@@ -72,10 +72,9 @@ static int VAR_add_models (GRETL_VAR *var, const DATASET *dset)
     return err;
 }
 
-/* Here we allocate storage for a full-size companion
-   matrix and fill in the "boilerplate" rows at the
-   bottom. The initial (VAR coefficient) rows are left
-   as zeros.
+/* Here we allocate storage for a full-size companion matrix and fill in
+   the "boilerplate" rows at the bottom. The initial (VAR coefficient)
+   rows are left as zeros.
 */
 
 static int VAR_allocate_companion_matrix (GRETL_VAR *var)
@@ -104,8 +103,8 @@ static int VAR_allocate_companion_matrix (GRETL_VAR *var)
     return err;
 }
 
-/* Given an m x n matrix @A, with m < n, construct the full
-   n x n companion matrix.
+/* Given an m x n matrix @A, with m < n, construct the full n x n
+   companion matrix.
 */
 
 static gretl_matrix *companionize (const gretl_matrix *A,
@@ -148,9 +147,9 @@ static gretl_matrix *companionize (const gretl_matrix *A,
     return ret;
 }
 
-/* Given the full (square) companion matrix, return a version
-   without the trailing rows holding (I ~ 0). The inverse
-   operation to companionize() above.
+/* Given the full (square) companion matrix, return a version without
+   the trailing rows holding (I ~ 0). The inverse operation to
+   companionize() above.
 */
 
 gretl_matrix *decompanionize (const gretl_matrix *A, int neqns,
@@ -357,9 +356,9 @@ static int VAR_add_regular_seasonals (GRETL_VAR *v,
 
 #define lag_wanted(v, i) (v->lags == NULL || in_gretl_list(v->lags, i))
 
-/* Construct the common X matrix (composed of lags of the core
-   variables plus other terms if applicable). This is in
-   common between VARs and VECMs
+/* Construct the common X matrix (composed of lags of the core variables
+   plus other terms if applicable). This is in common between VARs and
+   VECMs.
 */
 
 void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
@@ -433,7 +432,7 @@ void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset)
 #endif
 }
 
-/* construct the matrix of dependent variables for a plain VAR */
+/* Construct the matrix of dependent variables for a plain VAR. */
 
 static void VAR_fill_Y (GRETL_VAR *v, const DATASET *dset)
 {
@@ -457,7 +456,7 @@ static void VAR_fill_Y (GRETL_VAR *v, const DATASET *dset)
 #endif
 }
 
-/* construct the combined matrix of dependent variables for a VECM */
+/* Construct the combined matrix of dependent variables for a VECM. */
 
 static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
                          gretl_matrix *Y)
@@ -508,9 +507,9 @@ static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
 #endif
 }
 
-/* Split the user-supplied list, if need be, and construct the lists
-   of endogenous and (possibly) exogenous vars.  Note that
-   deterministic terms are handled separately, via option flags.
+/* Split the user-supplied list, if need be, and construct the lists of
+   endogenous and (possibly) exogenous vars.  Note that deterministic
+   terms are handled separately, via option flags.
 */
 
 static int VAR_make_lists (GRETL_VAR *v, const int *list,
@@ -573,10 +572,10 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
 }
 
 /* Starting from the given sample range, construct the feasible
-   estimation range for a VAR or VECM.  Flag an error if there
-   are missing values within the sample period.
-   Also see system_adjust_t1t2 in lib/src/system.c
-   (perhaps the two could be consolidated at some point)
+   estimation range for a VAR or VECM.  Flag an error if there are
+   missing values within the sample period.  Also see
+   system_adjust_t1t2() in lib/src/system.c (perhaps the two could be
+   consolidated at some point).
 */
 
 static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
@@ -699,8 +698,8 @@ static int VAR_set_sample (GRETL_VAR *v, const DATASET *dset)
     return err;
 }
 
-/* Account for deterministic terms and check for
-   non-negative degrees of freedom.
+/* Account for deterministic terms and check for non-negative degrees of
+   freedom.
 */
 
 static int VAR_check_df_etc (GRETL_VAR *v, const DATASET *dset,
@@ -783,9 +782,9 @@ static void set_to_NA (double *x, int n)
     }
 }
 
-/* main function for constructing a new VAR struct, which
-   may be used for estimating a VAR, a VECM, or various
-   auxiliary tasks */
+/* Main function for constructing a new VAR struct, which may be used
+   for estimating a VAR, a VECM, or various auxiliary tasks.
+*/
 
 static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
                                  const int *lags,
@@ -927,6 +926,7 @@ static void johansen_info_free (GRETL_VAR *var)
     gretl_matrix_free(jv->Alpha);
     gretl_matrix_free(jv->Gamma);
     gretl_matrix_free(jv->JC);
+    gretl_matrix_free(jv->JVC);
     gretl_matrix_free(jv->Bvar);
     gretl_matrix_free(jv->Bse);
     gretl_matrix_free(jv->Ase);
@@ -939,7 +939,7 @@ static void johansen_info_free (GRETL_VAR *var)
     gretl_matrix_free(jv->RR);
     gretl_matrix_free(jv->BB);
     if (jv->G != NULL) {
-        gretl_matrix_array_free(jv->G, var->order - 1);
+        gretl_array_destroy(jv->G);
     }
 
     free(jv);
@@ -947,7 +947,9 @@ static void johansen_info_free (GRETL_VAR *var)
 
 void gretl_VAR_free (GRETL_VAR *var)
 {
-    if (var == NULL) return;
+    if (var == NULL) {
+	return;
+    }
 
 #if VDEBUG
     fprintf(stderr, "gretl_VAR_free: var = %p, refcount = %d\n",
@@ -3070,7 +3072,7 @@ johansen_estimate_complete (GRETL_VAR *jvar, gretl_restriction *rset,
 }
 
 /* N.B. we allow for the possibility that this allocation has
-   already been done */
+   already been done. */
 
 static int allocate_johansen_extra_matrices (GRETL_VAR *v)
 {
@@ -3246,7 +3248,6 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
         gretl_matrix *R = v->jinfo->RR;
 
         VECM_fill_Y(v, dset, Y);
-
 #if 0
 	gretl_matrix_print(v->X, "X in johansen_stage_1");
 	gretl_matrix_print(Y, "Y  in johansen_stage_1");
@@ -3328,6 +3329,7 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
     jv->Alpha = NULL;
     jv->Gamma = NULL;
     jv->JC = NULL;
+    jv->JVC = NULL;
     jv->Bse = NULL;
     jv->Ase = NULL;
     jv->Bvar = NULL;
@@ -4708,6 +4710,7 @@ static void johansen_serialize (JohansenInfo *j, PRN *prn)
     gretl_matrix_serialize(j->Bse, "Bse", prn);
     gretl_matrix_serialize(j->Gamma, "Gamma", prn);
     gretl_matrix_serialize(j->JC, "long_run", prn);
+    gretl_matrix_serialize(j->JVC, "var_long_run", prn);
     gretl_matrix_serialize(j->R, "R", prn);
     gretl_matrix_serialize(j->q, "q", prn);
     gretl_matrix_serialize(j->Ra, "Ra", prn);
@@ -4780,20 +4783,21 @@ static gretl_matrix *johansen_perp (const gretl_matrix *a)
 
     c = gretl_zero_matrix_new(p, r);
     cp = gretl_zero_matrix_new(p, p-r);
+    atc = gretl_matrix_alloc(r, r);
+    tmp1 = gretl_matrix_alloc(p, r);
+    tmp2 = gretl_identity_matrix_new(p);
+    ret = gretl_matrix_alloc(p, p-r);
+
     gretl_matrix_inscribe_I(c, 0, 0, r);
     gretl_matrix_inscribe_I(cp, r, 0, p-r);
-    atc = gretl_matrix_alloc(r, r);
     gretl_matrix_multiply_mod(a, GRETL_MOD_TRANSPOSE,
                               c, GRETL_MOD_NONE,
                               atc, GRETL_MOD_NONE);
     gretl_invert_general_matrix(atc);
-    tmp1 = gretl_matrix_alloc(p, r);
     gretl_matrix_multiply(c, atc, tmp1);
-    tmp2 = gretl_identity_matrix_new(p);
     gretl_matrix_multiply_mod(tmp1, GRETL_MOD_NONE,
                               a, GRETL_MOD_TRANSPOSE,
                               tmp2, GRETL_MOD_DECREMENT);
-    ret = gretl_matrix_alloc(p, p-r);
     gretl_matrix_multiply(tmp2, cp, ret);
 
     gretl_matrix_free(c);
@@ -4805,7 +4809,192 @@ static gretl_matrix *johansen_perp (const gretl_matrix *a)
     return ret;
 }
 
-/* Add the "long-run impact" matrix, which Johansen (1995) calls c
+static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
+				     const gretl_matrix *b,
+				     DATASET *dset,
+				     int *err)
+{
+    gretl_matrix *S = NULL;
+    gretl_matrix *X = NULL;
+    gretl_matrix *M = NULL;
+    int k = var->order + 1;
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+
+    X = gretl_matrix_data_subset(var->ylist, dset,
+				 dset->t1, var->t2,
+				 M_MISSING_ERROR,
+				 err);
+    fprintf(stderr, "johansen_Sigma: var->t1 = %d, dset->t1 = %d\n",
+	    var->t1, dset->t1);
+    gretl_matrix_print_range(X, "X, in johansen_Sigma", 0, 11, prn);
+
+    if (!*err) {
+	M = gretl_matrix_alloc(X->rows, b->cols);
+	gretl_matrix_multiply(X, b, M);
+    }
+
+    if (!*err && k > 1) {
+	/* We need to append one or more differences of X */
+	int nc = M->cols + (k-1) * X->cols;
+	gretl_matrix *lags;
+	gretl_matrix *DX;
+	gretl_matrix *LDX;
+	int i;
+
+	DX = gretl_matrix_diffcol(X, 0, err);
+
+	*err = gretl_matrix_realloc(M, M->rows, nc);
+	if (!*err) {
+	    lags = gretl_matrix_alloc(k-1, 1);
+	    for (i=1; i<k; i++) {
+		lags->val[i-1] = i;
+	    }
+	    LDX = gretl_matrix_lag(DX, lags, OPT_L, 0);
+	    gretl_matrix_inscribe_matrix(M, LDX, 0, X->cols - 1, GRETL_MOD_NONE);
+	    gretl_matrix_free(LDX);
+	    gretl_matrix_free(DX);
+	    gretl_matrix_free(lags);
+	}
+    }
+
+    gretl_matrix_print_range(M, "M, in johansen_Sigma", 0, 11, prn);
+
+    if (!*err) {
+	/* FIXME seasonals */
+	S = gretl_covariance_matrix(M, 0, 0, err);
+    }
+
+    gretl_matrix_free(X);
+    gretl_matrix_free(M);
+
+    return S;
+}
+
+static int add_johansen_lr_variance (const GRETL_VAR *var,
+				     DATASET *dset)
+{
+    JohansenInfo *ji = var->jinfo;
+    gretl_matrix_block *B;
+    gretl_matrix *VC = NULL;
+    gretl_matrix *V1 = NULL;
+    gretl_matrix *V2 = NULL;
+    gretl_matrix *aa = NULL;
+    gretl_matrix *abar = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *tmp = NULL;
+    gretl_matrix *xiT = NULL;
+    gretl_matrix *Sigma = NULL;
+    double x;
+    int p = ji->Alpha->rows;
+    int k = var->order + 1;
+    int i, j, nc;
+    int err = 0;
+
+    VC = gretl_matrix_alloc(p*p, p*p);
+    if (VC == NULL) {
+	return E_ALLOC;
+    }
+
+    if (p < ji->Beta->rows) {
+	b = gretl_matrix_alloc(p, ji->Beta->cols);
+	for (j=0; j<ji->Beta->cols; j++) {
+	    for (i=0; i<p; i++) {
+		x = gretl_matrix_get(ji->Beta, i, j);
+		gretl_matrix_set(b, i, j, x);
+	    }
+	}
+    } else {
+	b = gretl_matrix_copy(ji->Beta);
+    }
+
+    if (k > 1) {
+	nc = ji->rank + (k-1) * p;
+    } else {
+	nc = ji->rank;
+    }
+
+    B = gretl_matrix_block_new(&V1, p, p,
+			       &aa, ji->rank, ji->rank,
+			       &abar, p, ji->rank,
+			       &xiT, p, nc,
+			       &tmp, p, p,
+			       &V2, p, p, NULL);
+    if (B == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    gretl_matrix_print(ji->JC, "JC");
+
+    /* V1 = C * vb.Omega * C' */
+    err = gretl_matrix_qform(ji->JC, GRETL_MOD_NONE, var->S,
+			     V1, GRETL_MOD_NONE);
+    gretl_matrix_print(V1, "V1");
+
+    /* abar = alpha * inv(alpha'alpha) */
+    gretl_matrix_multiply_mod(ji->Alpha, GRETL_MOD_TRANSPOSE,
+			      ji->Alpha, GRETL_MOD_NONE,
+			      aa, GRETL_MOD_NONE);
+    err = gretl_invert_symmetric_matrix(aa);
+    if (!err) {
+	gretl_matrix_multiply(ji->Alpha, aa, abar);
+    }
+    gretl_matrix_print(abar, "abar");
+
+    /* xiT = (C'Gamma' - I(p)) * abar */
+    gretl_matrix_multiply_mod(ji->JC, GRETL_MOD_TRANSPOSE,
+			      ji->Gamma, GRETL_MOD_TRANSPOSE,
+			      tmp, GRETL_MOD_NONE);
+    for (i=0; i<p; i++) {
+	x = gretl_matrix_get(tmp, i, i);
+	gretl_matrix_set(tmp, i, i, x - 1.0);
+    }
+    if (k > 1) {
+	gretl_matrix_reuse(xiT, p, ji->rank);
+    }
+    gretl_matrix_multiply(tmp, abar, xiT);
+    gretl_matrix_print(xiT, "xiT(1)");
+
+    if (k > 1) {
+	gretl_matrix_reuse(xiT, p, nc);
+	for (i=1, j=ji->rank; i<k && !err; i++) {
+	    err = gretl_matrix_inscribe_matrix(xiT, ji->JC, 0, j,
+					       GRETL_MOD_TRANSPOSE);
+	    j += p;
+	}
+    }
+    gretl_matrix_print(xiT, "xiT(2)");
+
+    Sigma = johansen_Sigma(var, b, dset, &err);
+    gretl_matrix_print(Sigma, "Sigma");
+
+    /* V2 = xiT * invpd(Sigma) * xiT' */
+    gretl_invert_symmetric_matrix(Sigma);
+    gretl_matrix_qform(xiT, GRETL_MOD_NONE, Sigma,
+		       V2, GRETL_MOD_NONE);
+    gretl_matrix_print(V2, "V2");
+
+    /* VC = (V2 ** V1) / T */
+    gretl_matrix_kronecker_product(V2, V1, VC);
+    gretl_matrix_divide_by_scalar(VC, var->T);
+    gretl_matrix_print(VC, "VC");
+
+ bailout:
+
+    gretl_matrix_free(Sigma);
+    gretl_matrix_free(b);
+    gretl_matrix_block_destroy(B);
+
+    if (err) {
+	gretl_matrix_free(VC);
+    } else {
+	ji->JVC = VC;
+    }
+
+    return err;
+}
+
+/* Add the "long-run impact" matrix, which Johansen (1995) calls C
    (Lütkepohl calls it $\Xi$).
 */
 
@@ -4872,7 +5061,8 @@ static void add_johansen_C (JohansenInfo *j)
     gretl_matrix_free(bp);
 }
 
-static gretl_bundle *johansen_bundlize (const GRETL_VAR *var)
+static gretl_bundle *johansen_bundlize (const GRETL_VAR *var,
+					DATASET *dset)
 {
     gretl_bundle *b = gretl_bundle_new();
     JohansenInfo *j = var->jinfo;
@@ -4918,22 +5108,22 @@ static gretl_bundle *johansen_bundlize (const GRETL_VAR *var)
         gretl_bundle_set_matrix(b, "qa", j->qa);
     }
     if (j->G != NULL) {
-        gretl_array *a;
-
-        a = gretl_array_from_C_array(GRETL_TYPE_MATRICES,
-                                     j->G, var->order,
-                                     NULL);
-        if (a != NULL) {
-            gretl_bundle_donate_data(b, "G_array", a,
-                                     GRETL_TYPE_ARRAY, 0);
-            j->G = NULL; /* don't double-free */
-        }
+	gretl_bundle_donate_data(b, "G_array", j->G,
+				 GRETL_TYPE_ARRAY, 0);
+	j->G = NULL; /* don't double-free */
     }
+
     if (j->Alpha != NULL && j->Beta != NULL && j->Gamma != NULL) {
         add_johansen_C(j);
         if (j->JC != NULL) {
             gretl_bundle_set_matrix(b, "long_run", j->JC);
-        }
+#if 0 /* not yet */
+	    add_johansen_lr_variance(var, dset);
+	    if (j->JVC != NULL) {
+		gretl_bundle_set_matrix(b, "var_long_run", j->JVC);
+	    }
+#endif
+	}
     }
 
     return b;
@@ -5020,12 +5210,11 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
     return err;
 }
 
-/* Clean-up of temporary "jinfo" used in IRF
-   bootstrapping. We can't use the regular destructor,
-   johansen_info_free(), because the primary matrix
-   pointers on var->jinfo are in this case borrowed
-   from a $system bundle; but we do need to free any
-   "extra" matrices that have been added.
+/* Clean-up of temporary "jinfo" used in IRF bootstrapping. We can't use
+   the regular destructor, johansen_info_free(), because the primary
+   matrix pointers on var->jinfo are in this case borrowed from a
+   $system bundle; but we do need to free any "extra" matrices that have
+   been added.
 */
 
 static void free_temp_jinfo (GRETL_VAR *var)
@@ -5038,10 +5227,10 @@ static void free_temp_jinfo (GRETL_VAR *var)
     free(var->jinfo);
 }
 
-/* When destroying a VAR that was reconstituted by reading
-   from a $system bundle, we must be careful not to free
-   any elements which were just borrowed from the bundle;
-   we set the associated pointers to NULL.
+/* When destroying a VAR that was reconstituted by reading from a
+   $system bundle, we must be careful not to free any elements which
+   were just borrowed from the bundle; we set the associated pointers to
+   NULL.
 */
 
 static void destroy_VAR_from_bundle (GRETL_VAR *var)
@@ -5072,12 +5261,11 @@ static void destroy_VAR_from_bundle (GRETL_VAR *var)
     gretl_VAR_free(var);
 }
 
-/* Reconstitute a VAR or VECM (partially) from the bundle @b,
-   for the purposes of generating an FEVD or IRF. How far we
-   need to go in rebuilding the GRETL_VAR struct depends on
-   the purpose, and in the IRF case, whether bootstrapping is
-   required. For FEVD we basically just need the A and C
-   matrices from the bundle.
+/* Reconstitute a VAR or VECM (partially) from the bundle @b, for the
+   purposes of generating an FEVD or IRF. How far we need to go in
+   rebuilding the GRETL_VAR struct depends on the purpose, and in the
+   IRF case, whether bootstrapping is required. For FEVD we basically
+   just need the A and C matrices from the bundle.
 */
 
 static GRETL_VAR *build_VAR_from_bundle (gretl_bundle *b,
@@ -5377,7 +5565,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 
     if (var->jinfo != NULL) {
         /* VECM specific info */
-        gretl_bundle *jb = johansen_bundlize(var);
+        gretl_bundle *jb = johansen_bundlize(var, dset);
 
         if (jb != NULL) {
             err = gretl_bundle_donate_data(b, "vecm_info", jb,

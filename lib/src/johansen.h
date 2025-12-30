@@ -45,6 +45,7 @@ struct JohansenInfo_ {
     gretl_matrix *Alpha;  /* matrix of adjustments */
     gretl_matrix *Gamma;  /* I - sum of \Gamma_i matrices */
     gretl_matrix *JC;     /* Johansen's 'C' (Lütkepohl's $\Xi$) */
+    gretl_matrix *JVC;    /* Variance of vec(C) */
     gretl_matrix *Bvar;   /* variance matrix of beta */
     gretl_matrix *Bse;    /* standard errors of beta */
     gretl_matrix *Ase;    /* standard errors of alpha */
@@ -55,7 +56,7 @@ struct JohansenInfo_ {
     gretl_matrix *YY;     /* double-size Y matrix */
     gretl_matrix *RR;     /* double-size residuals matrix */
     gretl_matrix *BB;     /* double-size coefficient matrix */
-    gretl_matrix **G;     /* array of \Gamma_i matrices */
+    gretl_array *G;       /* array of \Gamma_i matrices */
     double ll0;           /* unrestricted log-likelihood */
     int lrdf;             /* df for likelihood ratio test */
     double prior_ll;      /* ll for prior model in restriction sequence */

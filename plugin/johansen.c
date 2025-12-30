@@ -545,16 +545,18 @@ static void gretl_matrix_I (gretl_matrix *A, int n)
    the coefficients on the lagged differences (i.e. form the \Gamma
    matrices) so we can compute the VAR representation */
 
-static void copy_coeffs_to_Gamma (GRETL_VAR *vecm, gretl_matrix **G)
+static void copy_coeffs_to_Gamma (GRETL_VAR *vecm, gretl_array *G)
 {
+    gretl_matrix *Gk;
     int nl = var_n_lags(vecm);
     int i, j, k, h;
     double x;
 
     for (i=0; i<vecm->neqns; i++) {
         for (k=0; k<vecm->order; k++) {
+	    Gk = gretl_array_get_data(G, k);
             if (!lag_wanted(vecm, k+1)) {
-                gretl_matrix_zero(G[k]);
+                gretl_matrix_zero(Gk);
                 continue;
             }
             h = k + vecm->ifc;
@@ -562,7 +564,7 @@ static void copy_coeffs_to_Gamma (GRETL_VAR *vecm, gretl_matrix **G)
             for (j=0; j<vecm->neqns; j++) {
                 /* successive \Delta x_j */
                 x = gretl_matrix_get(vecm->B, h, i);
-                gretl_matrix_set(G[k], i, j, x);
+                gretl_matrix_set(Gk, i, j, x);
                 h += nl;
             }
         }
@@ -573,7 +575,7 @@ static void copy_coeffs_to_Gamma (GRETL_VAR *vecm, gretl_matrix **G)
         char msg[32];
 
         sprintf(msg, "Gamma matrix, lag %d", k+1);
-        gretl_matrix_print(G[k], msg);
+        gretl_matrix_print(Gk, msg);
     }
 #endif
 }
@@ -997,7 +999,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     gretl_matrix *beta = v->jinfo->Beta;
     gretl_matrix *Pi = NULL;
     gretl_matrix *Ai = NULL;
-    gretl_matrix **G = NULL;
+    gretl_array *G = NULL;
     int order = v->order;
     int xc, n = v->neqns;
     int use_XTX = 0;
@@ -1031,10 +1033,14 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     }
 
     if (!err && order > 0) {
-        G = gretl_matrix_array_new_with_size(order, n, n);
+        G = gretl_array_new(GRETL_TYPE_MATRICES, order, &err);
         if (G == NULL) {
             err = E_ALLOC;
-        }
+        } else {
+	    for (i=0; i<order; i++) {
+		gretl_array_set_data(G, i, gretl_matrix_alloc(n, n));
+	    }
+	}
     }
 
     if (!err && alpha_restricted(flags)) {
@@ -1115,17 +1121,23 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
         gretl_matrix_add_to(Ai, Pi);
         add_Ai_to_VAR_A(Ai, v, 0, flags);
     } else {
+	gretl_matrix *Gm;
+
         for (i=0; i<=order; i++) {
             if (i == 0) {
                 gretl_matrix_I(Ai, n);
                 gretl_matrix_add_to(Ai, Pi);
-                gretl_matrix_add_to(Ai, G[0]);
+		Gm = gretl_array_get_data(G, i);
+                gretl_matrix_add_to(Ai, Gm);
             } else if (i == order) {
                 gretl_matrix_zero(Ai);
-                gretl_matrix_subtract_from(Ai, G[i-1]);
+		Gm = gretl_array_get_data(G, i-1);
+                gretl_matrix_subtract_from(Ai, Gm);
             } else {
-                gretl_matrix_copy_values(Ai, G[i]);
-                gretl_matrix_subtract_from(Ai, G[i-1]);
+		Gm = gretl_array_get_data(G, i);
+                gretl_matrix_copy_values(Ai, Gm);
+		Gm = gretl_array_get_data(G, i-1);
+                gretl_matrix_subtract_from(Ai, Gm);
             }
 #if JDEBUG
             fprintf(stderr, "Ai matrix, lag %d\n\n", i+1);
@@ -1158,9 +1170,11 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     if (!err) {
         /* see Johansen (1995, p. 45) */
         gretl_matrix *Tmp = gretl_identity_matrix_new(n);
+	gretl_matrix *Gi;
 
         for (i=0; i<order; i++) {
-            gretl_matrix_subtract_from(Tmp, G[i]);
+	    Gi = gretl_array_get_data(G, i);
+            gretl_matrix_subtract_from(Tmp, Gi);
         }
         v->jinfo->Gamma = Tmp;
     }
