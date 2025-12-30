@@ -6530,7 +6530,8 @@ gretl_matrix_kronecker_I_new (const gretl_matrix *A, int r, int *err)
  */
 
 int
-gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
+gretl_matrix_kronecker_product (const gretl_matrix *A,
+				const gretl_matrix *B,
                                 gretl_matrix *K)
 {
     double aij, bkl;
@@ -11992,14 +11993,14 @@ gretl_matrix *gretl_matrix_lag (const gretl_matrix *m,
 {
     gretl_matrix *a;
     double x;
-    int l = gretl_vector_get_length(k);
+    int nl = gretl_vector_get_length(k);
     int s, t, i, j, n, kj;
 
-    if (gretl_is_null_matrix(m) || l == 0 || m->is_complex) {
+    if (gretl_is_null_matrix(m) || nl == 0 || m->is_complex) {
         return NULL;
     }
 
-    a = gretl_matrix_alloc(m->rows, m->cols * l);
+    a = gretl_matrix_alloc(m->rows, m->cols * nl);
     if (a == NULL) {
         return NULL;
     }
@@ -12007,7 +12008,7 @@ gretl_matrix *gretl_matrix_lag (const gretl_matrix *m,
     if (opt & OPT_L) {
         /* by lag */
         n = 0;
-        for (j=0; j<l; j++) {
+        for (j=0; j<nl; j++) {
             kj = gretl_vector_get(k, j);
             for (t=0; t<m->rows; t++) {
                 s = t - kj;
@@ -12028,7 +12029,7 @@ gretl_matrix *gretl_matrix_lag (const gretl_matrix *m,
         /* by variable */
         n = 0;
         for (i=0; i<m->cols; i++) {
-            for (j=0; j<l; j++) {
+            for (j=0; j<nl; j++) {
                 kj = gretl_vector_get(k, j);
                 for (t=0; t<m->rows; t++) {
                     s = t - kj;
@@ -12040,7 +12041,7 @@ gretl_matrix *gretl_matrix_lag (const gretl_matrix *m,
                     }
                 }
             }
-            n += l;
+            n += nl;
         }
     }
 
@@ -14340,86 +14341,6 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m,
     gretl_matrix_free(D);
 
     return V;
-}
-
-/**
- * gretl_matrix_array_new:
- * @n: number of matrices.
- *
- * Allocates an array of @n gretl matrix pointers. On successful
- * allocation of the array, each element is initialized to NULL.
- *
- * Returns: pointer on sucess, NULL on failure.
- */
-
-gretl_matrix **gretl_matrix_array_new (int n)
-{
-    gretl_matrix **A = malloc(n * sizeof *A);
-    int i;
-
-    if (A != NULL) {
-        for (i=0; i<n; i++) {
-            A[i] = NULL;
-        }
-    }
-
-    return A;
-}
-
-/**
- * gretl_matrix_array_new_with_size:
- * @n: number of matrices.
- * @rows: number of rows in each matrix.
- * @cols: number of columns in each matrix.
- *
- * Allocates an array of @n gretl matrix pointers, each one
- * with size @rows * @cols.
- *
- * Returns: pointer on sucess, NULL on failure.
- */
-
-gretl_matrix **
-gretl_matrix_array_new_with_size (int n, int rows, int cols)
-{
-    gretl_matrix **A = malloc(n * sizeof *A);
-    int i, j;
-
-    if (A != NULL) {
-        for (i=0; i<n; i++) {
-            A[i] = gretl_matrix_alloc(rows, cols);
-            if (A[i] == NULL) {
-                for (j=0; j<i; j++) {
-                    gretl_matrix_free(A[i]);
-                }
-                free(A);
-                A = NULL;
-                break;
-            }
-        }
-    }
-
-    return A;
-}
-
-/**
- * gretl_matrix_array_free:
- * @A: dyamically allocated array of gretl matrices.
- * @n: number of matrices in array.
- *
- * Frees each of the @n gretl matrices in the array @A, and
- * the array itself.  See also gretl_matrix_array_alloc().
- */
-
-void gretl_matrix_array_free (gretl_matrix **A, int n)
-{
-    int i;
-
-    if (A != NULL) {
-        for (i=0; i<n; i++) {
-            gretl_matrix_free(A[i]);
-        }
-        free(A);
-    }
 }
 
 static gretl_matrix *

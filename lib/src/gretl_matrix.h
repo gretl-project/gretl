@@ -854,13 +854,6 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
 				     const gretl_matrix *x0,
 				     int *err);
 
-gretl_matrix **gretl_matrix_array_new (int n);
-
-gretl_matrix **
-gretl_matrix_array_new_with_size (int n, int rows, int cols);
-
-void gretl_matrix_array_free (gretl_matrix **A, int n);
-
 gretl_matrix *gretl_matrix_values (const double *x, int n,
 				   gretlopt opt, int *err);
 
