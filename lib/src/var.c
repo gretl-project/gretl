@@ -4772,6 +4772,8 @@ static int retrieve_johansen_basics (GRETL_VAR *var,
 
 #define JCDEBUG 0
 
+/* See Johansen's 1995 book, pages 188-190 */
+
 static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
 				     const gretl_matrix *b,
 				     DATASET *dset,
@@ -4790,6 +4792,7 @@ static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
 	    var->t1, dset->t1);
 #endif
 
+    /* the lagged level of X */
     X = gretl_matrix_data_subset(var->ylist, dset,
 				 var->t1-1, var->t2-1,
 				 M_MISSING_ERROR,
@@ -4803,7 +4806,7 @@ static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
 	M = gretl_matrix_alloc(X->rows, r);
 	gretl_matrix_multiply(X, b, M);
     } else if (!*err) {
-	/* We need to handle one or more lagged differences of X */
+	/* We also need one or more lagged differences of X */
 	int mc = r + (k-1) * p;
 	int lag, j, s, t, c;
 	double x1, x2;
