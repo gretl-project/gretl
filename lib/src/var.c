@@ -3364,7 +3364,7 @@ static void coint_test_header (const GRETL_VAR *v,
 
     pprintf(prn, "\n%s:\n", _("Johansen test"));
     pprintf(prn, "%s = %d\n", _("Number of equations"), v->neqns);
-    pprintf(prn, "%s = %d\n", _("Lag order"), v->order + 1);
+    pprintf(prn, "%s = %d\n", _("Lag order"), levels_order(v));
     pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
             ntolabel(stobs, v->t1, dset),
             ntolabel(endobs, v->t2, dset), v->T);
@@ -4770,44 +4770,7 @@ static int retrieve_johansen_basics (GRETL_VAR *var,
     return err;
 }
 
-static gretl_matrix *johansen_perp (const gretl_matrix *a)
-{
-    gretl_matrix *c;
-    gretl_matrix *cp;
-    gretl_matrix *atc;
-    gretl_matrix *tmp1;
-    gretl_matrix *tmp2;
-    gretl_matrix *ret;
-    int p = a->rows;
-    int r = a->cols;
-
-    c = gretl_zero_matrix_new(p, r);
-    cp = gretl_zero_matrix_new(p, p-r);
-    atc = gretl_matrix_alloc(r, r);
-    tmp1 = gretl_matrix_alloc(p, r);
-    tmp2 = gretl_identity_matrix_new(p);
-    ret = gretl_matrix_alloc(p, p-r);
-
-    gretl_matrix_inscribe_I(c, 0, 0, r);
-    gretl_matrix_inscribe_I(cp, r, 0, p-r);
-    gretl_matrix_multiply_mod(a, GRETL_MOD_TRANSPOSE,
-                              c, GRETL_MOD_NONE,
-                              atc, GRETL_MOD_NONE);
-    gretl_invert_general_matrix(atc);
-    gretl_matrix_multiply(c, atc, tmp1);
-    gretl_matrix_multiply_mod(tmp1, GRETL_MOD_NONE,
-                              a, GRETL_MOD_TRANSPOSE,
-                              tmp2, GRETL_MOD_DECREMENT);
-    gretl_matrix_multiply(tmp2, cp, ret);
-
-    gretl_matrix_free(c);
-    gretl_matrix_free(cp);
-    gretl_matrix_free(atc);
-    gretl_matrix_free(tmp1);
-    gretl_matrix_free(tmp2);
-
-    return ret;
-}
+#define JCDEBUG 0
 
 static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
 				     const gretl_matrix *b,
@@ -4817,47 +4780,57 @@ static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
     gretl_matrix *S = NULL;
     gretl_matrix *X = NULL;
     gretl_matrix *M = NULL;
-    int k = var->order + 1;
+    int p = var->neqns;
+    int k = levels_order(var);
+    int r = jrank(var);
+
+#if JCDEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    fprintf(stderr, "johansen_Sigma: var->t1 = %d, dset->t1 = %d\n\n",
+	    var->t1, dset->t1);
+#endif
 
     X = gretl_matrix_data_subset(var->ylist, dset,
-				 dset->t1, var->t2,
+				 var->t1-1, var->t2-1,
 				 M_MISSING_ERROR,
 				 err);
-    fprintf(stderr, "johansen_Sigma: var->t1 = %d, dset->t1 = %d\n",
-	    var->t1, dset->t1);
-    gretl_matrix_print_range(X, "X, in johansen_Sigma", 0, 11, prn);
+#if JCDEBUG
+    gretl_matrix_print_range(X, "X, johansen_Sigma", 0, 4, prn);
+#endif
 
-    if (!*err) {
-	M = gretl_matrix_alloc(X->rows, b->cols);
+    if (!err && k < 2) {
+	/* the simplest case */
+	M = gretl_matrix_alloc(X->rows, r);
 	gretl_matrix_multiply(X, b, M);
-    }
+    } else if (!*err) {
+	/* We need to handle one or more lagged differences of X */
+	int mc = r + (k-1) * p;
+	int lag, j, s, t, c;
+	double x1, x2;
 
-    if (!*err && k > 1) {
-	/* We need to append one or more differences of X */
-	int nc = M->cols + (k-1) * X->cols;
-	gretl_matrix *lags;
-	gretl_matrix *DX;
-	gretl_matrix *LDX;
-	int i;
+	M = gretl_matrix_alloc(X->rows, mc);
+	gretl_matrix_reuse(M, -1, r);
+	gretl_matrix_multiply(X, b, M);
+	gretl_matrix_reuse(M, -1, mc);
 
-	DX = gretl_matrix_diffcol(X, 0, err);
-
-	*err = gretl_matrix_realloc(M, M->rows, nc);
-	if (!*err) {
-	    lags = gretl_matrix_alloc(k-1, 1);
-	    for (i=1; i<k; i++) {
-		lags->val[i-1] = i;
+	for (lag=1, c=r; lag<k; lag++) {
+	    for (j=0; j<p; j++) {
+		s = k - lag;
+		for (t=0; t<var->T; t++) {
+		    x1 = gretl_matrix_get(X, s, j);
+		    x2 = gretl_matrix_get(X, s-1, j);
+		    gretl_matrix_set(M, t, c, x1 - x2);
+		    s++;
+		}
+		c++;
 	    }
-	    LDX = gretl_matrix_lag(DX, lags, OPT_L, 0);
-	    gretl_matrix_inscribe_matrix(M, LDX, 0, X->cols - 1, GRETL_MOD_NONE);
-	    gretl_matrix_free(LDX);
-	    gretl_matrix_free(DX);
-	    gretl_matrix_free(lags);
 	}
     }
 
-    gretl_matrix_print_range(M, "M, in johansen_Sigma", 0, 11, prn);
+#if JCDEBUG
+    gretl_matrix_print_range(M, "M, in johansen_Sigma", 0, 4, prn);
+    gretl_print_destroy(prn);
+#endif
 
     if (!*err) {
 	/* FIXME seasonals */
@@ -4885,8 +4858,8 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
     gretl_matrix *xiT = NULL;
     gretl_matrix *Sigma = NULL;
     double x;
-    int p = ji->Alpha->rows;
-    int k = var->order + 1;
+    int p = var->neqns;
+    int k = levels_order(var);
     int i, j, nc;
     int err = 0;
 
@@ -4895,7 +4868,7 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
 	return E_ALLOC;
     }
 
-    if (p < ji->Beta->rows) {
+    if (ji->Beta->rows > p) {
 	b = gretl_matrix_alloc(p, ji->Beta->cols);
 	for (j=0; j<ji->Beta->cols; j++) {
 	    for (i=0; i<p; i++) {
@@ -4924,12 +4897,12 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
 	goto bailout;
     }
 
-    gretl_matrix_print(ji->JC, "JC");
-
     /* V1 = C * vb.Omega * C' */
     err = gretl_matrix_qform(ji->JC, GRETL_MOD_NONE, var->S,
 			     V1, GRETL_MOD_NONE);
+#if JCDEBUG
     gretl_matrix_print(V1, "V1");
+#endif
 
     /* abar = alpha * inv(alpha'alpha) */
     gretl_matrix_multiply_mod(ji->Alpha, GRETL_MOD_TRANSPOSE,
@@ -4939,7 +4912,9 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
     if (!err) {
 	gretl_matrix_multiply(ji->Alpha, aa, abar);
     }
+#if JCDEBUG
     gretl_matrix_print(abar, "abar");
+#endif
 
     /* xiT = (C'Gamma' - I(p)) * abar */
     gretl_matrix_multiply_mod(ji->JC, GRETL_MOD_TRANSPOSE,
@@ -4953,7 +4928,9 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
 	gretl_matrix_reuse(xiT, p, ji->rank);
     }
     gretl_matrix_multiply(tmp, abar, xiT);
+#if JCDEBUG
     gretl_matrix_print(xiT, "xiT(1)");
+#endif
 
     if (k > 1) {
 	gretl_matrix_reuse(xiT, p, nc);
@@ -4963,21 +4940,27 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
 	    j += p;
 	}
     }
+#if JCDEBUG
     gretl_matrix_print(xiT, "xiT(2)");
+#endif
 
     Sigma = johansen_Sigma(var, b, dset, &err);
     gretl_matrix_print(Sigma, "Sigma");
 
     /* V2 = xiT * invpd(Sigma) * xiT' */
-    gretl_invert_symmetric_matrix(Sigma);
+    gretl_invpd(Sigma);
     gretl_matrix_qform(xiT, GRETL_MOD_NONE, Sigma,
 		       V2, GRETL_MOD_NONE);
+#if JCDEBUG
     gretl_matrix_print(V2, "V2");
+#endif
 
     /* VC = (V2 ** V1) / T */
     gretl_matrix_kronecker_product(V2, V1, VC);
     gretl_matrix_divide_by_scalar(VC, var->T);
+#if JCDEBUG
     gretl_matrix_print(VC, "VC");
+#endif
 
  bailout:
 
@@ -4994,6 +4977,19 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
     return err;
 }
 
+static gretl_matrix *johansen_perp (const gretl_matrix *a,
+				    int *err)
+{
+    gretl_matrix *tmp = gretl_matrix_alloc(a->cols, a->rows);
+    gretl_matrix *ret;
+
+    gretl_matrix_transpose(tmp, a);
+    ret = gretl_matrix_right_nullspace(tmp, err);
+    gretl_matrix_free(tmp);
+
+    return ret;
+}
+
 /* Add the "long-run impact" matrix, which Johansen (1995) calls C
    (Lütkepohl calls it $\Xi$).
 */
@@ -5008,7 +5004,7 @@ static void add_johansen_C (JohansenInfo *j)
     int err = 0;
 
     /* make \alpha_{\perp} in ap */
-    ap = johansen_perp(j->Alpha);
+    ap = johansen_perp(j->Alpha, &err);
 
     /* make \beta_{\perp} in bp */
     if (!err && j->Beta->rows > p) {
@@ -5022,10 +5018,10 @@ static void add_johansen_C (JohansenInfo *j)
                 gretl_matrix_set(tmp, i, k, bik);
             }
         }
-        bp = johansen_perp(tmp);
+        bp = johansen_perp(tmp, &err);
         gretl_matrix_free(tmp);
     } else if (!err) {
-        bp = johansen_perp(j->Beta);
+        bp = johansen_perp(j->Beta, &err);
     }
 
     if (err) {
@@ -5117,7 +5113,7 @@ static gretl_bundle *johansen_bundlize (const GRETL_VAR *var,
         add_johansen_C(j);
         if (j->JC != NULL) {
             gretl_bundle_set_matrix(b, "long_run", j->JC);
-#if 0 /* not yet */
+#if 1 /* not yet */
 	    add_johansen_lr_variance(var, dset);
 	    if (j->JVC != NULL) {
 		gretl_bundle_set_matrix(b, "var_long_run", j->JVC);
