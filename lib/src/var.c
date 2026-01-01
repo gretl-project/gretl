@@ -4770,9 +4770,30 @@ static int retrieve_johansen_basics (GRETL_VAR *var,
     return err;
 }
 
-#define JCDEBUG 0
+static double get_x_diff (const gretl_matrix *X,
+			  const gretl_matrix *P,
+			  int s, int j)
+{
+    double x[2];
+    int i;
 
-/* See Johansen's 1995 book, pages 188-190 */
+    for (i=0; i<2; i++) {
+	if (s >= 0) {
+	    x[i] = gretl_matrix_get(X, s, j);
+	} else {
+	    x[i] = gretl_matrix_get(P, P->rows + s, j);
+	}
+	s--;
+    }
+
+    return x[0] - x[1];
+}
+
+/* See Johansen's 1995 book: the Sigma matrix is defined on page 188 and
+   used in the formula for the C-matrix variance on page 190.
+
+   FIXME handling of seasonal dummies? (cf. Paruolo)
+*/
 
 static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
 				     const gretl_matrix *b,
@@ -4780,71 +4801,69 @@ static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
 				     int *err)
 {
     gretl_matrix *S = NULL;
+    gretl_matrix *P = NULL;
     gretl_matrix *X = NULL;
     gretl_matrix *M = NULL;
     int p = var->neqns;
     int k = levels_order(var);
     int r = jrank(var);
 
-#if JCDEBUG
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-    fprintf(stderr, "johansen_Sigma: var->t1 = %d, dset->t1 = %d\n\n",
-	    var->t1, dset->t1);
-#endif
+    if (k > 1) {
+	/* We'll need X values prior to the estimation range,
+	   to compute the required lagged X-difference(s).
+	*/
+	P = gretl_matrix_data_subset(var->ylist, dset,
+				     dset->t1, var->t1-2,
+				     M_MISSING_ERROR,
+				     err);
+    }
 
-    /* the lagged level of X */
+    /* the lagged level of X, for X_{t-1} * \beta */
     X = gretl_matrix_data_subset(var->ylist, dset,
 				 var->t1-1, var->t2-1,
 				 M_MISSING_ERROR,
 				 err);
-#if JCDEBUG
-    gretl_matrix_print_range(X, "X, johansen_Sigma", 0, 4, prn);
-#endif
 
     if (!err && k < 2) {
-	/* the simplest case */
+	/* the simple case: no X-differences */
 	M = gretl_matrix_alloc(X->rows, r);
 	gretl_matrix_multiply(X, b, M);
     } else if (!*err) {
-	/* We also need one or more lagged differences of X */
+	/* lagged differences of X are needed */
 	int mc = r + (k-1) * p;
-	int lag, j, s, t, c;
-	double x1, x2;
+	int lag, j, t, col;
+	double dx;
 
 	M = gretl_matrix_alloc(X->rows, mc);
 	gretl_matrix_reuse(M, -1, r);
 	gretl_matrix_multiply(X, b, M);
 	gretl_matrix_reuse(M, -1, mc);
 
-	for (lag=1, c=r; lag<k; lag++) {
+	for (lag=1, col=r; lag<k; lag++) {
 	    for (j=0; j<p; j++) {
-		s = k - lag;
 		for (t=0; t<var->T; t++) {
-		    x1 = gretl_matrix_get(X, s, j);
-		    x2 = gretl_matrix_get(X, s-1, j);
-		    gretl_matrix_set(M, t, c, x1 - x2);
-		    s++;
+		    dx = get_x_diff(X, P, 1 + t - lag, j);
+		    gretl_matrix_set(M, t, col, dx);
 		}
-		c++;
+		col++;
 	    }
 	}
     }
 
-#if JCDEBUG
-    gretl_matrix_print_range(M, "M, in johansen_Sigma", 0, 4, prn);
-    gretl_print_destroy(prn);
-#endif
-
     if (!*err) {
-	/* FIXME seasonals */
 	S = gretl_covariance_matrix(M, 0, 0, err);
     }
 
+    gretl_matrix_free(P);
     gretl_matrix_free(X);
     gretl_matrix_free(M);
 
     return S;
 }
+
+/* See Johansen's 1995 book, around page 190: produce the
+   variance matrix of the vec of the "long-run matrix" C.
+*/
 
 static int add_johansen_lr_variance (const GRETL_VAR *var,
 				     DATASET *dset)
@@ -4903,21 +4922,17 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
     /* V1 = C * vb.Omega * C' */
     err = gretl_matrix_qform(ji->JC, GRETL_MOD_NONE, var->S,
 			     V1, GRETL_MOD_NONE);
-#if JCDEBUG
-    gretl_matrix_print(V1, "V1");
-#endif
 
     /* abar = alpha * inv(alpha'alpha) */
     gretl_matrix_multiply_mod(ji->Alpha, GRETL_MOD_TRANSPOSE,
 			      ji->Alpha, GRETL_MOD_NONE,
 			      aa, GRETL_MOD_NONE);
     err = gretl_invert_symmetric_matrix(aa);
-    if (!err) {
+    if (err) {
+	goto bailout;
+    } else {
 	gretl_matrix_multiply(ji->Alpha, aa, abar);
     }
-#if JCDEBUG
-    gretl_matrix_print(abar, "abar");
-#endif
 
     /* xiT = (C'Gamma' - I(p)) * abar */
     gretl_matrix_multiply_mod(ji->JC, GRETL_MOD_TRANSPOSE,
@@ -4931,11 +4946,9 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
 	gretl_matrix_reuse(xiT, p, ji->rank);
     }
     gretl_matrix_multiply(tmp, abar, xiT);
-#if JCDEBUG
-    gretl_matrix_print(xiT, "xiT(1)");
-#endif
 
     if (k > 1) {
+	/* append k - 1 instances of C' */
 	gretl_matrix_reuse(xiT, p, nc);
 	for (i=1, j=ji->rank; i<k && !err; i++) {
 	    err = gretl_matrix_inscribe_matrix(xiT, ji->JC, 0, j,
@@ -4943,27 +4956,19 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
 	    j += p;
 	}
     }
-#if JCDEBUG
-    gretl_matrix_print(xiT, "xiT(2)");
-#endif
 
     Sigma = johansen_Sigma(var, b, dset, &err);
-    gretl_matrix_print(Sigma, "Sigma");
 
-    /* V2 = xiT * invpd(Sigma) * xiT' */
-    gretl_invpd(Sigma);
-    gretl_matrix_qform(xiT, GRETL_MOD_NONE, Sigma,
-		       V2, GRETL_MOD_NONE);
-#if JCDEBUG
-    gretl_matrix_print(V2, "V2");
-#endif
+    if (!err) {
+	/* V2 = xiT * invpd(Sigma) * xiT' */
+	gretl_invpd(Sigma);
+	gretl_matrix_qform(xiT, GRETL_MOD_NONE, Sigma,
+			   V2, GRETL_MOD_NONE);
 
-    /* VC = (V2 ** V1) / T */
-    gretl_matrix_kronecker_product(V2, V1, VC);
-    gretl_matrix_divide_by_scalar(VC, var->T);
-#if JCDEBUG
-    gretl_matrix_print(VC, "VC");
-#endif
+	/* VC = (V2 ** V1) / T */
+	gretl_matrix_kronecker_product(V2, V1, VC);
+	gretl_matrix_divide_by_scalar(VC, var->T);
+    }
 
  bailout:
 
