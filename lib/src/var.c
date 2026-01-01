@@ -5065,6 +5065,42 @@ static void add_johansen_C (JohansenInfo *j)
     gretl_matrix_free(bp);
 }
 
+#define CCHECK 0
+
+#if CCHECK
+
+/* Enable checking the C code relating to the long-run C matrix and the
+   variance of its vectorization, against results obtained via hansl and
+   validated via Monte Carlo simulation. A temporary thing. Here we
+   replace the estimated results for alpha, beta, Gamma and Omega with
+   the stipulated parameter values from the XML bundle file.
+*/
+
+static int inject_params (GRETL_VAR *var)
+{
+    const char *fname = "/home/cottrell/stats/gretl-workspace/cvar/vdata.xml";
+    gretl_bundle *b;
+    int err = 0;
+
+    b = gretl_bundle_read_from_file(fname, 0, &err);
+    if (b == NULL) {
+	return E_DATA;
+    }
+
+    gretl_matrix_free(var->jinfo->Alpha);
+    var->jinfo->Alpha = gretl_bundle_steal_data(b, "alpha", NULL, NULL, &err);
+    gretl_matrix_free(var->jinfo->Beta);
+    var->jinfo->Beta = gretl_bundle_steal_data(b, "beta", NULL, NULL, &err);
+    gretl_matrix_free(var->jinfo->Gamma);
+    var->jinfo->Gamma = gretl_bundle_steal_data(b, "Gamma", NULL, NULL, &err);
+    gretl_matrix_free(var->S);
+    var->S = gretl_bundle_steal_data(b, "Omega", NULL, NULL, &err);
+
+    return err;
+}
+
+#endif
+
 static gretl_bundle *johansen_bundlize (const GRETL_VAR *var,
 					DATASET *dset)
 {
@@ -5118,10 +5154,14 @@ static gretl_bundle *johansen_bundlize (const GRETL_VAR *var,
     }
 
     if (j->Alpha != NULL && j->Beta != NULL && j->Gamma != NULL) {
+#if CCHECK
+	int err = inject_params((GRETL_VAR *) var);
+	fprintf(stderr, "HERE inject err %d\n", err);
+#endif
         add_johansen_C(j);
         if (j->JC != NULL) {
             gretl_bundle_set_matrix(b, "long_run", j->JC);
-#if 1 /* not yet */
+#if 1 /* still experimental */
 	    add_johansen_lr_variance(var, dset);
 	    if (j->JVC != NULL) {
 		gretl_bundle_set_matrix(b, "var_long_run", j->JVC);
