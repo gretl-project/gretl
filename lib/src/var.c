@@ -4792,7 +4792,7 @@ static double get_x_diff (const gretl_matrix *X,
 /* See Johansen's 1995 book: the Sigma matrix is defined on page 188 and
    used in the formula for the C-matrix variance on page 190.
 
-   FIXME handling of seasonal dummies? (cf. Paruolo)
+   FIXME handling of seasonal dummies? (cf. Paruolo, 1997)
 */
 
 static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
@@ -4813,7 +4813,7 @@ static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
 	   to compute the required lagged X-difference(s).
 	*/
 	P = gretl_matrix_data_subset(var->ylist, dset,
-				     dset->t1, var->t1-2,
+				     var->t1-k, var->t1-2,
 				     M_MISSING_ERROR,
 				     err);
     }
