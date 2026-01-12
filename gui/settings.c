@@ -236,7 +236,7 @@ RCVAR rc_vars[] = {
 #endif
 #ifdef ENABLE_NLS
     { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric,
-      BOOLSET, 0, TAB_MAIN, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL }, /* RESTART? */
 #endif
 #if defined(MAC_THEMING) || defined(G_OS_WIN32)
     { "themepref", N_("Theme preference"), NULL, themepref,
