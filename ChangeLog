@@ -6,12 +6,13 @@ version 2026a, in progress
 - "difftest" command: support the --split-by option for the
   rank sum test
 - "print" command: add --head (-h) and --tail (-t) options
-  as convenience abbreviations for --range
+  as convenient abbreviations for --range
 - "gnuplot" command, --y2axis option: accept a named list
   as parameter, or comma-separated series
 - "open" command: support the --all-cols option for xlsx
   and gnumeric importation
-- "xcorrgm" command: save a $result matrix
+- "xcorrgm" command: save a $result matrix and add a --quiet
+  option
 - random number generator: replace Mersenne Twister with
   xoshiro256+
 
