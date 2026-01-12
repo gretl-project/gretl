@@ -4190,6 +4190,7 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     const char *xname, *yname;
     const double *x, *y;
     int t1 = dset->t1, t2 = dset->t2;
+    int do_print = 1;
     int do_plot = 0;
     int k, p, badvar = 0;
     int T, err = 0;
@@ -4225,6 +4226,11 @@ int xcorrgram (const int *list, int order, DATASET *dset,
 	return err;
     }
 
+    if (opt & (OPT_Q | OPT_S)) {
+	/* suppress printing */
+	do_print = 0;
+    }
+
     /* graphing? */
     do_plot = gnuplot_graph_wanted(PLOT_XCORRELOGRAM, opt, &err);
     if (err) {
@@ -4251,7 +4257,7 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     pm[1] = 1.96 / sqrt((double) T);
     pm[2] = 2.58 / sqrt((double) T);
 
-    if (!(opt & (OPT_Q | OPT_S))) {
+    if (do_print) {
 	pputc(prn, '\n');
 	pprintf(prn, _("Cross-correlation function for %s and %s"),
 		xname, yname);
