@@ -1357,6 +1357,7 @@ static int do_pca (int *list, DATASET *dset, gretlopt opt, PRN *prn)
                 if (gretl_messages_on()) {
                     pputs(prn, _("Generated principal component series\n"));
                 }
+		set_dataset_is_changed(dset, 1);
             }
             free_vmatrix(cmat);
         }
