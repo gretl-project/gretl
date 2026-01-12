@@ -2284,7 +2284,7 @@
 	  <effect>see below</effect>
 	</option>
 	<option>
-	  <flag>--silent</flag>
+	  <flag>--quiet</flag>
 	  <effect>don't print anything</effect>
         </option>
 	<option>
@@ -18023,7 +18023,7 @@
 	  <effect>see below</effect>
         </option>
         <option>
-	  <flag>--silent</flag>
+	  <flag>--quiet</flag>
 	  <effect>suppress printed output</effect>
         </option>
       </options>

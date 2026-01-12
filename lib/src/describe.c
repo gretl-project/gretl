@@ -3511,24 +3511,6 @@ gretl_xcf (int k, int t1, int t2, const double *x, const double *y,
     return num / sqrt(den1 * den2);
 }
 
-static int corrgm_plot_wanted (PlotType ptype, gretlopt opt, int *err)
-{
-    if (opt & OPT_Q) {
-	/* handle legacy option: --quiet = no plot */
-	return 0;
-    } else if (opt & OPT_U) {
-	/* ignore legacy option: --plot=ascii */
-	int ci = ptype == PLOT_CORRELOGRAM ? CORRGM : XCORRGM;
-	const char *s = get_optval_string(ci, OPT_U);
-
-	if (s != NULL && !strcmp(s, "ascii")) {
-	    return 0;
-	}
-    }
-
-    return gnuplot_graph_wanted(ptype, opt, err);
-}
-
 /* Full Bartlett calculation for three z-values, called from
    corrgm_plot() if we're printing ACF output. BPM will have three
    columns.
@@ -3789,7 +3771,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	return E_DATA;
     }
 
-    if (opt & OPT_S) {
+    if (opt & (OPT_Q | OPT_S)) {
 	do_print = 0;
 	BPMcols = 1;
     }
@@ -3826,7 +3808,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     }
 
     /* graphing? */
-    do_plot = corrgm_plot_wanted(PLOT_CORRELOGRAM, opt, &err);
+    do_plot = gnuplot_graph_wanted(PLOT_CORRELOGRAM, opt, &err);
     if (err) {
 	goto bailout;
     }
@@ -4190,7 +4172,8 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
  * @list: should contain ID numbers of two variables.
  * @order: integer order for autocorrelation function.
  * @dset: dataset struct.
- * @opt: may include OPT_U for plot options.
+ * @opt: may include OPT_U for plot options, OPT_Q to
+ * skip printing results.
  * @prn: gretl printing struct.
  *
  * Computes the cross-correlation function and plots the
@@ -4243,7 +4226,7 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     }
 
     /* graphing? */
-    do_plot = corrgm_plot_wanted(PLOT_XCORRELOGRAM, opt, &err);
+    do_plot = gnuplot_graph_wanted(PLOT_XCORRELOGRAM, opt, &err);
     if (err) {
 	return err;
     }
@@ -4268,27 +4251,29 @@ int xcorrgram (const int *list, int order, DATASET *dset,
     pm[1] = 1.96 / sqrt((double) T);
     pm[2] = 2.58 / sqrt((double) T);
 
-    pputc(prn, '\n');
-    pprintf(prn, _("Cross-correlation function for %s and %s"),
-	    xname, yname);
-    pputs(prn, "\n\n");
-    pputs(prn, _("  LAG      XCF"));
-    pputs(prn, "\n\n");
+    if (!(opt & (OPT_Q | OPT_S))) {
+	pputc(prn, '\n');
+	pprintf(prn, _("Cross-correlation function for %s and %s"),
+		xname, yname);
+	pputs(prn, "\n\n");
+	pputs(prn, _("  LAG      XCF"));
+	pputs(prn, "\n\n");
 
-    for (k=-p; k<=p; k++) {
-	double x = xcf->val[k + p];
+	for (k=-p; k<=p; k++) {
+	    double x = xcf->val[k + p];
 
-	pprintf(prn, "%5d%9.4f", k, x);
-	if (fabs(x) > pm[2]) {
-	    pputs(prn, " ***");
-	} else if (fabs(x) > pm[1]) {
-	    pputs(prn, " **");
-	} else if (fabs(x) > pm[0]) {
-	    pputs(prn, " *");
+	    pprintf(prn, "%5d%9.4f", k, x);
+	    if (fabs(x) > pm[2]) {
+		pputs(prn, " ***");
+	    } else if (fabs(x) > pm[1]) {
+		pputs(prn, " **");
+	    } else if (fabs(x) > pm[0]) {
+		pputs(prn, " *");
+	    }
+	    pputc(prn, '\n');
 	}
 	pputc(prn, '\n');
     }
-    pputc(prn, '\n');
 
     if (do_plot) {
 	int allpos = 1;

@@ -225,7 +225,7 @@ struct gretl_option gretl_opts[] = {
     { CORR,     OPT_T, "triangle", 0 },
     { CORRGM,   OPT_A, "acf-only", 0 },
     { CORRGM,   OPT_B, "bartlett", 0 },
-    { CORRGM,   OPT_S, "silent", 0 },
+    { CORRGM,   OPT_S, "silent", 0 }, /* legacy (= quiet) */
     { CUSUM,    OPT_R, "squares", 0 },
     { DATA,     OPT_C, "compact", 2 },
     { DATA,     OPT_O, "odbc", 0 },
@@ -726,6 +726,7 @@ struct gretl_option gretl_opts[] = {
     { WLS,      OPT_R, "robust", 0 },
     { WLS,      OPT_C, "cluster", 2 },
     { WLS,      OPT_Z, "allow-zeros", 0 },
+    { XCORRGM,  OPT_S, "silent", 0 }, /* legacy (= quiet) */
     { XTAB,     OPT_C, "column", 0 },
     { XTAB,     OPT_X, "matrix", 2 },
     { XTAB,     OPT_R, "row", 0 },
