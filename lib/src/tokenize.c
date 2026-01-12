@@ -3704,6 +3704,9 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 		}
 		if (cmd->ciflags & CI_FNAME) {
 		    want_fname = 1;
+		} else if (cmd->ci == DATA && strchr(s, '/')) {
+		    /* a dbnomics series id may be long */
+		    want_fname = 1;
 		}
 		if (cmd->ci == LOOP && compmode == LOOP) {
 		    /* we need to pick up the specifics of the loop */
