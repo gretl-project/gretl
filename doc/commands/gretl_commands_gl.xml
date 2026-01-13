@@ -2284,7 +2284,7 @@
 	  <effect>Mira abaixo</effect>
 	</option>
 	<option>
-	  <flag>--silent</flag>
+	  <flag>--quiet</flag>
 	  <effect>Non presenta nada</effect>
 	</option>
 	<option>
@@ -5670,6 +5670,7 @@
 	fronte a <lit>x</lit>, de tal xeito que <lit>y2</lit> represéntase
 	cunha liña mentres <lit>y1</lit> con puntos.
       </para>
+      <subhead>Dous eixes y</subhead>
       <para>
 	Cando <repl>yvars</repl> contén máis de unha variable, podería ser
 	preferible utilizar dous eixes y (á esquerda e á dereita). Por defecto,
@@ -5678,7 +5679,10 @@
 	opcións (mutuamente excluíntes) para anular o predeterminado:
 	<opt>single-yaxis</opt> evita o uso dun segundo eixe, mentres que
 	<opt>y2axis=</opt><repl>yvar</repl> especifica que se represente unha
-	certa variable (unicamente) en relación ao segundo eixe.
+	certa variable (unicamente) en relación ao segundo eixe. O parámetro
+	<repl>yvars</repl> pode ser o nome dunha única variable, o nome
+	dunha lista de variables, ou dous (ou máis) nomes de variables
+	separados mediante comas (sen espazos en branco).
       </para>
 	      <subhead>Gráficas factorizadas</subhead>
       <para>
@@ -8019,7 +8023,7 @@
     <usage>
       <arguments>
         <argument optional="true" separated="true">nivel</argument>
-	      <argument>listaretardos</argument>
+	      <argument>listavariables</argument>
       </arguments>
       <options>
 	<option>
@@ -12853,6 +12857,7 @@
 	Preséntase a cadea de texto en cuestión, seguida dun carácter
 	de liña nova.
       </para>
+      <subhead>Presentar rangos</subhead>
       <para>
 	Podes utilizar a opción <opt>range</opt> para controlar o volume de
 	información que se presenta. Os valores (enteiros) dos marcadores
@@ -12866,8 +12871,9 @@
 	estes marcadores en formato numérico, ou mediante nomes de variables
 	escalares previamente definidas. Se omites <repl>inicio</repl>, se
 	considera implicitamente igual a 1; e se omites <repl>parada</repl>,
-	iso significa ir ata o final de todo. Con series e listas, cae na
-	conta de que os marcadores refírense ao rango mostral vixente.
+	iso significa ir ata o final de todo (un -1 implícito). Con series
+	e listas, cae na conta de que os marcadores refírense ao rango
+	mostral vixente.
       </para>
       <para>
 	As opcións <opt>head</opt> e <opt>tail</opt> ofrecen un xeito rápido
@@ -12876,10 +12882,18 @@
 	liñas para cadeas de texto con múltiples liñas). Por defecto, o número
 	de liñas que se presentan en cada caso é de 5; pero pódese usar o
 	parámetro opcional (que debe ser un número enteiro positivo) para
-	axustar isto. Tamén hai dispoñibles versións abreviadas destas dúas
-	opcións: <lit>-h</lit> e <lit>-t</lit>, respectivamente, que implican
-	5 liñas en cada caso por defecto.
+	axustar isto. Hai dispoñibles versións abreviadas destas opcións:
+	<lit>-h</lit> e <lit>-t</lit>, respectivamente, que implican 5 liñas
+	en cada caso por defecto. As seguintes instrucións ilustran o uso
+	para unha lista <lit>L</lit>.
       </para>
+      <code>
+	print L -h        # Amosa as 5 primeiras liñas
+	print L --head=10 # As 10 primeiras liñas
+	print L -t        # Amosa as 5 últimas liñas
+	print L --tail=3  # As 3 últimas liñas
+      </code>
+      <subhead>Casos especiais</subhead>
       <para>
 	A opción <opt>tree</opt> é específica para presentar un feixe
 	(bundle) de GRETL. O efecto diso é que, se o feixe especificado
@@ -18009,7 +18023,7 @@
 	  <effect>Mira abaixo</effect>
         </option>
         <option>
-	  <flag>--silent</flag>
+	  <flag>--quiet</flag>
 	  <effect>Omite a presentación do resultado</effect>
         </option>
       </options>
@@ -18043,6 +18057,12 @@
 	por lotes), ou un nome de ficheiro. O efecto de proporcionar un
 	nome de ficheiro é como se describiu para a opción <opt>output</opt>
 	da instrución <cmdref targ="gnuplot"/>.
+      </para>
+      <para>
+	Ao completarse con éxito esta instrución, a función
+	<fncref targ="$result"/> proporciona os resultados en formato dunha
+	matriz con dúas columnas, cos retardos na primeira columna e as
+	correlacións cruzadas na segunda.
       </para>
     </description>
 
