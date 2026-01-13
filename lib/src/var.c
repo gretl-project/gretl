@@ -4770,9 +4770,40 @@ static int retrieve_johansen_basics (GRETL_VAR *var,
     return err;
 }
 
+#define ADDCONST 1
+
+#if ADDCONST
+
 /* Load constant plus seasonals, exogenous regressors, trend
    (if present, in each case) from var->X into @R.
 */
+
+static int load_exo_terms (const GRETL_VAR *var,
+			   gretl_matrix *R)
+{
+    double *dest = R->val + var->T;
+    const double *src;
+    size_t sz = var->T * sizeof(double);
+    int k = levels_order(var);
+    int n = var->neqns;
+    int t, j;
+
+    for (t=0; t<var->T; t++) {
+        gretl_matrix_set(R, t, 0, 1.0);
+    }
+
+    src = var->X->val + (var->ifc + n * (k-1)) * var->T;
+
+    for (j=1; j<R->cols; j++) {
+	memcpy(dest, src, sz);
+	dest += var->T;
+	src += var->T;
+    }
+
+    return 0;
+}
+
+#else
 
 static int load_exo_terms (const GRETL_VAR *var,
 			   gretl_matrix *R)
@@ -4794,6 +4825,8 @@ static int load_exo_terms (const GRETL_VAR *var,
 
     return 0;
 }
+
+#endif
 
 static double get_x_diff (const gretl_matrix *X,
 			  const gretl_matrix *P,
@@ -4836,6 +4869,7 @@ static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
 
     if (R != NULL) {
 	load_exo_terms(var, R);
+        gretl_matrix_print(R, "R");
     }
 
     if (k > 1) {
@@ -4939,6 +4973,11 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
     if (ji->code == J_UNREST_TREND) {
 	nreg++;
     }
+#if ADDCONST
+    if (nreg > 0) {
+        nreg++; /* for the constant */
+    }
+#endif    
     if (nreg > 0) {
 	R = gretl_matrix_alloc(var->T, nreg);
 	if (R == NULL) {
