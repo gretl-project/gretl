@@ -4777,19 +4777,16 @@ static int retrieve_johansen_basics (GRETL_VAR *var,
 static int load_exo_terms (const GRETL_VAR *var,
 			   gretl_matrix *R)
 {
-    double *dest;
+    double *dest = R->val;
     const double *src;
     size_t sz = var->T * sizeof(double);
     int k = levels_order(var);
     int n = var->neqns;
-    int j, t;
+    int j;
 
-    for (t=0; t<var->T; t++) {
-	gretl_matrix_set(R, t, 0, 1.0);
-    }
-    dest = R->val + var->T;
     src = var->X->val + (var->ifc + n * (k-1)) * var->T;
-    for (j=1; j<R->cols; j++) {
+
+    for (j=0; j<R->cols; j++) {
 	memcpy(dest, src, sz);
 	dest += var->T;
 	src += var->T;
@@ -4941,10 +4938,6 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
     }
     if (ji->code == J_UNREST_TREND) {
 	nreg++;
-    }
-    if (nreg > 0) {
-	/* include const */
-	nreg += (ji->code > J_REST_CONST);
     }
     if (nreg > 0) {
 	R = gretl_matrix_alloc(var->T, nreg);
