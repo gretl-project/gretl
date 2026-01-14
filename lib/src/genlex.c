@@ -647,9 +647,9 @@ int const_lookup (const char *s)
     int i;
 
     for (i=0; consts[i].id != 0; i++) {
-	if (!strcmp(s, consts[i].str)) {
-	    return consts[i].id;
-	}
+        if (!strcmp(s, consts[i].str)) {
+            return consts[i].id;
+        }
     }
 
     return 0;
@@ -660,9 +660,9 @@ const char *constname (int c)
     int i;
 
     for (i=0; consts[i].id != 0; i++) {
-	if (c == consts[i].id) {
-	    return consts[i].str;
-	}
+        if (c == consts[i].id) {
+            return consts[i].str;
+        }
     }
 
     return "unknown";
@@ -676,16 +676,16 @@ static GHashTable *gretl_function_hash_init (void)
     ht = g_hash_table_new(g_str_hash, g_str_equal);
 
     for (i=0; ptrfuncs[i].str != NULL; i++) {
-	g_hash_table_insert(ht, (gpointer) ptrfuncs[i].str, &ptrfuncs[i]);
+        g_hash_table_insert(ht, (gpointer) ptrfuncs[i].str, &ptrfuncs[i]);
     }
 
     for (i=0; funcs[i].str != NULL; i++) {
-	g_hash_table_insert(ht, (gpointer) funcs[i].str, &funcs[i]);
+        g_hash_table_insert(ht, (gpointer) funcs[i].str, &funcs[i]);
     }
 
     for (i=0; hidden_funcs[i].str != NULL; i++) {
-	g_hash_table_insert(ht, (gpointer) hidden_funcs[i].str,
-			    &hidden_funcs[i]);
+        g_hash_table_insert(ht, (gpointer) hidden_funcs[i].str,
+                            &hidden_funcs[i]);
     }
 
     return ht;
@@ -694,52 +694,52 @@ static GHashTable *gretl_function_hash_init (void)
 static GHashTable *oht;
 
 int install_function_override (const char *funname,
-			       const char *pkgname,
-			       gpointer data)
+                               const char *pkgname,
+                               gpointer data)
 {
     if (funname == NULL) {
-	/* cleanup signal */
-	if (oht != NULL) {
-	    g_hash_table_destroy(oht);
-	    oht = NULL;
-	}
-	return 0;
+        /* cleanup signal */
+        if (oht != NULL) {
+            g_hash_table_destroy(oht);
+            oht = NULL;
+        }
+        return 0;
     }
 
     if (oht == NULL) {
-	oht = g_hash_table_new_full(g_str_hash, g_str_equal,
-				    g_free, NULL);
+        oht = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                    g_free, NULL);
     }
 
     if (oht != NULL) {
-	gchar *key = g_strdup_printf("%s::%s", pkgname, funname);
+        gchar *key = g_strdup_printf("%s::%s", pkgname, funname);
 
-	g_hash_table_insert(oht, (gpointer) key, data);
+        g_hash_table_insert(oht, (gpointer) key, data);
     }
 
     return 0;
 }
 
 int delete_function_override (const char *funname,
-			      const char *pkgname)
+                              const char *pkgname)
 {
     int ret = 0;
 
     if (oht != NULL) {
-	gchar *key = g_strdup_printf("%s::%s", pkgname, funname);
+        gchar *key = g_strdup_printf("%s::%s", pkgname, funname);
 
-	if (g_hash_table_remove(oht, key)) {
-	    fprintf(stderr, "'%s': deleted override of built-in\n", key);
-	    ret = 1;
-	}
-	g_free(key);
+        if (g_hash_table_remove(oht, key)) {
+            fprintf(stderr, "'%s': deleted override of built-in\n", key);
+            ret = 1;
+        }
+        g_free(key);
     }
 
     return ret;
 }
 
 static ufunc *get_function_override (const char *sf,
-				     gpointer p)
+                                     gpointer p)
 {
     const char *sp = function_package_get_name(p);
     gchar *key = g_strdup_printf("%s::%s", sp, sf);
@@ -747,7 +747,7 @@ static ufunc *get_function_override (const char *sf,
 
 #if 0
     if (uf != NULL) {
-	fprintf(stderr, "'%s': using package override\n", key);
+        fprintf(stderr, "'%s': using package override\n", key);
     }
 #endif
     g_free(key);
@@ -761,61 +761,61 @@ static ufunc *get_function_override (const char *sf,
 */
 
 static int real_function_lookup (const char *s, int aliases,
-				 parser *p)
+                                 parser *p)
 {
     static GHashTable *fht;
     gpointer fnp;
 
     if (s == NULL) {
-	/* cleanup signal */
-	if (fht != NULL) {
-	    g_hash_table_destroy(fht);
-	    fht = NULL;
-	}
-	return 0;
+        /* cleanup signal */
+        if (fht != NULL) {
+            g_hash_table_destroy(fht);
+            fht = NULL;
+        }
+        return 0;
     }
 
     if (fht == NULL) {
-	fht = gretl_function_hash_init();
+        fht = gretl_function_hash_init();
     }
 
     fnp = g_hash_table_lookup(fht, s);
     if (fnp != NULL) {
-	struct str_table *st = (struct str_table *) fnp;
+        struct str_table *st = (struct str_table *) fnp;
 
-	if (p != NULL && st->id > 0 && st->id < FP_MAX) {
-	    struct str_table_ex *sx = (struct str_table_ex *) fnp;
+        if (p != NULL && st->id > 0 && st->id < FP_MAX) {
+            struct str_table_ex *sx = (struct str_table_ex *) fnp;
 
-	    p->data = sx->ptr;
-	}
+            p->data = sx->ptr;
+        }
 #if 1
-	if (p != NULL) {
-	    /* note: point d'appui for deprecation of built-in function */
-	    if (st->id == F_CHOWLIN) {
-		pprintf(p->prn, "*** Warning: %s() is obsolete, please use "
-			"tdisagg() instead ***\n", st->str);
-	    }
-	}
+        if (p != NULL) {
+            /* note: point d'appui for deprecation of built-in function */
+            if (st->id == F_CHOWLIN) {
+                pprintf(p->prn, "*** Warning: %s() is obsolete, please use "
+                        "tdisagg() instead ***\n", st->str);
+            }
+        }
 #endif
-	return st->id;
+        return st->id;
     }
 
     if (aliases) {
-	int i;
+        int i;
 
-	for (i=0; func_alias[i].id != 0; i++) {
-	    if (!strcmp(s, func_alias[i].str)) {
+        for (i=0; func_alias[i].id != 0; i++) {
+            if (!strcmp(s, func_alias[i].str)) {
 #if 1
-		if (!strcmp(s, "fft2")) {
-		    gretl_warnmsg_set(_("deprecated alias 'fft2': please call fft()"));
-		}
+                if (!strcmp(s, "fft2")) {
+                    gretl_warnmsg_set(_("deprecated alias 'fft2': please call fft()"));
+                }
 #endif
-		if (p != NULL) {
-		    p->flags |= P_ALIASED;
-		}
-		return func_alias[i].id;
-	    }
-	}
+                if (p != NULL) {
+                    p->flags |= P_ALIASED;
+                }
+                return func_alias[i].id;
+            }
+        }
     }
 
     return 0;
@@ -837,9 +837,9 @@ int is_function_alias (const char *s)
     int i;
 
     for (i=0; func_alias[i].id != 0; i++) {
-	if (!strcmp(s, func_alias[i].str)) {
-	    return 1;
-	}
+        if (!strcmp(s, func_alias[i].str)) {
+            return 1;
+        }
     }
 
     return 0;
@@ -850,32 +850,32 @@ void *get_genr_function_pointer (int f)
     int i;
 
     for (i=0; ptrfuncs[i].str != NULL; i++) {
-	if (ptrfuncs[i].id == f) {
-	    return ptrfuncs[i].ptr;
-	}
+        if (ptrfuncs[i].id == f) {
+            return ptrfuncs[i].ptr;
+        }
     }
 
     return NULL;
 }
 
 static int function_lookup_with_alias (const char *s,
-				       parser *p)
+                                       parser *p)
 {
     if (oht != NULL) {
-	/* we have a record of one or more package-private
-	   functions whose names collide with built-ins
-	*/
-	gpointer pp = get_active_function_package(OPT_O);
+        /* we have a record of one or more package-private
+           functions whose names collide with built-ins
+        */
+        gpointer pp = get_active_function_package(OPT_O);
 
-	if (pp != NULL) {
-	    ufunc *uf = get_function_override(s, pp);
+        if (pp != NULL) {
+            ufunc *uf = get_function_override(s, pp);
 
-	    if (uf != NULL) {
-		p->idstr = gretl_strdup(s);
-		p->data = uf;
-		return UFUN;
-	    }
-	}
+            if (uf != NULL) {
+                p->idstr = gretl_strdup(s);
+                p->data = uf;
+                return UFUN;
+            }
+        }
     }
 
     return real_function_lookup(s, 1, p);
@@ -886,21 +886,21 @@ static const char *funname (int t)
     int i;
 
     for (i=0; ptrfuncs[i].id != 0; i++) {
-	if (t == ptrfuncs[i].id) {
-	    return ptrfuncs[i].str;
-	}
+        if (t == ptrfuncs[i].id) {
+            return ptrfuncs[i].str;
+        }
     }
 
     for (i=0; funcs[i].id != 0; i++) {
-	if (t == funcs[i].id) {
-	    return funcs[i].str;
-	}
+        if (t == funcs[i].id) {
+            return funcs[i].str;
+        }
     }
 
     for (i=0; hidden_funcs[i].id != 0; i++) {
-	if (t == hidden_funcs[i].id) {
-	    return hidden_funcs[i].str;
-	}
+        if (t == hidden_funcs[i].id) {
+            return hidden_funcs[i].str;
+        }
     }
 
     return "unknown";
@@ -909,9 +909,9 @@ static const char *funname (int t)
 static int show_alias (int i)
 {
     if (strstr(func_alias[i].str, "min")) {
-	return 1;
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -922,17 +922,17 @@ int gen_func_count (void)
     int i, n = 0;
 
     for (i=0; ptrfuncs[i].id != 0; i++) {
-	n++;
+        n++;
     }
 
     for (i=0; funcs[i].id != 0; i++) {
-	n++;
+        n++;
     }
 
     for (i=0; func_alias[i].id != 0; i++) {
-	if (show_alias(i)) {
-	    n++;
-	}
+        if (show_alias(i)) {
+            n++;
+        }
     }
 
     return n;
@@ -945,26 +945,26 @@ const char *gen_func_name (int i)
     int j, seq = -1;
 
     for (j=0; ptrfuncs[j].id != 0; j++) {
-	seq++;
-	if (seq == i) {
-	    return ptrfuncs[i].str;
-	}
+        seq++;
+        if (seq == i) {
+            return ptrfuncs[i].str;
+        }
     }
 
     for (j=0; funcs[j].id != 0; j++) {
-	seq++;
-	if (seq == i) {
-	    return funcs[j].str;
-	}
+        seq++;
+        if (seq == i) {
+            return funcs[j].str;
+        }
     }
 
     for (j=0; func_alias[j].id != 0; j++) {
-	if (show_alias(j)) {
-	    seq++;
-	}
-	if (seq == i) {
-	    return func_alias[j].str;
-	}
+        if (show_alias(j)) {
+            seq++;
+        }
+        if (seq == i) {
+            return func_alias[j].str;
+        }
     }
 
     return NULL;
@@ -1001,9 +1001,9 @@ int data_var_count (void)
     int i, n = 0;
 
     for (i=0; dvars[i].id != 0; i++) {
-	if (dvars[i].str[0] == '$') {
-	    n++;
-	}
+        if (dvars[i].str[0] == '$') {
+            n++;
+        }
     }
 
     return n;
@@ -1020,15 +1020,15 @@ const char *gretl_function_complete (const char *s)
     int i;
 
     for (i=0; ptrfuncs[i].str != NULL; i++) {
-	if (!strncmp(s, ptrfuncs[i].str, n)) {
-	    return ptrfuncs[i].str;
-	}
+        if (!strncmp(s, ptrfuncs[i].str, n)) {
+            return ptrfuncs[i].str;
+        }
     }
 
     for (i=0; funcs[i].str != NULL; i++) {
-	if (!strncmp(s, funcs[i].str, n)) {
-	    return funcs[i].str;
-	}
+        if (!strncmp(s, funcs[i].str, n)) {
+            return funcs[i].str;
+        }
     }
 
     return NULL;
@@ -1054,24 +1054,24 @@ static int dummy_lookup (const char *s, parser *p)
     int i, d = 0;
 
     for (i=0; dummies[i].id != 0; i++) {
-	if (!strcmp(s, dummies[i].str)) {
-	    d = dummies[i].id;
-	    break;
-	}
+        if (!strcmp(s, dummies[i].str)) {
+            d = dummies[i].id;
+            break;
+        }
     }
 
     if (d == DUM_END) {
-	; /* let this pass: we'll check its validity later */
+        ; /* let this pass: we'll check its validity later */
     } else if (MSEL_DUM(d) && parser_next_char(p) != ']') {
-	/* most MSEL dummies are stand-alone; they can
-	   be valid only if followed by ']'
-	*/
-	d = 0;
+        /* most MSEL dummies are stand-alone; they can
+           be valid only if followed by ']'
+        */
+        d = 0;
     } else if (d == DUM_EMPTY && strcmp(p->rhs, "empty")) {
         /* if "empty" is not the only term on the right-hand
            side, convert it to "null"
         */
-	p->sym = EMPTY;
+        p->sym = EMPTY;
     }
 
     return d;
@@ -1082,9 +1082,9 @@ const char *dumname (int t)
     int i;
 
     for (i=0; dummies[i].id != 0; i++) {
-	if (t == dummies[i].id) {
-	    return dummies[i].str;
-	}
+        if (t == dummies[i].id) {
+            return dummies[i].str;
+        }
     }
 
     return "unknown";
@@ -1095,9 +1095,9 @@ static int dvar_lookup (const char *s)
     int i;
 
     for (i=0; dvars[i].id != 0; i++) {
-	if (!strcmp(s, dvars[i].str)) {
-	    return dvars[i].id;
-	}
+        if (!strcmp(s, dvars[i].str)) {
+            return dvars[i].id;
+        }
     }
 
     return 0;
@@ -1108,9 +1108,9 @@ const char *dvarname (int t)
     int i;
 
     for (i=0; dvars[i].id != 0; i++) {
-	if (t == dvars[i].id) {
-	    return dvars[i].str;
-	}
+        if (t == dvars[i].id) {
+            return dvars[i].str;
+        }
     }
 
     return "unknown";
@@ -1121,17 +1121,17 @@ int mvar_lookup (const char *s)
     int i;
 
     for (i=0; mvars[i].id != 0; i++) {
-	if (!strcmp(s, mvars[i].str)) {
-	    return mvars[i].id;
-	}
+        if (!strcmp(s, mvars[i].str)) {
+            return mvars[i].id;
+        }
     }
 
     /* aliases */
 
     if (!strcmp(s, "$nrsq")) {
-	return M_TRSQ;
+        return M_TRSQ;
     } else if (!strcmp(s, "$fcerr")) {
-	return M_FCSE;
+        return M_FCSE;
     }
 
     return 0;
@@ -1142,9 +1142,9 @@ const char *mvarname (int t)
     int i;
 
     for (i=0; mvars[i].id != 0; i++) {
-	if (t == mvars[i].id) {
-	    return mvars[i].str;
-	}
+        if (t == mvars[i].id) {
+            return mvars[i].str;
+        }
     }
 
     return "unknown";
@@ -1155,9 +1155,9 @@ int bvar_lookup (const char *s)
     int i;
 
     for (i=0; bvars[i].id != 0; i++) {
-	if (!strcmp(s, bvars[i].str)) {
-	    return bvars[i].id;
-	}
+        if (!strcmp(s, bvars[i].str)) {
+            return bvars[i].id;
+        }
     }
 
     return 0;
@@ -1168,9 +1168,9 @@ const char *bvarname (int t)
     int i;
 
     for (i=0; bvars[i].id != 0; i++) {
-	if (t == bvars[i].id) {
-	    return bvars[i].str;
-	}
+        if (t == bvars[i].id) {
+            return bvars[i].str;
+        }
     }
 
     return "unknown";
@@ -1182,16 +1182,16 @@ int genr_function_word (const char *s)
 
     ret = real_function_lookup(s, 0, NULL);
     if (!ret) {
-	ret = dvar_lookup(s);
+        ret = dvar_lookup(s);
     }
     if (!ret) {
-	ret = mvar_lookup(s);
+        ret = mvar_lookup(s);
     }
     if (!ret) {
-	ret = bvar_lookup(s);
+        ret = bvar_lookup(s);
     }
     if (!ret) {
-	ret = const_lookup(s);
+        ret = const_lookup(s);
     }
 
     return ret;
@@ -1200,13 +1200,13 @@ int genr_function_word (const char *s)
 int parser_ensure_error_buffer (parser *p)
 {
     if (p->prn == NULL && p->errprn == NULL) {
-	p->errprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
-	if (p->errprn != NULL) {
-	    p->prn = p->errprn;
-	    return 0;
-	} else {
-	    return E_ALLOC;
-	}
+        p->errprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+        if (p->errprn != NULL) {
+            p->prn = p->errprn;
+            return 0;
+        } else {
+            return E_ALLOC;
+        }
     }
 
     return 0;
@@ -1218,9 +1218,9 @@ void undefined_symbol_error (const char *s, parser *p)
     parser_print_input(p);
 
     if (p->ch == '.') {
-	pprintf(p->prn, _("%s: no such object"), s);
+        pprintf(p->prn, _("%s: no such object"), s);
     } else {
-	pprintf(p->prn, _("The symbol '%s' is undefined"), s);
+        pprintf(p->prn, _("The symbol '%s' is undefined"), s);
     }
     pputc(p->prn, '\n');
     p->err = E_DATA;
@@ -1240,36 +1240,36 @@ void context_error (int c, parser *p, const char *func)
 {
 #if LDEBUG
     if (func != NULL) {
-	fprintf(stderr, "context error in %s()\n", func);
+        fprintf(stderr, "context error in %s()\n", func);
     }
 #endif
     parser_ensure_error_buffer(p);
     if (c != 0) {
-	parser_print_input(p);
-	pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), c);
-	if (c == '&') {
-	    pputs(p->prn, _("(for logical AND, use '&&')\n"));
-	} else if (c == '|') {
-	    pputs(p->prn, _("(for logical OR, use '||')\n"));
-	} else if (c == ',') {
-	    p->err = E_PARSE;
-	}
+        parser_print_input(p);
+        pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), c);
+        if (c == '&') {
+            pputs(p->prn, _("(for logical AND, use '&&')\n"));
+        } else if (c == '|') {
+            pputs(p->prn, _("(for logical OR, use '||')\n"));
+        } else if (c == ',') {
+            p->err = E_PARSE;
+        }
     } else if (p->sym == EOT) {
-	parser_print_input(p);
-	pputs(p->prn, _("Incomplete expression\n"));
+        parser_print_input(p);
+        pputs(p->prn, _("Incomplete expression\n"));
     } else {
-	const char *s = getsymb_full(p->sym, p);
+        const char *s = getsymb_full(p->sym, p);
 
-	if (s != NULL && *s != '\0' && strcmp(s, "unknown")) {
-	    pprintf(p->prn, _("The symbol '%s' is not valid in this context\n"),
-		    getsymb_full(p->sym, p));
-	} else {
-	    parser_print_input(p);
-	}
+        if (s != NULL && *s != '\0' && strcmp(s, "unknown")) {
+            pprintf(p->prn, _("The symbol '%s' is not valid in this context\n"),
+                    getsymb_full(p->sym, p));
+        } else {
+            parser_print_input(p);
+        }
     }
 
     if (!p->err) {
-	p->err = E_PARSE;
+        p->err = E_PARSE;
     }
 }
 
@@ -1305,14 +1305,14 @@ static int alt_double_quote_pos (const char *s, int *esc)
     int i, ret = -1;
 
     for (i=0; s[i]; i++) {
-	if (s[i] == '"') {
-	    if (i == 0 || s[i-1] != '\\' || s[i+1] == '\0') {
-		ret = i;
-		break;
-	    } else {
-		*esc = 1;
-	    }
-	}
+        if (s[i] == '"') {
+            if (i == 0 || s[i-1] != '\\' || s[i+1] == '\0') {
+                ret = i;
+                break;
+            } else {
+                *esc = 1;
+            }
+        }
     }
 
     return ret;
@@ -1323,9 +1323,9 @@ static char *escape_quotes (char *s)
     int i;
 
     for (i=1; s[i]; i++) {
-	if (s[i] == '"' && s[i-1] == '\\') {
-	    shift_string_left(s + i - 1, 1);
-	}
+        if (s[i] == '"' && s[i-1] == '\\') {
+            shift_string_left(s + i - 1, 1);
+        }
     }
 
     return s;
@@ -1339,44 +1339,44 @@ static char *get_quoted_string (parser *p, int prevsym)
 
 #if LDEBUG
     fprintf(stderr, "get_quoted_string: sym = '%s', prevsym '%s'\n",
-	    getsymb(p->sym), getsymb(prevsym));
+            getsymb(p->sym), getsymb(prevsym));
     fprintf(stderr, " p->ch = '%c', p->point = '%s'\n", p->ch, p->point);
 #endif
 
     if (prevsym == F_SPRINTF || prevsym == F_PRINTF) {
-	/* look for a matching non-escaped double-quote,
-	   allowance made for "\\" as itself an escape
-	*/
-	n = double_quote_position(p->point);
+        /* look for a matching non-escaped double-quote,
+           allowance made for "\\" as itself an escape
+        */
+        n = double_quote_position(p->point);
     } else {
-	/* look for a matching non-escaped double-quote when
-	   backslash is special only when preceding a double
-	   quote
-	*/
-	n = alt_double_quote_pos(p->point, &esc);
+        /* look for a matching non-escaped double-quote when
+           backslash is special only when preceding a double
+           quote
+        */
+        n = alt_double_quote_pos(p->point, &esc);
     }
 
     if (n >= 0) {
-	s = gretl_strndup(p->point, n);
-	if (esc == 1) {
-	    /* "\"" is accepted as an escape, but that's all */
-	    escape_quotes(s);
-	}
-	parser_advance(p, n + 1);
+        s = gretl_strndup(p->point, n);
+        if (esc == 1) {
+            /* "\"" is accepted as an escape, but that's all */
+            escape_quotes(s);
+        }
+        parser_advance(p, n + 1);
     } else {
-	parser_print_input(p);
-	pprintf(p->prn, _("Unmatched '%c'\n"), '"');
-	p->err = E_PARSE;
+        parser_print_input(p);
+        pprintf(p->prn, _("Unmatched '%c'\n"), '"');
+        p->err = E_PARSE;
     }
 
     if (!p->err) {
-	if (p->ch == '.' && *p->point == '$') {
-	    /* maybe quoted name of saved model followed by
-	       dollar variable? */
-	    p->sym = MMEMB;
-	} else {
-	    p->sym = CSTR;
-	}
+        if (p->ch == '.' && *p->point == '$') {
+            /* maybe quoted name of saved model followed by
+               dollar variable? */
+            p->sym = MMEMB;
+        } else {
+            p->sym = CSTR;
+        }
     }
 
     return s;
@@ -1392,24 +1392,24 @@ static int might_be_date_string (const char *s, int n)
 #endif
 
     if (n > 10) {
-	return 0;
+        return 0;
     }
 
     *test = 0;
     strncat(test, s, n);
 
     if (strspn(s, "1234567890") == n) {
-	/* plain integer (FIXME?) */
-	return 1;
+        /* plain integer (FIXME?) */
+        return 1;
     } else if (sscanf(s, "%d:%d", &y, &m) == 2) {
-	/* quarterly, monthly date */
-	return 1;
+        /* quarterly, monthly date */
+        return 1;
     } else if (sscanf(s, "%d-%d-%d", &y, &m, &d) == 3) {
-	/* daily date? */
-	return 1;
+        /* daily date? */
+        return 1;
     } else if (sscanf(s, "%d/%d/%d", &y, &m, &d) == 3) {
-	/* daily date? */
-	return 1;
+        /* daily date? */
+        return 1;
     }
 
     return 0;
@@ -1428,43 +1428,43 @@ NODE *obs_node (parser *p)
 
 #if LDEBUG
     fprintf(stderr, "obs_node: s='%s', ch='%c', close=%d\n",
-	    s, (char) p->ch, close);
+            s, (char) p->ch, close);
 #endif
 
     if (close == 0) {
-	pprintf(p->prn, _("Empty observation []\n"));
-	p->err = E_PARSE;
+        pprintf(p->prn, _("Empty observation []\n"));
+        p->err = E_PARSE;
     } else if (close < 0) {
-	pprintf(p->prn, _("Unmatched '%c'\n"), '[');
-	p->err = E_PARSE;
+        pprintf(p->prn, _("Unmatched '%c'\n"), '[');
+        p->err = E_PARSE;
     } else if (*s == '"' && close < OBSLEN + 2 &&
-	       gretl_charpos('"', s+1) == close - 2) {
-	/* quoted observation label? */
-	strncat(word, s, close);
-	special = 1;
+               gretl_charpos('"', s+1) == close - 2) {
+        /* quoted observation label? */
+        strncat(word, s, close);
+        special = 1;
     } else if (might_be_date_string(s, close)) {
-	strncat(word, s, close);
-	special = 1;
+        strncat(word, s, close);
+        special = 1;
     }
 
     if (special && !p->err) {
-	t = get_t_from_obs_string(word, p->dset);
-	if (t >= 0) {
-	    /* convert to user-style 1-based index */
-	    t++;
-	}
+        t = get_t_from_obs_string(word, p->dset);
+        if (t >= 0) {
+            /* convert to user-style 1-based index */
+            t++;
+        }
     }
 
     if (t > 0) {
-	parser_advance(p, close - 1);
-	lex(p);
-	ret = newdbl(t);
+        parser_advance(p, close - 1);
+        lex(p);
+        ret = newdbl(t);
     } else if (!p->err) {
 #if LDEBUG
-	fprintf(stderr, "obs_node: first try failed, going for expr\n");
+        fprintf(stderr, "obs_node: first try failed, going for expr\n");
 #endif
-	lex(p);
-	ret = expr(p);
+        lex(p);
+        ret = expr(p);
     }
 
     return ret;
@@ -1475,24 +1475,24 @@ int is_gretl_accessor (const char *s)
     int i, n;
 
     for (i=0; dvars[i].id != 0; i++) {
-	n = strlen(dvars[i].str);
-	if (!strncmp(s, dvars[i].str, n)) {
-	    return !isalpha(s[n]);
-	}
+        n = strlen(dvars[i].str);
+        if (!strncmp(s, dvars[i].str, n)) {
+            return !isalpha(s[n]);
+        }
     }
 
     for (i=0; mvars[i].id != 0; i++) {
-	n = strlen(mvars[i].str);
-	if (!strncmp(s, mvars[i].str, n)) {
-	    return !isalpha(s[n]);
-	}
+        n = strlen(mvars[i].str);
+        if (!strncmp(s, mvars[i].str, n)) {
+            return !isalpha(s[n]);
+        }
     }
 
     for (i=0; bvars[i].id != 0; i++) {
-	n = strlen(bvars[i].str);
-	if (!strncmp(s, bvars[i].str, n)) {
-	    return !isalpha(s[n]);
-	}
+        n = strlen(bvars[i].str);
+        if (!strncmp(s, bvars[i].str, n)) {
+            return !isalpha(s[n]);
+        }
     }
 
     return 0;
@@ -1503,23 +1503,23 @@ static void look_up_dollar_word (const char *s, parser *p)
     char *bstr;
 
     if ((p->idnum = dvar_lookup(s)) > 0) {
-	p->sym = DVAR;
+        p->sym = DVAR;
     } else if ((p->idnum = const_lookup(s)) > 0) {
-	p->sym = CON;
+        p->sym = CON;
     } else if ((p->idnum = mvar_lookup(s)) > 0) {
-	p->sym = MVAR;
+        p->sym = MVAR;
     } else if ((p->idnum = bvar_lookup(s)) > 0) {
-	p->sym = DBUNDLE;
+        p->sym = DBUNDLE;
     } else if ((bstr = get_built_in_string_by_name(s+1))) {
-	p->sym = CSTR;
-	p->idstr = gretl_strdup(bstr);
+        p->sym = CSTR;
+        p->idstr = gretl_strdup(bstr);
     } else {
-	undefined_symbol_error(s, p);
+        undefined_symbol_error(s, p);
     }
 
 #if LDEBUG
     fprintf(stderr, "look_up_dollar_word: '%s' -> %d\n",
-	    s, p->idnum);
+            s, p->idnum);
 #endif
 }
 
@@ -1530,10 +1530,10 @@ static void look_up_dollar_word (const char *s, parser *p)
 static int maybe_get_R_function (const char *s)
 {
     if (libset_get_bool(R_FUNCTIONS) &&
-	strlen(s) >= 3 && !strncmp(s, "R.", 2)) {
-	return get_R_function_by_name(s + 2);
+        strlen(s) >= 3 && !strncmp(s, "R.", 2)) {
+        return get_R_function_by_name(s + 2);
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -1556,30 +1556,30 @@ void set_doing_genseries (int s)
 static int parser_next_char (parser *p)
 {
     if (p->ch != ' ') {
-	return p->ch;
+        return p->ch;
     } else {
-	const char *s = p->point;
+        const char *s = p->point;
 
-	while (*s) {
-	    if (!isspace(*s)) {
-		return *s;
-	    }
-	    s++;
-	}
-	return 0;
+        while (*s) {
+            if (!isspace(*s)) {
+                return *s;
+            }
+            s++;
+        }
+        return 0;
     }
 }
 
 static int char_past_point (parser *p)
 {
     if (*p->point != '\0') {
-	int i;
+        int i;
 
-	for (i=1; p->point[i] != '\0'; i++) {
-	    if (!isspace(p->point[i])) {
-		return p->point[i];
-	    }
-	}
+        for (i=1; p->point[i] != '\0'; i++) {
+            if (!isspace(p->point[i])) {
+                return p->point[i];
+            }
+        }
     }
     return 0;
 }
@@ -1589,7 +1589,7 @@ static int char_past_point (parser *p)
 */
 
 static int get_oldstyle_stack_args (const char *s, char **arg,
-				    char **opt1, char **opt2)
+                                    char **opt1, char **opt2)
 {
     const char *p1, *p2;
     int len;
@@ -1599,22 +1599,22 @@ static int get_oldstyle_stack_args (const char *s, char **arg,
 
     p1 = strstr(s, "--length=");
     if (p1 != NULL) {
-	len = strcspn(p1 + 9, " \n");
-	*opt1 = gretl_strndup(p1 + 9, len);
+        len = strcspn(p1 + 9, " \n");
+        *opt1 = gretl_strndup(p1 + 9, len);
     }
 
     p2 = strstr(s, "--offset=");
     if (p2 != NULL) {
-	len = strcspn(p2 + 9, " \n");
-	*opt2 = gretl_strndup(p2 + 9, len);
+        len = strcspn(p2 + 9, " \n");
+        *opt2 = gretl_strndup(p2 + 9, len);
     }
 
     if (p1 != NULL || p2 != NULL) {
-	len = strcspn(s, ")");
-	*arg = gretl_strndup(s, len);
-	return 1;
+        len = strcspn(s, ")");
+        *arg = gretl_strndup(s, len);
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -1634,18 +1634,18 @@ static int stack_update_parser_input (parser *p)
     s = strstr(p->input, "stack(") + 6;
     get_oldstyle_stack_args(s, &arg, &opt1, &opt2);
     if (arg != NULL) {
-	gs = g_string_append(gs, arg);
-	free(arg);
+        gs = g_string_append(gs, arg);
+        free(arg);
     }
     if (opt1 != NULL) {
-	gs = g_string_append_c(gs, ',');
-	gs = g_string_append(gs, opt1);
-	free(opt1);
+        gs = g_string_append_c(gs, ',');
+        gs = g_string_append(gs, opt1);
+        free(opt1);
     }
     if (opt2 != NULL) {
-	gs = g_string_append_c(gs, ',');
-	gs = g_string_append(gs, opt2);
-	free(opt2);
+        gs = g_string_append_c(gs, ',');
+        gs = g_string_append(gs, opt2);
+        free(opt2);
     }
     gs = g_string_append_c(gs, ')');
     tmp = g_string_free(gs, FALSE);
@@ -1658,58 +1658,58 @@ static int stack_update_parser_input (parser *p)
 }
 
 static void handle_lpnext (const char *s, parser *p,
-			   int have_dset)
+                           int have_dset)
 {
     ufunc *u = get_user_function_by_name(s);
     int vnum = -1;
 
     if (have_dset) {
-	vnum = current_series_index(p->dset, s);
+        vnum = current_series_index(p->dset, s);
     }
 
     if (u == NULL && vnum >= 0) {
-	/* unambiguous: series */
-	p->sym = SERIES;
+        /* unambiguous: series */
+        p->sym = SERIES;
     } else if (u != NULL && vnum < 0) {
-	/* unambiguous: function */
-	p->sym = UFUN;
+        /* unambiguous: function */
+        p->sym = UFUN;
     } else if (u != NULL) {
-	/* ambiguous case! */
-	if (gretl_function_depth() > 0) {
-	    /* function writers should avoid collisions
-	       when naming series
-	    */
-	    p->sym = SERIES;
-	} else if (p->targ != UNK && p->targ != LIST && p->targ != SERIES) {
-	    /* target not compatible with series lag? */
-	    p->sym = UFUN;
-	} else if (defining_list(p) || p->targ == SERIES) {
-	    /* debatable */
-	    p->sym = SERIES;
-	} else {
-	    /* debatable */
-	    p->sym = UFUN;
-	}
+        /* ambiguous case! */
+        if (gretl_function_depth() > 0) {
+            /* function writers should avoid collisions
+               when naming series
+            */
+            p->sym = SERIES;
+        } else if (p->targ != UNK && p->targ != LIST && p->targ != SERIES) {
+            /* target not compatible with series lag? */
+            p->sym = UFUN;
+        } else if (defining_list(p) || p->targ == SERIES) {
+            /* debatable */
+            p->sym = SERIES;
+        } else {
+            /* debatable */
+            p->sym = UFUN;
+        }
     }
 
     if (p->sym != 0) {
-	p->idstr = gretl_strdup(s);
-	if (p->sym == UFUN) {
-	    p->data = u;
-	} else {
-	    p->idnum = vnum;
-	    /* in case of any intervening space */
-	    while (p->ch == ' ') {
-		parser_getc(p);
-	    }
-	}
+        p->idstr = gretl_strdup(s);
+        if (p->sym == UFUN) {
+            p->data = u;
+        } else {
+            p->idnum = vnum;
+            /* in case of any intervening space */
+            while (p->ch == ' ') {
+                parser_getc(p);
+            }
+        }
     }
 }
 
 static int is_function_word (const char *s)
 {
     return function_lookup_with_alias(s, NULL) != 0 ||
-	get_user_function_by_name(s) != NULL;
+        get_user_function_by_name(s) != NULL;
 }
 
 static void look_up_word (const char *s, parser *p)
@@ -1720,7 +1720,7 @@ static void look_up_word (const char *s, parser *p)
 
 #if LDEBUG
     fprintf(stderr, "look_up_word: s='%s', ch='%c', next='%c'\n",
-	    s, p->ch, parser_next_char(p));
+            s, p->ch, parser_next_char(p));
 #endif
 
     /* is the next (or next non-space) character left paren? */
@@ -1731,95 +1731,95 @@ static void look_up_word (const char *s, parser *p)
     p->data = NULL;
 
     if (lpnext) {
-	/* identifier is immediately followed by left paren:
-	   most likely a function call but could be the name
-	   of a series followed by a lag specifier
-	*/
-	p->sym = function_lookup_with_alias(s, p);
-	if (p->sym == 0) {
-	    handle_lpnext(s, p, have_dset);
-	} else if (p->sym == F_STACK) {
-	    /* special! */
-	    if (strstr(p->point, "--length") || strstr(p->point, "--offset")) {
-		stack_update_parser_input(p);
-	    }
-	    p->flags |= P_STACK;
-	}
+        /* identifier is immediately followed by left paren:
+           most likely a function call but could be the name
+           of a series followed by a lag specifier
+        */
+        p->sym = function_lookup_with_alias(s, p);
+        if (p->sym == 0) {
+            handle_lpnext(s, p, have_dset);
+        } else if (p->sym == F_STACK) {
+            /* special! */
+            if (strstr(p->point, "--length") || strstr(p->point, "--offset")) {
+                stack_update_parser_input(p);
+            }
+            p->flags |= P_STACK;
+        }
     }
 
     if (p->sym == 0) {
-	p->idnum = const_lookup(s);
-	if (p->idnum > 0) {
-	    p->sym = CON;
-	} else {
-	    p->idnum = dummy_lookup(s, p);
-	    if (p->idnum > 0) {
-		p->sym = DUM;
-	    } else if (have_dset &&
-		       (p->idnum = current_series_index(p->dset, s)) >= 0) {
-		p->sym = SERIES;
-		p->idstr = gretl_strdup(s);
-	    } else if (have_dset && !strcmp(s, "time")) {
-		p->sym = DUM;
-		p->idnum = DUM_TREND;
-	    } else if ((p->data = get_user_var_by_name(s)) != NULL) {
-		user_var *u = p->data;
+        p->idnum = const_lookup(s);
+        if (p->idnum > 0) {
+            p->sym = CON;
+        } else {
+            p->idnum = dummy_lookup(s, p);
+            if (p->idnum > 0) {
+                p->sym = DUM;
+            } else if (have_dset &&
+                       (p->idnum = current_series_index(p->dset, s)) >= 0) {
+                p->sym = SERIES;
+                p->idstr = gretl_strdup(s);
+            } else if (have_dset && !strcmp(s, "time")) {
+                p->sym = DUM;
+                p->idnum = DUM_TREND;
+            } else if ((p->data = get_user_var_by_name(s)) != NULL) {
+                user_var *u = p->data;
 
-		if (u->type == GRETL_TYPE_DOUBLE) {
-		    p->sym = NUM;
-		} else if (u->type == GRETL_TYPE_MATRIX) {
-		    p->sym = MAT;
-		} else if (u->type == GRETL_TYPE_BUNDLE) {
-		    p->sym = BUNDLE;
-		} else if (u->type == GRETL_TYPE_ARRAY) {
-		    p->sym = ARRAY;
-		} else if (u->type == GRETL_TYPE_STRING) {
-		    p->sym = STR;
-		} else if (u->type == GRETL_TYPE_LIST) {
-		    p->sym = LIST;
-		}
-		p->idstr = gretl_strdup(s);
-	    } else if (defining_list(p) && varname_match_any(p->dset, s)) {
-		p->sym = WLIST;
-		p->idstr = gretl_strdup(s);
-	    } else if (have_dset && !strcmp(s, "t")) {
-		/* if "t" has not been otherwise defined, treat it
-		   as an alias for "obs"
-		*/
-		p->sym = DVAR;
-		p->idnum = R_INDEX;
-	    } else if (maybe_get_R_function(s)) {
-		/* note: all "native" types take precedence over this */
-		p->sym = RFUN;
-		p->idstr = gretl_strdup(s + 2);
-	    } else if (parsing_query || prevsym == B_AND || prevsym == B_OR) {
-		p->sym = UNDEF;
-		p->idstr = gretl_strdup(s);
-	    } else if (p->flags & (P_AND | P_OR)) {
-		p->sym = UNDEF;
-		p->idstr = gretl_strdup(s);
-	    } else if (gretl_get_object_by_name(s)) {
-		p->sym = UOBJ;
-		p->idstr = gretl_strdup(s);
-	    } else {
-		err = E_UNKVAR;
-	    }
-	}
+                if (u->type == GRETL_TYPE_DOUBLE) {
+                    p->sym = NUM;
+                } else if (u->type == GRETL_TYPE_MATRIX) {
+                    p->sym = MAT;
+                } else if (u->type == GRETL_TYPE_BUNDLE) {
+                    p->sym = BUNDLE;
+                } else if (u->type == GRETL_TYPE_ARRAY) {
+                    p->sym = ARRAY;
+                } else if (u->type == GRETL_TYPE_STRING) {
+                    p->sym = STR;
+                } else if (u->type == GRETL_TYPE_LIST) {
+                    p->sym = LIST;
+                }
+                p->idstr = gretl_strdup(s);
+            } else if (defining_list(p) && varname_match_any(p->dset, s)) {
+                p->sym = WLIST;
+                p->idstr = gretl_strdup(s);
+            } else if (have_dset && !strcmp(s, "t")) {
+                /* if "t" has not been otherwise defined, treat it
+                   as an alias for "obs"
+                */
+                p->sym = DVAR;
+                p->idnum = R_INDEX;
+            } else if (maybe_get_R_function(s)) {
+                /* note: all "native" types take precedence over this */
+                p->sym = RFUN;
+                p->idstr = gretl_strdup(s + 2);
+            } else if (parsing_query || prevsym == B_AND || prevsym == B_OR) {
+                p->sym = UNDEF;
+                p->idstr = gretl_strdup(s);
+            } else if (p->flags & (P_AND | P_OR)) {
+                p->sym = UNDEF;
+                p->idstr = gretl_strdup(s);
+            } else if (gretl_get_object_by_name(s)) {
+                p->sym = UOBJ;
+                p->idstr = gretl_strdup(s);
+            } else {
+                err = E_UNKVAR;
+            }
+        }
     }
 
     if (err) {
-	if (is_function_word(s)) {
-	    /* @s is a function identifier with no
-	       following left paren */
-	    function_noargs_error(s, p);
-	} else if (object_is_function_arg(s)) {
-	    /* @s is the name of a function parameter
-	       with a null value */
-	    p->sym = NULLARG;
-	    p->idstr = gretl_strdup(s);
-	} else if (p->sym != DUM_EMPTY) {
-	    undefined_symbol_error(s, p);
-	}
+        if (is_function_word(s)) {
+            /* @s is a function identifier with no
+               following left paren */
+            function_noargs_error(s, p);
+        } else if (object_is_function_arg(s)) {
+            /* @s is the name of a function parameter
+               with a null value */
+            p->sym = NULLARG;
+            p->idstr = gretl_strdup(s);
+        } else if (p->sym != DUM_EMPTY) {
+            undefined_symbol_error(s, p);
+        }
     }
 
 #if LDEBUG
@@ -1830,26 +1830,26 @@ static void look_up_word (const char *s, parser *p)
 static void maybe_treat_as_postfix (parser *p)
 {
     if (p->sym == NUM) {
-	const char *ok = ")]}+-*/%,:";
-	int c = char_past_point(p);
+        const char *ok = ")]}+-*/%,:";
+        int c = char_past_point(p);
 
-	/* Interpret as foo++ or foo-- ? Only if
-	   the following character is suitable.
-	*/
-	if (c == 0 || strchr(ok, c)) {
-	    p->sym = p->ch == '+'? NUM_P : NUM_M;
-	    /* swallow the pluses or minuses */
-	    parser_advance(p, 1);
-	}
+        /* Interpret as foo++ or foo-- ? Only if
+           the following character is suitable.
+        */
+        if (c == 0 || strchr(ok, c)) {
+            p->sym = p->ch == '+'? NUM_P : NUM_M;
+            /* swallow the pluses or minuses */
+            parser_advance(p, 1);
+        }
     }
 }
 
 #define dollar_series(t) (t > R_SCALAR_MAX && t < R_SERIES_MAX)
 
 #define could_be_matrix(t) (model_data_matrix(t) || \
-			    model_data_matrix_builder(t) || \
-			    t == M_UHAT || t == M_YHAT || \
-			    (t > R_SERIES_MAX && t < R_MAX))
+                            model_data_matrix_builder(t) || \
+                            t == M_UHAT || t == M_YHAT || \
+                            (t > R_SERIES_MAX && t < R_MAX))
 
 #define could_be_bundle(t) (t == R_RESULT)
 
@@ -1859,10 +1859,10 @@ static void word_check_next_char (parser *p)
 
 #if LDEBUG
     if (p->ch) {
-	fprintf(stderr, "word_check_next_char: ch='%c', sym='%s'\n",
-		p->ch, getsymb(p->sym));
+        fprintf(stderr, "word_check_next_char: ch='%c', sym='%s'\n",
+                p->ch, getsymb(p->sym));
     } else {
-	fprintf(stderr, "word_check_next_char: ch = NUL\n");
+        fprintf(stderr, "word_check_next_char: ch = NUL\n");
     }
 #endif
     p->upsym = 0;
@@ -1871,111 +1871,111 @@ static void word_check_next_char (parser *p)
        of one of "([.+-" immediately following a 'word' of some kind.
     */
     if (strspn(chk, "([.+-") == 0) {
-	/* none of the above */
-	return;
+        /* none of the above */
+        return;
     }
 
     if (p->sym == UNDEF) {
-	/* 2020-03-16: suspend disbelief, we might be in a branch
-	   of "cond ? x : y" that ends up not being taken */
-	return;
+        /* 2020-03-16: suspend disbelief, we might be in a branch
+           of "cond ? x : y" that ends up not being taken */
+        return;
     }
 
     if (p->ch == '(') {
-	/* series or list (lag), or function */
-	if (p->sym == SERIES) {
-	    if (p->idnum > 0 && p->idnum == p->lh.vnum) {
-		p->flags |= P_AUTOREG;
-	    }
-	    p->upsym = p->sym;
-	    p->sym = LAG;
-	} else if (p->sym == LIST) {
-	    p->upsym = p->sym;
-	    p->sym = LAG;
-	} else if (p->sym == MVAR && model_data_matrix(p->idnum)) {
-	    /* old-style "$coeff(x1)" etc. */
-	    p->sym = DMSTR;
-	} else if (!func1_symb(p->sym) &&
-		   !func2_symb(p->sym) &&
-		   !func3_symb(p->sym) &&
-		   !funcn_symb(p->sym) &&
-		   p->sym != UFUN &&
-		   p->sym != RFUN) {
-	    p->err = E_PARSE;
-	}
+        /* series or list (lag), or function */
+        if (p->sym == SERIES) {
+            if (p->idnum > 0 && p->idnum == p->lh.vnum) {
+                p->flags |= P_AUTOREG;
+            }
+            p->upsym = p->sym;
+            p->sym = LAG;
+        } else if (p->sym == LIST) {
+            p->upsym = p->sym;
+            p->sym = LAG;
+        } else if (p->sym == MVAR && model_data_matrix(p->idnum)) {
+            /* old-style "$coeff(x1)" etc. */
+            p->sym = DMSTR;
+        } else if (!func1_symb(p->sym) &&
+                   !func2_symb(p->sym) &&
+                   !func3_symb(p->sym) &&
+                   !funcn_symb(p->sym) &&
+                   p->sym != UFUN &&
+                   p->sym != RFUN) {
+            p->err = E_PARSE;
+        }
     } else if (p->ch == '[') {
-	p->upsym = p->sym;
-	if (p->sym == MAT || p->sym == ARRAY ||
-	    p->sym == LIST || p->sym == STR) {
-	    /* slice of sliceable object */
-	    p->sym = OSL;
-	} else if (*p->point != '"' &&
-		   (p->sym == MVAR || p->sym == DVAR) &&
-		   could_be_matrix(p->idnum)) {
-	    /* slice of $-matrix? */
-	    p->sym = OSL;
-	} else if (p->sym == SERIES) {
-	    /* observation from series */
-	    p->sym = OBS;
-	} else if (p->sym == DVAR && dollar_series(p->idnum)) {
-	    /* observation from "dollar" series */
-	    p->sym = OBS;
-	} else if (p->sym == MVAR && (model_data_list(p->idnum) ||
+        p->upsym = p->sym;
+        if (p->sym == MAT || p->sym == ARRAY ||
+            p->sym == LIST || p->sym == STR) {
+            /* slice of sliceable object */
+            p->sym = OSL;
+        } else if (*p->point != '"' &&
+                   (p->sym == MVAR || p->sym == DVAR) &&
+                   could_be_matrix(p->idnum)) {
+            /* slice of $-matrix? */
+            p->sym = OSL;
+        } else if (p->sym == SERIES) {
+            /* observation from series */
+            p->sym = OBS;
+        } else if (p->sym == DVAR && dollar_series(p->idnum)) {
+            /* observation from "dollar" series */
+            p->sym = OBS;
+        } else if (p->sym == MVAR && (model_data_list(p->idnum) ||
                                       model_data_array(p->idnum))) {
-	    /* element/range of accessor list or array */
-	    p->sym = OSL;
-	} else if (p->sym == BUNDLE) {
-	    /* member from bundle */
-	    p->sym = BMEMB;
-	} else if (p->sym == DBUNDLE) {
-	    /* member from $ bundle */
-	    p->sym = DBMEMB;
-	} else if (p->sym == DVAR && could_be_bundle(p->idnum)) {
-	    p->sym = DBMEMB;
-	} else {
-	    p->err = E_PARSE;
-	}
+            /* element/range of accessor list or array */
+            p->sym = OSL;
+        } else if (p->sym == BUNDLE) {
+            /* member from bundle */
+            p->sym = BMEMB;
+        } else if (p->sym == DBUNDLE) {
+            /* member from $ bundle */
+            p->sym = DBMEMB;
+        } else if (p->sym == DVAR && could_be_bundle(p->idnum)) {
+            p->sym = DBMEMB;
+        } else {
+            p->err = E_PARSE;
+        }
     } else if (p->ch == '.' && *p->point == '$') {
-	if (p->sym == UOBJ) {
-	    /* name of saved model followed by dollar variable? */
-	    p->sym = MMEMB;
-	} else if (p->sym == CSTR) {
-	    /* maybe quoted name of saved object followed by
-	       dollar variable? */
-	    p->sym = MMEMB;
-	} else {
-	    p->err = E_PARSE;
-	}
+        if (p->sym == UOBJ) {
+            /* name of saved model followed by dollar variable? */
+            p->sym = MMEMB;
+        } else if (p->sym == CSTR) {
+            /* maybe quoted name of saved object followed by
+               dollar variable? */
+            p->sym = MMEMB;
+        } else {
+            p->err = E_PARSE;
+        }
     } else if (p->ch == '.' && isalpha(*p->point)) {
-	if (p->sym == LIST) {
-	    p->sym = LISTVAR;
-	} else if (p->sym == BUNDLE) {
-	    p->sym = BMEMB;
-	} else if (p->sym == DBUNDLE) {
-	    p->sym = DBMEMB;
-	} else if (p->sym == DVAR && could_be_bundle(p->idnum)) {
-	    p->sym = DBMEMB;
-	} else {
-	    p->err = E_PARSE;
-	}
+        if (p->sym == LIST) {
+            p->sym = LISTVAR;
+        } else if (p->sym == BUNDLE) {
+            p->sym = BMEMB;
+        } else if (p->sym == DBUNDLE) {
+            p->sym = DBMEMB;
+        } else if (p->sym == DVAR && could_be_bundle(p->idnum)) {
+            p->sym = DBMEMB;
+        } else {
+            p->err = E_PARSE;
+        }
     } else if (p->ch == '+' && *p->point == '+') {
-	maybe_treat_as_postfix(p);
+        maybe_treat_as_postfix(p);
     } else if (p->ch == '-' && *p->point == '-') {
-	maybe_treat_as_postfix(p);
+        maybe_treat_as_postfix(p);
     }
 
     if (p->err) {
-	context_error(p->ch, p, "word_check_next_char");
+        context_error(p->ch, p, "word_check_next_char");
     }
 }
 
 static int is_word_char (parser *p)
 {
     if (strchr(wordchars, p->ch) != NULL) {
-	return 1;
+        return 1;
     } else if (defining_list(p) && !doing_genseries &&
-	       (p->ch == '*' || p->ch == '?')) {
-	return 1;
+               (p->ch == '*' || p->ch == '?')) {
+        return 1;
     }
 
     return 0;
@@ -1987,29 +1987,29 @@ static void getword (parser *p, int greek)
     int i = 0;
 
     if (greek) {
-	/* we have a single (2-byte) UTF-8 greek letter in scope */
-	for (i=0; i<2; i++) {
-	    word[i] = p->ch;
-	    parser_getc(p);
-	}
+        /* we have a single (2-byte) UTF-8 greek letter in scope */
+        for (i=0; i<2; i++) {
+            word[i] = p->ch;
+            parser_getc(p);
+        }
     } else {
-	/* we know the first char is acceptable (and might be '$' or '_') */
-	word[i++] = p->ch;
-	parser_getc(p);
+        /* we know the first char is acceptable (and might be '$' or '_') */
+        word[i++] = p->ch;
+        parser_getc(p);
 
 #ifdef USE_RLIB
-	/* allow for R.foo function namespace */
-	if (*word == 'R' && p->ch == '.' && *p->point != '$') {
-	    if (libset_get_bool(R_FUNCTIONS) && !gretl_is_bundle("R")) {
-		word[i++] = p->ch;
-		parser_getc(p);
-	    }
-	}
+        /* allow for R.foo function namespace */
+        if (*word == 'R' && p->ch == '.' && *p->point != '$') {
+            if (libset_get_bool(R_FUNCTIONS) && !gretl_is_bundle("R")) {
+                word[i++] = p->ch;
+                parser_getc(p);
+            }
+        }
 #endif
-	while (p->ch != 0 && is_word_char(p) && i < 31) {
-	    word[i++] = p->ch;
-	    parser_getc(p);
-	}
+        while (p->ch != 0 && is_word_char(p) && i < 31) {
+            word[i++] = p->ch;
+            parser_getc(p);
+        }
     }
 
     word[i] = '\0';
@@ -2019,27 +2019,27 @@ static void getword (parser *p, int greek)
 #endif
 
     while (p->ch != 0 && strchr(wordchars, p->ch) != NULL) {
-	/* flush excess word characters */
-	parser_getc(p);
+        /* flush excess word characters */
+        parser_getc(p);
     }
 
     if (p->flags & P_GETSTR) {
-	/* uninterpreted string wanted */
-	p->sym = CSTR;
-	p->idstr = gretl_strdup(word);
-	p->flags ^= P_GETSTR;
-	return; /* FIXME bundle-member name */
+        /* uninterpreted string wanted */
+        p->sym = CSTR;
+        p->idstr = gretl_strdup(word);
+        p->flags ^= P_GETSTR;
+        return; /* FIXME bundle-member name */
     } else if ((*word == '$' && word[1]) || !strcmp(word, "obs")) {
-	look_up_dollar_word(word, p);
+        look_up_dollar_word(word, p);
     } else if (*word == '$' && word[1] == '\0' && (p->ch == '[' || p->ch == '.')) {
-	p->sym = DBUNDLE;
-	p->idnum = B_MODEL;
+        p->sym = DBUNDLE;
+        p->idnum = B_MODEL;
     } else {
-	look_up_word(word, p);
+        look_up_word(word, p);
     }
 
     if (!p->err) {
-	word_check_next_char(p);
+        word_check_next_char(p);
     }
 
 #if LDEBUG
@@ -2052,24 +2052,24 @@ static int colon_ok (parser *p, char *s, int n)
     int i;
 
     if (p->flags & P_SLICING) {
-	/* calculating a matrix "slice": colon is a separator in
-	   this context, cannot be part of a time/panel observation
-	   string
-	*/
+        /* calculating a matrix "slice": colon is a separator in
+           this context, cannot be part of a time/panel observation
+           string
+        */
 #if LDEBUG
-	fprintf(stderr, "colon_ok: doing matrix slice\n");
+        fprintf(stderr, "colon_ok: doing matrix slice\n");
 #endif
-	return 0;
+        return 0;
     }
 
     if (n != 1 && n != 3) {
-	return 0;
+        return 0;
     }
 
     for (i=0; i<=n; i++) {
-	if (!isdigit(s[i])) {
-	    return 0;
-	}
+        if (!isdigit(s[i])) {
+            return 0;
+        }
     }
 
     return 1;
@@ -2085,30 +2085,30 @@ static int ok_dbl_char (parser *p, char *s, int i)
     int ret = 0;
 
     if (i < 0 || (p->ch >= '0' && p->ch <= '9')) {
-	return 1;
+        return 1;
     }
 
     switch (p->ch) {
     case '+':
     case '-':
-	ret = s[i] == 'e' || s[i] == 'E';
-	break;
+        ret = s[i] == 'e' || s[i] == 'E';
+        break;
     case '.':
-	ret = !strchr(s, '.') && !strchr(s, ':') &&
-	    !strchr(s, 'e') && !strchr(s, 'E') &&
-	    *p->point != '.';
-	break;
+        ret = !strchr(s, '.') && !strchr(s, ':') &&
+            !strchr(s, 'e') && !strchr(s, 'E') &&
+            *p->point != '.';
+        break;
     case 'e':
     case 'E':
-	ret = !strchr(s, 'e') && !strchr(s, 'E') &&
-	    !strchr(s, ':');
-	break;
+        ret = !strchr(s, 'e') && !strchr(s, 'E') &&
+            !strchr(s, ':');
+        break;
     case ':':
-	/* allow for obs numbers in the form, e.g., "1995:10" */
-	ret = colon_ok(p, s, i);
-	break;
+        /* allow for obs numbers in the form, e.g., "1995:10" */
+        ret = colon_ok(p, s, i);
+        break;
     default:
-	break;
+        break;
     }
 
     return ret;
@@ -2117,13 +2117,13 @@ static int ok_dbl_char (parser *p, char *s, int i)
 static int ok_hex_char (parser *p, char *s, int i)
 {
     if (i < 1) {
-	return 1;
+        return 1;
     } else if (p->ch >= '0' && p->ch <= '9') {
-	return 1;
+        return 1;
     } else if (p->ch >= 'a' && p->ch <= 'f') {
-	return 1;
+        return 1;
     } else if (p->ch >= 'A' && p->ch <= 'F') {
-	return 1;
+        return 1;
     }
 
     return 0;
@@ -2137,25 +2137,25 @@ static void parse_number (parser *p)
     int i = 0;
 
     if (p->ch == '0' && (p->point[0] == 'x' || p->point[0] == 'X')) {
-	/* hexadecimal input */
-	got_hex = 1;
-	while (ok_hex_char(p, xstr, i - 1) && i < HEXLEN - 1) {
-	    xstr[i++] = p->ch;
-	    parser_getc(p);
-	}
+        /* hexadecimal input */
+        got_hex = 1;
+        while (ok_hex_char(p, xstr, i - 1) && i < HEXLEN - 1) {
+            xstr[i++] = p->ch;
+            parser_getc(p);
+        }
     } else {
-	/* decimal input */
-	while (ok_dbl_char(p, xstr, i - 1) && i < NUMLEN - 1) {
-	    xstr[i++] = p->ch;
-	    if (p->ch == ':') {
-		got_colon = 1;
-	    }
-	    parser_getc(p);
-	}
-	while (p->ch >= '0' && p->ch <= '9') {
-	    /* flush excess numeric characters */
-	    parser_getc(p);
-	}
+        /* decimal input */
+        while (ok_dbl_char(p, xstr, i - 1) && i < NUMLEN - 1) {
+            xstr[i++] = p->ch;
+            if (p->ch == ':') {
+                got_colon = 1;
+            }
+            parser_getc(p);
+        }
+        while (p->ch >= '0' && p->ch <= '9') {
+            /* flush excess numeric characters */
+            parser_getc(p);
+        }
     }
 
 #if LDEBUG
@@ -2164,28 +2164,28 @@ static void parse_number (parser *p)
 
     if (got_colon) {
 #if LDEBUG
-	fprintf(stderr, " got colon: obs identifier?\n");
+        fprintf(stderr, " got colon: obs identifier?\n");
 #endif
-	if (p->dset == NULL || p->dset->n == 0) {
-	    p->err = E_NODATA;
-	} else if (p->dset->pd == 1) {
-	    p->err = E_PDWRONG;
-	} else if (dateton(xstr, p->dset) < 0) {
-	    p->err = E_DATA;
-	} else {
-	    p->idstr = gretl_strdup(xstr);
-	    p->sym = CSTR;
-	}
+        if (p->dset == NULL || p->dset->n == 0) {
+            p->err = E_NODATA;
+        } else if (p->dset->pd == 1) {
+            p->err = E_PDWRONG;
+        } else if (dateton(xstr, p->dset) < 0) {
+            p->err = E_DATA;
+        } else {
+            p->idstr = gretl_strdup(xstr);
+            p->sym = CSTR;
+        }
     } else if (got_hex) {
-	guint32 u = strtoul(xstr, NULL, 16);
+        guint32 u = strtoul(xstr, NULL, 16);
 
-	p->xval = (double) u;
-	p->sym = CNUM;
+        p->xval = (double) u;
+        p->sym = CNUM;
     } else {
-	p->xval = dot_atof(xstr);
-	p->sym = CNUM;
+        p->xval = dot_atof(xstr);
+        p->sym = CNUM;
 #if LDEBUG
-	fprintf(stderr, " dot_atof gave %g\n", p->xval);
+        fprintf(stderr, " dot_atof gave %g\n", p->xval);
 #endif
     }
 }
@@ -2195,20 +2195,20 @@ static int wildcard_special (parser *p)
     char cprev = *(p->point - 2);
 
     if (p->ch == '?') {
-	char cnext = *p->point;
+        char cnext = *p->point;
 
-	if ((cprev == ' ' || cprev == ')') && cnext == ' ') {
-	    /* '?' is presumably ternary operator */
-	    return 0;
-	}
+        if ((cprev == ' ' || cprev == ')') && cnext == ' ') {
+            /* '?' is presumably ternary operator */
+            return 0;
+        }
     }
 
     if (cprev == ' ' &&
-	(bare_data_type(p->sym) || closing_sym(p->sym) ||
-	 (p->sym == LAG))) {
-	p->sym = B_LCAT;
+        (bare_data_type(p->sym) || closing_sym(p->sym) ||
+         (p->sym == LAG))) {
+        p->sym = B_LCAT;
     } else {
-	getword(p, 0);
+        getword(p, 0);
     }
 
     return 1;
@@ -2219,15 +2219,15 @@ static int wildcard_special (parser *p)
 static void lex_try_utf8 (parser *p)
 {
     if ((unsigned char) *p->point == 0x88 &&
-	(unsigned char) *(p->point + 1) == 0x92) {
-	p->sym = B_SUB;
-	parser_getc(p);
-	parser_getc(p);
-	parser_getc(p);
+        (unsigned char) *(p->point + 1) == 0x92) {
+        p->sym = B_SUB;
+        parser_getc(p);
+        parser_getc(p);
+        parser_getc(p);
     } else {
-	pprintf(p->prn, _("Unexpected byte 0x%x\n"),
-		(unsigned char) p->ch);
-	p->err = E_PARSE;
+        pprintf(p->prn, _("Unexpected byte 0x%x\n"),
+                (unsigned char) p->ch);
+        p->err = E_PARSE;
     }
 }
 
@@ -2236,8 +2236,8 @@ static void lex_try_utf8 (parser *p)
 /* accept 'to', but only with spaces before and after */
 #define lag_range_sym(p) ((p->flags & P_LAGPRSE) && p->ch == 't' && \
                           *p->point == 'o' && \
-			  *(p->point - 2) == ' ' && \
-			  *(p->point + 1) == ' ')
+                          *(p->point - 2) == ' ' && \
+                          *(p->point + 1) == ' ')
 
 void lex (parser *p)
 {
@@ -2245,522 +2245,522 @@ void lex (parser *p)
 
 #if LDEBUG
     if (p->ch) {
-	fprintf(stderr, "lex: p->ch='%c', point='%c'\n", p->ch, *p->point);
+        fprintf(stderr, "lex: p->ch='%c', point='%c'\n", p->ch, *p->point);
     } else {
-	fprintf(stderr, "lex: p->ch is NUL\n");
+        fprintf(stderr, "lex: p->ch is NUL\n");
     }
 #endif
     prevsyms[0] = prevsyms[1];
     prevsyms[1] = p->sym;
 
     if (p->ch == 0) {
-	p->sym = EOT;
-	return;
+        p->sym = EOT;
+        return;
     }
 
     while (p->ch != 0) {
-	if ((unsigned char) p->ch == 0xE2) {
-	    lex_try_utf8(p);
-	    return;
-	} else if (is_greek_letter(p->point - 1)) {
-	    getword(p, 1);
-	    return;
-	}
-	switch (p->ch) {
-	case ' ':
-	case '\t':
-	case '\r':
+        if ((unsigned char) p->ch == 0xE2) {
+            lex_try_utf8(p);
+            return;
+        } else if (is_greek_letter(p->point - 1)) {
+            getword(p, 1);
+            return;
+        }
+        switch (p->ch) {
+        case ' ':
+        case '\t':
+        case '\r':
         case '\n':
-	    parser_getc(p);
-	    break;
+            parser_getc(p);
+            break;
         case '+':
-	    p->sym = B_ADD;
-	    parser_getc(p);
-	    return;
+            p->sym = B_ADD;
+            parser_getc(p);
+            return;
         case '-':
-	    p->sym = B_SUB;
-	    parser_getc(p);
-	    return;
+            p->sym = B_SUB;
+            parser_getc(p);
+            return;
         case '*':
-	    if (defining_list(p) && !doing_genseries) {
-		/* allow for '*' as wildcard */
-		wildcard_special(p);
-		return;
-	    }
-	    parser_getc(p);
-	    if (p->ch == '*') {
-		p->sym = B_KRON;
-		parser_getc(p);
-	    } else {
-		p->sym = B_MUL;
-	    }
-	    return;
-	case '\'':
-	    p->sym = B_TRMUL;
-	    parser_getc(p);
-	    return;
+            if (defining_list(p) && !doing_genseries) {
+                /* allow for '*' as wildcard */
+                wildcard_special(p);
+                return;
+            }
+            parser_getc(p);
+            if (p->ch == '*') {
+                p->sym = B_KRON;
+                parser_getc(p);
+            } else {
+                p->sym = B_MUL;
+            }
+            return;
+        case '\'':
+            p->sym = B_TRMUL;
+            parser_getc(p);
+            return;
         case '/':
-	    p->sym = B_DIV;
-	    parser_getc(p);
-	    return;
+            p->sym = B_DIV;
+            parser_getc(p);
+            return;
         case '\\':
-	    p->sym = B_LDIV;
-	    parser_getc(p);
-	    return;
+            p->sym = B_LDIV;
+            parser_getc(p);
+            return;
         case '%':
-	    p->sym = B_MOD;
-	    parser_getc(p);
-	    return;
+            p->sym = B_MOD;
+            parser_getc(p);
+            return;
         case '^':
-	    p->sym = B_POW;
-	    parser_getc(p);
-	    return;
+            p->sym = B_POW;
+            parser_getc(p);
+            return;
         case '&':
-	    parser_getc(p);
-	    if (p->ch == '&') {
-		p->sym = B_AND;
-		parser_getc(p);
-	    } else {
-		p->sym = U_ADDR;
-	    }
-	    return;
+            parser_getc(p);
+            if (p->ch == '&') {
+                p->sym = B_AND;
+                parser_getc(p);
+            } else {
+                p->sym = U_ADDR;
+            }
+            return;
         case '|':
-	    parser_getc(p);
-	    if (p->ch == '|') {
-		p->sym = B_OR;
-		parser_getc(p);
-	    } else {
-		p->sym = B_VCAT;
-	    }
-	    return;
+            parser_getc(p);
+            if (p->ch == '|') {
+                p->sym = B_OR;
+                parser_getc(p);
+            } else {
+                p->sym = B_VCAT;
+            }
+            return;
         case '!':
-	    parser_getc(p);
-	    if (p->ch == '=') {
-		p->sym = B_NEQ;
-		parser_getc(p);
-	    } else {
-		p->sym = U_NOT;
-	    }
-	    return;
+            parser_getc(p);
+            if (p->ch == '=') {
+                p->sym = B_NEQ;
+                parser_getc(p);
+            } else {
+                p->sym = U_NOT;
+            }
+            return;
         case '=':
-	    parser_getc(p);
-	    if (p->ch == '=') {
-		parser_getc(p);
-		p->sym = B_EQ;
-	    } else {
-		gretl_errmsg_set(_("If you meant to test for "
-				   "equality, please use '=='"));
-		p->err = E_PARSE;
-	    }
-	    return;
+            parser_getc(p);
+            if (p->ch == '=') {
+                parser_getc(p);
+                p->sym = B_EQ;
+            } else {
+                gretl_errmsg_set(_("If you meant to test for "
+                                   "equality, please use '=='"));
+                p->err = E_PARSE;
+            }
+            return;
         case '>':
-	    parser_getc(p);
-	    if (p->ch == '=') {
-		p->sym = B_GTE;
-		parser_getc(p);
-	    } else {
-		p->sym = B_GT;
-	    }
-	    return;
+            parser_getc(p);
+            if (p->ch == '=') {
+                p->sym = B_GTE;
+                parser_getc(p);
+            } else {
+                p->sym = B_GT;
+            }
+            return;
         case '<':
-	    parser_getc(p);
-	    if (p->ch == '=') {
-		p->sym = B_LTE;
-		parser_getc(p);
-	    } else if (p->ch == '>') {
-		p->sym = B_NEQ;
-		parser_getc(p);
-	    } else {
-		p->sym = B_LT;
-	    }
-	    return;
+            parser_getc(p);
+            if (p->ch == '=') {
+                p->sym = B_LTE;
+                parser_getc(p);
+            } else if (p->ch == '>') {
+                p->sym = B_NEQ;
+                parser_getc(p);
+            } else {
+                p->sym = B_LT;
+            }
+            return;
         case '(':
-	    p->sym = G_LPR;
-	    parser_getc(p);
-	    return;
+            p->sym = G_LPR;
+            parser_getc(p);
+            return;
         case ')':
-	    p->sym = G_RPR;
-	    parser_getc(p);
-	    return;
+            p->sym = G_RPR;
+            parser_getc(p);
+            return;
         case '[':
-	    p->sym = G_LBR;
-	    parser_getc(p);
-	    return;
+            p->sym = G_LBR;
+            parser_getc(p);
+            return;
         case '{':
-	    p->sym = G_LCB;
-	    parser_getc(p);
-	    return;
+            p->sym = G_LCB;
+            parser_getc(p);
+            return;
         case '}':
-	    p->sym = G_RCB;
-	    parser_getc(p);
-	    return;
+            p->sym = G_RCB;
+            parser_getc(p);
+            return;
         case ']':
-	    p->sym = G_RBR;
-	    parser_getc(p);
-	    return;
+            p->sym = G_RBR;
+            parser_getc(p);
+            return;
         case '~':
-	    p->sym = B_HCAT;
-	    parser_getc(p);
-	    return;
+            p->sym = B_HCAT;
+            parser_getc(p);
+            return;
         case ',':
-	    p->sym = P_COM;
-	    parser_getc(p);
-	    return;
+            p->sym = P_COM;
+            parser_getc(p);
+            return;
         case ';':
-	    if (defining_list(p)) {
-		p->sym = B_JOIN;
-	    } else {
-		/* used in matrix definition */
-		p->sym = P_SEMI;
-	    }
-	    parser_getc(p);
-	    return;
+            if (defining_list(p)) {
+                p->sym = B_JOIN;
+            } else {
+                /* used in matrix definition */
+                p->sym = P_SEMI;
+            }
+            parser_getc(p);
+            return;
         case ':':
-	    p->sym = P_COL;
-	    parser_getc(p);
-	    return;
+            p->sym = P_COL;
+            parser_getc(p);
+            return;
         case '?':
-	    if (defining_list(p) && !doing_genseries) {
-		/* allow for '?' as wildcard */
-		if (wildcard_special(p)) {
-		    return;
-		}
-	    }
-	    p->sym = QUERY;
-	    parser_getc(p);
-	    return;
-	case '.':
-	    if (*p->point == '$') {
-		p->sym = P_DOT;
-		parser_getc(p);
-		return;
-	    } else if (isalpha(*p->point)) {
-		/* 2017-01-07 */
-		p->sym = BMEMB;
-		parser_getc(p);
-		return;
-	    }
-	    parser_getc(p);
-	    if (p->ch == '*') {
-		p->sym = B_DOTMULT;
-		parser_getc(p);
-		return;
-	    } else if (p->ch == '/') {
-		p->sym = B_DOTDIV;
-		parser_getc(p);
-		return;
-	    } else if (p->ch == '^') {
-		p->sym = B_DOTPOW;
-		parser_getc(p);
-		return;
-	    } else if (p->ch == '+') {
-		p->sym = B_DOTADD;
-		parser_getc(p);
-		return;
-	    } else if (p->ch == '-') {
-		p->sym = B_DOTSUB;
-		parser_getc(p);
-		return;
-	    } else if (p->ch == '=') {
-		p->sym = B_DOTEQ;
-		parser_getc(p);
-		return;
-	    } else if (p->ch == '>') {
-		p->sym = B_DOTGT;
-		parser_getc(p);
-		if (p->ch == '=') {
-		    p->sym = B_DOTGTE;
-		    parser_getc(p);
-		}
-		return;
-	    } else if (p->ch == '<') {
-		p->sym = B_DOTLT;
-		parser_getc(p);
-		if (p->ch == '=') {
-		    p->sym = B_DOTLTE;
-		    parser_getc(p);
-		}
-		return;
-	    } else if (p->ch == '!' && *p->point == '=') {
-		p->sym = B_DOTNEQ;
-		parser_getc(p);
-		parser_getc(p);
-		return;
-	    } else if (p->ch == '.') {
-		p->sym = B_ELLIP;
-		parser_getc(p);
-		return;
-	    } else {
-		/* not a "dot operator", so back up */
-		parser_ungetc(p);
-	    }
-	    /* Falls through. */
+            if (defining_list(p) && !doing_genseries) {
+                /* allow for '?' as wildcard */
+                if (wildcard_special(p)) {
+                    return;
+                }
+            }
+            p->sym = QUERY;
+            parser_getc(p);
+            return;
+        case '.':
+            if (*p->point == '$') {
+                p->sym = P_DOT;
+                parser_getc(p);
+                return;
+            } else if (isalpha(*p->point)) {
+                /* 2017-01-07 */
+                p->sym = BMEMB;
+                parser_getc(p);
+                return;
+            }
+            parser_getc(p);
+            if (p->ch == '*') {
+                p->sym = B_DOTMULT;
+                parser_getc(p);
+                return;
+            } else if (p->ch == '/') {
+                p->sym = B_DOTDIV;
+                parser_getc(p);
+                return;
+            } else if (p->ch == '^') {
+                p->sym = B_DOTPOW;
+                parser_getc(p);
+                return;
+            } else if (p->ch == '+') {
+                p->sym = B_DOTADD;
+                parser_getc(p);
+                return;
+            } else if (p->ch == '-') {
+                p->sym = B_DOTSUB;
+                parser_getc(p);
+                return;
+            } else if (p->ch == '=') {
+                p->sym = B_DOTEQ;
+                parser_getc(p);
+                return;
+            } else if (p->ch == '>') {
+                p->sym = B_DOTGT;
+                parser_getc(p);
+                if (p->ch == '=') {
+                    p->sym = B_DOTGTE;
+                    parser_getc(p);
+                }
+                return;
+            } else if (p->ch == '<') {
+                p->sym = B_DOTLT;
+                parser_getc(p);
+                if (p->ch == '=') {
+                    p->sym = B_DOTLTE;
+                    parser_getc(p);
+                }
+                return;
+            } else if (p->ch == '!' && *p->point == '=') {
+                p->sym = B_DOTNEQ;
+                parser_getc(p);
+                parser_getc(p);
+                return;
+            } else if (p->ch == '.') {
+                p->sym = B_ELLIP;
+                parser_getc(p);
+                return;
+            } else {
+                /* not a "dot operator", so back up */
+                parser_ungetc(p);
+            }
+            /* Falls through. */
         default:
-	    if (defining_list(p) && lag_range_sym(p)) {
-		p->sym = B_RANGE;
-		parser_getc(p);
-		parser_getc(p);
-		return;
-	    }
-	    if (defining_list(p) && !doing_genseries &&
-		(bare_data_type(p->sym) || closing_sym(p->sym) ||
-		 p->sym == LAG) && *(p->point - 2) == ' ') {
-		/* may be forming a list, but only if there are
-		   spaces between the terms
-		*/
-		p->sym = B_LCAT;
-		return;
-	    }
-	    if (isdigit(p->ch)) {
-		parse_number(p);
-		return;
-	    } else if (p->ch == '.' && isdigit(*p->point)) {
-		parse_number(p);
-		return;
-	    } else if (islower(p->ch) || isupper(p->ch) ||
-		       word_start_special(p->ch)) {
-		getword(p, 0);
-		return;
-	    } else if (p->ch == '"') {
-		p->idstr = get_quoted_string(p, prevsyms[0]);
-		return;
-	    } else if (p->ch == '#' && prevsyms[0] == CSTR) {
-		/* 2023-12-22: an uncaught inline comment? */
-		p->ch = '\0';
-		p->sym = EOT;
-		return;
-	    } else {
-		parser_print_input(p);
-		if (isprint(p->ch)) {
-		    pprintf(p->prn, _("Invalid character '%c'\n"), p->ch);
-		} else {
-		    pprintf(p->prn, _("Unexpected byte 0x%x\n"),
-			    (unsigned char) p->ch);
-		}
-		p->err = E_PARSE;
-		return;
-	    }
-	} /* end ch switch */
+            if (defining_list(p) && lag_range_sym(p)) {
+                p->sym = B_RANGE;
+                parser_getc(p);
+                parser_getc(p);
+                return;
+            }
+            if (defining_list(p) && !doing_genseries &&
+                (bare_data_type(p->sym) || closing_sym(p->sym) ||
+                 p->sym == LAG) && *(p->point - 2) == ' ') {
+                /* may be forming a list, but only if there are
+                   spaces between the terms
+                */
+                p->sym = B_LCAT;
+                return;
+            }
+            if (isdigit(p->ch)) {
+                parse_number(p);
+                return;
+            } else if (p->ch == '.' && isdigit(*p->point)) {
+                parse_number(p);
+                return;
+            } else if (islower(p->ch) || isupper(p->ch) ||
+                       word_start_special(p->ch)) {
+                getword(p, 0);
+                return;
+            } else if (p->ch == '"') {
+                p->idstr = get_quoted_string(p, prevsyms[0]);
+                return;
+            } else if (p->ch == '#' && prevsyms[0] == CSTR) {
+                /* 2023-12-22: an uncaught inline comment? */
+                p->ch = '\0';
+                p->sym = EOT;
+                return;
+            } else {
+                parser_print_input(p);
+                if (isprint(p->ch)) {
+                    pprintf(p->prn, _("Invalid character '%c'\n"), p->ch);
+                } else {
+                    pprintf(p->prn, _("Unexpected byte 0x%x\n"),
+                            (unsigned char) p->ch);
+                }
+                p->err = E_PARSE;
+                return;
+            }
+        } /* end ch switch */
     } /* end while ch != 0 */
 }
 
 const char *getsymb_full (int t, const parser *p)
 {
     if (t == F_DEFMAT) {
-	/* pseudo function */
-	return "DEFMAT";
+        /* pseudo function */
+        return "DEFMAT";
     } else if ((t > F1_MIN && t < F1_MAX) ||
-	(t > F1_MAX && t < F2_MAX) ||
-	(t > F2_MAX && t < FN_MAX)) {
-	return funname(t);
+        (t > F1_MAX && t < F2_MAX) ||
+        (t > F2_MAX && t < FN_MAX)) {
+        return funname(t);
     }
 
     if (t == EOT) {
-	return "EOT";
+        return "EOT";
     }
 
     /* yes, well */
     if (t == OBS) {
-	return "OBS";
+        return "OBS";
     } else if (t == OSL) {
-	return "OSL";
+        return "OSL";
     } else if (t == SUB_ADDR) {
-	return "SUB_ADDR";
+        return "SUB_ADDR";
     } else if (t == DMSTR) {
-	return "DMSTR";
+        return "DMSTR";
     } else if (t == SLRAW) {
-	return "SLRAW";
+        return "SLRAW";
     } else if (t == MSPEC) {
-	return "MSPEC";
+        return "MSPEC";
     } else if (t == SUBSL) {
-	return "SUBSL";
+        return "SUBSL";
     } else if (t == FARGS) {
-	return "FARGS";
+        return "FARGS";
     } else if (t == LIST || t == WLIST) {
-	return "LIST";
+        return "LIST";
     } else if (t == EMPTY) {
-	return "EMPTY";
+        return "EMPTY";
     } else if (t == LISTVAR) {
-	return "LISTVAR";
+        return "LISTVAR";
     } else if (t == BMEMB) {
-	return "BMEMB";
+        return "BMEMB";
     } else if (t == SERIES) {
-	return "SERIES";
+        return "SERIES";
     } else if (t == MAT) {
-	return "MAT";
+        return "MAT";
     } else if (t == UNDEF) {
-	return "UNDEF";
+        return "UNDEF";
     } else if (t == NUM) {
-	return "NUM";
+        return "NUM";
     } else if (t == CNUM) {
-	return "CNUM";
+        return "CNUM";
     } else if (t == IVEC) {
-	return "IVEC";
+        return "IVEC";
     } else if (t == NUM_P) {
-	return "NUM_P";
+        return "NUM_P";
     } else if (t == NUM_M) {
-	return "NUM_M";
+        return "NUM_M";
     } else if (t == DBUNDLE) {
-	return "DBUNDLE";
+        return "DBUNDLE";
     } else if (t == DBMEMB) {
-	return "DBMEMB";
+        return "DBMEMB";
     } else if (t == MMEMB) {
-	return "MMEMB";
+        return "MMEMB";
     } else if (t == DUM_EMPTY) {
-	return "empty";
+        return "empty";
     }
 
     if (p != NULL) {
-	if (t == BUNDLE) {
-	    return p->idstr;
-	} else if (t == ARRAY) {
-	    return p->idstr;
-	} else if (t == UOBJ) {
-	    return p->idstr;
-	} else if (t == CON) {
-	    return constname(p->idnum);
-	} else if (t == DUM) {
-	    return dumname(p->idnum);
-	} else if (t == DVAR) {
-	    return dvarname(p->idnum);
-	} else if (t == MVAR) {
-	    return mvarname(p->idnum);
-	} else if (t == UFUN || t == RFUN) {
-	    return p->idstr;
-	} else if (t == STR || t == CSTR) {
-	    return p->idstr;
-	}
+        if (t == BUNDLE) {
+            return p->idstr;
+        } else if (t == ARRAY) {
+            return p->idstr;
+        } else if (t == UOBJ) {
+            return p->idstr;
+        } else if (t == CON) {
+            return constname(p->idnum);
+        } else if (t == DUM) {
+            return dumname(p->idnum);
+        } else if (t == DVAR) {
+            return dvarname(p->idnum);
+        } else if (t == MVAR) {
+            return mvarname(p->idnum);
+        } else if (t == UFUN || t == RFUN) {
+            return p->idstr;
+        } else if (t == STR || t == CSTR) {
+            return p->idstr;
+        }
     } else {
-	if (t == BUNDLE) {
-	    return "BUNDLE";
-	} else if (t == ARRAY) {
-	    return "ARRAY";
-	} else if (t == UOBJ) {
-	    return "UOBJ";
-	} else if (t == CON) {
-	    return "CON";
-	} else if (t == DUM) {
-	    return "dummy constant";
-	} else if (t == DVAR) {
-	    return "DVAR";
-	} else if (t == MVAR) {
-	    return "MVAR";
-	} else if (t == UFUN) {
-	    return "UFUN";
-	} else if (t == RFUN) {
-	    return "RFUN";
-	} else if (t == STR) {
-	    return "STR";
-	} else if (t == CSTR) {
-	    return "CSTR";
-	}
+        if (t == BUNDLE) {
+            return "BUNDLE";
+        } else if (t == ARRAY) {
+            return "ARRAY";
+        } else if (t == UOBJ) {
+            return "UOBJ";
+        } else if (t == CON) {
+            return "CON";
+        } else if (t == DUM) {
+            return "dummy constant";
+        } else if (t == DVAR) {
+            return "DVAR";
+        } else if (t == MVAR) {
+            return "MVAR";
+        } else if (t == UFUN) {
+            return "UFUN";
+        } else if (t == RFUN) {
+            return "RFUN";
+        } else if (t == STR) {
+            return "STR";
+        } else if (t == CSTR) {
+            return "CSTR";
+        }
     }
 
     switch (t) {
     case B_ASN:
-	return "=";
+        return "=";
     case B_ADD:
     case U_POS:
-	return "+";
+        return "+";
     case B_SUB:
     case U_NEG:
-	return "-";
+        return "-";
     case B_MUL:
-	return "*";
+        return "*";
     case B_TRMUL:
-	return "'";
+        return "'";
     case B_DIV:
-	return "/";
+        return "/";
     case B_LDIV:
-	return "\\";
+        return "\\";
     case B_MOD:
-	return "%";
+        return "%";
     case B_POW:
-	return "^";
+        return "^";
     case B_EQ:
-	return "==";
+        return "==";
     case B_NEQ:
-	return "!=";
+        return "!=";
     case B_GT:
-	return ">";
+        return ">";
     case B_LT:
-	return "<";
+        return "<";
     case B_GTE:
-	return ">=";
+        return ">=";
     case B_LTE:
-	return "<=";
+        return "<=";
     case B_AND:
-	return "&&";
+        return "&&";
     case B_JOIN:
-	return "JOIN";
+        return "JOIN";
     case B_RANGE:
-	return " to ";
+        return " to ";
     case B_ELLIP:
-	return "..";
+        return "..";
     case U_ADDR:
-	return "&";
+        return "&";
     case B_OR:
-	return "||";
+        return "||";
     case U_NOT:
-	return "!";
+        return "!";
     case G_LPR:
-	return "(";
+        return "(";
     case G_RPR:
-	return ")";
+        return ")";
     case G_LBR:
-	return "[";
+        return "[";
     case G_RBR:
-	return "]";
+        return "]";
     case G_LCB:
-	return "{";
+        return "{";
     case G_RCB:
-	return "}";
+        return "}";
     case B_DOTMULT:
-	return ".*";
+        return ".*";
     case B_DOTDIV:
-	return "./";
+        return "./";
     case B_DOTPOW:
-	return ".^";
+        return ".^";
     case B_DOTADD:
-	return ".+";
+        return ".+";
     case B_DOTSUB:
-	return ".-";
+        return ".-";
     case B_DOTEQ:
-	return ".=";
+        return ".=";
     case B_DOTGT:
-	return ".>";
+        return ".>";
     case B_DOTLT:
-	return ".<";
+        return ".<";
     case B_DOTGTE:
-	return ".>=";
+        return ".>=";
     case B_DOTLTE:
-	return ".<=";
+        return ".<=";
     case B_DOTNEQ:
-	return ".!=";
+        return ".!=";
     case B_DOTASN:
-	return "dot-assign";
+        return "dot-assign";
     case B_KRON:
-	return "**";
+        return "**";
     case B_HCAT:
-	return "~";
+        return "~";
     case B_VCAT:
-	return "|";
+        return "|";
     case B_LCAT:
-	return "LCAT";
+        return "LCAT";
     case P_COM:
-	return ",";
+        return ",";
     case P_DOT:
-	return ".";
+        return ".";
     case P_SEMI:
-	return ";";
+        return ";";
     case P_COL:
-	return ":";
+        return ":";
     case QUERY:
-	return "query";
+        return "query";
     case LAG:
-	return "lag";
+        return "lag";
     default:
-	break;
+        break;
     }
 
     return "unknown";
