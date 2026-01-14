@@ -1405,10 +1405,6 @@ static char *get_quoted_string (parser *p, int prevsym)
         }
     }
 
-#if LDEBUG
-    fprintf(stderr, " HERE 4, s = '%s'\n", s);
-#endif
-
     return s;
 }
 
