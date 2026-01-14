@@ -65,36 +65,6 @@ static void printf_series (int v, const DATASET *dset,
     }
 }
 
-static int printf_escape (int c, PRN *prn)
-{
-    switch (c) {
-    case 'n':
-	pputc(prn, '\n');
-	break;
-    case 'r':
-        pputc(prn, '\r');
-	break;
-    case 't':
-	pputc(prn, '\t');
-	break;
-    case 'v':
-	pputc(prn, '\v');
-	break;
-    case '\\':
-	pputc(prn, '\\');
-	break;
-    case '"':
-	pputc(prn, '"');
-	break;
-    default:
-	/* treat as literal backslash */
-	pputc(prn, '\\');
-	pputc(prn, c);
-    }
-
-    return 0;
-}
-
 static char *printf_get_string (char *s, DATASET *dset,
 				int t, int *err)
 {
@@ -783,6 +753,7 @@ static int real_do_printf (const char *format,
     if (format != NULL) {
 	const char *p = format;
 	const char *q = args;
+	char c;
 
 	while (*p && !err) {
 	    if (*p == '%' && *(p+1) == '%') {
@@ -791,8 +762,11 @@ static int real_do_printf (const char *format,
 	    } else if (*p == '%') {
 		err = print_arg(&p, &q, dset, t, prn);
 	    } else if (*p == '\\') {
-		err = printf_escape(*(p+1), prn);
-		p += 2;
+		c = printf_escape(*(p+1), &err);
+		if (!err) {
+		    pputc(prn, c);
+		    p += 2;
+		}
 	    } else {
 		pputc(prn, *p);
 		p++;
@@ -864,6 +838,7 @@ char *do_sprintf_function (const char *format, const char *args,
     const char *p = format;
     const char *q = args;
     char *buf = NULL;
+    char c;
     PRN *prn;
 
     if (format == NULL || *format == '\0') {
@@ -885,8 +860,11 @@ char *do_sprintf_function (const char *format, const char *args,
 	} else if (*p == '%') {
 	    *err = print_arg(&p, &q, dset, -1, prn);
 	} else if (*p == '\\') {
-	    printf_escape(*(p+1), prn);
-	    p += 2;
+	    c = printf_escape(*(p+1), err);
+	    if (!*err) {
+		pputc(prn, c);
+		p += 2;
+	    }
 	} else {
 	    pputc(prn, *p);
 	    p++;

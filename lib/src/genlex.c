@@ -27,6 +27,7 @@
 #include "gretl_bundle.h"
 #include "uservar_priv.h"
 #include "gretl_cmatrix.h"
+#include "libset.h"
 
 #define NUMLEN 32
 #define HEXLEN 11
@@ -1318,6 +1319,27 @@ static int alt_double_quote_pos (const char *s, int *esc)
     return ret;
 }
 
+static char *escape_all (char *s, int *err)
+{
+    char *e = calloc(strlen(s) + 1, 1);
+    char *p = s;
+    char c;
+    int i = 0;
+
+    while (*s && !*err) {
+	if (*s == '\\') {
+	    c = printf_escape(*(s+1), err);
+	    e[i++] = c;
+	    s += 2;
+	} else {
+	    e[i++] = *s;
+	}
+    }
+    free(p);
+
+    return e;
+}
+
 static char *escape_quotes (char *s)
 {
     int i;
@@ -1333,6 +1355,7 @@ static char *escape_quotes (char *s)
 
 static char *get_quoted_string (parser *p, int prevsym)
 {
+    int raw = raw_strings_on();
     char *s = NULL;
     int esc = 0;
     int n;
@@ -1340,14 +1363,15 @@ static char *get_quoted_string (parser *p, int prevsym)
 #if LDEBUG
     fprintf(stderr, "get_quoted_string: sym = '%s', prevsym '%s'\n",
             getsymb(p->sym), getsymb(prevsym));
-    fprintf(stderr, " p->ch = '%c', p->point = '%s'\n", p->ch, p->point);
+    fprintf(stderr, " p->ch = '%c', p->point = '%s', raw = %d\n",
+	    p->ch, p->point, raw);
 #endif
 
     if (prevsym == F_SPRINTF || prevsym == F_PRINTF) {
-        /* look for a matching non-escaped double-quote,
-           allowance made for "\\" as itself an escape
-        */
-        n = double_quote_position(p->point);
+	n = double_quote_position(p->point);
+    } else if (!raw) {
+	n = double_quote_position(p->point);
+	esc = 2;
     } else {
         /* look for a matching non-escaped double-quote when
            backslash is special only when preceding a double
@@ -1357,12 +1381,14 @@ static char *get_quoted_string (parser *p, int prevsym)
     }
 
     if (n >= 0) {
-        s = gretl_strndup(p->point, n);
-        if (esc == 1) {
-            /* "\"" is accepted as an escape, but that's all */
-            escape_quotes(s);
-        }
-        parser_advance(p, n + 1);
+	s = gretl_strndup(p->point, n);
+	if (esc == 2 && strchr(s, '\\')) {
+	    s = escape_all(s, &p->err);
+	} else if (esc == 1) {
+	    /* "\"" is accepted as an escape, but that's all */
+	    escape_quotes(s);
+	}
+	parser_advance(p, n + 1);
     } else {
         parser_print_input(p);
         pprintf(p->prn, _("Unmatched '%c'\n"), '"');
@@ -1378,6 +1404,10 @@ static char *get_quoted_string (parser *p, int prevsym)
             p->sym = CSTR;
         }
     }
+
+#if LDEBUG
+    fprintf(stderr, " HERE 4, s = '%s'\n", s);
+#endif
 
     return s;
 }

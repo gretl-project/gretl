@@ -3528,3 +3528,33 @@ char *gretl_change_case (const char *s, GretlCase c, int *err)
     return ret;
 }
 
+/**
+ * printf_escape:
+ * @c: the byte following backslash in a string.
+ * @err: location to receive error code.
+ *
+ * Returns: the byte indicated by the escape sequence of
+ * backslash follwed by @c, or a NUL byte if there is no
+ * such sequence.
+ */
+
+char printf_escape (int c, int *err)
+{
+    if (c == 'n') {
+	return '\n';
+    } else if (c == 'r') {
+	return '\r';
+    } else if (c == '\t') {
+	return '\t';
+    } else if (c == 'v') {
+	return '\v';
+    } else if (c == '\\') {
+	return '\\';
+    } else if (c == '"') {
+	return '"';
+    } else {
+	gretl_errmsg_sprintf(_("Unknown escape sequence '\\%c'"), c);
+	*err = E_PARSE;
+	return '\0';
+    }
+}
