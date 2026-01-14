@@ -4770,6 +4770,35 @@ static int retrieve_johansen_basics (GRETL_VAR *var,
     return err;
 }
 
+/* Load constant plus seasonals, exogenous regressors, trend
+   (if present, in each case) from var->X into @R.
+*/
+
+static int load_exo_terms (const GRETL_VAR *var,
+			   gretl_matrix *R)
+{
+    double *dest = R->val + var->T;
+    const double *src;
+    size_t sz = var->T * sizeof(double);
+    int k = levels_order(var);
+    int n = var->neqns;
+    int t, j;
+
+    for (t=0; t<var->T; t++) {
+        gretl_matrix_set(R, t, 0, 1.0);
+    }
+
+    src = var->X->val + (var->ifc + n * (k-1)) * var->T;
+
+    for (j=1; j<R->cols; j++) {
+	memcpy(dest, src, sz);
+	dest += var->T;
+	src += var->T;
+    }
+
+    return 0;
+}
+
 static double get_x_diff (const gretl_matrix *X,
 			  const gretl_matrix *P,
 			  int s, int j)
@@ -4798,6 +4827,7 @@ static double get_x_diff (const gretl_matrix *X,
 static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
 				     const gretl_matrix *b,
 				     DATASET *dset,
+				     gretl_matrix *R,
 				     int *err)
 {
     gretl_matrix *S = NULL;
@@ -4807,6 +4837,10 @@ static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
     int p = var->neqns;
     int k = levels_order(var);
     int r = jrank(var);
+
+    if (R != NULL) {
+	load_exo_terms(var, R);
+    }
 
     if (k > 1) {
 	/* We'll need X values prior to the estimation range,
@@ -4850,7 +4884,19 @@ static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
 	}
     }
 
-    if (!*err) {
+    if (!*err && R != NULL) {
+	gretl_matrix *E = gretl_matrix_alloc(var->T, M->cols);
+
+	if (E == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *err = gretl_matrix_multi_ols(M, R, NULL, E, NULL);
+	}
+	if (!*err) {
+	    S = gretl_covariance_matrix(E, 0, 0, err);
+	}
+	gretl_matrix_free(E);
+    } else if (!*err) {
 	S = gretl_covariance_matrix(M, 0, 0, err);
     }
 
@@ -4878,15 +4924,38 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
     gretl_matrix *b = NULL;
     gretl_matrix *tmp = NULL;
     gretl_matrix *xiT = NULL;
+    gretl_matrix *R = NULL;
     gretl_matrix *Sigma = NULL;
     double x;
     int p = var->neqns;
     int k = levels_order(var);
+    int nreg = 0;
     int i, j, nc;
     int err = 0;
 
+    /* Will we need regressors in forming Sigma? Yes, if
+       we have any unrestricted exogenous terms.
+    */
+    nreg = ji->seasonals;
+    if (var->xlist != NULL) {
+	nreg += var->xlist[0];
+    }
+    if (ji->code == J_UNREST_TREND) {
+	nreg++;
+    }
+    if (nreg > 0) {
+        nreg++; /* for the constant */
+    }
+    if (nreg > 0) {
+	R = gretl_matrix_alloc(var->T, nreg);
+	if (R == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
     VC = gretl_matrix_alloc(p*p, p*p);
     if (VC == NULL) {
+	gretl_matrix_free(R);
 	return E_ALLOC;
     }
 
@@ -4957,7 +5026,7 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
 	}
     }
 
-    Sigma = johansen_Sigma(var, b, dset, &err);
+    Sigma = johansen_Sigma(var, b, dset, R, &err);
 
     if (!err) {
 	/* V2 = xiT * invpd(Sigma) * xiT' */
@@ -4973,6 +5042,7 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
  bailout:
 
     gretl_matrix_free(Sigma);
+    gretl_matrix_free(R);
     gretl_matrix_free(b);
     gretl_matrix_block_destroy(B);
 

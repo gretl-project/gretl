@@ -2275,17 +2275,6 @@ static void record_freq_matrix (FreqDist *fd)
     }
 }
 
-static int freq_plot_wanted (PlotType ptype, gretlopt opt,
-			     int *err)
-{
-    if (opt & OPT_Q) {
-	/* handle legacy option: --quiet = no plot */
-	return 0;
-    } else {
-	return gnuplot_graph_wanted(ptype, opt, err);
-    }
-}
-
 /* Wrapper function: get the distribution, print it if
    wanted, graph it if wanted, then free stuff.
 */
@@ -2312,7 +2301,7 @@ int freqdist (int varno, const DATASET *dset,
 	ptype = PLOT_FREQ_SIMPLE;
     }
 
-    do_graph = freq_plot_wanted(ptype, opt, &err);
+    do_graph = gnuplot_graph_wanted(ptype, opt, &err);
 
     if (!err) {
 	err = check_freq_opts(opt, &n_bins, &fmin, &fwid);
@@ -3771,7 +3760,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	return E_DATA;
     }
 
-    if (opt & (OPT_Q | OPT_S)) {
+    if (opt & OPT_Q) {
 	do_print = 0;
 	BPMcols = 1;
     }
@@ -4226,7 +4215,7 @@ int xcorrgram (const int *list, int order, DATASET *dset,
 	return err;
     }
 
-    if (opt & (OPT_Q | OPT_S)) {
+    if (opt & OPT_Q) {
 	/* suppress printing */
 	do_print = 0;
     }

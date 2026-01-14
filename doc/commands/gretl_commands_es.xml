@@ -2284,7 +2284,7 @@
 	  <effect>Mira abajo</effect>
 	</option>
 	<option>
-	  <flag>--silent</flag>
+	  <flag>--quiet</flag>
 	  <effect>No presenta nada</effect>
 	</option>
 	<option>
@@ -5670,6 +5670,7 @@
 	<lit>y2</lit> frente a <lit>x</lit>, de tal modo que <lit>y2</lit> se
 	representa con una línea mientras <lit>y1</lit> con puntos.
       </para>
+      <subhead>Dos ejes y</subhead>
       <para>
 	Cuando <repl>yvars</repl> contiene más de una variable, podría ser
 	preferible utilizar dos ejes y (a la izquierda y a la derecha). Por defecto,
@@ -5678,7 +5679,10 @@
 	opciones (mutuamente excluyentes) para anular lo predeterminado:
 	<opt>single-yaxis</opt> evita el uso de un segundo eje, mientras que
 	<opt>y2axis=</opt><repl>yvar</repl> especifica que se represente una
-	cierta variable (únicamente) en relación al segundo eje.
+	cierta variable (únicamente) en relación al segundo eje. El parámetro
+	<repl>yvars</repl> puede ser el nombre de una única variable, el nombre
+	de una lista de variables, o dous (o más) nombres de variables
+	separados mediante comas (sin espacios en blanco).
       </para>
 	      <subhead>Gráficas factorizadas</subhead>
       <para>
@@ -8019,7 +8023,7 @@
     <usage>
       <arguments>
         <argument optional="true" separated="true">orden</argument>
-	      <argument>listaretardos</argument>
+	      <argument>listavariables</argument>
       </arguments>
       <options>
 	<option>
@@ -12853,6 +12857,7 @@
 	Se presenta la cadena de texto en cuestión, seguida de un carácter
 	de línea nueva.
       </para>
+      <subhead>Presentar rangos</subhead>
       <para>
 	Puedes utilizar la opción <opt>range</opt> para controlar el volumen de
 	información que se presenta. Los valores (enteros) de los marcadores
@@ -12866,8 +12871,9 @@
 	estos marcadores en formato numérico, o mediante nombres de variables
 	escalares previamente definidas. Si omites <repl>inicio</repl>, se
 	considera implícitamente igual a 1; y si omites <repl>parada</repl>,
-	eso significa ir hasta el final del todo. Con series y listas, ten en
-	cuenta que los marcadores se refieren al rango muestral vigente.
+	eso significa ir hasta el final del todo (un -1 implícito). Con series
+	y listas, ten en cuenta que los marcadores se refieren al rango
+	muestral vigente.
       </para>
       <para>
 	Las opciones <opt>head</opt> y <opt>tail</opt> ofrecen un modo rápido
@@ -12876,10 +12882,18 @@
 	líneas para cadenas de texto con múltiples líneas). Por defecto, el número
 	de líneas que se presentan en cada caso es de 5; pero se puede usar el
 	parámetro opcional (que debe ser un número entero positivo) para
-	ajustar esto. También hay disponibles versiones abreviadas de estas dos
-	opciones: <lit>-h</lit> y <lit>-t</lit>, respectivamente, que implican
-	5 líneas en cada caso por defecto.
+	ajustar esto. Hay disponibles versiones abreviadas de estas opciones:
+	<lit>-h</lit> y <lit>-t</lit>, respectivamente, que implican 5 líneas
+	en cada caso por defecto. Las siguientes instrucciones ilustran el uso
+	para unha lista <lit>L</lit>.
       </para>
+      <code>
+	print L -h        # Muestra las 5 primeras líneas
+	print L --head=10 # Las 10 primeras líneas
+	print L -t        # Muestra las 5 últimas líneas
+	print L --tail=3  # Las 3 últimas líneas
+      </code>
+      <subhead>Casos especiales</subhead>
       <para>
 	La opción <opt>tree</opt> es específica para presentar un
 	bundle de GRETL. El efecto de ello es que, si el paquete especificado
@@ -18009,7 +18023,7 @@
 	  <effect>Mira abajo</effect>
         </option>
         <option>
-	  <flag>--silent</flag>
+	  <flag>--quiet</flag>
 	  <effect>Omite la presentación del resultado</effect>
         </option>
       </options>
@@ -18043,6 +18057,12 @@
 	por lotes), o un nombre de archivo. El efecto de proporcionar un
 	nombre de archivo es como se describió para la opción <opt>output</opt>
 	de la instrucción <cmdref targ="gnuplot"/>.
+      </para>
+      <para>
+	Al completarse con éxito esta instrucción, la función
+	<fncref targ="$result"/> proporciona los resultados en formato de
+	una matriz con dos columnas, con los retardos en la primera columna
+	y las correlaciones cruzadas en la segunda.
       </para>
     </description>
 

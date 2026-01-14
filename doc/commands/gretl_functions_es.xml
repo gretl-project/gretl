@@ -1361,11 +1361,12 @@
     <function name="$vecGamma" section="access" output="matrix">
       <description>
 	<para>
-	  Debe ejecutarse después de estimar un VECM y devuelve una matriz en la que
-	  las matrices Gamma (con los coeficientes de las diferencias retardadas de las
-	  variables cointegradas) se agrupan unas al lado de las otras. Cada fila
-	  indica una ecuación; para un VECM con nivel de retardo <math>p</math>
-	  existen <math>p</math> &minus; 1 submatrices.
+	  Debe ejecutarse después de estimar un VECM y devuelve una matriz
+	  en la que las matrices Gamma (con los coeficientes de las diferencias
+	  retardadas de las <math>n</math> variables endógenas) se agrupan
+	  unas al lado de las otras. Cada fila indica una ecuación; para un VECM
+	  con nivel de retardo <math>p</math> existen <math>p</math> &minus; 1
+	  submatrices, cada una de dimensión <by r="n" c="n"/>.
 	</para>
       </description>
     </function>
@@ -4840,16 +4841,18 @@
 	  Funciona del mismo modo que la función <fncref targ="eigen"/>,
 	  excepto que el argumento <argname>A</argname> debe ser simétrico
 	  (por lo que, en este caso, se pueden acortar los cálculos), y los
-	  autovalores se devuelven en orden ascendente. Si deseas obtener los
-	  autovalores en orden descendente (y tener los autovectores reordenados
-	  en consecuencia), puedes hacer lo siguiente:
+	  autovalores se devuelven en orden ascendente. Si deseas obtener
+	  los autovalores en orden descendente (y tener los autovectores
+	  reordenados en consecuencia), puedes podes utilizar la función
+	  <fncref targ="mreverse"/>:
 	</para>
 	<code>
 	  matrix U
 	  e = eigensym(A, &amp;U)
-	  Tmp = msortby((-e' | U)',1)'
-	  e = -Tmp[1,]'
-	  U = Tmp[2:,]
+	  # Autovalores de menor a mayor
+	  print e U
+	  e = mreverse(e)
+	  U = mreverse(U')'
 	  # Ahora los autovalores de mayor a menor
 	  print e U
 	</code>
@@ -11112,6 +11115,25 @@
 	  elemento ausente en $X$ se utiliza el algoritmo EM de
 	  <cite key="stock-watson2002">Stock y Watson (2002)</cite>.
 	</para>
+	<para>
+	  El carácter del cálculo para el caso de la matriz de covarianzas se
+	  ilustra en el siguiente ejemplo. La última línea debería presentar
+	  un 0 (o tal vez un valor muy pequeño).
+	</para>
+	<code>
+	  matrix A = mnormal(30,10)
+	  matrix v = empty # Para guardar los autovalores
+
+	  # Versión manual utilizando la función 'eigensym'
+	  m = cdemean(A)
+	  eigensym(m'm, &amp;v)
+	  pe = m * mreverse(v')'
+
+	  # Función propia 'princomp' utilizando la covarianza
+	  pp = princomp(A, cols(A), TRUE)
+
+	  eval max(abs(pe - pp))
+	</code>
 	<para>
 	  <seelist>
             <fncref targ="eigensym"/>
