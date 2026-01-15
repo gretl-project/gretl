@@ -3104,7 +3104,7 @@ static int install_package (const char *pkgname,
         }
 
         if (!err && !scripts) {
-	    package_check_dependencies(fullname, state, prn);
+	    err = package_check_dependencies(fullname, state, prn);
         }
 
         if (!err && gretl_messages_on()) {
