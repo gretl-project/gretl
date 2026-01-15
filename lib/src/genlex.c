@@ -1395,6 +1395,10 @@ static char *get_quoted_string (parser *p, int prevsym)
         p->err = E_PARSE;
     }
 
+#if LDEBUG
+    fprintf(stderr, " result: s = '%s'\n", s);
+#endif
+
     if (!p->err) {
         if (p->ch == '.' && *p->point == '$') {
             /* maybe quoted name of saved model followed by
