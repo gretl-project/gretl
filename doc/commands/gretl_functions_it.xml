@@ -12151,7 +12151,7 @@
 	  Laplace &amp; \texttt{l} o \texttt{L} &amp; media &amp; scala &amp; --\\
 	  Generalized Error &amp; \texttt{e} o \texttt{E} &amp; forma &amp; -- &amp; --\\
 	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma1 &amp; --\\
-	  Beta-Binomiale &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma1
+	  Beta-Binomiale &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma1 \\
 	  Generic discrete &amp; \texttt{disc} &amp; $\mathbf{p}$ &amp; -- &amp; --
 	</tabular>
 	<para>
