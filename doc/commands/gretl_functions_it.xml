@@ -1485,7 +1485,7 @@
 
   </funclist>
 
-  <funclist name="Stringhe predefinite" ref="string_constants">
+  <funclist name="Built-in strings" ref="string_constants">
 
     <function name="$dotdir" section="access" output="string">
       <description>
@@ -1605,7 +1605,7 @@
 
   </funclist>
 
-  <funclist name="Funzioni vere e proprie" ref="functions">
+  <funclist name="Functions proper" ref="functions">
 
     <function name="abs" section="math" output="asinput">
       <fnargs>
@@ -8824,7 +8824,7 @@
 	  saltare osservazioni mancanti. Se viene
 	  specificato un valore non-zero per il secondo argomento
 	  (opzionale), i valori mancanti vengono ignorati, altrimenti
-	  il ​​risultato è <lit>NA</lit> per tutte le colonne che
+	  il risultato è <lit>NA</lit> per tutte le colonne che
 	  contengono valori mancanti.
 	</para>
 	<para>
