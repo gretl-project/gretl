@@ -1307,7 +1307,7 @@ static int alt_double_quote_pos (const char *s, int *esc)
 
     for (i=0; s[i]; i++) {
         if (s[i] == '"') {
-            if (i == 0 || s[i-1] != '\\' || s[i+1] == '\0') {
+            if (i == 0 || s[i-1] != '\\') {
                 ret = i;
                 break;
             } else {
@@ -1332,7 +1332,7 @@ static char *escape_all (char *s, int *err)
 	    e[i++] = c;
 	    s += 2;
 	} else {
-	    e[i++] = *s;
+	    e[i++] = *s++;
 	}
     }
     free(p);
@@ -1361,7 +1361,7 @@ static char *get_quoted_string (parser *p, int prevsym)
     int n;
 
 #if LDEBUG
-    fprintf(stderr, "get_quoted_string: sym = '%s', prevsym '%s'\n",
+    fprintf(stderr, "genlex: get_quoted_string: sym = '%s', prevsym '%s'\n",
             getsymb(p->sym), getsymb(prevsym));
     fprintf(stderr, " p->ch = '%c', p->point = '%s', raw = %d\n",
 	    p->ch, p->point, raw);
