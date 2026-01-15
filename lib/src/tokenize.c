@@ -866,11 +866,10 @@ static int wild_spn (const char *s)
     return strspn(s, ok);
 }
 
-/* We allow here for special behavior with PRINT, whereby
-   '\"' is interpreted as an escaped double-quote, unless
-   it occurs at the end of the string literal. We set *esc
-   to non-zero if @s contains any occurrences of the
-   special combination of bytes.
+/* We allow here for special behavior with PRINT, whereby '\"' is
+   interpreted as an escaped double-quote, unless it occurs at the
+   end of the input. We set *esc to non-zero if @s contains any
+   occurrences of this special combination of bytes.
 */
 
 static int closing_quote_pos (const char *s, int ci, int *esc)
