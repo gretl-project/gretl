@@ -4279,6 +4279,10 @@ int xcorrgram (const int *list, int order, DATASET *dset,
 		break;
 	    }
 	}
+#if 0 /* is this really what we want? */
+	xname = plotname(dset, list[1], 1);
+	yname = plotname(dset, list[2], 1);
+#endif
 	err = xcorrgm_graph(xname, yname, xcf->val, p, pm, allpos);
     }
 

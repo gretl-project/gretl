@@ -3544,7 +3544,7 @@ char printf_escape (int c, int *err)
 	return '\n';
     } else if (c == 'r') {
 	return '\r';
-    } else if (c == '\t') {
+    } else if (c == 't') {
 	return '\t';
     } else if (c == 'v') {
 	return '\v';
