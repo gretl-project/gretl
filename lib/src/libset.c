@@ -166,7 +166,6 @@ setvar setvars[] = {
     { ROBUST_Z,     "robust_z", CAT_ROBUST },
     { MWRITE_G,     "mwrite_g", CAT_BEHAVE },
     { MPI_USE_SMT,  "mpi_use_smt", CAT_BEHAVE },
-    { RAW_STRINGS,  "raw_strings", CAT_BEHAVE },
     { STATE_FLAG_MAX, NULL },
     /* small integers */
     { GRETL_OPTIM,  "optimizer", CAT_NUMERIC, offsetof(set_state,optim) },
@@ -562,7 +561,7 @@ static void state_vars_copy (set_state *sv)
 }
 
 static set_state default_state = {
-    ECHO_ON | MSGS_ON | WARNINGS | SKIP_MISSING | RAW_STRINGS, /* .flags */
+    ECHO_ON | MSGS_ON | WARNINGS | SKIP_MISSING, /* .flags */
     OPTIM_AUTO,     /* .optim */
     NORM_PHILLIPS,  /* .vecm_norm */
     ML_UNSET,       /* .garch_vcv */
@@ -655,15 +654,6 @@ int gretl_comments_on (void)
 	return 0;
     } else {
 	return comments_on;
-    }
-}
-
-int raw_strings_on (void)
-{
-    if (check_for_state()) {
-	return 1;
-    } else {
-	return flag_to_bool(state, RAW_STRINGS);
     }
 }
 

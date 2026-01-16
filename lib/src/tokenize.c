@@ -764,9 +764,9 @@ static int push_delimited_token (CMD *c, const char *tok,
 
 static int push_quoted_token (CMD *c, const char *s,
 			      int len, int pos,
-			      int raw, int esc)
+			      int esc)
 {
-    char *tok = calloc(len + 1, 1);
+    char *tok = malloc(len + 1);
     int err = 0;
 
     if (tok == NULL) {
@@ -775,30 +775,22 @@ static int push_quoted_token (CMD *c, const char *s,
 	const char *p = s + 1;
 	int i = 0;
 
-	if (c->ci == PRINT && !raw) {
-	    /* apply full escaping */
-	    int j;
-
-	    for (j=0; j<len && !err; ) {
-		if (p[j] == '\\') {
-		    tok[i++] = printf_escape(p[j+1], &err);
-		    j += 2;
-		} else {
-		    tok[i++] = p[j++];
-		}
-	    }
-	} else if (c->ci == PRINTF || (c->ci == PRINT && !esc)) {
+	if (c->ci == PRINTF || (c->ci == PRINT && !esc)) {
 	    /* either a format string, or "print" with no
-	       backslash-quote escapes: print 'as is'
+	       backslash-quote escapes
 	    */
 	    *tok = '\0';
 	    strncat(tok, p, len);
 	} else {
-	    /* escape quotes only */
+	    /* unescape escaped quotes */
 	    while (*p) {
 		if (*p == '\\' && *(p+1) == '"') {
-		    tok[i++] = '"';
-		    p += 2;
+		    if (*(p+2) == '\0') {
+			tok[i++] = *p++;
+		    } else {
+			tok[i++] = '"';
+			p += 2;
+		    }
 		} else if (*p == '"') {
 		    tok[i] = '\0';
 		    break;
@@ -874,27 +866,33 @@ static int wild_spn (const char *s)
     return strspn(s, ok);
 }
 
-/* We allow here for special behavior with PRINT, whereby '\"' is
-   interpreted as an escaped double-quote.  We set *esc to non-zero if
-   @s contains any occurrences of this combination of bytes.
+/* We allow here for special behavior with PRINT, whereby
+   '\"' is interpreted as an escaped double-quote, unless
+   it occurs at the end of the string literal. We set *esc
+   to non-zero if @s contains any occurrences of the
+   special combination of bytes.
 */
 
-static int closing_quote_pos (const char *s, int ci,
-			      int raw, int *esc)
+static int closing_quote_pos (const char *s, int ci, int *esc)
 {
     int i, j, bsl;
 
     for (i=1; s[i]; i++) {
-	if (s[i] == '"' && raw && ci == PRINT) {
+	if (s[i] == '"' && ci == PRINT) {
 	    if (s[i-1] == '\\') {
-		/* the quote is escaped */
-		*esc = 1;
+		if (s[i+1] == '\0') {
+		    /* got the closer */
+		    return i-1;
+		} else {
+		    /* the quote is escaped */
+		    *esc = 1;
+		}
 	    } else {
 		/* not preceded by backslash */
 		return i-1;
 	    }
 	} else if (s[i] == '"') {
-	    /* not plain PRINT, or not raw */
+	    /* not plain PRINT */
 	    bsl = 0;
 	    for (j=i-1; j>=1; j--) {
 		if (s[j] == '\\') {
@@ -3546,7 +3544,6 @@ static int tokenize_line (ExecState *state, DATASET *dset,
     int n, m, pos = 0;
     int wild_ok = 0;
     int want_fname = 0;
-    int raw = raw_strings_on();
     int err = 0;
 
 #if CDEBUG || TDEBUG
@@ -3631,12 +3628,12 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	} else if (*s == '"') {
 	    int esc = 0;
 
-	    n = closing_quote_pos(s, cmd->ci, raw, &esc);
+	    n = closing_quote_pos(s, cmd->ci, &esc);
 	    if (n < 0) {
 		gretl_errmsg_sprintf(_("Unmatched '%c'\n"), '"');
 		err = E_PARSE;
 	    } else {
-		err = push_quoted_token(cmd, s, n, pos, raw, esc);
+		err = push_quoted_token(cmd, s, n, pos, esc);
 	    }
 	    n += 2;
 	} else if ((n = symbol_spn(s)) > 0) {
