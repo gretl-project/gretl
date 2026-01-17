@@ -12982,9 +12982,9 @@
 	The maximum length of a format string is 127 characters.  The
 	escape sequences <lit>\n</lit> (newline), <lit>\r</lit>
 	(carriage return), <lit>\t</lit> (tab), <lit>\v</lit>
-	(vertical tab) and <lit>\\</lit> (literal backslash) are
-	recognized.  To print a literal percent sign, use
-	<lit>%%</lit>.
+	(vertical tab), <lit>\"</lit> (literal double-quote) and
+	<lit>\\</lit> (literal backslash) are recognized.  To print a
+	literal percent sign, use <lit>%%</lit>.
       </para>
       <para>
 	As in C, numerical values that form part of the format (width
