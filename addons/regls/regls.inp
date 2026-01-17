@@ -389,7 +389,7 @@ function bundle regls (series depvar, list indeps,
 
    if !exists(parms)
       # an empty bundle will do
-      bundle parms = null
+      bundle parms = empty
    endif
 
    # initialize the return bundle
