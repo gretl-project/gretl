@@ -763,10 +763,14 @@ static int real_do_printf (const char *format,
 		err = print_arg(&p, &q, dset, t, prn);
 	    } else if (*p == '\\') {
 		c = printf_escape(*(p+1), &err);
-		if (!err) {
+		if (c == 0) {
+		    /* tolerate slop! */
+		    pputc(prn, *p);
+		    pputc(prn, *(p+1));
+		} else {
 		    pputc(prn, c);
-		    p += 2;
 		}
+		p += 2;
 	    } else {
 		pputc(prn, *p);
 		p++;
@@ -861,10 +865,14 @@ char *do_sprintf_function (const char *format, const char *args,
 	    *err = print_arg(&p, &q, dset, -1, prn);
 	} else if (*p == '\\') {
 	    c = printf_escape(*(p+1), err);
-	    if (!*err) {
+	    if (c == 0) {
+		/* tolerate slop! */
+		pputc(prn, *p);
+		pputc(prn, *(p+1));
+	    } else {
 		pputc(prn, c);
-		p += 2;
 	    }
+	    p += 2;
 	} else {
 	    pputc(prn, *p);
 	    p++;

@@ -3528,6 +3528,8 @@ char *gretl_change_case (const char *s, GretlCase c, int *err)
     return ret;
 }
 
+#define TOLERATE_SLOP 1
+
 /**
  * printf_escape:
  * @c: the byte following backslash in a string.
@@ -3553,8 +3555,13 @@ char printf_escape (int c, int *err)
     } else if (c == '"') {
 	return '"';
     } else {
+#if TOLERATE_SLOP
+	/* treat the preceding backslash as literal */
+	return '\0';
+#else
 	gretl_errmsg_sprintf(_("Unknown escape sequence '\\%c'"), c);
 	*err = E_PARSE;
 	return '\0';
+#endif
     }
 }
