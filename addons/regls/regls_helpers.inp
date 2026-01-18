@@ -130,6 +130,7 @@ function void glmnet_multiprint (const matrix RB, const matrix Rlam,
    scalar den = sdc(ym) * b.lmax
    bundle tmp = _(B=RB, lambda=Rlam * n / den)
    tmp.estimator = b.estimator
+   tmp.lfrac = b.lfrac
    regls_multiprint(tmp, y, X)
 end function
 
