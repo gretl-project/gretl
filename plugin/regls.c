@@ -339,10 +339,6 @@ static int regls_set_Xty (regls_info *ri)
     int err = 0;
 
     if (ri->Xty == NULL) {
-	ri->Xty = gretl_matrix_alloc(ri->X->cols, 1);
-	if (ri->Xty == NULL) {
-	    err = E_ALLOC;
-	}
         ri->Xty = gretl_matrix_alloc(ri->X->cols, 1);
         if (ri->Xty == NULL) {
             err = E_ALLOC;
@@ -1246,7 +1242,7 @@ static void ccd_print (const gretl_matrix *B,
 /* This also serves for printing elastic net results */
 
 static void ridge_print (const gretl_matrix *lam,
-			 regls_info *ri)
+			 regls_info *ri, int idxmin)
 {
     int j;
 
@@ -1254,9 +1250,14 @@ static void ridge_print (const gretl_matrix *lam,
     pputs(ri->prn, "      lambda      df      R^2       BIC\n");
 
     for (j=0; j<ri->nlam; j++) {
-	pprintf(ri->prn, "%12f  %6.2f   %.4f   %#g\n",
+	pprintf(ri->prn, "%12f  %6.2f   %.4f   %#g",
 		lam->val[j], ri->edf->val[j],
 		ri->R2->val[j], ri->BIC->val[j]);
+	if (ri->nlam > 1 && j == idxmin) {
+	    pputs(ri->prn, " *\n");
+	} else {
+	    pputc(ri->prn, '\n');
+	}
     }
 }
 
@@ -1710,7 +1711,7 @@ static int ccd_regls (regls_info *ri)
 	}
 	if (ri->verbose) {
 	    if (ri->alpha < 1) {
-		ridge_print(ci.lam, ri);
+		ridge_print(ci.lam, ri, idxmin);
 	    } else {
 		ccd_print(ci.B, ci.lam, ri, idxmin);
 	    }
@@ -2054,13 +2055,12 @@ static int svd_ridge (regls_info *ri)
     }
 
     if (!ri->xvalid) {
+	int idxmin = 0;
+
 	ccd_get_crit(B, lam, ri);
-	if (ri->verbose) {
-	    ridge_print(lam, ri);
-	}
 	if (ri->nlam > 1) {
 	    double BICmin = 1e200;
-	    int j, idxmin = 0;
+	    int j;
 
 	    for (j=0; j<ri->nlam; j++) {
 		if (ri->BIC->val[j] < BICmin) {
@@ -2070,6 +2070,9 @@ static int svd_ridge (regls_info *ri)
 	    }
 	    gretl_bundle_set_scalar(ri->b, "idxmin", idxmin + 1);
 	    gretl_bundle_set_scalar(ri->b, "lfmin", ri->lfrac->val[idxmin]);
+	}
+	if (ri->verbose) {
+	    ridge_print(lam, ri, idxmin);
 	}
 	regls_set_crit_data(ri);
     }
@@ -2170,6 +2173,7 @@ static int admm_lasso (regls_info *ri)
 	int offset = ri->kextra;
 	int tune_rho = 1;
 	int iters = 0;
+	int nnzj = 0;
 
 	lfrac = ri->lfrac->val[j];
 	lambda = lfrac * lmax;
@@ -2179,10 +2183,9 @@ static int admm_lasso (regls_info *ri)
 			     &iters);
 
 	if (!err) {
-	    nnz[j] = 0;
 	    for (i=0; i<k; i++) {
 		if (b->val[i] != 0.0) {
-		    nnz[j] += 1;
+		    nnzj++;
 		}
 		if (B->cols == 1) {
 		    gretl_matrix_set(B, i + offset, 0, b->val[i]);
@@ -2196,11 +2199,14 @@ static int admm_lasso (regls_info *ri)
 		ri->crit->val[j] = lasso_objective(ri, b, lambda, n1, &SSR, &R2);
 		ri->R2->val[j] = R2;
 		ll = llc - 0.5 * n * log(SSR);
-		ri->BIC->val[j] = -2 * ll + nnz[j] * log(n);
+		ri->BIC->val[j] = -2 * ll + nnzj * log(n);
 		if (ri->BIC->val[j] < BICmin) {
 		    BICmin = ri->BIC->val[j];
 		    idxmin = j;
 		}
+	    }
+	    if (nnz != NULL) {
+		nnz[j] = nnzj;
 	    }
 	}
     }
