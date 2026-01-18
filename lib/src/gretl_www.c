@@ -533,6 +533,19 @@ static int common_curl_setup (CURL **pcurl)
             curl_easy_setopt(*pcurl, CURLOPT_VERBOSE, 1L);
         }
 #endif
+    /* for gretl4py: make libcurl honor CURL_CA_BUNDLE */
+    if (gretl_in_python_mode()) {
+        const char *ca_env = getenv("CURL_CA_BUNDLE");
+
+        if (ca_env && *ca_env != '\0') {
+            CURLcode res = curl_easy_setopt(*pcurl, CURLOPT_CAINFO, ca_env);
+            if (res != CURLE_OK) {
+                gretl_errmsg_set("curl_easy_setopt CURLOPT_CAINFO failed");
+                curl_easy_cleanup(*pcurl);
+                return 1;
+            }
+        }
+    }
 #ifdef _WIN32
         /* be on the safe side: 'http' can turn into 'https'
            at the server */
