@@ -1196,31 +1196,17 @@ static int elnet_effective_df (const gretl_matrix *lam,
     return err;
 }
 
-static gchar *crit_print_format (const gretl_matrix *crit,
-				 int ridge)
-{
-    gchar *fmt = NULL;
-
-    if (ridge) {
-	fmt = g_strdup_printf("%%12f  %%6.2f   %%.4f   %%#g\n");
-    } else {
-	fmt = g_strdup_printf("%%12f  %%5d    %%f   %%.4f  %%#g\n");
-    }
-
-    return fmt;
-}
-
 static void lambda_sequence_header (PRN *prn)
 {
     pputc(prn, '\n');
-    pputs(prn, "    lambda/n     df   criterion      R^2      BIC\n");
+    pputs(prn, "       lfrac    lambda/n     df   criterion      R^2      BIC\n");
 }
 
 static void ccd_print (const gretl_matrix *B,
 		       const gretl_matrix *lam,
-		       regls_info *ri)
+		       regls_info *ri,
+		       int idxmin)
 {
-    gchar *cfmt = NULL;
     double *bj;
     int k = B->rows;
     int nlam = B->cols;
@@ -1235,8 +1221,6 @@ static void ccd_print (const gretl_matrix *B,
 	pputs(ri->prn, "    df     R^2  lambda    BIC\n");
     }
 
-    cfmt = crit_print_format(ri->crit, 0);
-
     for (j=0; j<nlam; j++) {
 	bj = B->val + j*k;
 	dfj = 0;
@@ -1244,15 +1228,19 @@ static void ccd_print (const gretl_matrix *B,
 	    dfj += fabs(bj[i]) > 0;
 	}
 	if (ri->crit != NULL) {
-	    pprintf(ri->prn, cfmt, lam->val[j], dfj, ri->crit->val[j],
-		    ri->R2->val[j], ri->BIC->val[j]);
+	    pprintf(ri->prn, "%12f%12f  %5d    %f   %.4f  %#g",
+		    ri->lfrac->val[j], lam->val[j], dfj,
+		    ri->crit->val[j], ri->R2->val[j], ri->BIC->val[j]);
+	    if (j == idxmin) {
+		pputs(ri->prn, " *\n");
+	    } else {
+		pputc(ri->prn, '\n');
+	    }
 	} else {
 	    pprintf(ri->prn, "%-2d  %2d  %.4f  %.4f  %#g\n", j+1, dfj,
 		    ri->R2->val[j], lam->val[j], ri->BIC->val[j]);
 	}
     }
-
-    g_free(cfmt);
 }
 
 /* This also serves for printing elastic net results */
@@ -1260,19 +1248,16 @@ static void ccd_print (const gretl_matrix *B,
 static void ridge_print (const gretl_matrix *lam,
 			 regls_info *ri)
 {
-    gchar *cfmt = NULL;
     int j;
 
     pprintf(ri->prn, "\n  %s\n\n", _("df = effective number of free parameters"));
     pputs(ri->prn, "      lambda      df      R^2       BIC\n");
 
-    cfmt = crit_print_format(ri->crit, 1);
-
     for (j=0; j<ri->nlam; j++) {
-	pprintf(ri->prn, cfmt, lam->val[j], ri->edf->val[j],
+	pprintf(ri->prn, "%12f  %6.2f   %.4f   %#g\n",
+		lam->val[j], ri->edf->val[j],
 		ri->R2->val[j], ri->BIC->val[j]);
     }
-    g_free(cfmt);
 }
 
 static void xv_ridge_print (const gretl_matrix *lam,
@@ -1707,17 +1692,12 @@ static int ccd_regls (regls_info *ri)
     }
 
     if (!ri->xvalid) {
+	int idxmin = 0;
+
 	ccd_get_crit(ci.B, ci.lam, ri);
-	if (ri->verbose) {
-	    if (ri->alpha < 1) {
-		ridge_print(ci.lam, ri);
-	    } else {
-		ccd_print(ci.B, ci.lam, ri);
-	    }
-	}
 	if (nlam > 1) {
 	    double BICmin = 1e200;
-	    int j, idxmin = 0;
+	    int j;
 
 	    for (j=0; j<nlam; j++) {
 		if (ri->BIC->val[j] < BICmin) {
@@ -1727,6 +1707,13 @@ static int ccd_regls (regls_info *ri)
 	    }
 	    gretl_bundle_set_scalar(ri->b, "idxmin", idxmin + 1);
 	    gretl_bundle_set_scalar(ri->b, "lfmin", ri->lfrac->val[idxmin]);
+	}
+	if (ri->verbose) {
+	    if (ri->alpha < 1) {
+		ridge_print(ci.lam, ri);
+	    } else {
+		ccd_print(ci.B, ci.lam, ri, idxmin);
+	    }
 	}
 	regls_set_crit_data(ri);
     }
@@ -2123,7 +2110,9 @@ static int admm_lasso (regls_info *ri)
     gretl_matrix_block *MB;
     double BICmin = 1e200;
     gretl_matrix *B = NULL;
+    int *nnz = NULL;
     double lmax, rho = ri->rho;
+    double lambda, lfrac;
     double llc = 0;
     int k = ri->k;
     int n = ri->n;
@@ -2173,24 +2162,27 @@ static int admm_lasso (regls_info *ri)
     if (!ri->xvalid && ri->verbose > 0) {
 	lambda_sequence_header(ri->prn);
 	llc = -0.5 * n * (1 + LN_2_PI - log(n));
+	nnz = malloc(ri->nlam * sizeof *nnz);
     }
 
     for (j=0; j<ri->nlam && !err; j++) {
 	/* loop across lambda values */
-	double critj, lambda = ri->lfrac->val[j] * lmax;
 	int offset = ri->kextra;
 	int tune_rho = 1;
 	int iters = 0;
-	int nnz = 0;
+
+	lfrac = ri->lfrac->val[j];
+	lambda = lfrac * lmax;
 
 	err = admm_iteration(ri->X, ri->Xty, L, v, b, u, q, n1, r,
 			     bprev, bdiff, lambda, &rho, tune_rho,
 			     &iters);
 
 	if (!err) {
+	    nnz[j] = 0;
 	    for (i=0; i<k; i++) {
 		if (b->val[i] != 0.0) {
-		    nnz++;
+		    nnz[j] += 1;
 		}
 		if (B->cols == 1) {
 		    gretl_matrix_set(B, i + offset, 0, b->val[i]);
@@ -2201,21 +2193,32 @@ static int admm_lasso (regls_info *ri)
 	    if (!ri->xvalid) {
 		double R2, SSR, ll;
 
-		critj = lasso_objective(ri, b, lambda, n1, &SSR, &R2);
+		ri->crit->val[j] = lasso_objective(ri, b, lambda, n1, &SSR, &R2);
+		ri->R2->val[j] = R2;
 		ll = llc - 0.5 * n * log(SSR);
-		ri->BIC->val[j] = -2 * ll + nnz * log(n);
-		if (ri->verbose > 0) {
-		    pprintf(ri->prn, "%12f  %5d    %f   %.4f  %#g\n",
-			    lambda/n, nnz, critj, R2, ri->BIC->val[j]);
-		}
+		ri->BIC->val[j] = -2 * ll + nnz[j] * log(n);
 		if (ri->BIC->val[j] < BICmin) {
 		    BICmin = ri->BIC->val[j];
 		    idxmin = j;
 		}
-		ri->crit->val[j] = critj;
-		ri->R2->val[j] = R2;
 	    }
 	}
+    }
+
+    if (!ri->xvalid && ri->verbose > 0) {
+	for (j=0; j<ri->nlam; j++) {
+	    lfrac = ri->lfrac->val[j];
+	    lambda = lfrac * lmax;
+	    pprintf(ri->prn, "%12f%12f  %5d    %f   %.4f  %#g",
+		    lfrac, lambda/n, nnz[j], ri->crit->val[j],
+		    ri->R2->val[j], ri->BIC->val[j]);
+	    if (j == idxmin) {
+		pputs(ri->prn, " *\n");
+	    } else {
+		pputc(ri->prn, '\n');
+	    }
+	}
+	free(nnz);
     }
 
     gretl_bundle_set_scalar(ri->b, "lmax", lmax);
