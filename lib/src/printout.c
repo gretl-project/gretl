@@ -2417,6 +2417,7 @@ static int get_print_range (gretlopt opt, int len,
     if (len == -1) {
         *start = k1;
         *stop = k2;
+	return 0;
     } else if (k1 == 0 || k2 == 0) {
         fprintf(stderr, "get_print_range: got a zero value\n");
         err = E_INVARG;
