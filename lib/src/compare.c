@@ -3665,13 +3665,9 @@ int cusum_test (MODEL *pmod, DATASET *dset,
 
     if (pmod->ci != OLS) {
 	return E_OLSONLY;
-    }
-
-    if (exact_fit_check(pmod, prn)) {
+    } else if (exact_fit_check(pmod, prn)) {
 	return 0;
-    }
-
-    if (model_has_missing_obs(pmod)) {
+    } else if (model_has_missing_obs(pmod)) {
 	return E_MISSDATA;
     }
 
@@ -3697,6 +3693,7 @@ int cusum_test (MODEL *pmod, DATASET *dset,
 	int sig;
 
 	if (opt & OPT_R) {
+	    /* squares */
 	    double a1, a2, a3;
 	    double n = 0.5 * m - 1;
 

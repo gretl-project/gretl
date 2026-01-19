@@ -150,6 +150,8 @@ static const char *test_type_key (ModelTestType t)
 	return "cross_sectional_dependence_test";
     } else if (t == GRETL_TEST_PANEL_AR) {
 	return "panel_ar_test";
+    } else if (t == GRETL_TEST_BDS) {
+	return "BDS_test";
     } else {
 	fprintf(stderr, "test_type_key(): type %d has no key!\n", t);
 	return NULL;
@@ -4189,7 +4191,6 @@ int maybe_add_test_to_model (MODEL *pmod, ModelTest *test)
 	ModelTest *tests;
 
 	tests = realloc(pmod->tests, n * sizeof *tests);
-
 	if (tests != NULL) {
 	    pmod->tests = tests;
 	    copy_test(&pmod->tests[n-1], test);
@@ -4376,6 +4377,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_PANEL_AR,
       N_("Wooldridge test for autocorrelation in panel data"),
       N_("No first-order autocorrelation (rho = -0.5)") },
+    { GRETL_TEST_BDS,
+      N_("BDS test for nonlinearity"),
+      NULL },
     { GRETL_TEST_MAX, NULL, NULL }
 };
 
