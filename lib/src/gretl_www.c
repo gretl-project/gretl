@@ -513,32 +513,49 @@ static void set_curl_proxy (urlinfo *u, CURL *curl)
 
 static int common_curl_setup (CURL **pcurl)
 {
-    int err;
+    int err = gretl_curl_toggle(1);
 
-    err = gretl_curl_toggle(1);
+    if (!err) {
+	*pcurl = curl_easy_init();
+	if (*pcurl == NULL) {
+	    gretl_errmsg_set("curl_easy_init failed");
+	    err = 1;
+	}
+    }
     if (err) {
-        return err;
+	return err;
     }
 
-    *pcurl = curl_easy_init();
-
-    if (*pcurl == NULL) {
-        gretl_errmsg_set("curl_easy_init failed");
-        err = 1;
-    } else {
+    /* Verbosity can be invoked by defining WDEBUG at
+       compile time or via the environment at run time.
+    */
 #if WDEBUG
-        curl_easy_setopt(*pcurl, CURLOPT_VERBOSE, 1L);
+    curl_easy_setopt(*pcurl, CURLOPT_VERBOSE, 1L);
 #else
-        if (getenv("GRETL_WWW_VERBOSE") != NULL) {
-            curl_easy_setopt(*pcurl, CURLOPT_VERBOSE, 1L);
-        }
-#endif
-#ifdef _WIN32
-        /* be on the safe side: 'http' can turn into 'https'
-           at the server */
-        curl_easy_setopt(*pcurl, CURLOPT_CAINFO, certs_path);
-#endif
+    if (getenv("GRETL_WWW_VERBOSE") != NULL) {
+	curl_easy_setopt(*pcurl, CURLOPT_VERBOSE, 1L);
     }
+#endif
+
+    /* The certificates path needs special treatment on
+       Windows, and in gretl4py on Linux.
+    */
+#ifdef _WIN32
+    curl_easy_setopt(*pcurl, CURLOPT_CAINFO, certs_path);
+#else
+    if (gretl_in_python_mode()) {
+        char *ca_env = getenv("CURL_CA_BUNDLE");
+
+        if (ca_env && *ca_env != '\0') {
+            CURLcode res = curl_easy_setopt(*pcurl, CURLOPT_CAINFO, ca_env);
+            if (res != CURLE_OK) {
+                gretl_errmsg_set("curl_easy_setopt CURLOPT_CAINFO failed");
+                curl_easy_cleanup(*pcurl);
+                err = 1;
+            }
+        }
+    }
+#endif
 
     return err;
 }
