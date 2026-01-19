@@ -2234,7 +2234,7 @@ static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
     }
 }
 
-static void update_model_tests (windata_t *vwin)
+void update_model_tests (windata_t *vwin)
 {
     MODEL *pmod = (MODEL *) vwin->data;
 
@@ -3128,7 +3128,6 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 
         update_model_tests(vwin);
         record_model_command_verbatim(pmod->ID);
-
         view_buffer_with_parent(vwin, prn, 78, 400,
                                 (ci == CHOW)?
                                 _("gretl: Chow test output") :
@@ -5415,7 +5414,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
     strcpy(dset->varname[uv], "residual");
 
     if (bds) {
-	bdstest_dialog(uv, vwin_toplevel(vwin));
+	bdstest_dialog(uv, vwin);
 	goto finish;
     } else {
 	/* OPT_Z: compare with normal dist */

@@ -194,6 +194,8 @@ void do_panel_tests (GtkAction *action, gpointer p);
 
 int out_of_sample_info (int add_ok, int *t2);
 
+void update_model_tests (windata_t *vwin);
+
 /* variable-related functions */
 
 void do_minibuf (GtkWidget *w, dialog_t *dlg);

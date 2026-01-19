@@ -7698,6 +7698,7 @@ void tdisagg_dialog (int v)
 
 struct bds_info {
     int vnum;         /* ID of series to test */
+    windata_t *vwin;  /* viewer for model being tested or NULL */
     GtkWidget *dlg;   /* the dialog widget */
     GtkWidget *src;   /* source or parent of dialog */
     GtkWidget *mspin; /* spin button for order/max dimension */
@@ -7707,8 +7708,9 @@ struct bds_info {
     GtkWidget *boot;  /* radio button for bootstrapped P-values */
 };
 
-static void record_bdstest (int m, int v, gretlopt opt, double dval,
-			    int boot, GtkWidget *modelwin)
+static void record_bdstest_command (int m, int v, gretlopt opt,
+				    double dval, int boot,
+				    GtkWidget *modelwin)
 {
     const char *dstr[2] = {"corr1", "sdcrit"};
     GString *gs = g_string_new("bds ");
@@ -7763,7 +7765,27 @@ static void do_bdstest (GtkWidget *w, struct bds_info *bi)
 	    gretl_print_destroy(prn);
 	} else {
             view_buffer(prn, 78, 400, "bds", PRINT, NULL);
-	    record_bdstest(m, bi->vnum, dopt, dval, boot, bi->src);
+	    record_bdstest_command(m, bi->vnum, dopt, dval, boot, bi->src);
+	}
+	if (!err && bi->vwin != NULL) {
+	    GretlType t;
+	    void *data;
+	    int err = 0;
+
+	    data = get_last_result_data(&t, &err);
+	    if (data != NULL && t == GRETL_TYPE_MATRIX) {
+		ModelTest *test = model_test_new(GRETL_TEST_BDS);
+		gretl_matrix *m = data;
+		double z = gretl_matrix_get(m, 0, 0);
+		double p = gretl_matrix_get(m, 1, 0);
+
+		model_test_set_teststat(test, GRETL_STAT_Z);
+		model_test_set_value(test, z);
+		model_test_set_pvalue(test, p);
+		if (maybe_add_test_to_model(bi->vwin->data, test)) {
+		    update_model_tests(bi->vwin);
+		}
+	    }
 	}
     }
 
@@ -7778,9 +7800,10 @@ static void switch_bds_mode (GtkToggleButton *b, struct bds_info *bi)
     gtk_widget_set_sensitive(bi->cspin, !sdcrit);
 }
 
-void bdstest_dialog (int v, GtkWidget *parent)
+void bdstest_dialog (int v, windata_t *vwin)
 {
     struct bds_info bi = {0};
+    GtkWidget *parent;
     GtkWidget *dialog, *hbox;
     GtkWidget *vbox, *label;
     GtkWidget *rb1, *tmp;
@@ -7791,11 +7814,13 @@ void bdstest_dialog (int v, GtkWidget *parent)
         return;
     }
 
+    parent = vwin == NULL ? NULL : vwin_toplevel(vwin);
     dialog = gretl_dialog_new(_("gretl: BDS test"), parent, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     bi.vnum = v;
     bi.dlg = dialog;
+    bi.vwin = vwin;
     bi.src = parent;
 
     /* maximum dimension control */
