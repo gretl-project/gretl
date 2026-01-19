@@ -2350,8 +2350,8 @@
 	  <effect>si veda sotto</effect>
 	</option>
 	<option>
-	  <flag>--silent</flag>
-	  <effect>sopprime l'ouput</effect>
+	  <flag>--quiet</flag>
+	  <effect>sopprime l'output</effect>
         </option>
 	<option>
 	  <flag>--acf-only</flag>
@@ -7467,9 +7467,9 @@
       stime originali dei parametri e i residui ri-campionati, viene
       ri-stimato il sistema e vengono ri-calcolate le funzioni di
       impulso-risposta.  Questa procedura viene ripetuta 999 volte e
-      vengono mostrati i quantili &alpha;/2 e 1 &minus; &alpha;/2 per le risposte,
-      insieme alle stime puntuali.  L'opzione bootstrap al momento
-      non è disponibile per il VECM vincolati.
+      vengono mostrati i quantili &alpha;/2 e 1 &minus; &alpha;/2 per
+      le risposte, insieme alle stime puntuali.  L'opzione bootstrap
+      al momento non è disponibile per il VECM vincolati.
     </para>
     <para>
       Questo comando permette anche il riordinamento delle variabili per la
@@ -7592,100 +7592,100 @@
       producono rispettivamente i casi 1, 2, 4 e 5. Il significato di
       questi casi e i criteri per scegliere tra di essi sono spiegati
       nel<guideref targ="chap:vecm"/>.
-    </para>
-    <para context="gui">
-      L'inclusione di termini deterministici nel modello è controllata
-      dai pulsanti delle opzioni. L'opzione predefinita è di includere
-      una <quote>costante non vincolata</quote>, che permette la
-      presenza di un'intercetta diversa da zero nelle relazioni di
-      cointegrazione e di un trend nei livelli delle variabili
-      endogene. Nella letteratura originata dal lavoro di Johansen (si
-      veda ad esempio il suo libro del 1995), si fa riferimento a
-      questo come al <quote>caso 3</quote>.  Le prime quattro opzioni
-      mostrate sopra, che sono mutualmente esclusive, producono
-      rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
-      casi e i criteri per scegliere tra di essi sono spiegati
-      nel<guideref targ="chap:vecm"/>.
-    </para>
-    <para context="cli">
-      Le liste opzionali <repl>lista-x</repl> e
-      <repl>lista-rx</repl> permettono di controllare per specifiche
-      variabili esogene che entrano nel sistema in modo non
-      vincolato (<repl>lista-x</repl>) o vincolate allo spazio di
-      cointegrazione (<repl>lista-rx</repl>). Queste liste vanno
-      separate tra di loro e dalla <repl>lista-y</repl> usando il
-      carattere punto e virgola.
-    </para>
-    <para context="gui">
-      È possibile controllare per le variabili esogene aggiungendole
-      nel campo inferiore. Per impostazione predefinita, le
-      variabili vengono aggiunte al modello in forma non vincolata
-      (indicata da una lettera <lit>U</lit> vicino al nome della
-      variabile). Se si vuole che una certa variabile esogena sia
-      vincolata allo spazio di cointegrazione, basta fare clic col
-      tasto destro e selezionare <quote>Vincolata</quote> dal menu
-      pop-up. Il simbolo vicino alla variabile diventerà una V.
-    </para>
-    <para context="cli">
-      L'opzione <opt>seasonals</opt>, che può accompagnare una qualsiasi
-      delle altre opzioni, specifica l'inclusione di un gruppo di variabili
-      dummy stagionali centrate. Questa opzione è disponibile solo per dati
-      trimestrali o mensili.
-    </para>
-    <para context="gui">
-      Se i dati sono trimestrali o mensili, è presente anche una casella che
-      permette di includere un gruppo di variabili dummy stagionali centrate.
-      In tutti i casi, la casella <quote>Mostra dettagli</quote> permette di
-      vedere il risultato delle regressioni ausiliarie che sono il punto di
-      partenza per la procedura di stima di massima verosimiglianza di
-      Johansen.
-    </para>
-    <para context="notex">
-      La tabella seguente fornisce un esempio di interpretazione dei
-      risultati del test nel caso di 3 variabili. <lit>H0</lit> denota
-      l'ipotesi nulla, <lit>H1</lit> l'ipotesi alternativa e <lit>c</lit>
-      il numero delle relazioni di cointegrazione.
-    </para>
-    <code context="notex">
-      Rango    Test traccia       Test Lmax
-      H0     H1          H0     H1
-      ---------------------------------------
-      0      c = 0  c = 3       c = 0  c = 1
-      1      c = 1  c = 3       c = 1  c = 2
-      2      c = 2  c = 3       c = 2  c = 3
-      ---------------------------------------
-    </code>
+</para>
+<para context="gui">
+  L'inclusione di termini deterministici nel modello è controllata
+  dai pulsanti delle opzioni. L'opzione predefinita è di includere
+  una <quote>costante non vincolata</quote>, che permette la
+  presenza di un'intercetta diversa da zero nelle relazioni di
+  cointegrazione e di un trend nei livelli delle variabili
+  endogene. Nella letteratura originata dal lavoro di Johansen (si
+  veda ad esempio il suo libro del 1995), si fa riferimento a
+  questo come al <quote>caso 3</quote>.  Le prime quattro opzioni
+  mostrate sopra, che sono mutualmente esclusive, producono
+  rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
+  casi e i criteri per scegliere tra di essi sono spiegati
+  nel<guideref targ="chap:vecm"/>.
+</para>
+<para context="cli">
+  Le liste opzionali <repl>lista-x</repl> e
+  <repl>lista-rx</repl> permettono di controllare per specifiche
+  variabili esogene che entrano nel sistema in modo non
+  vincolato (<repl>lista-x</repl>) o vincolate allo spazio di
+  cointegrazione (<repl>lista-rx</repl>). Queste liste vanno
+  separate tra di loro e dalla <repl>lista-y</repl> usando il
+  carattere punto e virgola.
+</para>
+<para context="gui">
+  È possibile controllare per le variabili esogene aggiungendole
+  nel campo inferiore. Per impostazione predefinita, le
+  variabili vengono aggiunte al modello in forma non vincolata
+  (indicata da una lettera <lit>U</lit> vicino al nome della
+  variabile). Se si vuole che una certa variabile esogena sia
+  vincolata allo spazio di cointegrazione, basta fare clic col
+  tasto destro e selezionare <quote>Vincolata</quote> dal menu
+  pop-up. Il simbolo vicino alla variabile diventerà una V.
+</para>
+<para context="cli">
+  L'opzione <opt>seasonals</opt>, che può accompagnare una qualsiasi
+  delle altre opzioni, specifica l'inclusione di un gruppo di variabili
+  dummy stagionali centrate. Questa opzione è disponibile solo per dati
+  trimestrali o mensili.
+</para>
+<para context="gui">
+  Se i dati sono trimestrali o mensili, è presente anche una casella che
+  permette di includere un gruppo di variabili dummy stagionali centrate.
+  In tutti i casi, la casella <quote>Mostra dettagli</quote> permette di
+  vedere il risultato delle regressioni ausiliarie che sono il punto di
+  partenza per la procedura di stima di massima verosimiglianza di
+  Johansen.
+</para>
+<para context="notex">
+  La tabella seguente fornisce un esempio di interpretazione dei
+  risultati del test nel caso di 3 variabili. <lit>H0</lit> denota
+l'ipotesi nulla, <lit>H1</lit> l'ipotesi alternativa e <lit>c</lit>
+il numero delle relazioni di cointegrazione.
+</para>
+<code context="notex">
+  Rango    Test traccia       Test Lmax
+  H0     H1          H0     H1
+  ---------------------------------------
+  0      c = 0  c = 3       c = 0  c = 1
+  1      c = 1  c = 3       c = 1  c = 2
+  2      c = 2  c = 3       c = 2  c = 3
+  ---------------------------------------
+</code>
 
-    <para context="tex">
-      La tabella seguente fornisce un esempio di interpretazione dei
-      risultati del test nel caso di 3 variabili. $H_0$ denota
-      l'ipotesi nulla, $H_1$ l'ipotesi alternativa e $c$
-      il numero delle relazioni di cointegrazione.
+<para context="tex">
+  La tabella seguente fornisce un esempio di interpretazione dei
+  risultati del test nel caso di 3 variabili. $H_0$ denota
+  l'ipotesi nulla, $H_1$ l'ipotesi alternativa e $c$
+  il numero delle relazioni di cointegrazione.
+  
+  \begin{center}
+  \begin{tabular}{cllll}
+  &amp; \multicolumn{2}{c}{Test traccia} &amp;
+  \multicolumn{2}{c}{Test $\lambda$-max} \\
+  Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp;
+  \multicolumn{1}{c}{$H_1$} &amp;
+  \multicolumn{1}{c}{$H_0$} &amp;
+  \multicolumn{1}{c}{$H_1$} \\ [4pt]
+  0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
+  1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
+  2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
+  \end{tabular}
+  \end{center}
+</para>
 
-      \begin{center}
-      \begin{tabular}{cllll}
-      &amp; \multicolumn{2}{c}{Test traccia} &amp;
-      \multicolumn{2}{c}{Test $\lambda$-max} \\
-      Rango &amp;  \multicolumn{1}{c}{$H_0$} &amp;
-      \multicolumn{1}{c}{$H_1$} &amp;
-      \multicolumn{1}{c}{$H_0$} &amp;
-      \multicolumn{1}{c}{$H_1$} \\ [4pt]
-      0 &amp; $c$ = 0 &amp; $c$ = 3 &amp; $c$ = 0 &amp; $c$ = 1 \\
-      1 &amp; $c$ = 1 &amp; $c$ = 3 &amp; $c$ = 1 &amp; $c$ = 2 \\
-      2 &amp; $c$ = 2 &amp; $c$ = 3 &amp; $c$ = 2 &amp; $c$ = 3
-      \end{tabular}
-      \end{center}
-    </para>
+<para>
+  Si veda anche il comando <cmdref targ="vecm"/>.
+</para>
 
-    <para>
-      Si veda anche il comando <cmdref targ="vecm"/>.
-    </para>
+</description>
 
-  </description>
-
-  <gui-access>
-    <menu-path>/Modello/Serie storiche/Test di cointegrazione/Johansen</menu-path>
-  </gui-access>
+<gui-access>
+<menu-path>/Modello/Serie storiche/Test di cointegrazione/Johansen</menu-path>
+</gui-access>
 
 </command>
 
@@ -8077,19 +8077,19 @@
 
       <command name="labels" section="Dataset" label="Mostra etichette delle variabili" context="cli">
 
-	<usage>
+<usage>
 	  <altforms>
-<altform><lit>labels [</lit> <repl>varlist</repl> <lit>]</lit></altform>
-<altform><lit>labels --to-file=</lit><repl>filename</repl></altform>
-<altform><lit>labels --from-file=</lit><repl>filename</repl></altform>
-<altform><lit>labels --delete</lit></altform>
-</altforms>
-<examples>
-  <demos>
-    <demo>oprobit.inp</demo>
-  </demos>
-</examples>
-</usage>
+	    <altform><lit>labels [</lit> <repl>varlist</repl> <lit>]</lit></altform>
+	    <altform><lit>labels --to-file=</lit><repl>filename</repl></altform>
+	    <altform><lit>labels --from-file=</lit><repl>filename</repl></altform>
+	    <altform><lit>labels --delete</lit></altform>
+	  </altforms>
+	  <examples>
+	    <demos>
+	      <demo>oprobit.inp</demo>
+	    </demos>
+	  </examples>
+	</usage>
 
 <description>
   <para>
@@ -13199,10 +13199,12 @@ del comando <cmdref targ="set"/>.
     </para>
     <para>
       La lunghezza massima di una stringa di formato è di 127
-      caratteri. Vengono riconosciute le sequenze di escape
-      <lit>\n</lit> (newline), <lit>\t</lit> (tab),
-      <lit>\v</lit> (tab verticale) e <lit>\\</lit> (barra inversa).
-      Per stampare un segno di percentuale, si usi <lit>%%</lit>.
+      caratteri. Vengono riconosciute queste sequenze di escape:
+      <lit>\n</lit> (nuova linea), <lit>\r</lit> (ritorno carrello),
+      <lit>\t</lit> (tab), <lit>\v</lit> (tab verticale),
+      <lit>\"</lit> (virgoletta doppia) e <lit>\\</lit> (barra
+      inversa).  Per stampare un segno di percentuale, si usi
+      <lit>%%</lit>.
     </para>
     <para>
       Come in C, i valori numerici che fanno parte del formato (larghezza e
@@ -18356,7 +18358,7 @@ del comando <cmdref targ="set"/>.
 	  <effect>vedi sotto</effect>
 	</option>
         <option>
-	  <flag>--silent</flag>
+	  <flag>--quiet</flag>
 	  <effect>sopprime l'output</effect>
         </option>
       </options>
@@ -18393,6 +18395,12 @@ del comando <cmdref targ="set"/>.
 	quest'ultima scelta è identico a quello descritto sotto
 	l'opzione <opt>output</opt> del comando <cmdref
 	targ="gnuplot"/>.
+      </para>
+      <para>
+	Se il comando va a buon fine, <fncref targ="$result"/>
+	contiene i risultati sotto forma di matrice a due colonne con
+	i ritardi nella prima colonna e le correlazioni incrociate nella
+	seconda.
       </para>
     </description>
 

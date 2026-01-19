@@ -1375,12 +1375,13 @@
     <function name="$vecGamma" section="access" output="matrix">
       <description>
 	<para>
-	  Deve seguire la stima di un VECM; restituisce una matrice in cui
-	  le matrici Gamma (cioè i coefficienti delle differenze
-	  ritardate) sono messe una fianco all'altra.  Ogni riga
-	  rappresenta un'equazione; per un VECM di ordine
-	  <math>p</math> ci sono <math>p</math> &minus; 1
-	  sottomatrici.
+	  Deve seguire la stima di un VECM; restituisce una matrice in
+	  cui le matrici Gamma (cioè i coefficienti per le differenze
+	  ritardate delle <math>n</math> endogene) sono messe una
+	  fianco all'altra.  Ogni riga rappresenta un'equazione; per
+	  un VECM di ordine <math>p</math> ci sono <math>p</math>
+	  &minus; 1 sottomatrici, ciascuna di dimension <by r="n"
+	  c="n"/>.
 	</para>
       </description>
     </function>
