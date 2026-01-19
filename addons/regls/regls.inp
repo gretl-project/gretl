@@ -389,7 +389,7 @@ function bundle regls (series depvar, list indeps,
 
    if !exists(parms)
       # an empty bundle will do
-      bundle parms = null
+      bundle parms = empty
    endif
 
    # initialize the return bundle
@@ -402,9 +402,6 @@ function bundle regls (series depvar, list indeps,
 
    # read optional parameters
    read_optional_params(parms, &ret, &gui, &elnet)
-
-   # list of regressors with constant prepended
-   list X0 = 0 indeps
 
    # record upper limit of incoming sample range
    my_tmax = $t2
@@ -425,19 +422,21 @@ function bundle regls (series depvar, list indeps,
          matrix Y = s_standardize({depvar}, &my, &sy)
       endif
       matrix X = m_standardize({indeps}, &mx, &sx)
+      list XL = 0 indeps
    else
       matrix Y = {depvar}
       matrix X = {indeps}
-   endif
-
-   if ret.y_discrete || !ret.stdize
-      # include intercept in estimation
-      matrix X = {1} ~ X
+      list XL = indeps
    endif
 
    # check for bad Y
-   if nelem(Y) == 0
+   if nelem(Y) == 0 || isconst(Y)
       funcerr "Invalid (constant) dependent variable"
+   endif
+
+   if ret.y_discrete
+      # include intercept in estimation
+      matrix X = {1} ~ X
    endif
 
    scalar ret.nobs = rows(X)
@@ -480,11 +479,11 @@ function bundle regls (series depvar, list indeps,
       return ret
    endif
 
-   strings xnames = varnames(X0)
+   strings xnames = varnames(XL)
    finalize_coeff_matrices(&ret, xnames, mx, sx, my, sy, &bsel)
 
    if !ret.ridge && nelem(bsel) > 0
-      matrix tmp = X0 # list as matrix
+      matrix tmp = XL # list as matrix
       tmp = selifr(tmp', bsel)
       list ret.nzX = tmp
       rnameset(ret.nzb, varnames(ret.nzX))
