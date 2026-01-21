@@ -67,6 +67,8 @@ void set_mpi_variant (const char *pref);
 
 int check_for_mpiexec (void);
 
+int get_default_mpi_np (void);
+
 #endif /* HAVE_MPI */
 
 #ifdef USE_RLIB

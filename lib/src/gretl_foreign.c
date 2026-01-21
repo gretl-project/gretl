@@ -519,6 +519,21 @@ static void print_mpi_command (char **argv, PRN *prn)
     pputc(prn, '\n');
 }
 
+int get_default_mpi_np (void)
+{
+    int np = 0;
+
+    if (libset_get_bool(MPI_USE_SMT)) {
+	/* use max number of processes */
+	np = gretl_n_processors();
+    } else {
+	/* don't use hyperthreads */
+	np = gretl_n_physical_cores();
+    }
+
+    return np;
+}
+
 static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
 {
     const char *hostfile = get_mpi_hostfile();
@@ -556,13 +571,7 @@ static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
             }
         } else if (np == 0) {
             /* no user spec, so supply a default np value */
-            if (libset_get_bool(MPI_USE_SMT)) {
-                /* use max number of processes */
-                np = nproc;
-            } else {
-                /* don't use hyper-threads */
-                np = gretl_n_physical_cores();
-            }
+	    np = get_default_mpi_np();
         }
 
         argv[i++] = (char *) mpiexec;
