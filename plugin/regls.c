@@ -2512,7 +2512,9 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 					   PRN *prn)
 {
     gretl_matrix *metrics;
-    double avg, d, v, se, se1, avgmin = 1e200;
+    double avgmin = 1e200;
+    double avg, se, se_star;
+    double d, v;
     int mcols = 2;
     int nf = XVC->cols;
     int i, j;
@@ -2525,7 +2527,7 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
     *imin = 0;
 
     for (i=0; i<XVC->rows; i++) {
-	v = avg = 0;
+	avg = 0;
 	for (j=0; j<nf; j++) {
 	    avg += gretl_matrix_get(XVC, i, j);
 	}
@@ -2537,6 +2539,7 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 	    *imin = i;
 	}
 	gretl_matrix_set(metrics, i, 0, avg);
+	v = 0;
 	for (j=0; j<nf; j++) {
 	    d = gretl_matrix_get(XVC, i, j) - avg;
 	    v += d * d;
@@ -2546,18 +2549,17 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 	gretl_matrix_set(metrics, i, 1, se);
     }
 
-    *i1se = *imin;
-
-    /* estd. standard error of minimum average XVC */
-    se1 = gretl_matrix_get(metrics, *imin, 1);
+    /* standard error of minimized MSE */
+    se_star = gretl_matrix_get(metrics, *imin, 1);
 
     /* Find the index of the largest lamba that gives
-       an average XVC within one standard error of the
+       an average MSE within one standard error of the
        minimum (glmnet's "$lambda.1se").
     */
+    *i1se = *imin;
     for (i=*imin-1; i>=0; i--) {
 	avg = gretl_matrix_get(metrics, i, 0);
-	if (avg - avgmin < se1) {
+	if (avg - avgmin < se_star) {
 	    *i1se = i;
 	} else {
 	    break;
@@ -2810,9 +2812,13 @@ static int real_regls_xv_mpi (regls_info *ri)
     np = gretl_mpi_n_processes();
     rankmax = np - 1;
 
+    /* observations per fold */
     fsize = ri->n / ri->nf;
+    /* observations per fold-complement */
     csize = (ri->nf - 1) * fsize;
+    /* folds per MPI process */
     folds_per = ri->nf / np;
+    /* folds remainder */
     folds_rem = ri->nf % np;
 
     /* matrix-space for per-fold data */
@@ -2845,6 +2851,12 @@ static int real_regls_xv_mpi (regls_info *ri)
 	randomize_rows(ri->X, ri->y);
     }
 
+    /* The matrix @XVC will be used to store the cross-validation
+       criteria: each row is associated with a lambda value and
+       each column with a fold. The condition rank < folds_rem
+       identifies processes which will need an extra column to
+       handle one of the "remainder" folds.
+    */
     if (rank < folds_rem) {
 	XVC = gretl_zero_matrix_new(ri->nlam, folds_per + 1);
     } else {
@@ -2866,7 +2878,12 @@ static int real_regls_xv_mpi (regls_info *ri)
 	}
     }
 
-    /* process all folds */
+    /* Process all folds, going through all the lambda values at each
+       step. The job is shared out "round robin" fashion, cycling back
+       to rank 0 when all processes have been used. This gives the best
+       balancing of the load when the number of folds is not evenly
+       divisible by the number of MPI processes.
+    */
     r = 0;
     for (f=0; f<ri->nf && !err; f++) {
 	if (rank == r) {
@@ -2884,13 +2901,15 @@ static int real_regls_xv_mpi (regls_info *ri)
 	    }
 	}
 	if (r == rankmax) {
+	    /* cycle back to rank 0 */
 	    r = 0;
 	} else {
+	    /* continue to the next rank */
 	    r++;
 	}
     }
 
-    /* reduce @XVC to root by column concatenation */
+    /* reduce @XVC to the root process by column concatenation */
     gretl_matrix_mpi_reduce(XVC, &XVC, GRETL_MPI_HCAT, 0, OPT_NONE);
 
     /* send deallocation signal, all processes */
@@ -2956,8 +2975,10 @@ int gretl_regls (gretl_matrix *X,
 #ifdef HAVE_MPI
 	if (xv_use_mpi(ri)) {
 	    if (gretl_mpi_n_processes() > 1) {
+		/* MPI is already running */
 		regfunc = real_regls_xv_mpi;
 	    } else if (auto_mpi_ok()) {
+		/* Start MPI now */
 		regfunc = mpi_parent_action;
 	    }
 	}
@@ -3060,16 +3081,18 @@ static int mpi_parent_action (regls_info *ri)
 		/* user-specified number of processes */
 		mpi_opt |= OPT_N;
 		set_optval_int(MPI, OPT_N, np);
+	    } else {
+		np = get_default_mpi_np();
 	    }
 	    if (mpi_local) {
 		/* local machine only */
 		mpi_opt |= OPT_L;
 	    }
 	    if (ri->verbose) {
-		pputs(ri->prn, _("Invoking MPI...\n\n"));
+		pprintf(ri->prn, _("Invoking MPI with %d processes...\n\n"), np);
 		gretl_flush(ri->prn);
 	    } else {
-		fprintf(stderr, "doing MPI\n");
+		fprintf(stderr, "doing MPI with %d processes\n", np);
 	    }
 	    foreign_append("_regls()", MPI);
 	    err = foreign_execute(NULL, mpi_opt, ri->prn);
