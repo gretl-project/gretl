@@ -3077,13 +3077,15 @@ static int mpi_parent_action (regls_info *ri)
 	    int mpi_local = gretl_bundle_get_int(ri->b, "mpi_local", NULL);
 	    gretlopt mpi_opt = OPT_S | OPT_Q;
 
-	    if (np > 0) {
-		/* user-specified number of processes */
-		mpi_opt |= OPT_N;
-		set_optval_int(MPI, OPT_N, np);
-	    } else {
+	    if (np == 0) {
+		/* the caller didn't specify the number of processes */
 		np = get_default_mpi_np();
 	    }
+	    if (np > ri->nf) {
+		np = ri->nf;
+	    }
+	    mpi_opt |= OPT_N;
+	    set_optval_int(MPI, OPT_N, np);
 	    if (mpi_local) {
 		/* local machine only */
 		mpi_opt |= OPT_L;
