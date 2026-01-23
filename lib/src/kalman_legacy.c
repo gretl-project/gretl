@@ -214,11 +214,11 @@ static int legacy_load_filter_data (kalman *K, int smtype)
    page 19, var(\varepsilon_t|Y_n).
 */
 
-static int combined_dist_variance (kalman *K,
-                                   struct dk_dist_info *di,
-                                   gretl_matrix *Nt,
-                                   gretl_matrix_block *BX,
-                                   int DKstyle)
+static int legacy_combined_dist_variance (kalman *K,
+					  struct dk_dist_info *di,
+					  gretl_matrix *Nt,
+					  gretl_matrix_block *BX,
+					  int DKstyle)
 {
     gretl_matrix *DG, *KN, *VP, *NH, *NK;
 
@@ -282,13 +282,18 @@ static int combined_dist_variance (kalman *K,
     return 0;
 }
 
-static int dist_variance (kalman *K,
-                          struct dk_dist_info *di,
-			  gretl_matrix *Nt,
-			  gretl_matrix_block *BX,
-			  int DKstyle)
+static int legacy_dist_variance (kalman *K,
+				 struct dk_dist_info *di,
+				 gretl_matrix *Nt,
+				 gretl_matrix_block *BX,
+				 int DKstyle)
 {
     int err = 0;
+
+#if 0
+    fprintf(stderr, "legacy_dist_variance: K->VS=%p, K->VY=%p, di->D=%p\n",
+	    (void *) K->VS, (void *) K->VY, (void *) di->D);
+#endif
 
     if (di->D != NULL) {
 	/* needed only in presence of obs disturbance */
@@ -300,7 +305,14 @@ static int dist_variance (kalman *K,
 	}
     }
 
-    if (K->p == 0) {
+    if (K->p > 0) {
+        /* cross-correlated disturbance variance */
+        err = legacy_combined_dist_variance(K, di, Nt, BX, DKstyle);
+        if (!err) {
+            record_to_diag(di->veta, di->vwt, K->t);
+            record_to_diag(di->veps, di->vut, K->t);
+        }
+    } else {
 	/* variance of state disturbance */
 	if (DKstyle) {
 	    /* HH' - HH' N_t HH' */
@@ -314,24 +326,19 @@ static int dist_variance (kalman *K,
 	}
 	record_to_diag(di->veta, di->vwt, K->t);
 
-        /* variance of obs disturbance */
-        if (DKstyle) {
-            /* GG' - GG D_t GG' */
-            fast_copy_values(di->vut, K->VY);
-            gretl_matrix_qform(K->VY, GRETL_MOD_TRANSPOSE,
-                               di->D, di->vut, GRETL_MOD_DECREMENT);
-        } else {
-            /* GG' D_t GG' */
-            gretl_matrix_qform(K->VY, GRETL_MOD_TRANSPOSE,
-                               di->D, di->vut, GRETL_MOD_NONE);
-        }
-        record_to_diag(di->veps, di->vut, K->t);
-    } else {
-        /* cross-correlated disturbance variance */
-        err = combined_dist_variance(K, di, Nt, BX, DKstyle);
-        if (!err) {
-            record_to_diag(di->veta, di->vwt, K->t);
-            record_to_diag(di->veps, di->vut, K->t);
+        /* variance of obs disturbance, if applicable */
+	if (K->VY != NULL) {
+	    if (DKstyle) {
+		/* GG' - GG D_t GG' */
+		fast_copy_values(di->vut, K->VY);
+		gretl_matrix_qform(K->VY, GRETL_MOD_TRANSPOSE,
+				   di->D, di->vut, GRETL_MOD_DECREMENT);
+	    } else {
+		/* GG' D_t GG' */
+		gretl_matrix_qform(K->VY, GRETL_MOD_TRANSPOSE,
+				   di->D, di->vut, GRETL_MOD_NONE);
+	    }
+	    record_to_diag(di->veps, di->vut, K->t);
         }
     }
 
@@ -403,7 +410,7 @@ static void koopman_calc_a0 (kalman *K, gretl_matrix *r0)
    (SsfPack doc), section 4.4.
 */
 
-static int koopman_smooth (kalman *K, int DKstyle)
+static int legacy_koopman_smooth (kalman *K, int DKstyle)
 {
     struct dk_dist_info di = {0};
     gretl_matrix_block *B, *BX = NULL;
@@ -483,7 +490,7 @@ static int koopman_smooth (kalman *K, int DKstyle)
 	record_to_row(R, r0, t);
 
 	/* compute variance of disturbances */
-	err = dist_variance(K, &di, N0, BX, DKstyle);
+	err = legacy_dist_variance(K, &di, N0, BX, DKstyle);
 	if (err) {
 	    break;
 	}

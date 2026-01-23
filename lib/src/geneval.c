@@ -16105,22 +16105,22 @@ static NODE *eval_kalman_bundle_func (NODE *t, NODE *n, parser *p)
         }
     } else if (t->t == F_KDSMOOTH) {
         gretl_bundle *b = get_kalman_bundle_arg(n, p);
-        int param = 1;
-        int dkstyle = 0;
+        int dist = 1;
 
         if (!p->err) {
             if (k == 2) {
                 e = n->v.bn.n[1];
-                dkstyle = node_get_int(e, p);
+		if (node_get_bool(e, p, 0)) {
+		    dist = 2;
+		}
             } else if (k < 1 || k > 2) {
                 n_args_error(k, 1, 2, t->t, p);
             }
         }
         if (!p->err) {
-            param += dkstyle != 0;
             ret = aux_scalar_node(p);
             if (!p->err) {
-                ret->v.xval = kalman_bundle_smooth(b, param, p->prn);
+                ret->v.xval = kalman_bundle_smooth(b, dist, p->prn);
             }
         }
     } else if (t->t == F_KSMOOTH) {

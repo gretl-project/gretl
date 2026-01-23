@@ -283,7 +283,7 @@ static int bundle_add_matrix (gretl_bundle *b,
                               gretl_matrix *m);
 #if SUPPORT_LEGACY
 static int anderson_moore_smooth (kalman *K);
-static int koopman_smooth (kalman *K, int DKstyle);
+static int legacy_koopman_smooth (kalman *K, int DKstyle);
 #endif
 
 int is_kalman_bundle (gretl_bundle *b)
@@ -2751,10 +2751,15 @@ static int kalman_add_dejong_info (kalman *K)
 
 static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
 {
+    int DKstyle = 0;
     int err = 0;
 
     if (trace) {
-        printf("real_kalman_smooth(), K->code %d\n", K->code);
+        printf("real_kalman_smooth(), K->code %d, dist %d\n", K->code, dist);
+    }
+
+    if (dist == 2) {
+	DKstyle = 1;
     }
 
     err = kalman_ensure_output_matrices(K);
@@ -2809,13 +2814,13 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
             err = ksmooth_sequential(K, dist);
 	} else if (kalman_dejong(K)) {
             if (dist) {
-                err = dist_smooth_dejong(K, dist > 1);
+                err = dist_smooth_dejong(K, DKstyle);
 	    } else {
 		err = state_smooth_dejong(K);
 	    }
 	} else {
             if (dist) {
-		err = koopman_smooth(K, dist > 1);
+		err = legacy_koopman_smooth(K, DKstyle);
 	    } else {
 		err = anderson_moore_smooth(K);
 	    }
@@ -2837,7 +2842,12 @@ static int real_kalman_smooth (kalman *K, int dist, PRN *prn)
 }
 
 /* For use with userspace bundle-based API: implements
-   the ksmooth() and kdsmooth() functions.
+   the ksmooth() and kdsmooth() functions. The @dist parameter
+   works as follows:
+
+   0 -> state smoothing
+   1 -> disturbance smoothing
+   2 -> disturbance smoothing with "DKstyle" variance
 */
 
 int kalman_bundle_smooth (gretl_bundle *b, int dist, PRN *prn)
@@ -6468,7 +6478,7 @@ static int kfilter_dejong (kalman *K, PRN *prn)
         if (K->d == K->N) {
             err = handle_no_collapse_case(K, nl2pi, sum_preldet);
         } else if (loglik_1991) {
-            /* Eeal with extra terms set out in De Jong (1991)?
+            /* Deal with extra terms set out in De Jong (1991)?
                Not activated at present.
             */
             double ll_adj = K->djinfo->qm + K->djinfo->ldS;
