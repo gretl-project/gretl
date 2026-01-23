@@ -5803,12 +5803,12 @@
       <para>
 	The <opt>band</opt> option can be used for plotting a
 	<quote>band</quote> of some sort (typically representing a
-	confidence interval) along with other data. The recommended way
-	of specifying such a band is via a bundle, whose name is given
-	as a parameter to the option. Such a bundle has two required
-	elements, to specify the center of the band (under the key
-	<lit>center</lit>) and its width (under the key
-	<lit>width</lit>). Each of these must be given as either the
+	confidence interval) along with other data.  Such a band is
+	specified via a bundle, whose name is given as a parameter to
+	the option. In the primary usage of this option the bundle has
+	two required elements, to specify the center of the band (under
+	the key <lit>center</lit>) and its width (under the key
+	<lit>width</lit>). Each element must be given as either the
 	quoted name of a series or (if the element in question happens
 	to be constant) a numerical constant. In addition four optional
 	elements are supported, as follows.
@@ -5879,16 +5879,16 @@
 	reused with different factor values, since it avoids duplicating
 	the matrix in memory.
       </para>
-      <subhead>Recession bars</subhead>
+      <subhead>Period bars</subhead>
       <para>
-	The <quote>band</quote> option can also be used to add
-	<quote>recession bars</quote> to a plot. By this we mean
-	vertical bars occupying the full <math>y</math>-dimension of
-	the plot and indicating the presence (bar) or absence (no bar)
-	of some qualitative feature in a time-series plot. Such bars
-	are commonly used to flag periods of recession; they could
-	also be used to indicate periods of war, or anything that can
-	be coded in a 0/1 dummy variable.
+	An alternative usage of the <opt>band</opt> option is to add
+	<quote>period bars</quote> to a plot. By this we mean vertical
+	bars occupying the full <math>y</math>-dimension of the plot and
+	indicating the presence (bar) or absence (no bar) of some
+	qualitative feature in a time-series plot. Such bars are
+	commonly used to flag periods of recession; they could also be
+	used to indicate periods of war, or anything that can be coded
+	in a 0/1 dummy variable.
       </para>
       <para>
 	In this context the band bundle has a single required element:
@@ -5898,7 +5898,7 @@
 	<quote>on</quote> for observations where this series or vector
 	has value 1 and <quote>off</quote> when it's 0. The
 	<lit>center</lit>, <lit>width</lit>, <lit>factor</lit> and
-	<lit>style</lit> keys are not relevant, but <lit>color</lit>
+	<lit>style</lit> keys are not applicable, but <lit>color</lit>
 	can be used. Note that only one such specification can be used
 	per plot. Here's an example:
       </para>
@@ -5939,7 +5939,7 @@
 	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
       </code>
       <para>
-	To achieve aesthetically pleasing result, you may want to use
+	To achieve aesthetically pleasing results, you may want to use
 	the <fncref targ="rgbmix"/> function.
       </para>
       <subhead>Controlling the output</subhead>
