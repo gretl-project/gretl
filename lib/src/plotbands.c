@@ -329,17 +329,18 @@ static band_info *band_info_from_bundle (int matrix_mode,
 	    return NULL;
 	}
     } else {
-	int got_cw = 0;
+	int got[3] = {0};
 	int v_next = v_orig;
 	int v_add = 0;
 	int i, v = 0;
+	int imin = 0;
 	int imax = 3;
 	void *data;
 
 	/* first pass */
-	for (i=0; i<imax && !*err; i++) {
+	for (i=imin; i<imax && !*err; i++) {
 	    data = gretl_bundle_get_data(b, keys[i], &(bdata[i].t),
-					 &(bdata[i].sz), err);
+					 &(bdata[i].sz), NULL);
 	    if (data != NULL) {
 		if (bdata[i].t == GRETL_TYPE_STRING) {
 		    bdata[i].s = (char *) data;
@@ -353,19 +354,24 @@ static band_info *band_info_from_bundle (int matrix_mode,
 		} else {
 		    *err = band_type_error(&bdata[i], keys[i]);
 		}
-		if (i < 2) {
-		    if (++got_cw == 2) {
-			imax = 2;
-			break;
-		    }
-		}
+		got[i] = 1;
 	    }
+	}
+	/* we should have either center and width, or dummy alone */
+	if (got[0] && got[1] && !got[2]) {
+	    imax = 2;
+	} else if (got[2] && !got[0] && !got[1]) {
+	    imin = 2;
+	} else {
+	    gretl_errmsg_set(_("Invalid band specification"));
+	    *err = E_INVARG;
 	}
 	if (!*err && v_add > 0) {
 	    *err = dataset_add_series(dset, v_add);
 	}
 	/* second pass */
-	for (i=0; i<imax && !*err; i++) {
+	for (i=imin; i<imax && !*err; i++) {
+	    v = -1;
 	    if (bdata[i].t == GRETL_TYPE_STRING) {
 		v = current_series_index(dset, bdata[i].s);
 	    } else if (bdata[i].t == GRETL_TYPE_DOUBLE) {
@@ -395,6 +401,9 @@ static band_info *band_info_from_bundle (int matrix_mode,
     }
     if (!*err && gretl_bundle_has_key(b, "factor")) {
         bi->factor = gretl_bundle_get_scalar(b, "factor", err);
+        if (!*err && (bi->factor <= 0 || na(bi->factor))) {
+            *err = E_INVARG;
+        }
     }
     if (!*err && gretl_bundle_has_key(b, "style")) {
 	const char *s = gretl_bundle_get_string(b, "style", err);
@@ -404,22 +413,6 @@ static band_info *band_info_from_bundle (int matrix_mode,
     }
     if (!*err && gretl_bundle_has_key(b, "title")) {
         bi->title = gretl_bundle_get_string(b, "title", err);
-    }
-
-    if (!*err) {
-        /* further checks on validity of input */
-        if (bi->bdummy > 0) {
-            /* not compatible with width and center */
-            if (bi->center > 0 || bi->width > 0) {
-                *err = E_BADOPT;
-            }
-        } else if (bi->center < 0 || bi->width < 0) {
-            /* without bdummy, center and width are required */
-            *err = E_ARGS;
-        }
-        if (!*err && (bi->factor <= 0 || na(bi->factor))) {
-            *err = E_INVARG;
-        }
     }
 
  bailout:
