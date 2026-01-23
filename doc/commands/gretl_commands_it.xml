@@ -5944,15 +5944,16 @@
       <para>
 	L'opzione <opt>band</opt> si usa per mostrare una o più serie
 	assieme ad una <quote>banda</quote> (spesso, ma non sempre,
-	associata ad un intervallo di confidenza). Il modo consigliato
-	per definire e personalizzare la banda è tramite un bundle, da
-	fornire come parametro dell'opzione.  Il bundle richiede la
-	chiave <lit>center</lit> che identifica il nome della serie
-	attorno a cui si costruirà la banda, e la chiave
-	<lit>width</lit> per il nome della serie rappresentante
-	l'ampiezza della banda&mdash; entrambe le chiavi accettano
-	stringhe di testo.  Inoltre, quattro elementi opzionali sono
-	previsti:
+	associata ad un intervallo di confidenza). Tale banda è
+	specificate tramite un bundle, da fornire come parametro
+	dell'opzione. Tipicamente, il bundle contewrrà due elementi
+	obbligatori: la chiave <lit>center</lit> che identifica il
+	nome della serie attorno a cui si costruirà la banda, e la
+	chiave <lit>width</lit> per il nome della serie rappresentante
+	l'ampiezza della banda&mdash;. Queste due chiavi possono
+	essere stringhe col nome di serie esistenti oppure constanti
+	numeriche, per il caso in cui siano costanti.  Inoltre, sono
+	previsti quattro elementi opzionali:
       </para>
       <ilist>
 	<li>
@@ -6021,17 +6022,17 @@
 	essere riutilizzata in più di un bundle, per evitare spreco di
 	memoria.
       </para>
-      <subhead>Barre di recessione</subhead>
+      <subhead>Barre per sottoperiodi</subhead>
       <para>
-	L'opzione <quote>band</quote> sopra descritta può inoltre
-	essere utilizzata per aggiungere delle barre di recessione al
-	grafico. Con ciò si intendono barre verticali che occuperanno
-	l'intera dimensione <math>y</math> del grafico ed indicheranno
-	la presenza (con barra) o l'assenza (senza barra) di alcune
-	caratteristiche qualitative in una serie storica.  Queste
-	barre sono comunemente utilizzate per indicare periodi di
-	recessione/guerra/qualsiasi cosa codificabile da una variabile
-	dummy 0/1.
+	In alternativa, l'opzione <quote>band</quote> sopra descritta
+	può inoltre essere utilizzata per aggiungere delle <quote>barre di
+	periodo</quote> al grafico. Con ciò si intendono barre verticali
+	che occuperanno l'intera dimensione <math>y</math> del grafico
+	ed indicheranno la presenza (con barra) o l'assenza (senza
+	barra) di alcune caratteristiche qualitative in una serie
+	storica.  Queste barre sono comunemente utilizzate per
+	indicare periodi di recessione/guerra/qualsiasi cosa
+	codificabile da una variabile dummy 0/1.
       </para>
       <para>
 	In questo caso, il bundle per la banda ha solo un
