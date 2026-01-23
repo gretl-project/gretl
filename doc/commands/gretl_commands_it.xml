@@ -5946,11 +5946,11 @@
 	assieme ad una <quote>banda</quote> (spesso, ma non sempre,
 	associata ad un intervallo di confidenza). Tale banda è
 	specificate tramite un bundle, da fornire come parametro
-	dell'opzione. Tipicamente, il bundle contewrrà due elementi
+	dell'opzione. Tipicamente, il bundle conterrà due elementi
 	obbligatori: la chiave <lit>center</lit> che identifica il
 	nome della serie attorno a cui si costruirà la banda, e la
 	chiave <lit>width</lit> per il nome della serie rappresentante
-	l'ampiezza della banda&mdash;. Queste due chiavi possono
+	l'ampiezza della banda. Queste due chiavi possono
 	essere stringhe col nome di serie esistenti oppure constanti
 	numeriche, per il caso in cui siano costanti.  Inoltre, sono
 	previsti quattro elementi opzionali:
