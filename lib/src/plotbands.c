@@ -260,6 +260,43 @@ static const gretl_matrix *retrieve_bandmat (gretl_bundle *b,
     return m;
 }
 
+struct band_data {
+    GretlType t;
+    char *s;
+    double c;
+    int sz;
+};
+
+static int band_type_error (struct band_data *bdata,
+			    const char *key)
+{
+    gretl_errmsg_sprintf("%s: invalid type %s in band bundle",
+			 key, gretl_type_get_name(bdata->t));
+    return E_TYPES;
+}
+
+static int band_data_error (const char *key)
+{
+    gretl_errmsg_sprintf("%s: failed to get a series", key);
+    return E_DATA;
+}
+
+static int make_const_series (double c, DATASET *dset,
+			      int *v_next)
+{
+    if (c == 1.0) {
+	return 0; /* use "const" */
+    } else {
+	int t, v = *v_next;
+
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    dset->Z[v][t] = c;
+	}
+	*v_next += 1;
+	return v;
+    }
+}
+
 static band_info *band_info_from_bundle (int matrix_mode,
 					 gretl_bundle *b,
 					 gnuplot_info *gi,
@@ -267,12 +304,11 @@ static band_info *band_info_from_bundle (int matrix_mode,
                                          int *err)
 {
     band_info *bi = band_info_new();
-    const char *S[5] = {NULL};
-    const char *strkeys[] = {
-        "center", "width", "dummy", "style", "title"
+    struct band_data bdata[3] = {0};
+    const char *keys[3] = {
+        "center", "width", "dummy"
     };
-    char colspec[32];
-    int v, i, imin = 0;
+    int v_orig = dset->v;
 
     if (has_bogus_key(b)) {
 	*err = E_DATA;
@@ -289,47 +325,85 @@ static band_info *band_info_from_bundle (int matrix_mode,
 	if (!*err) {
 	    *err = process_band_matrix(m, bi, gi, dset);
 	}
-	if (!*err) {
-	    imin = 3;
-	} else {
+	if (*err) {
 	    return NULL;
 	}
-    }
+    } else {
+	int got_cw = 0;
+	int v_next = v_orig;
+	int v_add = 0;
+	int i, v = 0;
+	int imax = 3;
+	void *data;
 
-    *colspec = '\0';
-
-    for (i=imin; i<5 && !*err; i++) {
-        if (gretl_bundle_has_key(b, strkeys[i])) {
-            S[i] = gretl_bundle_get_string(b, strkeys[i], err);
+	/* first pass */
+	for (i=0; i<imax && !*err; i++) {
+	    data = gretl_bundle_get_data(b, keys[i], &(bdata[i].t),
+					 &(bdata[i].sz), err);
+	    if (data != NULL) {
+		if (bdata[i].t == GRETL_TYPE_STRING) {
+		    bdata[i].s = (char *) data;
+		} else if (bdata[i].t == GRETL_TYPE_DOUBLE) {
+		    if (i < 2) {
+			bdata[i].c = *(double *) data;
+			v_add += (bdata[i].c != 1.0);
+		    } else {
+			*err = band_type_error(&bdata[i], keys[i]);
+		    }
+		} else {
+		    *err = band_type_error(&bdata[i], keys[i]);
+		}
+		if (i < 2) {
+		    if (++got_cw == 2) {
+			imax = 2;
+			break;
+		    }
+		}
+	    }
+	}
+	if (!*err && v_add > 0) {
+	    *err = dataset_add_series(dset, v_add);
+	}
+	/* second pass */
+	for (i=0; i<imax && !*err; i++) {
+	    if (bdata[i].t == GRETL_TYPE_STRING) {
+		v = current_series_index(dset, bdata[i].s);
+	    } else if (bdata[i].t == GRETL_TYPE_DOUBLE) {
+		v = make_const_series(bdata[i].c, dset, &v_next);
+	    }
+	    if (v < 0) {
+		*err = band_data_error(keys[i]);
+	    }
+	    if (!*err) {
+		if (i < 2) {
+		    do_center_or_width(bi, gi, i, v);
+		} else {
+		    /* should be a dummy */
+		    *err = check_assign_bdummy(bi, v, dset);
+		}
+	    }
         }
     }
+
+    if (*err) {
+	goto bailout;
+    }
+
+    /* optional bundle members */
     if (!*err && gretl_bundle_has_key(b, "color")) {
 	*err = get_input_color(b, bi->rgb);
     }
     if (!*err && gretl_bundle_has_key(b, "factor")) {
         bi->factor = gretl_bundle_get_scalar(b, "factor", err);
     }
-
-    /* try cashing out the string members */
-    for (i=imin; i<5 && !*err; i++) {
-        if (S[i] == NULL) {
-            continue;
-        }
-        if (i < 3) {
-            v = current_series_index(dset, S[i]);
-            if (v < 0) {
-                *err = invalid_field_error(S[i]);
-            } else if (i < 2) {
-		do_center_or_width(bi, gi, i, v);
-	    } else {
-		/* dummy? */
-		*err = check_assign_bdummy(bi, v, dset);
-	    }
-        } else if (i == 3) {
-            bi->style = style_from_string(S[i], err);
-        } else if (i == 4) {
-	    bi->title = S[i];
+    if (!*err && gretl_bundle_has_key(b, "style")) {
+	const char *s = gretl_bundle_get_string(b, "style", err);
+	if (s != NULL) {
+	    bi->style = style_from_string(s, err);
 	}
+    }
+    if (!*err && gretl_bundle_has_key(b, "title")) {
+        bi->title = gretl_bundle_get_string(b, "title", err);
     }
 
     if (!*err) {
@@ -339,8 +413,8 @@ static band_info *band_info_from_bundle (int matrix_mode,
             if (bi->center > 0 || bi->width > 0) {
                 *err = E_BADOPT;
             }
-        } else if (bi->center <= 0) {
-            /* without bdummy, center is required */
+        } else if (bi->center < 0 || bi->width < 0) {
+            /* without bdummy, center and width are required */
             *err = E_ARGS;
         }
         if (!*err && (bi->factor <= 0 || na(bi->factor))) {
@@ -348,7 +422,12 @@ static band_info *band_info_from_bundle (int matrix_mode,
         }
     }
 
+ bailout:
+
     if (*err) {
+	if (dset->v > v_orig) {
+	    dataset_drop_last_variables(dset, dset->v - v_orig);
+	}
         free(bi);
         bi = NULL;
     }
@@ -864,9 +943,12 @@ int plot_with_band (BPMode mode,
     int i, j, n_yvars = 0;
     int matrix_mode;
     int n_bands = 1;
+    int pushed = 0;
+    int v_orig;
     int err = 0;
 
     matrix_mode = (opt & OPT_X) || mode == BP_BLOCKMAT;
+    v_orig = dset->v;
 
 #if PB_DEBUG
     fprintf(stderr, "\nplot_with_band: matrix_mode = %d\n", matrix_mode);
@@ -899,14 +981,12 @@ int plot_with_band (BPMode mode,
 
     err = graph_list_adjust_sample(gi, dset, 1);
     if (err) {
-        free_bbi(bbi, n_bands);
-        return err;
+	goto finish;
     }
 
     fp = open_plot_input_file(PLOT_BAND, gi->flags, &err);
     if (err) {
-        free_bbi(bbi, n_bands);
-        return err;
+	goto finish;
     }
 
     if (gi->flags & GPT_TS) {
@@ -937,6 +1017,7 @@ int plot_with_band (BPMode mode,
     lwstr = get_lw_string();
 
     gretl_push_c_numeric_locale();
+    pushed = 1;
 
     if (gi->x != NULL) {
         print_x_range(gi, fp);
@@ -993,9 +1074,23 @@ int plot_with_band (BPMode mode,
 
  finish:
 
-    gretl_pop_c_numeric_locale();
+    if (pushed) {
+	gretl_pop_c_numeric_locale();
+    }
 
-    err = finalize_plot_input_file(fp);
+    if (!matrix_mode && dset->v > v_orig) {
+	dataset_drop_last_variables(dset, dset->v - v_orig);
+    }
+
+    if (err) {
+	if (fp != NULL) {
+	    fclose(fp);
+	    gretl_remove(gretl_plotfile());
+	}
+    } else {
+	err = finalize_plot_input_file(fp);
+    }
+
     clear_gpinfo(gi);
     free_bbi(bbi, n_bands);
 

@@ -5803,14 +5803,15 @@
       <para>
 	The <opt>band</opt> option can be used for plotting a
 	<quote>band</quote> of some sort (typically representing a
-	confidence interval) along with other data. The recommended
-	way of specifying such a band is via a bundle, whose name is
-	given as a parameter to the option.  A <lit>band</lit> bundle
-	has two required elements: under the key <lit>center</lit>,
-	the name of a series for the center of the band, and under the
-	key <lit>width</lit> the name of a series representing the
-	width of the band&mdash;both being given as quoted strings. In
-	addition four optional elements are supported, as follows.
+	confidence interval) along with other data. The recommended way
+	of specifying such a band is via a bundle, whose name is given
+	as a parameter to the option. Such a bundle has two required
+	elements, to specify the center of the band (under the key
+	<lit>center</lit>) and its width (under the key
+	<lit>width</lit>). Each of these must be given as either the
+	quoted name of a series or (if the element in question happens
+	to be constant) a numerical constant. In addition four optional
+	elements are supported, as follows.
       </para>
       <ilist>
 	<li>
@@ -5867,7 +5868,7 @@
 	gnuplot y --time-series --with-lines --bands=bb
       </code>
       <para>
-	When plotting matrix rather than series data, the only
+	When plotting matrix data rather than series, the only
 	difference is that the <lit>center</lit> and <lit>width</lit>
 	elements of the band bundle are replaced by a single element
 	under the key <lit>bandmat</lit>. This should be a two-column
@@ -5875,8 +5876,8 @@
 	width in the second. Alternatively you can give a string under
 	this key: the <i>quoted name</i> of a suitable matrix. This
 	variant may be preferable if the matrix in question is to be
-	reused with different factor values, since it avoids
-	duplicating the matrix in memory.
+	reused with different factor values, since it avoids duplicating
+	the matrix in memory.
       </para>
       <subhead>Recession bars</subhead>
       <para>
