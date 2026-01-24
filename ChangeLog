@@ -11,8 +11,24 @@ version 2026a, in progress
   as parameter, or comma-separated series
 - "open" command: support the --all-cols option for xlsx
   and gnumeric importation
+- "data" command: fix possible problem with long db.nomics
+  series identifiers
 - "xcorrgm" command: save a $result matrix and add a --quiet
   option
+- "gnuplot" and "plot" commands with --band option: support
+  giving the center and width of the band as scalars if they
+  are not varying
+- fix bug: possible crash from kdsmooth() when there's no
+  disturbance in the observation equation and exact diffuse
+  initialization is not employed
+- fix bug: in regls() with cross validation using MPI it
+  could happen that too many MPI processes were employed,
+  leading to broken results
+- fix bug in GUI deletion dialog: destroying the dialog
+  could be taken as indicating "OK"
+- updates and fixes for documentation
+- macos arm64 build: ensure that __divdc3 is defined
+- 64-bit Windows build: ensure that libreadline is supplied
 - random number generator: replace Mersenne Twister with
   xoshiro256+
 
