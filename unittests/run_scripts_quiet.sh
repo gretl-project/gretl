@@ -1,11 +1,11 @@
 #!/bin/bash
 
 if [ "x$1" != "x" ] ; then
-   # executing in build tree
+   echo "*** Executing unit tests in the build tree ***"
    INPPATH=$1
    GRETLCLI="$(pwd)/../cli/gretlcli"
 else
-   # executing "here" using installed gretlcli
+   echo "*** Executing unit tests using installed gretlcli ***"
    INPPATH="."
    GRETLCLI="gretlcli"
 fi
