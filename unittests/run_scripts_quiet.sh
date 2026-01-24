@@ -21,7 +21,8 @@ my_status=0
 
 # Test scripts in the 'practice_scripts' directory
 echo "*** practice scripts ***"
-for f in `find $INPPATH/practice_scripts -name "*.inp"` ; do
+cd $INPPATH/practice_scripts
+for f in `find . -name "*.inp"` ; do
    # Print the name of the script being tested
    bname=`basename $f`
    echo -n $bname
