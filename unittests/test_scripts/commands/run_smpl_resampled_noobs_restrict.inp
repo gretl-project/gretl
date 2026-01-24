@@ -3,7 +3,7 @@ clear
 
 /* Crash with gretl 2024a, fixed thereafter */
 
-open housing.gdt --quiet
+nulldata 546
 
 series trainvali = FALSE
 scalar nresample = ceil($nobs * 0.9)
