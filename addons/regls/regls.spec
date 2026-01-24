@@ -1,7 +1,7 @@
 author = Allin Cottrell
 email = cottrell@wfu.edu
 version = @VERSION@
-date = 2025-05-15
+date = 2026-01-21
 description = Regularized least squares
 tags = C20 C52
 data-requirement = no-data-ok

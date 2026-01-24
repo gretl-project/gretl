@@ -488,7 +488,11 @@ issue, by two main means.
 \item We implemented automatic ``farming out'' of cross validation to
   multiple \textsf{MPI} processes (when \textsf{MPI} is available on
   the host machine). It's possible to prevent this by adding
-  \dtk{no_mpi} to the parameter bundle with a non-zero value.
+  \dtk{no_mpi} to the parameter bundle with a non-zero value. When
+  MPI is being used one can specify the number of processes via
+  \dtk{mpi_np} in the parameter bundle; this defaults to the lesser
+  of the number of folds and the number of physical cores on the
+  local machine.
 \end{itemize}
 In one benchmark case we considered---with 1500 training observations,
 101 covariates, 50 values of $\lambda$ and 10 randomized cross
@@ -818,6 +822,7 @@ bundle regls (series y, list X, bundle parms)
     \texttt{seed} & optional integer & controls random folds\\
     \dtk{single_b} & 0/1, default 0 & see Section~\ref{sec:xvalid}\\
     \dtk{no_mpi} & 0/1, default 0 & see Section~\ref{sec:speed}\\
+    \dtk{mpi_np} & optional integer & see Section~\ref{sec:speed}\\
     \texttt{admmctrl} & optional control vector & see
                                                   Section~\ref{sec:add-controls} \\
     \texttt{ccd} & 0/1, default 0 & see section~\ref{sec:ccd} \\
@@ -1020,6 +1025,9 @@ void glmnet_multiprint (const matrix RB, const matrix Rlam,
 \section{Change log}
 \label{sec:changes}
 
+2026-01-21: Fix problem whereby cross validation using MPI could
+start more processes than there are folds, giving broken results;
+augment/improve some printouts; fix bug in \dtk{glmnet_pred}.
 2025-05-15: Increase the default minimum $s$ value for the case when
 \texttt{nlambda} is given and the number of observations is not greater
 than the number of regressors (as per \textsf{glmnet}). Revise the
