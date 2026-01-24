@@ -420,6 +420,21 @@ static int get_user_mpi_procs (int *err)
     return np;
 }
 
+int get_default_mpi_np (void)
+{
+    int np = 0;
+
+    if (libset_get_bool(MPI_USE_SMT)) {
+	/* use max number of processes */
+	np = gretl_n_processors();
+    } else {
+	/* don't use hyperthreads */
+	np = gretl_n_physical_cores();
+    }
+
+    return np;
+}
+
 # ifdef G_OS_WIN32
 
 static int win32_run_mpi_sync (gretlopt opt, PRN *prn)
@@ -517,21 +532,6 @@ static void print_mpi_command (char **argv, PRN *prn)
         pprintf(prn, "%s ", argv[i]);
     }
     pputc(prn, '\n');
-}
-
-int get_default_mpi_np (void)
-{
-    int np = 0;
-
-    if (libset_get_bool(MPI_USE_SMT)) {
-	/* use max number of processes */
-	np = gretl_n_processors();
-    } else {
-	/* don't use hyperthreads */
-	np = gretl_n_physical_cores();
-    }
-
-    return np;
 }
 
 static int lib_run_mpi_sync (gretlopt opt, void *ptr, PRN *prn)
