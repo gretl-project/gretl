@@ -63,9 +63,9 @@ For example, the code
 in which the seed is set by the user, should invariably produce the
 matrix
 \begin{code}
-  0.435995943611  0.904018425383
-  0.460968831787  0.497482939158
-  0.264728404349  0.639622737188
+  0.088025327009  0.547567021443
+  0.428678844208  0.307482010724
+  0.600651539849  0.955673248007
 \end{code}
 If you wish to reset the seed to something over which you have no
 control, you can use the command \cmd{set seed auto}.
@@ -86,9 +86,9 @@ implementation. The normal equivalent to the code above is
 \end{code}
 whose output is
 \begin{code}
- -0.019792432788  1.685256806117
- -1.556782638829  0.853192127156
-  1.266141569909 -0.909426429943
+ -0.300383700185  0.265822214364
+  0.816693512224  0.836117005449
+  0.147805465748  0.644932184014
 \end{code}
 
 Drawing from a generic normal distribution with arbitrary mean and
@@ -115,10 +115,10 @@ Cholesky decomposition being a popular choice. For example,
 \end{code}
 will produce
 \begin{code}
-  2.9727       3.9924
+      2.9666       3.9788 
 
-  4.0690       2.0670
-  2.0670       2.0406
+      4.0689       2.0165 
+      2.0165       1.9856 
 \end{code}
 Note that in this example the individual draws are the \emph{rows} of
 the matrices $X$ and $Z$, so we are using a row vector $m$ and the
@@ -142,9 +142,9 @@ summary x1 x2 --simple
 \end{code}
 The output of the above is
 \begin{code}
-          Mean      Median        S.D.         Min         Max
-x1      2.9727      2.9781      2.0172     -4.2671      11.460
-x2      3.0121      3.0019      1.9909     -5.4445      10.923
+           Mean      Median        S.D.         Min         Max
+x1       2.9666      2.9816      2.0171     -4.7079      9.6585
+x2       2.9911      3.0221      1.9862     -5.2539      9.8079
 \end{code}
 
 \section{Other distributions via native functions}
@@ -496,11 +496,11 @@ estimate of the joint density of the generated data).
 \begin{code}
 scalar y
              Mean      Median        S.D.         Min         Max
-col1       3.0017      2.9967      1.4172     -2.2430      8.6539
+col1       2.9916      2.9959      1.4026     -3.3100      7.9858
 
 scalar x
              Mean      Median        S.D.         Min         Max
-col2      0.99380     0.99801      1.9994     -5.8432      9.1098
+col2      0.97753     0.98632      2.0132     -5.9734      8.7937
 \end{code}
 
 The sequential nature of the algorithm does not guarantee that the
