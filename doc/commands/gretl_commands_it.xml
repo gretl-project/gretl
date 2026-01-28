@@ -13729,14 +13729,27 @@ del comando <cmdref targ="set"/>.
       regressori.
     </para>
     <para>
-      Si noti che in questo caso molti degli accessori normalmente
-      disponibili dopo il completamento della stima, come
-      <lit>$coeff</lit> o <lit>$stderr</lit>, non saranno
-      disponibili. Tuttavia, è possibile salvare il bundle del modello
-      e utilizzare l'elemento <lit>rq_sequence</lit>, che contiene il
-      coefficiente nella colonna 1 e gli errori standard nella colonna
-      2.
+      Si noti che in questo caso gli accessori <lit>$coeff</lit> o
+      <lit>$stderr</lit>, normalmente disponibili dopo il
+      completamento della stima, non sono definiti. Tuttavia, è
+      possibile trovare tali informazioni sotto la chiave
+      <lit>rq_sequence</lit> nel bundle <lit>$model</lit>: si tratta
+      di una matrice a due colonne con i coefficienti nella colonna 1
+      e gli errori standard nella colonna 2.  L'ordine delle righe è
+      come nella stampa. Segue un esempio (si assume che <lit>y</lit>
+      sia una serie dipendente appropriata e <lit>X</lit> una lista di
+      regressori).
     </para>
+      <code>
+	matrix q = {0.75, 0.5, 0.25}
+	quantreg q y X
+	bundle b = $model
+	# show all coefficients and standard errors
+	print b.rq_sequence
+	# show just those for tau = 0.5
+	n = rows(b.rq_sequence)
+	eval b.rq_sequence[seq(2,n-1,nelem(q))',]
+      </code>
   </description>
   
   <gui-access>
