@@ -13722,34 +13722,21 @@ del comando <cmdref targ="set"/>.
 	Stima con un vettore di quantili
       </subhead>
     <para>
-      Invece di indicare <repl>tau</repl> come uno scalare, è possibile usare
-      un vettore, indicando il nome di una matrice predefinita. In questo
-      caso le stime vengono eseguite per tutti i valori di <repl>tau</repl>, e
-      i risultati mostrano la sequenza delle stime quantili per ognuno dei
-      regressori.
+      Invece di indicare <repl>tau</repl> come uno scalare, è
+      possibile usare un vettore, indicando il nome di una matrice
+      predefinita. Le stime vengono eseguite per tutti i valori di
+      <repl>tau</repl>, e i risultati mostrano la sequenza delle stime
+      quantili per ognuno dei regressori.
     </para>
     <para>
-      Si noti che in questo caso gli accessori <lit>$coeff</lit> o
-      <lit>$stderr</lit>, normalmente disponibili dopo il
-      completamento della stima, non sono definiti. Tuttavia, è
-      possibile trovare tali informazioni sotto la chiave
-      <lit>rq_sequence</lit> nel bundle <lit>$model</lit>: si tratta
-      di una matrice a due colonne con i coefficienti nella colonna 1
-      e gli errori standard nella colonna 2.  L'ordine delle righe è
-      come nella stampa. Segue un esempio (si assume che <lit>y</lit>
-      sia una serie dipendente appropriata e <lit>X</lit> una lista di
-      regressori).
+      In questo caso, gli accessori <lit>$coeff</lit> e
+      <lit>$stderr</lit> restituiscono matrici <by r="k" c="n"/>, dove
+      <math>k</math> è il numero di regressori e <math>n</math> è il
+      numero di quantili. È anche possibile ottenere una matrice
+      contenente i coefficienti e gli errori standard nello stesso formato
+      in cui <lit>quantreg</lit> presenta i risultati, sotto la chiave
+      <lit>rq_sequence</lit> nel bundle <fncref targ="$model"/>.
     </para>
-      <code>
-	matrix q = {0.75, 0.5, 0.25}
-	quantreg q y X
-	bundle b = $model
-	# show all coefficients and standard errors
-	print b.rq_sequence
-	# show just those for tau = 0.5
-	n = rows(b.rq_sequence)
-	eval b.rq_sequence[seq(2,n-1,nelem(q))',]
-      </code>
   </description>
   
   <gui-access>

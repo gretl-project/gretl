@@ -2405,7 +2405,7 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
-    if (plain_format(prn) && (pmod->ci == LAD || pmod->ci == QUANTREG) {
+    if (plain_format(prn) && (pmod->ci == LAD || pmod->ci == QUANTREG)) {
 	maybe_print_lad_warning(pmod, prn);
     }
 
