@@ -13498,14 +13498,27 @@
 	in turn.
       </para>
       <para>
-	Note that in this case many of post-estimation accessors
-	normally available after successful completion of the command,
-	such as <lit>$coeff</lit> or <lit>$stderr</lit> will not be
-	available. However, you can save the model bundle to a named
-	variable and use the <lit>rq_tauvec</lit> key, which contains
-	the coefficients in column 1 and the standard errors in column
-	2.
+	Note that when a vector of quantiles is specified, the
+	accessors <lit>$coeff</lit> and <lit>$stderr</lit>, which are
+	usually available after successful completion of an estimation
+	command, are not defined. However, you can find that
+	information under the key <lit>rq_sequence</lit> in the
+	<lit>$model</lit> bundle: this is a two-column matrix with the
+	coefficients in column 1 and the standard errors in column 2.
+	The order of the rows is as in the printout. An example
+	follows (we assume that <lit>y</lit> is a suitable dependent
+	series and <lit>X</lit> a list of regressors).
       </para>
+      <code>
+	matrix q = {0.75, 0.5, 0.25}
+	quantreg q y X
+	bundle b = $model
+	# show all coefficients and standard errors
+	print b.rq_sequence
+	# show just those for tau = 0.5
+	n = rows(b.rq_sequence)
+	eval b.rq_sequence[seq(2,n-1,nelem(q))',]
+      </code>
     </description>
 
     <gui-access>

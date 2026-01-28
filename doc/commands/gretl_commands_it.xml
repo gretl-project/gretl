@@ -13733,7 +13733,7 @@ del comando <cmdref targ="set"/>.
       disponibili dopo il completamento della stima, come
       <lit>$coeff</lit> o <lit>$stderr</lit>, non saranno
       disponibili. Tuttavia, è possibile salvare il bundle del modello
-      e utilizzare l'elemento <lit>rq_tauvec</lit>, che contiene il
+      e utilizzare l'elemento <lit>rq_sequence</lit>, che contiene il
       coefficiente nella colonna 1 e gli errori standard nella colonna
       2.
     </para>
