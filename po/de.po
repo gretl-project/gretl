@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-24 08:54-0500\n"
-"PO-Revision-Date: 2025-11-11 23:40+0100\n"
+"PO-Revision-Date: 2026-01-28 19:12+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -1147,7 +1147,7 @@ msgstr "Unterstelle einfaches Anführungszeichen als relevant\n"
 
 #: lib/src/csvdata.c:1586
 msgid "unmatched quotation marks in CSV file"
-msgstr ""
+msgstr "ungepaarte Anführungszeichen in CSV-Datei"
 
 #: lib/src/csvdata.c:1587
 msgid "Quotation broken: marks not paired\n"
@@ -1279,9 +1279,9 @@ msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- keine Zahlenumwandlung ausgeführt!"
 
 #: lib/src/csvdata.c:3273
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %d strings were truncated.\n"
-msgstr "Warnung: %d Bezeichner wurden abgeschnitten.\n"
+msgstr "Warnung: %d Zeichenketten wurden abgeschnitten.\n"
 
 #: lib/src/csvdata.c:3315
 msgid "scanning for data...\n"
@@ -2769,9 +2769,8 @@ msgid "White's test for heteroskedasticity"
 msgstr "Whites Test auf Heteroskedastizität"
 
 #: lib/src/estimate.c:3315
-#, fuzzy
 msgid "At least one regressor is required"
-msgstr "Kein Passwort notwendig"
+msgstr "Mind. ein Regressor notwendig"
 
 #: lib/src/estimate.c:3362
 msgid "Generalized Cochrane-Orcutt estimation"
@@ -3635,9 +3634,9 @@ msgid "Actual and fitted %s versus %s"
 msgstr "Tatsächliche und angepasste %s gegen %s"
 
 #: lib/src/graphing.c:2847
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with separation by %s"
-msgstr "%s gegen %s (mit quadrat. Anpassung)"
+msgstr "%s gegen %s mit Aufteilung gemäß %s"
 
 #: lib/src/graphing.c:3098 gui/gpt_dialog.c:677
 #, c-format
@@ -4367,9 +4366,8 @@ msgid "Matrix argument contains non-finite values"
 msgstr "Matrixargument enthält nichtendliche Werte"
 
 #: lib/src/gretl_errors.c:93
-#, fuzzy
 msgid "This command requires time-series data"
-msgstr "Diese Funktion erfordert Zeitreihendaten."
+msgstr "Dieser Befehl erfordert Zeitreihendaten."
 
 #: lib/src/gretl_errors.c:101
 msgid "gradient is not close to zero"
@@ -5350,9 +5348,8 @@ msgid "No first-order autocorrelation (rho = -0.5)"
 msgstr "Keine Autokorrelation erster Ordnung (rho = -0.5)"
 
 #: lib/src/gretl_model.c:4381
-#, fuzzy
 msgid "BDS test for nonlinearity"
-msgstr "B_DS-Nichtlinearitätstest"
+msgstr "BDS-Nichtlinearitätstest"
 
 #: lib/src/gretl_model.c:4389 lib/src/gretl_panel.c:5582
 msgid "Distribution free Wald test for heteroskedasticity"
@@ -8454,9 +8451,8 @@ msgid "%s: inapplicable option"
 msgstr "%s: nicht anwendbare Option"
 
 #: lib/src/plotbands.c:366
-#, fuzzy
 msgid "Invalid band specification"
-msgstr "Ungültige Spezifikation für join"
+msgstr "Ungültige Band-Spezifikation"
 
 #: lib/src/plotbands.c:747
 msgid ""
@@ -9037,7 +9033,7 @@ msgstr "Zu wenig Speicher beim XML-Kodieren"
 #: lib/src/strutils.c:3562
 #, c-format
 msgid "Unknown escape sequence '\\%c'"
-msgstr ""
+msgstr "Unbekannte Escape-Sequenz '\\%c'"
 
 #: lib/src/subsample.c:744
 msgid "You cannot subsample a resampled dataset"
@@ -17167,9 +17163,8 @@ msgid "Set %d observations to \"missing\""
 msgstr "Setze %d Beobachtungen auf \"missing\""
 
 #: gui/library.c:5292
-#, fuzzy
 msgid "No name was given"
-msgstr "Keine Formel eingegeben"
+msgstr "Kein Name eingegeben"
 
 #: gui/library.c:5438
 msgid "gretl: residual dist."
@@ -21436,12 +21431,12 @@ msgstr ""
 "\")\n"
 
 #: plugin/regls.c:3094
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Invoking MPI with %d processes...\n"
 "\n"
 msgstr ""
-"Rufe MPI auf...\n"
+"Rufe MPI mit %d Prozessen auf...\n"
 "\n"
 
 #: plugin/sas_import.c:614 plugin/sas_import.c:649
