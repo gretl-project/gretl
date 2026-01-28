@@ -13498,27 +13498,15 @@
 	in turn.
       </para>
       <para>
-	Note that when a vector of quantiles is specified, the
-	accessors <lit>$coeff</lit> and <lit>$stderr</lit>, which are
-	usually available after successful completion of an estimation
-	command, are not defined. However, you can find that
-	information under the key <lit>rq_sequence</lit> in the
-	<lit>$model</lit> bundle: this is a two-column matrix with the
-	coefficients in column 1 and the standard errors in column 2.
-	The order of the rows is as in the printout. An example
-	follows (we assume that <lit>y</lit> is a suitable dependent
-	series and <lit>X</lit> a list of regressors).
+	When a vector of quantiles is specified, the accessors
+	<lit>$coeff</lit> and <lit>$stderr</lit> provide <by r="k"
+	c="n"/> matrices, where <math>k</math> is the number of
+	regressors and <math>n</math> the number of quantiles.  You can
+	also get a matrix holding the coefficients and standard errors
+	in the format shown in the <lit>quantreg</lit> printout, under
+	the key <lit>rq_sequence</lit> in the <fncref targ="$model"/>
+	bundle.
       </para>
-      <code>
-	matrix q = {0.75, 0.5, 0.25}
-	quantreg q y X
-	bundle b = $model
-	# show all coefficients and standard errors
-	print b.rq_sequence
-	# show just those for tau = 0.5
-	n = rows(b.rq_sequence)
-	eval b.rq_sequence[seq(2,n-1,nelem(q))',]
-      </code>
     </description>
 
     <gui-access>
