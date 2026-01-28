@@ -1444,7 +1444,7 @@ int rq_driver (const gretl_matrix *tau, MODEL *pmod,
     if (!err) {
 	/* some common finishing touches */
 	gretl_model_add_y_median(pmod, dset->Z[pmod->list[1]]);
-	pmod->ci = LAD;
+	pmod->ci = QUANTREG;
 	gretl_model_set_int(pmod, "rq", 1);
 	if (opt & OPT_R) {
 	    gretl_model_set_int(pmod, "rq_nid", 1);

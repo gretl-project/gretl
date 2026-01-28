@@ -7394,6 +7394,35 @@ int gretl_model_get_series (double *x, MODEL *pmod,
     return 0;
 }
 
+static gretl_matrix *tauvec_result (const MODEL *pmod,
+				    const gretl_vector *tau,
+				    int idx)
+{
+    gretl_matrix *S = gretl_model_get_data(pmod, "rq_sequence");
+    gretl_matrix *ret = NULL;
+
+    if (S != NULL) {
+	double xij;
+	int src = idx == M_COEFF ? 0 : 1;
+	int c = gretl_vector_get_length(tau);
+	int r = pmod->ncoeff;
+	int i, j, t;
+
+	ret = gretl_matrix_alloc(r, c);
+
+	t = 0;
+	for (i=0; i<r; i++) {
+	    t = i * c;
+	    for (j=0; j<c; j++) {
+		xij = gretl_matrix_get(S, t++, src);
+		gretl_matrix_set(ret, i, j, xij);
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static gretl_matrix *
 model_get_estvec (const MODEL *pmod, int idx, int *err)
 {
@@ -7401,9 +7430,13 @@ model_get_estvec (const MODEL *pmod, int idx, int *err)
     gretl_matrix *v = NULL;
     int i;
 
-    if (gretl_model_get_data(pmod, "rq_tauvec")) {
-	*err = E_BADSTAT;
-	return NULL;
+    if ((v = gretl_model_get_data(pmod, "rq_tauvec")) != NULL) {
+	gretl_matrix *ret = tauvec_result(pmod, v, idx);
+
+	if (ret == NULL) {
+	    *err = E_BADSTAT;
+	}
+	return ret;
     }
 
     src = (idx == M_COEFF)? pmod->coeff : pmod->sderr;

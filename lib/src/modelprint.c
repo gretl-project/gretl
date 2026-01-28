@@ -967,6 +967,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == HSK)  return N_("Heteroskedasticity-corrected");
     else if (ci == AR)   return N_("AR");
     else if (ci == LAD)  return N_("LAD");
+    else if (ci == QUANTREG) return N_("Quantile regression");
     else if (ci == MPOLS) return N_("High-Precision OLS");
     else if (ci == PROBIT) return N_("Probit");
     else if (ci == LOGIT)  return N_("Logit");
@@ -1071,7 +1072,7 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("ML Heckit");
 	}
-    } else if (pmod->ci == LAD) {
+    } else if (pmod->ci == LAD || pmod->ci == QUANTREG) {
 	if (gretl_model_get_int(pmod, "rq")) {
 	    return N_("Quantile estimates");
 	} else {
@@ -1665,7 +1666,7 @@ void print_model_vcv_info (const MODEL *pmod, const DATASET *dset,
 {
     VCVInfo *vi = NULL;
 
-    if (pmod->ci == LAD && gretl_model_get_int(pmod, "rq")) {
+    if (pmod->ci == QUANTREG) {
 	rq_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "panel_bk_failed")) {
 	beck_katz_failed_line(prn);
@@ -2291,7 +2292,7 @@ static void print_model_heading (const MODEL *pmod,
 	if (method != SYS_METHOD_FIML && method != SYS_METHOD_LIML) {
 	    print_ivreg_instruments(pmod, dset, prn);
 	}
-    } else if (pmod->ci == LAD) {
+    } else if (pmod->ci == LAD || pmod->ci == QUANTREG) {
 	/* tau for quantile regression */
 	double tau = gretl_model_get_double(pmod, "tau");
 
@@ -2404,7 +2405,7 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
-    if (plain_format(prn) && pmod->ci == LAD) {
+    if (plain_format(prn) && (pmod->ci == LAD || pmod->ci == QUANTREG) {
 	maybe_print_lad_warning(pmod, prn);
     }
 
@@ -3287,7 +3288,7 @@ static void print_middle_table (MODEL *pmod, PRN *prn, int code)
 	    }
 	}
 #endif
-    } else if (pmod->ci == LAD) {
+    } else if (pmod->ci == LAD || pmod->ci == QUANTREG) {
 	key[K_YBAR] = N_("Median depend. var");  /* 22: Median of dependent variable */
 	val[K_YBAR] = gretl_model_get_double(pmod, "ymedian");
 	key[K_SSR] = N_("Sum absolute resid");  /* 22: Sum of absolute residuals */
@@ -3663,7 +3664,7 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 	pmod->ci != DPANEL && pmod->ci != GARCH && pmod->ci != DURATION &&
 	!ordered_model(pmod) && !multinomial_model(pmod) &&
 	!COUNT_MODEL(pmod->ci) && !intreg_model(pmod) &&
-	pmod->ci != BIPROBIT && !pmod->aux) {
+	pmod->ci != BIPROBIT && pmod->ci != QUANTREG && !pmod->aux) {
 	pval_max_line(pmod, dset, prn);
     }
 
@@ -4995,7 +4996,7 @@ static int plain_print_coeffs (const MODEL *pmod,
             se = xse;
             nc += k;
         }
-    } else if (pmod->ci == LAD) {
+    } else if (pmod->ci == LAD || pmod->ci == QUANTREG) {
         gretl_matrix *m = gretl_model_get_data(pmod, "coeff_intervals");
 
         if (m != NULL) {
@@ -5306,7 +5307,7 @@ alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn)
 	seppos = pmod->list[0] - 4;
     }
 
-    if (pmod->ci == LAD) {
+    if (pmod->ci == LAD || pmod->ci == QUANTREG) {
 	intervals = gretl_model_get_data(pmod, "coeff_intervals");
     }
 
