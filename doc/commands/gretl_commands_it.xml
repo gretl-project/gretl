@@ -13718,12 +13718,24 @@ del comando <cmdref targ="set"/>.
       forma di frazione decimale), aggiungendolo all'opzione, come in
       <lit>--intervals=0.95</lit>.
     </para>
+      <subhead>
+	Stima con un vettore di quantili
+      </subhead>
     <para>
       Invece di indicare <repl>tau</repl> come uno scalare, è possibile usare
       un vettore, indicando il nome di una matrice predefinita. In questo
       caso le stime vengono eseguite per tutti i valori di <repl>tau</repl>, e
       i risultati mostrano la sequenza delle stime quantili per ognuno dei
       regressori.
+    </para>
+    <para>
+      Si noti che in questo caso molti degli accessori normalmente
+      disponibili dopo il completamento della stima, come
+      <lit>$coeff</lit> o <lit>$stderr</lit>, non saranno
+      disponibili. Tuttavia, è possibile salvare il bundle del modello
+      e utilizzare l'elemento <lit>rq_tauvec</lit>, che contiene il
+      coefficiente nella colonna 1 e gli errori standard nella colonna
+      2.
     </para>
   </description>
   

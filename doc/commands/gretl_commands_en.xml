@@ -13486,12 +13486,25 @@
 	change this by appending a confidence level (expressed as a decimal
 	fraction) to the intervals option, as in <opt>intervals=0.95</opt>.
       </para>
+      <subhead>
+	Estimation with a vector of quantiles
+      </subhead>
       <para>
-	Vector-valued <repl>tau</repl>:  instead of supplying a scalar, you
-	may give the name of a pre-defined matrix.  In this case estimates are
-	computed for all the given <repl>tau</repl> values and the results are
-	printed in a special format, showing the sequence of quantile
-	estimates for each regressor in turn.
+	Instead of supplying a scalar, you may give as
+	<repl>tau</repl> the name of a pre-defined matrix.  In this
+	case estimates are computed for all the given <repl>tau</repl>
+	values and the results are printed in a special format,
+	showing the sequence of quantile estimates for each regressor
+	in turn.
+      </para>
+      <para>
+	Note that in this case many of post-estimation accessors
+	normally available after successful completion of the command,
+	such as <lit>$coeff</lit> or <lit>$stderr</lit> will not be
+	available. However, you can save the model bundle to a named
+	variable and use the <lit>rq_tauvec</lit> key, which contains
+	the coefficients in column 1 and the standard errors in column
+	2.
       </para>
     </description>
 
