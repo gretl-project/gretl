@@ -4821,7 +4821,11 @@ static double get_x_diff (const gretl_matrix *X,
 /* See Johansen's 1995 book: the Sigma matrix is defined on page 188 and
    used in the formula for the C-matrix variance on page 190.
 
-   FIXME handling of seasonal dummies? (cf. Paruolo, 1997)
+   We follow Paolo Paruolo, 'Asymptotic Inference on the Moving Average
+   Impact Matrix in Cointegrated I(1) Var Systems', Econometric Theory
+   13(1), Feb. 1997, pp. 79-118, by netting out the effect of any
+   deterministic and/or otherwise exogenous terms: see the use of @R
+   below.
 */
 
 static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
@@ -4839,6 +4843,7 @@ static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
     int r = jrank(var);
 
     if (R != NULL) {
+	/* fill R with seasonals, etc., as needed */
 	load_exo_terms(var, R);
     }
 
@@ -4908,7 +4913,7 @@ static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
 }
 
 /* See Johansen's 1995 book, around page 190: produce the
-   variance matrix of the vec of the "long-run matrix" C.
+   variance matrix of the vec of the "long-run matrix", C.
 */
 
 static int add_johansen_lr_variance (const GRETL_VAR *var,
@@ -4947,6 +4952,9 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
         nreg++; /* for the constant */
     }
     if (nreg > 0) {
+	/* Here we just allocate @R; this matrix will be filled
+	   in johansen_Sigma() if it's non-NULL.
+	*/
 	R = gretl_matrix_alloc(var->T, nreg);
 	if (R == NULL) {
 	    return E_ALLOC;
@@ -5231,12 +5239,11 @@ static gretl_bundle *johansen_bundlize (const GRETL_VAR *var,
         add_johansen_C(j);
         if (j->JC != NULL) {
             gretl_bundle_set_matrix(b, "long_run", j->JC);
-#if 1 /* still somewhat experimental */
+	    /* note: still somewhat experimental */
 	    add_johansen_lr_variance(var, dset);
 	    if (j->JVC != NULL) {
 		gretl_bundle_set_matrix(b, "cov_long_run", j->JVC);
 	    }
-#endif
 	}
     }
 
