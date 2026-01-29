@@ -36,15 +36,15 @@
   <p>
   <b>gretl4py</b> is a Python package designed to meet the needs of econometricians and applied
   economists who wish to use Python in their research. It can be broadly viewed as a complement to
-  the <a href="https://www.statsmodels.org/stable/index.html" target="_new">statsmodels</a> package,
+  the <a href="https://www.statsmodels.org/stable/index.html" target="_blank">statsmodels</a> package,
   with a more specific orientation toward the inference methods commonly employed in applied
   economics.
 </p>
 <p>
   <b>gretl4py</b> provides an interface to
-  <a href="https://gretl.sourceforge.net/API/new/gretl" target="_new">libgretl</a>
+  <a href="https://gretl.sourceforge.net/API/new/gretl" target="_blank">libgretl</a>
   for the Python language (versions 3.11, 3.12, 3.13 and 3.14 have been tested). Libgretl is the underlying
-  engine for the <a href="https://gretl.sourceforge.net/" target="_new">gretl</a> program.
+  engine for the <a href="https://gretl.sourceforge.net/" target="_blank">gretl</a> program.
   At present, gretl4py provides interfaces to all native estimators, several specified functions
   (like times-series filtering), and gretl packages (including addons).
   What's more, gretl4py can now deal with gretl bundles.
@@ -58,9 +58,9 @@
 
 <p>
   Source code (git repository):
-  <a href="https://sourceforge.net/p/gretl/gretl4py/ci/master/tree/" target="_new">source</a>,
+  <a href="https://sourceforge.net/p/gretl/gretl4py/ci/master/tree/" target="_blank">source</a>,
   official PyPI page:
-  <a href="https://pypi.org/project/gretl4py/" target="_new">gretl4py</a>.
+  <a href="https://pypi.org/project/gretl4py/" target="_blank">gretl4py</a>.
 </p>
 
 <h2>Install</h2>
@@ -68,17 +68,30 @@
 Gretl4py is distributed via PyPI infrastructure, so all you need to do is to call:
 <b>python(.exe) -m pip install gretl4py</b>.
 
-<p>Note: macOS users should install gretl4py in user space by using the "--user" option, for example:
-python -m pip install --user gretl4py
+<p>Notes:
+<ul>
+  <li>
+    macOS users should install <b>gretl4py</b> in user space using the <code>--user</code> option,
+    for example: <code>python -m pip install --user gretl4py</code>
+  </li>
+  <li>
+    On Microsoft Windows, <b>gretl4py</b> requires the Microsoft Visual C++ 2022 Redistributable
+    (v14.x). Please ensure that this runtime is installed on your system. The latest supported
+    version is available
+    <a href="https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist" target="_blank">here</a>.
+    You may also download it directly from
+    <a href="https://aka.ms/vc14/vc_redist.x64.exe" target="_blank">https://aka.ms/vc14/vc_redist.x64.exe</a>.
+  </li>
+  <li>
+   Linux users may encounter security warnings when installing non-system Python packages. This
+   affects distributions such as Debian/Ubuntu and Arch. To comply with these restrictions, you
+   can run the <kbd>webinstall.py</kbd> script available
+   <a href="https://sourceforge.net/p/gretl/gretl4py/ci/master/tree/webinstall.py" target="_blank">here</a>.
+   This script downloads a wheel package from the SourceForge website and installs it locally.
+  </li>
+</ul>
 </p>
 
-<p>
-  Linux users may encounter security warnings when installing non-system Python
-  packages. This affects distributions such as Debian/Ubuntu and Arch. To comply with
-  these restrictions, you can run the <kbd>webinstall.py</kbd> script available
-  <a href="https://sourceforge.net/p/gretl/gretl4py/ci/master/tree/webinstall.py" target="_new">here</a>.
-  This script downloads a wheel package from the SourceForge website and installs it locally.
-</p>
 
 <h2>Building</h2>
 
@@ -93,9 +106,9 @@ python -m pip install --user gretl4py
   <li>Fedora: <kbd>gretl-devel</kbd>, <kbd>python3-devel</kbd></li>
   <li>MS Windows: <kbd>MS SDK</kbd>, <kbd>native LLVM/Clang</kbd>, and
     <kbd>libgretl for MS SDK</kbd>
-    (<a href="https://sourceforge.net/projects/libgretl-for-ms-sdk/" target="_new">see this webpage</a>)</li>
+    (<a href="https://sourceforge.net/projects/libgretl-for-ms-sdk/" target="_blank">see this webpage</a>)</li>
 </ul>
-<p>Note that we are using <a href="https://mesonbuild.com/" target="_new">the Meson build system</a>.</p>
+<p>Note that we are using <a href="https://mesonbuild.com/" target="_blank">the Meson build system</a>.</p>
 
 <h2>Running gretl4py</h2>
 
@@ -137,7 +150,7 @@ python3 estimators.py
 
 <p>Marcin Błażejowski, marcin(at)gretlconference(dot)org</p>
 
-<p>Last updated: 2025-12-12</p>
+<p>Last updated: 2026-01-29</p>
 
 </body>
 </html>
