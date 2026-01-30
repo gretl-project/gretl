@@ -1,12 +1,12 @@
-version 2026a, in progress
+2026-01-30 version 2026a
 - mat2list(): fix potential crashing bug; enhance by using
   the t1 and t2 values on the matrix argument, if present
-- binary logit/probit: use QR for difficult cases, where
-  the Hessian may end up not positive definite otherwise
+- binary logit/probit: use QR decomposition in tricky cases
+  where the Hessian may otherwise end up not p.d.
 - "difftest" command: support the --split-by option for the
   rank sum test
 - "print" command: add --head (-h) and --tail (-t) options
-  as convenient abbreviations for --range
+  as convenient abbreviations for the --range option
 - "gnuplot" command, --y2axis option: accept a named list
   as parameter, or comma-separated series
 - "open" command: support the --all-cols option for xlsx
@@ -15,13 +15,15 @@ version 2026a, in progress
   series identifiers
 - "xcorrgm" command: save a $result matrix and add a --quiet
   option
+- "quantreg" command: support $coeff and $stderr accessors
+  for the multiple-tau case
 - "gnuplot" and "plot" commands with --band option: support
   giving the center and width of the band as scalars if they
   are not varying
 - fix bug: possible crash from kdsmooth() when there's no
   disturbance in the observation equation and exact diffuse
   initialization is not employed
-- fix bug: in regls() with cross validation using MPI it
+- fix bug in regls() with cross validation using MPI: it
   could happen that too many MPI processes were employed,
   leading to broken results
 - fix bug in GUI deletion dialog: destroying the dialog
