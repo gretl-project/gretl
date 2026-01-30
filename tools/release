@@ -13,7 +13,7 @@ Local:
 * Rebuild the gretl library and gretlci to the new version
 * Do "make addons.tar.gz" in the addons directory
 * Create a new versioned gretl directory in the sourceforge files area
-* Make and upload the MS Windows installers (32- and 64-bit)
+* Make and upload the MS Windows installers (32- and 64-bit intel, arm64)
 * Make and upload the macOS installers (intel and arm64)
 
 Remote:
