@@ -166,6 +166,7 @@ setvar setvars[] = {
     { ROBUST_Z,     "robust_z", CAT_ROBUST },
     { MWRITE_G,     "mwrite_g", CAT_BEHAVE },
     { MPI_USE_SMT,  "mpi_use_smt", CAT_BEHAVE },
+    { BS_ESCAPE,    "bs_escape", CAT_BEHAVE },
     { STATE_FLAG_MAX, NULL },
     /* small integers */
     { GRETL_OPTIM,  "optimizer", CAT_NUMERIC, offsetof(set_state,optim) },
@@ -681,6 +682,15 @@ int gretl_warnings_on (void)
 {
     if (check_for_state()) return 1;
     return flag_to_bool(state, WARNINGS);
+}
+
+int bs_escape_on (void)
+{
+    if (check_for_state()) {
+	return 1;
+    } else {
+	return flag_to_bool(state, BS_ESCAPE);
+    }
 }
 
 int gretl_debugging_on (void)

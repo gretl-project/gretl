@@ -1,3 +1,8 @@
+version 2026b, in progress
+- "set" command: add a new boolean variable, "bs_escape",
+  which is "off" by default, to make backslash the escape
+  character in all string literals
+
 2026-01-30 version 2026a
 - mat2list(): fix potential crashing bug; enhance by using
   the t1 and t2 values on the matrix argument, if present

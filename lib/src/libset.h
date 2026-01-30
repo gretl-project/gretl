@@ -67,7 +67,8 @@ typedef enum {
     ROBUST_Z        = 1 << 12, /* use z- not t-score with HCCM/HAC */
     MWRITE_G        = 1 << 13, /* use %g format with mwrite() */
     MPI_USE_SMT     = 1 << 14, /* MPI: use hyperthreads by default */
-    STATE_FLAG_MAX  = 1 << 15, /* separator */
+    BS_ESCAPE       = 1 << 15, /* backslash escapes in string literals */
+    STATE_FLAG_MAX  = 1 << 16, /* separator */
     /* state small int (but non-boolean) vars */
     GRETL_OPTIM,
     VECM_NORM,
@@ -224,9 +225,9 @@ void set_gretl_messages (int e);
 int gretl_messages_on (void);
 
 int gretl_comments_on (void);
-
 int gretl_warnings_on (void);
 int gretl_debugging_on (void);
+int bs_escape_on (void);
 
 void set_data_export_decimal_comma (int s);
 char get_data_export_decpoint (void);

@@ -27,6 +27,7 @@
 #include "gretl_bundle.h"
 #include "uservar_priv.h"
 #include "gretl_cmatrix.h"
+#include "libset.h"
 
 #define NUMLEN 32
 #define HEXLEN 11
@@ -1318,6 +1319,33 @@ static int alt_double_quote_pos (const char *s, int *esc)
     return ret;
 }
 
+static char *escape_all (char *s, int *err)
+{
+    char *e = calloc(strlen(s) + 1, 1);
+    char *p = s;
+    char c;
+    int i = 0;
+
+    while (*p && !*err) {
+	if (*p == '\\') {
+	    c = printf_escape(*(p+1), err);
+	    if (c == 0) {
+		/* tolerate slop! */
+		e[i++] = *p;
+		e[i++] = *(p+1);
+	    } else {
+		e[i++] = c;
+	    }
+	    p += 2;
+	} else {
+	    e[i++] = *p++;
+	}
+    }
+    free(s);
+
+    return e;
+}
+
 static char *escape_quotes (char *s)
 {
     int i;
@@ -1338,7 +1366,7 @@ static char *get_quoted_string (parser *p, int prevsym)
     int n;
 
 #if LDEBUG
-    fprintf(stderr, "get_quoted_string: sym = '%s', prevsym '%s'\n",
+    fprintf(stderr, "genlex: get_quoted_string: sym = '%s', prevsym '%s'\n",
             getsymb(p->sym), getsymb(prevsym));
     fprintf(stderr, " p->ch = '%c', p->point = '%s'\n", p->ch, p->point);
 #endif
@@ -1348,6 +1376,9 @@ static char *get_quoted_string (parser *p, int prevsym)
            allowance made for "\\" as itself an escape
         */
         n = double_quote_position(p->point);
+    } else if (bs_escape_on()) {
+	n = double_quote_position(p->point);
+	esc = 2;
     } else {
         /* look for a matching non-escaped double-quote when
            backslash is special only when preceding a double
@@ -1358,8 +1389,10 @@ static char *get_quoted_string (parser *p, int prevsym)
 
     if (n >= 0) {
         s = gretl_strndup(p->point, n);
-        if (esc == 1) {
-            /* "\"" is accepted as an escape, but that's all */
+	if (esc == 2 && strchr(s, '\\')) {
+	    s = escape_all(s, &p->err);
+        } else if (esc == 1) {
+            /* "\"" is accepted as an escape, but that's all: FIXME */
             escape_quotes(s);
         }
         parser_advance(p, n + 1);
