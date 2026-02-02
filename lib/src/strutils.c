@@ -1237,7 +1237,10 @@ int gretl_namechar_spn (const char *s)
  *
  * Returns: the 0-based index of the position of the next
  * unescaped double-quote character in @s, or -1 if no
- * such character is found.
+ * such character is found. Note that for this function,
+ * "unescaped" means not immediately preceded by a
+ * backslash, or immediately preceded by an even number
+ * of backslashes.
  */
 
 int double_quote_position (const char *s)

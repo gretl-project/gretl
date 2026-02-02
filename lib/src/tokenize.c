@@ -898,6 +898,11 @@ static int closing_quote_pos (const char *s, int ci,
     int raw = (bse == 0);
     int i, j, bsl;
 
+#if 0
+    fprintf(stderr, "tokenize: closing_quote_pos:\n '%s' (%s)\n",
+	    s, gretl_command_word(ci));
+#endif
+
     for (i=1; s[i]; i++) {
 	if (s[i] == '"' && raw && ci == PRINT) {
 	    if (s[i-1] == '\\') {
