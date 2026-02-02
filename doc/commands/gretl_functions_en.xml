@@ -13172,9 +13172,9 @@
 	  <repl>format</repl> is defined similarly to the format string
 	  in <cmdref targ="printf"/> (more on this below). The trailing
 	  arguments&mdash;the names of predefined variables that are the
-	  targets of conversion&mdash; must be separated by commas.
+	  targets of conversion&mdash;must be separated by commas.
 	  (For those used to C: one can prefix the names of numerical
-	  variables with an ampersand, as in <lit>&amp;x</lit> but this
+	  variables with an ampersand, as in <lit>&amp;x</lit>, but this
 	  is not required.)
 	</para>
 	<para>
