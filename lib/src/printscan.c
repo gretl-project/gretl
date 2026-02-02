@@ -1333,38 +1333,36 @@ static int scan_arg (const char **psrc, const char **pfmt, const char **pargs,
 int do_sscanf (const char *src, const char *format, const char *args,
 	       DATASET *dset, int *n_items)
 {
-    const char *r, *p, *q;
+    const char *p = src;
+    const char *q = format;
+    const char *r = args;
     int nscan = 0;
     int err = 0;
 
     gretl_error_clear();
 
 #if PSDEBUG
-    fprintf(stderr, "do_sscanf: src = '%s'\n", src);
-    fprintf(stderr, "do_sscanf: format = '%s'\n", format);
-    fprintf(stderr, "do_sscanf: args = '%s'\n", args);
+    fprintf(stderr, "do_sscanf: src = '%s'\n", p);
+    fprintf(stderr, "do_sscanf: format = '%s'\n", q);
+    fprintf(stderr, "do_sscanf: args = '%s'\n", r);
 #endif
 
-    r = src;
-    p = format;
-    q = args;
-
-    while (*r && *p && !err) {
-	if (isspace(*p)) {
-	    while (isspace(*r)) r++;
+    while (*p && *q && !err) {
+	if (isspace(*q)) {
 	    while (isspace(*p)) p++;
+	    while (isspace(*q)) q++;
 	}
-	if (*r == '\t' && *p == '\\' && *(p+1) == 't') {
-	    r++;
-	    p += 2;
-	} else if (*r == '\n' && *p == '\\' && *(p+1) == 'n') {
-	    r++;
-	    p += 2;
-	} else if (*r == *p) {
-	    r++;
+	if (*p == '\t' && *q == '\\' && *(q+1) == 't') {
 	    p++;
-	} else if (*p == '%') {
-	    err = scan_arg(&r, &p, &q, dset, &nscan);
+	    q += 2;
+	} else if (*p == '\n' && *q == '\\' && *(q+1) == 'n') {
+	    p++;
+	    q += 2;
+	} else if (*p == *q) {
+	    p++;
+	    q++;
+	} else if (*q == '%') {
+	    err = scan_arg(&p, &q, &r, dset, &nscan);
 	} else {
 	    break;
 	}
