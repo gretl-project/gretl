@@ -167,8 +167,8 @@ static void gbin_read_message (const char *fname,
     pputc(prn, '\n');
 }
 
-/* Get counts of various strings that may or may not
-   be attached to @dset.
+/* Get counts of various strings that may or may not be attached to
+   @dset.
 */
 
 static void get_string_counts (const DATASET *dset,
@@ -215,9 +215,9 @@ static void read_string (char *targ, int len, FILE *fp)
     targ[i] = '\0';
 }
 
-/* First read length of string. If @skip is non-zero, just
-   move the read position beyond the string; otherwise
-   allocate storage and read it in.
+/* First read length of string. If @skip is non-zero, just move the read
+   position beyond the string; otherwise allocate storage and read it
+   in.
 */
 
 static char *read_string_with_size (FILE *fp, int skip, int *err)
@@ -242,8 +242,8 @@ static char *read_string_with_size (FILE *fp, int skip, int *err)
     return ret;
 }
 
-/* Write the length of the string, followed by the string
-   itself; we use this for strings of variable length.
+/* Write the length of the string, followed by the string itself; we use
+   this for strings of variable length.
 */
 
 static void emit_string_with_size (const char *s, FILE *fp)
@@ -383,9 +383,8 @@ static int check_byte_order (gbin_header *gh, PRN *prn)
     return 0;
 }
 
-/* Common function used by both the full data reader
-   and the subset version: perform basic checks and
-   read basic dataset parameters.
+/* Common function used by both the full data reader and the subset
+   version: perform basic checks and read basic dataset parameters.
 */
 
 static int read_purebin_basics (const char *fname,
@@ -429,8 +428,8 @@ static int read_purebin_basics (const char *fname,
     return err;
 }
 
-/* Common function used by both the full data reader
-   and the subset version: read trailing metadata.
+/* Common function used by both the full data reader and the subset
+   version: read trailing metadata.
 */
 
 static int read_purebin_tail (DATASET *bset,
@@ -565,10 +564,9 @@ int purebin_read_data (const char *fname, DATASET *dset,
     return err;
 }
 
-/* Given a subset of series to import, @vlist, construct
-   an array mapping from the original series IDs to their
-   position in the subset -- or 0 if a series is not
-   selected.
+/* Given a subset of series to import, @vlist, construct an array
+   mapping from the original series IDs to their position in the subset
+   -- or 0 if a series is not selected.
 */
 
 static int *make_selection_array (int nv, int *vlist)
@@ -583,8 +581,8 @@ static int *make_selection_array (int nv, int *vlist)
     return sel;
 }
 
-/* Support reading a subset of the series contained in
-   the data file identified by @fname.
+/* Support reading a subset of the series contained in the data file
+   identified by @fname.
 */
 
 int purebin_read_subset (const char *fname, DATASET *dset,
@@ -592,7 +590,7 @@ int purebin_read_subset (const char *fname, DATASET *dset,
 {
     gbin_header gh = {0};
     FILE *fp = NULL;
-    DATASET *bset = NULL;
+    DATASET *tmpset = NULL;
     int *sel = NULL;
     int i, j, k, nv;
     char c;
@@ -607,14 +605,14 @@ int purebin_read_subset (const char *fname, DATASET *dset,
     nv = vlist[0];
 
     /* allocate dataset */
-    bset = create_new_dataset(nv + 1, gh.nobs, gh.markers);
-    if (bset == NULL) {
+    tmpset = create_new_dataset(nv + 1, gh.nobs, gh.markers);
+    if (tmpset == NULL) {
 	gretl_errmsg_set("gdtb: create_new_dataset failed");
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    gh_to_bset_transcribe(&gh, bset);
+    gh_to_bset_transcribe(&gh, tmpset);
 
     sel = make_selection_array(gh.nvars, vlist);
 
@@ -623,11 +621,11 @@ int purebin_read_subset (const char *fname, DATASET *dset,
 	j = 0;
 	while ((c = fgetc(fp)) != '\0') {
 	    if (sel[i]) {
-		bset->varname[k][j++] = c;
+		tmpset->varname[k][j++] = c;
 	    }
 	}
 	if (sel[i]) {
-	    bset->varname[k][j] = 0;
+	    tmpset->varname[k][j] = 0;
 	    k++;
 	}
     }
@@ -635,19 +633,19 @@ int purebin_read_subset (const char *fname, DATASET *dset,
     /* varinfo stuff */
     for (i=1, k=1; i<gh.nvars; i++) {
 	if (sel[i]) {
-	    varinfo_read(bset, k++, fp);
+	    varinfo_read(tmpset, k++, fp);
 	} else {
 	    varinfo_read(NULL, 0, fp);
 	}
     }
 
-    slen = bset->n * sizeof(double);
+    slen = tmpset->n * sizeof(double);
 
     /* numerical values */
     for (i=1, k=1; i<gh.nvars && !err; i++) {
 	if (sel[i]) {
-	    sz = fread(bset->Z[k++], sizeof(double), bset->n, fp);
-	    if (sz != (size_t) bset->n) {
+	    sz = fread(tmpset->Z[k++], sizeof(double), tmpset->n, fp);
+	    if (sz != (size_t) tmpset->n) {
 		gretl_errmsg_sprintf(_("failed reading variable %d"), i);
 		err = E_DATA;
 	    }
@@ -658,7 +656,7 @@ int purebin_read_subset (const char *fname, DATASET *dset,
     }
 
     /* read remaining metadata */
-    err = read_purebin_tail(bset, &gh, sel, fp);
+    err = read_purebin_tail(tmpset, &gh, sel, fp);
 
     free(sel);
 
@@ -666,12 +664,15 @@ int purebin_read_subset (const char *fname, DATASET *dset,
 
     fclose(fp);
 
-    if (err) {
-	destroy_dataset(bset);
+    if (!err) {
+	/* Note 2026-02-06: we were calling merge_or_replace_data()
+	   here but that was incompatible with the parallel code for
+	   plain gdt data files, which gave rise to a bug in join.
+	*/
+	*dset = *tmpset;
+	free(tmpset);
     } else {
-	gretlopt mopt = get_merge_opts(opt);
-
-	err = merge_or_replace_data(dset, &bset, mopt, NULL);
+	destroy_dataset(tmpset);
     }
 
     return err;
