@@ -225,6 +225,7 @@ int update_addons_index (PRN *prn)
 
     fp = gretl_fopen(idxname, "wb");
     if (fp == NULL) {
+	fprintf(stderr, "couldn't write to '%s'\n", idxname);
         g_free(idxname);
         return E_FOPEN;
     }
