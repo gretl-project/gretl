@@ -1969,7 +1969,9 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype,
     GtkWidget *combo;
     GtkWidget *entry;
     int null_OK = 0;
+#if 0
     int k = 0;
+#endif
 
     combo = combo_box_text_new_with_entry();
     entry = gtk_bin_get_child(GTK_BIN(combo));
@@ -1989,7 +1991,9 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype,
 	set_combo_box_strings_from_list(combo, list);
 	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo),
 			      list, ptype);
+#if 0
 	k = g_list_length(list);
+#endif
 	g_list_free(list);
     }
 
