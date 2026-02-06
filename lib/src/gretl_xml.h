@@ -181,9 +181,9 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 			   int *vlist, gretlopt opt);
 
-int gretl_read_gdt_varnames (const char *fname,
-			     char ***vnames,
-			     int *nvars);
+int gretl_read_native_varnames (const char *fname,
+				char ***vnames,
+				int *nvars);
 
 char *gretl_get_gdt_description (const char *fname, int *err);
 

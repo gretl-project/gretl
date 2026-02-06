@@ -4292,7 +4292,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
 
 static int real_read_gdt_subset (const char *fname,
 				 DATASET *dset,
-				 const int *vlist,
+				 int *vlist,
 				 gretlopt opt)
 {
     DATASET *tmpset;
@@ -4687,7 +4687,7 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
     if (gdtb && is_purebin_file(fname)) {
 	err = read_gbin_subset(fname, dset, vlist, opt);
     } else if (gdtb) {
-	/* zipfile with gdt + binary */
+	/* legacy: zipfile with gdt + binary */
 	gchar *zdir;
 	int err;
 
@@ -4709,7 +4709,7 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 
 	g_free(zdir);
     } else {
-	/* plain XML file */
+	/* plain XML gdt file */
 	err = real_read_gdt_subset(fname, dset, vlist, opt);
     }
 
@@ -4721,8 +4721,8 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 }
 
 /**
- * gretl_read_gdt_varnames:
- * @fname: name of file to open for reading.
+ * gretl_read_native_varnames:
+ * @fname: name of native gretl data file to open for reading.
  * @vnames: location to receive array of series names.
  * @nvars: location to receive the number of series.
  *
@@ -4731,9 +4731,9 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_read_gdt_varnames (const char *fname,
-			     char ***vnames,
-			     int *nvars)
+int gretl_read_native_varnames (const char *fname,
+				char ***vnames,
+				int *nvars)
 {
     int gdtb = has_suffix(fname, ".gdtb");
     int err = 0;

@@ -561,7 +561,7 @@ static DATASET *outer_dataset (joinspec *jspec)
     if (jspec->c != NULL) {
         return csvdata_get_dataset(jspec->c);
     } else {
-        return jspec->dset;
+        return jspec->tmpset;
     }
 }
 
@@ -2300,18 +2300,18 @@ static int first_available_index (joinspec *jspec)
     return -1;
 }
 
-static int determine_gdt_matches (const char *fname,
-                                  joinspec *jspec,
-                                  int **plist,
-                                  int *addvars,
-                                  int *omm,
-                                  PRN *prn)
+static int determine_native_matches (const char *fname,
+				     joinspec *jspec,
+				     int **plist,
+				     int *addvars,
+				     int *omm,
+				     PRN *prn)
 {
     char **vnames = NULL;
     int nv = 0;
     int err = 0;
 
-    err = gretl_read_gdt_varnames(fname, &vnames, &nv);
+    err = gretl_read_native_varnames(fname, &vnames, &nv);
 
     if (!err) {
         GPatternSpec *pspec;
@@ -2421,10 +2421,10 @@ static int rhs_add_obsmajmin (int *omm, DATASET *dset)
     return err;
 }
 
-static int join_import_gdt (const char *fname,
-                            joinspec *jspec,
-                            gretlopt opt,
-                            PRN *prn)
+static int join_import_native_data (const char *fname,
+				    joinspec *jspec,
+				    gretlopt opt,
+				    PRN *prn)
 {
     const char *cname;
     int *vlist = NULL;
@@ -2433,18 +2433,18 @@ static int join_import_gdt (const char *fname,
     int omm[2] = {0};
     int err = 0;
 
-    err = determine_gdt_matches(fname, jspec, &vlist, &addvars,
-                                omm, prn);
+    err = determine_native_matches(fname, jspec, &vlist, &addvars,
+				   omm, prn);
 
     if (!err) {
-        jspec->dset = datainfo_new();
-        if (jspec->dset == NULL) {
+        jspec->tmpset = datainfo_new();
+        if (jspec->tmpset == NULL) {
             err = E_ALLOC;
         }
     }
 
     if (!err) {
-        err = gretl_read_gdt_subset(fname, jspec->dset, vlist, opt);
+        err = gretl_read_gdt_subset(fname, jspec->tmpset, vlist, opt);
     }
 
     if (!err && addvars > 0) {
@@ -2454,7 +2454,7 @@ static int join_import_gdt (const char *fname,
 
     if (!err && (omm[0] || omm[1])) {
         /* we need to add $obsmajor and/or $obsminor on the right */
-        err = rhs_add_obsmajmin(omm, jspec->dset);
+        err = rhs_add_obsmajmin(omm, jspec->tmpset);
     }
 
     if (!err) {
@@ -2462,7 +2462,7 @@ static int join_import_gdt (const char *fname,
         for (i=0; i<orig_ncols && !err; i++) {
             cname = jspec->colnames[i];
             if (cname != NULL && !is_wildstr(cname)) {
-                vi = current_series_index(jspec->dset, cname);
+                vi = current_series_index(jspec->tmpset, cname);
                 if (vi < 0) {
                     err = E_DATA;
                 } else {
@@ -2476,7 +2476,7 @@ static int join_import_gdt (const char *fname,
         /* register any extra imported series */
         int j, pos, idx;
 
-        for (i=1; i<jspec->dset->v; i++) {
+        for (i=1; i<jspec->tmpset->v; i++) {
             pos = 0;
             for (j=0; j<jspec->ncols; j++) {
                 if (jspec->colnums[j] == i) {
@@ -2491,7 +2491,7 @@ static int join_import_gdt (const char *fname,
                     err = E_DATA;
                 } else {
                     jspec->colnums[idx] = i;
-                    jspec->colnames[idx] = jspec->dset->varname[i];
+                    jspec->colnames[idx] = jspec->tmpset->varname[i];
                 }
             }
         }
@@ -2744,21 +2744,32 @@ static int *revise_series_indices (joinspec *jspec,
     return ret;
 }
 
-static int set_up_jspec (joinspec *jspec,
-                         const char **vnames,
-                         int nvars,
-                         gretlopt opt,
-                         int any_wild,
-                         AggrType aggr,
-                         int midas_pd)
+static joinspec *set_up_jspec (const char **vnames,
+			       int nvars,
+			       gretlopt opt,
+			       int any_wild,
+			       AggrType aggr,
+			       int midas_pd,
+			       int *err)
 {
     int i, j, ncols = JOIN_TARG + nvars;
+    joinspec *jspec;
+
+    jspec = calloc(1, sizeof *jspec);
+    if (jspec == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    jspec->tmpset = NULL;
 
     jspec->colnames = malloc(ncols * sizeof *jspec->colnames);
     jspec->colnums = malloc(ncols * sizeof *jspec->colnums);
 
     if (jspec->colnames == NULL || jspec->colnums == NULL) {
-        return E_ALLOC;
+	free(jspec);
+	*err = E_ALLOC;
+        return NULL;
     }
 
     jspec->ncols = ncols;
@@ -2791,7 +2802,7 @@ static int set_up_jspec (joinspec *jspec,
         }
     }
 
-    return 0;
+    return jspec;
 }
 
 static int expand_jspec (joinspec *jspec, int addvars)
@@ -2820,7 +2831,7 @@ static int expand_jspec (joinspec *jspec, int addvars)
     return 0;
 }
 
-static void clear_jspec (joinspec *jspec, joiner *jr)
+static void jspec_destroy (joinspec *jspec, joiner *jr)
 {
     free(jspec->colnames);
     free(jspec->colnums);
@@ -2831,8 +2842,8 @@ static void clear_jspec (joinspec *jspec, joiner *jr)
 
     if (jspec->c != NULL) {
         csvdata_free(jspec->c);
-    } else if (jspec->dset != NULL) {
-        destroy_dataset(jspec->dset);
+    } else if (jspec->tmpset != NULL) {
+        destroy_dataset(jspec->tmpset);
     }
 
     if (jspec->wildnames != NULL) {
@@ -2846,6 +2857,8 @@ static void clear_jspec (joinspec *jspec, joiner *jr)
     if (jspec->tmpnames != NULL) {
         strings_array_free(jspec->tmpnames, jspec->n_tmp);
     }
+
+    free(jspec);
 }
 
 static int *midas_revise_jspec (joinspec *jspec,
@@ -2990,7 +3003,7 @@ static int has_native_suffix (const char *fname)
  * @fname: name of data file.
  * @vnames: name(s) of variables to create or modify.
  * @nvars: the number of elements in @vnames.
- * @dset: pointer to dataset.
+ * @dset: pointer to current dataset.
  * @ikeyvars: list of 1 or 2 "inner" key variables, or NULL.
  * @okey: string specifying "outer" key(s) or NULL.
  * @filtstr: string specifying filter, or NULL.
@@ -3030,7 +3043,7 @@ int gretl_join_data (const char *fname,
                      PRN *prn)
 {
     DATASET *outer_dset = NULL;
-    joinspec jspec = {0};
+    joinspec *jspec = NULL;
     joiner *jr = NULL;
     jr_filter *filter = NULL;
     const char *varname;
@@ -3083,8 +3096,8 @@ int gretl_join_data (const char *fname,
         return err;
     }
 
-    err = set_up_jspec(&jspec, vnames, nvars, opt, any_wild,
-                       aggr, midas_pd);
+    jspec = set_up_jspec(vnames, nvars, opt, any_wild,
+			 aggr, midas_pd, &err);
     if (err) {
         return err;
     }
@@ -3097,7 +3110,7 @@ int gretl_join_data (const char *fname,
     timeconv_map_init();
 
     if (okey != NULL || tconvstr != NULL || tconvfmt != NULL) {
-	jspec.user_tkey = 1;
+	jspec->user_tkey = 1;
     }
 
 #if JDEBUG
@@ -3162,7 +3175,7 @@ int gretl_join_data (const char *fname,
     if (!err && okey != NULL) {
         if (opt & OPT_K) {
             /* cancel automatic MIDAS flag if present */
-            jspec.auto_midas = 0;
+            jspec->auto_midas = 0;
             err = process_time_key(okey, okeyname1, tkeyfmt);
         } else {
             err = process_outer_key(okey, n_keys, okeyname1, okeyname2, opt);
@@ -3170,7 +3183,7 @@ int gretl_join_data (const char *fname,
     }
 
     /* Step 2: set up the array of required column names,
-       jspec.colnames. This is an array of const *char, pointers
+       jspec->colnames. This is an array of const *char, pointers
        to strings that "live" elsewhere. We leave any unneeded
        elements as NULL.
     */
@@ -3178,44 +3191,44 @@ int gretl_join_data (const char *fname,
     if (!err) {
         /* handle the primary outer key column, if any */
         if (*okeyname1 != '\0') {
-            jspec.colnames[JOIN_KEY] = okeyname1;
+            jspec->colnames[JOIN_KEY] = okeyname1;
         } else if (n_keys > 0) {
-            jspec.colnames[JOIN_KEY] = dset->varname[ikeyvars[1]];
+            jspec->colnames[JOIN_KEY] = dset->varname[ikeyvars[1]];
         }
 
         /* and the secondary outer key, if any */
         if (*okeyname2 != '\0') {
-            jspec.colnames[JOIN_KEY2] = okeyname2;
+            jspec->colnames[JOIN_KEY2] = okeyname2;
         } else if (n_keys > 1) {
-            jspec.colnames[JOIN_KEY2] = dset->varname[ikeyvars[2]];
+            jspec->colnames[JOIN_KEY2] = dset->varname[ikeyvars[2]];
         }
 
         /* the data or "payload" column */
         if (aggr != AGGR_COUNT) {
             if (srcname != NULL) {
-                jspec.colnames[JOIN_TARG] = srcname;
+                jspec->colnames[JOIN_TARG] = srcname;
             } else {
-                jspec.colnames[JOIN_TARG] = varname;
+                jspec->colnames[JOIN_TARG] = varname;
             }
         }
 
         /* the filter columns, if applicable */
         if (filter != NULL) {
-            jspec.colnames[JOIN_F1] = filter->vname1;
-            jspec.colnames[JOIN_F2] = filter->vname2;
-            jspec.colnames[JOIN_F3] = filter->vname3;
+            jspec->colnames[JOIN_F1] = filter->vname1;
+            jspec->colnames[JOIN_F2] = filter->vname2;
+            jspec->colnames[JOIN_F3] = filter->vname3;
         }
 
         /* the auxiliary var for aggregation, if present */
         if (auxname != NULL) {
-            jspec.colnames[JOIN_AUX] = auxname;
+            jspec->colnames[JOIN_AUX] = auxname;
         }
     }
 
     /* Step 3: handle the tconvert and tconv-fmt options */
 
     if (!err && tconvstr != NULL) {
-        err = process_tconvert_info(&jspec, tconvstr, tconvfmt, tkeyfmt);
+        err = process_tconvert_info(jspec, tconvstr, tconvfmt, tkeyfmt);
     }
 
     /* Step 4: read data from the outer file; check we got all the
@@ -3232,12 +3245,12 @@ int gretl_join_data (const char *fname,
                 /* import obs markers: may be needed */
                 gdt_opt = OPT_M;
             }
-            err = join_import_gdt(fname, &jspec, gdt_opt, vprn);
+            err = join_import_native_data(fname, jspec, gdt_opt, vprn);
         } else {
-            err = join_import_csv(fname, &jspec, dset, vprn);
+            err = join_import_csv(fname, jspec, dset, vprn);
         }
         if (!err) {
-            outer_dset = outer_dataset(&jspec);
+            outer_dset = outer_dataset(jspec);
         }
 #if JDEBUG > 2
         if (!err) {
@@ -3245,13 +3258,13 @@ int gretl_join_data (const char *fname,
         }
 #endif
         if (!err) {
-            err = check_for_missing_columns(&jspec);
+            err = check_for_missing_columns(jspec);
         }
         if (!err) {
-            err = aggregation_type_check(&jspec, aggr);
+            err = aggregation_type_check(jspec, aggr);
         }
         if (!err) {
-            err = join_data_type_check(&jspec, dset, targvars, aggr);
+            err = join_data_type_check(jspec, dset, targvars, aggr);
         }
     }
 
@@ -3267,8 +3280,8 @@ int gretl_join_data (const char *fname,
 
     /* Step 5: set up keys and check for conformability errors */
 
-    if (!err && jspec.colnames[JOIN_KEY] != NULL) {
-        err = set_up_outer_keys(&jspec, dset, opt, ikeyvars, okeyvars,
+    if (!err && jspec->colnames[JOIN_KEY] != NULL) {
+        err = set_up_outer_keys(jspec, dset, opt, ikeyvars, okeyvars,
                                 &auto_keys, str_keys);
     }
 
@@ -3292,7 +3305,7 @@ int gretl_join_data (const char *fname,
     */
 
     if (!err) {
-        jr = build_joiner(&jspec, dset, filter, aggr, seqval,
+        jr = build_joiner(jspec, dset, filter, aggr, seqval,
                           &auto_keys, n_keys, &err);
         if (!err && jr == NULL) {
             /* no matching data to join */
@@ -3332,12 +3345,12 @@ int gretl_join_data (const char *fname,
        of MIDAS importation
     */
 
-    if (!err && (jspec.wildcard || aggr == AGGR_MIDAS)) {
+    if (!err && (jspec->wildcard || aggr == AGGR_MIDAS)) {
         free(targvars);
         if (aggr == AGGR_MIDAS) {
-            targvars = midas_revise_jspec(&jspec, dset, &add_v, &err);
+            targvars = midas_revise_jspec(jspec, dset, &add_v, &err);
         } else {
-            targvars = revise_series_indices(&jspec, dset, &add_v, &err);
+            targvars = revise_series_indices(jspec, dset, &add_v, &err);
         }
     }
 
@@ -3345,11 +3358,11 @@ int gretl_join_data (const char *fname,
 
     if (!err && add_v > 0) {
         /* we need to add one or more new series on the left */
-        if (jspec.wildnames != NULL) {
-            err = add_target_series((const char **) jspec.wildnames,
+        if (jspec->wildnames != NULL) {
+            err = add_target_series((const char **) jspec->wildnames,
                                     dset, targvars, add_v);
-        } else if (jspec.mdsnames != NULL) {
-            err = add_target_series((const char **) jspec.mdsnames,
+        } else if (jspec->mdsnames != NULL) {
+            err = add_target_series((const char **) jspec->mdsnames,
                                     dset, targvars, add_v);
         } else {
             err = add_target_series(vnames, dset, targvars, add_v);
@@ -3362,17 +3375,17 @@ int gretl_join_data (const char *fname,
 
             fill_ts_joiner(dset, outer_dset, &tjr);
             err = join_transcribe_multi_data(dset, outer_dset, targvars,
-                                             orig_v, &jspec, &tjr,
+                                             orig_v, jspec, &tjr,
                                              &modified);
         } else if (jr == NULL) {
             err = join_transcribe_multi_data(dset, outer_dset, targvars,
-                                             orig_v, &jspec, NULL,
+                                             orig_v, jspec, NULL,
                                              &modified);
         } else if (jr->n_keys == 0) {
             err = join_transcribe_data(jr, targvars[1], add_v,
-                                       &jspec, &modified);
+                                       jspec, &modified);
         } else {
-            err = aggregate_data(jr, ikeyvars, targvars, &jspec,
+            err = aggregate_data(jr, ikeyvars, targvars, jspec,
                                  orig_v, &modified);
             /* complete the job for MIDAS daily import */
             if (!err && aggr == AGGR_MIDAS && midas_daily(jr)) {
@@ -3386,10 +3399,10 @@ int gretl_join_data (const char *fname,
             add_v, modified);
 #endif
 
-    if (!err && add_v > 0 && jspec.colnums[JOIN_TARG] > 0) {
+    if (!err && add_v > 0 && jspec->colnums[JOIN_TARG] > 0) {
         /* we added one or more new series */
         if (aggr != AGGR_MIDAS) {
-            maybe_import_strings(dset, outer_dset, &jspec,
+            maybe_import_strings(dset, outer_dset, jspec,
 				 targvars, orig_v);
         }
     }
@@ -3420,7 +3433,7 @@ int gretl_join_data (const char *fname,
         free(auto_keys.timefmt);
     }
 
-    clear_jspec(&jspec, jr);
+    jspec_destroy(jspec, jr);
     joiner_destroy(jr);
     jr_filter_destroy(filter);
     free(targvars);

@@ -2268,8 +2268,8 @@ static int open_append_stage_1 (CMD *cmd,
     return err;
 }
 
-/* respond to --select (select specific series) on OPEN
-   for native gdt or gdtb data files
+/* respond to --select (select specific series) on OPEN for native gdt
+   or gdtb data files
 */
 
 static int handle_gdt_selection (const char *fname,
@@ -2289,7 +2289,7 @@ static int handle_gdt_selection (const char *fname,
 
     err = get_selected_import_names(s, OPEN, dset, &S_sel, &n_sel);
     if (!err) {
-	err = gretl_read_gdt_varnames(fname, &S_ok, &n_ok);
+	err = gretl_read_native_varnames(fname, &S_ok, &n_ok);
     }
 
     if (!err) {

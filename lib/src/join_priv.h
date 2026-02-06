@@ -31,7 +31,7 @@ struct joinspec_ {
     int *colnums;
     int *timecols;
     csvdata *c;
-    DATASET *dset;
+    DATASET *tmpset;
     int wildcard;
     int auto_midas;
     int midas_pd;
