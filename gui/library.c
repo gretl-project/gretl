@@ -9074,15 +9074,6 @@ static int maybe_back_up_datafile (const char *fname)
     return err;
 }
 
-static void give_compat_warning (void)
-{
-    const char *msg =
-	N_("Data files written in the current gdtb binary format\n"
-	   "cannot be read by gretl versions older than 2020b");
-
-    warnbox(_(msg));
-}
-
 /* Note that in this context "exporting" means that we're saving
    a file that is not necessarily synced with the current dataset
    in memory (e.g. it may contain a subset of the currently defined
@@ -9143,9 +9134,6 @@ static gretlopt store_action_to_opt (const char *fname, int action,
 	*/
         if (level > 0) {
             opt |= OPT_Z; /* compression */
-        }
-        if (has_suffix(fname, ".gdtb")) {
-            give_compat_warning();
         }
     }
 
