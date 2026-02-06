@@ -578,6 +578,7 @@ static int is_nullarg_label (const char *s)
 	return 0;
     } else {
 	return strcmp(s, "[auto]") == 0 ||
+	    strcmp(s, "automatic") == 0 ||
 	    strcmp(s, "[null]") == 0;
     }
 }
@@ -585,7 +586,8 @@ static int is_nullarg_label (const char *s)
 static const char *nullarg_label (int null_OK)
 {
     if (null_OK == 2) {
-	return "[auto]";
+	return "automatic";
+	/* changed from "[auto]", 2026-02-06 */
     } else if (null_OK == 1) {
 	return "[null]";
     } else {
@@ -1160,12 +1162,11 @@ static void update_combo_selectors (call_info *cinfo,
 
 	sel = GTK_COMBO_BOX(w);
 
-	/* target == 1 means that we're looking at the
-	   selector whose button was clicked to add a
-	   variable: for this selector the newly added
-	   variable should be marked as selected;
-	   otherwise we modify the list of choices but
-	   preserve the previous selection.
+	/* target == 1 means that we're looking at the selector whose
+	   button was clicked to add a variable: for this selector the
+	   newly added variable should be marked as selected; otherwise
+	   we modify the list of choices but preserve the previous
+	   selection.
 	*/
 	if (!target) {
 	    /* make a record of the old selected item */
@@ -1992,14 +1993,19 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype,
 	g_list_free(list);
     }
 
+#if 0 /* masked out 2026-02-06 */
     if (null_OK) {
 	combo_box_append_text(combo, nullarg_label(null_OK));
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);
         widget_set_int(combo, "nullpos", k);
     }
+#endif
 
     if (prior_val != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(entry), prior_val);
+    } else if (null_OK) {
+	/* added 2026-02-06 */
+	set_placeholder_text(entry, nullarg_label(null_OK));
     } else if (ptype == GRETL_TYPE_INT) {
 	double x = fn_param_default(cinfo->func, i);
 
