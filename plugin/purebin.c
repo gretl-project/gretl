@@ -22,7 +22,7 @@
 #include "varinfo_priv.h"
 
 /* Writing and reading of gretl-native "pure binary" data files,
-   developed in December 2020 as an alterative to the original
+   developed in December 2020 as an alternative to the original
    gdtb format: this is _much_ faster for huge datasets.
 */
 
