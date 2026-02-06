@@ -940,8 +940,8 @@ int gui_join_data (const char *fname, GretlFileType ftype)
 	err = probe_csv(fname, &jinfo.r_vnames,
 			&full_nr, &jinfo.opt);
     } else {
-	err = gretl_read_gdt_varnames(fname, &jinfo.r_vnames,
-				      &full_nr);
+	err = gretl_read_native_varnames(fname, &jinfo.r_vnames,
+					 &full_nr);
     }
 
     if (err) {
