@@ -6089,9 +6089,10 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int plot_corrmat (VMatrix *corr, gretlopt opt)
+int plot_corrmat (VMatrix *corr, DATASET *dset, gretlopt opt)
 {
     FILE *fp;
+    const char *pname;
     double rcrit = 0.0;
     int i, j, df, n, idx;
     int allpos = 1;
@@ -6161,7 +6162,8 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     /* y-axis tics */
     fputs("set ytics (", fp);
     for (i=0; i<n; i++) {
-        fprintf(fp, "\"%s\" %d", corr->names[i], n-i-1);
+	pname = plotname(dset, corr->list[i+1], 1);
+        fprintf(fp, "\"%s\" %d", pname, n-i-1);
         if (i < n - 1) {
             fputs(", ", fp);
         }
@@ -6171,7 +6173,8 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     /* x-axis tics */
     fputs("set xtics (", fp);
     for (i=0; i<n; i++) {
-        fprintf(fp, "\"%s\" %d", corr->names[i], i);
+	pname = plotname(dset, corr->list[i+1], 1);
+        fprintf(fp, "\"%s\" %d", pname, i);
         if (i < n - 1) {
             fputs(", ", fp);
         }

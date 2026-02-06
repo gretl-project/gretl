@@ -838,7 +838,7 @@ static void do_corr_plot (windata_t *vwin)
     VMatrix *corr = vwin->data;
     int err;
 
-    err = plot_corrmat(corr, OPT_NONE);
+    err = plot_corrmat(corr, dataset, OPT_NONE);
     gui_graph_handler(err);
 }
 

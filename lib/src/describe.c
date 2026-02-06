@@ -6983,7 +6983,7 @@ int gretl_corrmx (int *list, const DATASET *dset,
 	    print_corrmat(corr, dset, prn);
 	}
 	if (corr->dim > 2 && gnuplot_graph_wanted(PLOT_HEATMAP, opt, NULL)) {
-	    err = plot_corrmat(corr, opt);
+	    err = plot_corrmat(corr, dset, opt);
 	}
 
 	record_corr_matrix(corr);
