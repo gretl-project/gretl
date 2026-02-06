@@ -6089,7 +6089,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int plot_corrmat (VMatrix *corr, DATASET *dset, gretlopt opt)
+int plot_corrmat (VMatrix *corr, const DATASET *dset, gretlopt opt)
 {
     FILE *fp;
     const char *pname;

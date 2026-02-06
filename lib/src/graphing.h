@@ -247,7 +247,7 @@ int gnuplot_3d (int *list, const char *literal,
 
 int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt);
 
-int plot_corrmat (VMatrix *corr, DATASET *dset, gretlopt opt);
+int plot_corrmat (VMatrix *corr, const DATASET *dset, gretlopt opt);
 
 int garch_resid_plot (const MODEL *pmod, const DATASET *dset);
 

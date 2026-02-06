@@ -1255,6 +1255,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int *biglist = NULL;
+    int *add_order = NULL;
     const int orig_nvar = dset->v;
     double alpha = 0;
     int n_add = 0;
@@ -1325,15 +1326,16 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 
     if (opt & OPT_A) {
         /* Do stepwise augmentation of the original model */
-        MODEL (*stepwise_add) (MODEL *, const int *, int, double,
-                               DATASET *, gretlopt, PRN *);
+        MODEL (*stepwise_add) (MODEL *, const int *, int **,
+			       int, double, DATASET *,
+			       gretlopt, PRN *);
 
         stepwise_add = get_plugin_function("stepwise_add");
         if (stepwise_add == NULL) {
             err = E_FOPEN;
         } else {
-            umod = stepwise_add(orig, addvars, crit, alpha,
-                                dset, opt, prn);
+            umod = stepwise_add(orig, addvars, &add_order,
+				crit, alpha, dset, opt, prn);
         }
     } else if (opt & OPT_L) {
 	/* run an LM test */
@@ -1370,8 +1372,12 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 
     if (err || pmod == NULL) {
 	clear_model(&umod);
+	free(add_order);
     } else {
 	*pmod = umod;
+	if (add_order != NULL) {
+	    gretl_model_set_list_as_data(pmod, "add_order", add_order);
+	}
     }
 
     /* put dset back as it was on input */
@@ -1763,19 +1769,27 @@ static int omit_options_inconsistent (MODEL *pmod, gretlopt opt)
     return 0;
 }
 
-static int omit_test_precheck (MODEL *pmod, gretlopt opt)
+static int const_only (MODEL *pmod)
 {
-    int err = 0;
+    return (pmod->list[0] == 2 && pmod->list[2] == 0);
+}
 
+static int omit_test_precheck (MODEL *pmod,
+			       const int *omitvars,
+			       gretlopt opt)
+{
     if (pmod == NULL || pmod->list == NULL) {
-	err = E_DATA;
+	return E_DATA;
     } else if (!command_ok_for_model(OMIT, 0, pmod)) {
-	err = E_NOTIMP;
+	return E_NOTIMP;
     } else if (omit_options_inconsistent(pmod, opt)) {
-	err = E_BADOPT;
+	return E_BADOPT;
+    } else if (const_only(pmod)) {
+	gretl_errmsg_set(_("There are no variables to omit"));
+	return E_DATA;
     }
 
-    return err;
+    return 0;
 }
 
 /* This is about whether we should use the relatively new code in the
@@ -1826,11 +1840,12 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int *tmplist = NULL;
+    int *omit_order = NULL;
     double alpha = 0;
     int crit = -1;
     int err;
 
-    err = omit_test_precheck(orig, opt);
+    err = omit_test_precheck(orig, omitvars, opt);
     if (err) {
 	return err;
     }
@@ -1860,15 +1875,16 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     set_reference_missmask_from_model(orig);
 
     if ((opt & OPT_A) && use_stepwise_omit(orig, crit)) {
-        MODEL (*stepwise_omit) (MODEL *, const int *, int, double,
-                                DATASET *, gretlopt, PRN *);
+        MODEL (*stepwise_omit) (MODEL *, const int *, int **,
+				int, double, DATASET *,
+				gretlopt, PRN *);
 
         stepwise_omit = get_plugin_function("stepwise_omit");
         if (stepwise_omit == NULL) {
             err = E_FOPEN;
         } else {
-            rmod = stepwise_omit(orig, omitvars, crit, alpha,
-                                 dset, opt, prn);
+            rmod = stepwise_omit(orig, omitvars, &omit_order,
+				 crit, alpha, dset, opt, prn);
         }
     } else if (opt & OPT_A) {
 	rmod = auto_omit(orig, omitvars, crit, alpha, dset, opt, prn);
@@ -1921,8 +1937,12 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 
     if (err || pmod == NULL) {
 	clear_model(&rmod);
+	free(omit_order);
     } else {
 	*pmod = rmod;
+	if (omit_order != NULL) {
+	    gretl_model_set_list_as_data(pmod, "omit_order", omit_order);
+	}
     }
 
     /* put back into dset what was there on input */
@@ -1953,7 +1973,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 int omit_test (MODEL *pmod, const int *omitvars,
 	       DATASET *dset, gretlopt opt, PRN *prn)
 {
-    int err = omit_test_precheck(pmod, opt);
+    int err = omit_test_precheck(pmod, omitvars, opt);
 
     if (!err) {
 	err = wald_omit_test(omitvars, pmod, dset, opt, prn);

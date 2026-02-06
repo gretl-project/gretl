@@ -499,6 +499,7 @@ static const char *crit_string (int crit)
 
 int *forward_stepwise (MODEL *pmod,
                        const int *zlist,
+		       int **orderp,
                        DATASET *dset,
                        int crit,
                        double alpha,
@@ -610,6 +611,7 @@ int *forward_stepwise (MODEL *pmod,
             }
         }
         if (!conv) {
+	    gretl_list_append_term(orderp, aux[best+1]);
             bpos = best + 1;
             matrix_drop_column(Z, best);
             fwd_wspace_shrink(&mm);
@@ -694,6 +696,7 @@ static int crit_na_error (double ssr, int T, int k,
 
 int *backward_stepwise (MODEL *pmod,
                         const int *zlist,
+			int **orderp,
                         DATASET *dset,
                         int crit,
                         int verbose,
@@ -779,6 +782,7 @@ int *backward_stepwise (MODEL *pmod,
             }
         }
         if (!conv) {
+	    gretl_list_append_term(orderp, delvar);
             gretl_list_delete_at_pos(xlist, trycol+1);
             trycol = tval_min_pos(mm.b->val, mm.g->val, xlist, zlist,
                                   ifc, k, err);
@@ -946,6 +950,7 @@ static void do_overall_test (MODEL *orig, MODEL *revised)
 
 MODEL stepwise_add (MODEL *pmod,
                     const int *zlist,
+		    int **add_order,
                     int crit,
                     double alpha,
                     DATASET *dset,
@@ -964,9 +969,9 @@ MODEL stepwise_add (MODEL *pmod,
         int verbose = (opt & OPT_Q)? 0 : 1;
         int addlen = verbose ? g_utf8_strlen(_("Add"), -1) : 0;
 
-        best = forward_stepwise(pmod, zlist, dset, crit, alpha,
-                                verbose, addlen, namelen + 2,
-                                prn, &err);
+        best = forward_stepwise(pmod, zlist, add_order, dset,
+				crit, alpha, verbose, addlen,
+				namelen + 2, prn, &err);
     }
 
     if (!err) {
@@ -1062,6 +1067,7 @@ static int *maybe_reorder_regressors (MODEL *pmod)
 
 MODEL stepwise_omit (MODEL *pmod,
                      const int *zlist,
+		     int **orderp,
                      int crit,
                      double alpha,
                      DATASET *dset,
@@ -1094,7 +1100,7 @@ MODEL stepwise_omit (MODEL *pmod,
 	    pprintf(prn, _("Sequential elimination using %s"), crit_string(crit));
 	    pputs(prn, "\n\n");
 	}
-        xlist = backward_stepwise(mptr, zlist, dset, crit,
+        xlist = backward_stepwise(mptr, zlist, orderp, dset, crit,
                                   verbose, droplen, namelen + 2,
                                   prn, &err);
         if (mptr != pmod) {
@@ -1118,7 +1124,6 @@ MODEL stepwise_omit (MODEL *pmod,
         }
         dset->t1 = pmod->t1;
         dset->t2 = pmod->t2;
-        // fprintf(stderr, "*** stepwise: call set_reference_missmask_from_model\n");
         set_reference_missmask_from_model(pmod);
         model = lsq(list, dset, OLS, ols_opt);
         free(list);
