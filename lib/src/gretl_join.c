@@ -34,6 +34,7 @@
 #define AGGDEBUG 0  /* aggregation in "join" */
 #define TDEBUG 0    /* handling of time keys in "join" */
 #define JDEBUG 0    /* joining in general */
+#define TASK 0
 
 enum {
     JOIN_KEY,
@@ -1002,14 +1003,13 @@ static void matcher_set_k2 (jr_matcher *matcher, int i,
 #define min_max_cond(x,y,a) ((a==AGGR_MAX && x>y) || (a==AGGR_MIN && x<y))
 
 /* aggr_value: here we're working on a given row of the left-hand
-   dataset. The values @key and (if applicable) @key2 are the
-   left-hand keys for this row. We count the key-matches on the
-   right and apply an aggregation procedure if the user specified
-   one. We return the value that should be entered for the imported
-   series on this row.
+   dataset. The values @key and (if applicable) @key2 are the left-hand
+   keys for this row. We count the key-matches on the right and apply an
+   aggregation procedure if the user specified one. We return the value
+   that should be entered for the imported series on this row.
 
-   Note: @xmatch and @auxmatch are workspace arrays allocated by
-   the caller.
+   Note: @xmatch and @auxmatch are workspace arrays allocated by the
+   caller.
 */
 
 static double aggr_value (joiner *jr,
@@ -1216,12 +1216,12 @@ static void handle_midas_setup (joiner *jr, int i, int lv, int rv,
     }
 }
 
-/* Handle the case where (a) the value from the right, @rz, is
-   actually the coding of a string value, and (b) the LHS series is
-   pre-existing and already has a string table attached. The RHS
-   coding must be made consistent with that on the left. We reach this
-   function only if we've verified that there are string tables on
-   both sides, and that @rz is not NA.
+/* Handle the case where (a) the value from the right, @rz, is actually
+   the coding of a string value, and (b) the LHS series is pre-existing
+   and already has a string table attached. The RHS coding must be made
+   consistent with that on the left. We reach this function only if
+   we've verified that there are string tables on both sides, and that
+   @rz is not NA.
 */
 
 static double maybe_adjust_string_code (series_table *rst,
@@ -1395,7 +1395,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
         }
     }
 
-#if AGGDEBUG
+#if TASK || AGGDEBUG
     fprintf(stderr, "\naggregate data: max primary matches = %d\n", nmax);
 #endif
 
@@ -1426,8 +1426,8 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
         int s, rv, lv = targvars[i];
         int strcheck = 0;
 
-#if AGGDEBUG
-        fprintf(stderr, "\nworking on series %d\n", i);
+#if TASK || AGGDEBUG
+        fprintf(stderr, "\nWorking on series %d (n = %d)\n", i, sample_size(dset));
 #endif
 
         if (jr->aggr == AGGR_MIDAS) {
@@ -1447,19 +1447,19 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
             strcheck = (rst != NULL && lst != NULL);
         }
 
-        /* run through the rows in the current sample range of the
+        /* Run through the rows in the current sample range of the
            left-hand dataset, pick up the value of the inner key(s), and
            call aggr_value() to determine the value that should be
-           imported from the right
+           imported from the right.
         */
 
         for (t=dset->t1, s=0; t<=dset->t2 && !err; t++, s++) {
 	    int nomatch = 0;
             double zt;
 
-#if AGGDEBUG
-            fprintf(stderr, " working on LHS obs %d (v=%d, value %g), s=%d\n",
-                    t, lv, dset->Z[lv][t], s);
+#if TASK || AGGDEBUG
+            fprintf(stderr, " LHS obs %d (v=%d, %s: %g), s=%d\n",
+                    t, lv, dset->varname[lv], dset->Z[lv][t], s);
 #endif
             if (matcher.pos[s] == KEYMISS) {
                 dset->Z[lv][t] = NADBL;
@@ -3369,6 +3369,11 @@ int gretl_join_data (const char *fname,
         }
     }
 
+#if JDEBUG
+    fprintf(stderr, "Step 10a done, jr = %p, n_keys = %d\n",
+	    (void *) jr, jr == NULL ? 0 : jr->n_keys);
+#endif
+
     if (!err) {
         if (jr == NULL && do_tsjoin) {
             ts_joiner tjr = {0};
@@ -3393,11 +3398,6 @@ int gretl_join_data (const char *fname,
             }
         }
     }
-
-#if JDEBUG
-    fprintf(stderr, "join: add_v = %d, modified = %d\n",
-            add_v, modified);
-#endif
 
     if (!err && add_v > 0 && jspec->colnums[JOIN_TARG] > 0) {
         /* we added one or more new series */
