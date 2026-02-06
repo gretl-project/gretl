@@ -34,7 +34,6 @@
 #define AGGDEBUG 0  /* aggregation in "join" */
 #define TDEBUG 0    /* handling of time keys in "join" */
 #define JDEBUG 0    /* joining in general */
-#define TASK 0
 
 enum {
     JOIN_KEY,
@@ -1395,7 +1394,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
         }
     }
 
-#if TASK || AGGDEBUG
+#if AGGDEBUG
     fprintf(stderr, "\naggregate data: max primary matches = %d\n", nmax);
 #endif
 
@@ -1426,7 +1425,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
         int s, rv, lv = targvars[i];
         int strcheck = 0;
 
-#if TASK || AGGDEBUG
+#if AGGDEBUG
         fprintf(stderr, "\nWorking on series %d (n = %d)\n", i, sample_size(dset));
 #endif
 
@@ -1457,7 +1456,7 @@ static int aggregate_data (joiner *jr, const int *ikeyvars,
 	    int nomatch = 0;
             double zt;
 
-#if TASK || AGGDEBUG
+#if AGGDEBUG
             fprintf(stderr, " LHS obs %d (v=%d, %s: %g), s=%d\n",
                     t, lv, dset->varname[lv], dset->Z[lv][t], s);
 #endif
