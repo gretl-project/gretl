@@ -1915,7 +1915,9 @@ static int cmd_get_sepcount (CMD *c)
     return n;
 }
 
-/* Convert token @k to an integer. */
+/* Convert token @k to an non-negative integer. This is used for
+   tokens that should hold a command order and for vecm rank.
+*/
 
 static int token_to_int (CMD *c, int k)
 {
@@ -1924,20 +1926,20 @@ static int token_to_int (CMD *c, int k)
 
     if (tok->type == TOK_INT) {
 	ret = atoi(tok->s);
-	tok->flag |= TOK_DONE;
     } else if (tok->type == TOK_NAME) {
 	double x = get_scalar_value_by_name(tok->s, &c->err);
 
-	if (!c->err) {
-	    if (x > 0 && x < INT_MAX) {
-		tok->flag |= TOK_DONE;
-		ret = x;
-	    } else {
-		c->err = E_INVARG;
-	    }
+	if (!c->err && x < INT_MAX) {
+	    ret = (int) x;
 	}
-    } else {
-	c->err = E_INVARG;
+    }
+
+    if (!c->err) {
+	if (ret < 0) {
+	    c->err = E_INVARG;
+	} else {
+	    tok->flag |= TOK_DONE;
+	}
     }
 
     return ret;
