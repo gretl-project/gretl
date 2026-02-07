@@ -3,7 +3,7 @@ version 2026b, in progress
   which is "off" by default, to make backslash the escape
   character in all string literals
 - "join" command: fix possible crash on joining data from
-   two binary gdtb data files in sequence
+  two binary gdtb data files in succession
 - Correlation matrix plot: use graph-names as set by the
   "setinfo" command if available
 - "add" and "omit" commands with --auto option: attach to
