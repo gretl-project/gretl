@@ -8293,10 +8293,10 @@ int waiting_for_output (void)
     return script_wait;
 }
 
-/* struct to handle "flush" in the course of script execution: this
+/* Struct to handle "flush" in the course of script execution: this
    may occur when we're executing a (time consuming) script in the
    "normal" way, or when the user calls a function from a function
-   package via the GUI
+   package via the GUI.
 */
 
 struct output_handler {
@@ -8373,10 +8373,9 @@ static gint block_deletion (GtkWidget *w, GdkEvent *event, gpointer p)
     return TRUE;
 }
 
-/* When we're in the process of "flushing" (a time-
-   consuming script is sending output to a window
-   incrementally) we must ensure that the output window
-   doesn't get closed prematurely (?)
+/* When we're in the process of "flushing" (a time-consuming script
+   is sending output to a window incrementally) we must ensure that
+   the output window doesn't get closed prematurely.
 */
 
 static void output_handler_block_deletion (void)
@@ -8388,8 +8387,8 @@ static void output_handler_block_deletion (void)
                          NULL);
 }
 
-/* Handle the case where a string passed to "flush" ends
-   with '\r', so that it should be overwritten on each call.
+/* Handle the case where a string passed to "flush" ends with '\r',
+   so that it should be overwritten on each call.
 */
 
 static void handle_carriage_return (char *buf)
@@ -10242,11 +10241,11 @@ static int gui_do_smpl (CMD *cmd, DATASET *dset, PRN *prn)
 
 /* gui_exec_line: this is called from the gretl console, from the
    command "minibuffer", from execute_script(), and when initiating a
-   call to a function package (fncall.c).  Note that most commands get
-   passed on to the libgretl function gretl_cmd_exec(), but some GUI
-   specials are dealt with here, as are some commands that require
-   special action when called in a GUI context.  All estimation
-   commands are passed on to libgretl.
+   call to a function package (see fncall.c).  Note that most commands
+   get passed on to the libgretl function gretl_cmd_exec(), but some
+   GUI specials are dealt with here, as are some regular commands that
+   require special action when called in a GUI context.  All
+   estimation commands are passed on to libgretl.
 */
 
 int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
@@ -10296,6 +10295,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
         /* when stacking commands for a loop, parse "lightly" */
         err = get_command_index(s, LOOP, 0);
     } else {
+	/* parse fully */
         err = parse_command_line(s, dset, NULL);
     }
 
@@ -10319,7 +10319,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     gretl_exec_state_transcribe_flags(s, cmd);
 
     if (cmd->ci < 0) {
-        /* nothing there, a comment, or masked by "if" */
+        /* nothing there, a comment, or execution blocked by "if" */
         return 0;
     }
 
@@ -10355,6 +10355,8 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     }
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
+
+    /* Now execute the current command */
 
     switch (cmd->ci) {
 
