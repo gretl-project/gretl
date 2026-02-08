@@ -8966,11 +8966,11 @@ static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
     NODE *mn = rstr ? l : r; /* the matrix or array node */
     NODE *sn = rstr ? r : l; /* the string node */
     const char *s = sn->v.str;
-    int dim;
+    int dim = 0;
 
     if (mn->t == ARRAY) {
         dim = gretl_array_get_length(mn->v.a);
-    } else {
+    } else if (mn->t == MAT) {
         dim = gretl_vector_get_length(mn->v.m);
     }
     if (dim == 0) {
