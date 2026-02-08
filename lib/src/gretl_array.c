@@ -1913,7 +1913,7 @@ gretl_array *gretl_arrays_intersection (gretl_array *A,
     return C;
 }
 
-/* respond to C = A ~ B, for strings only so far */
+/* respond to C = A ~ B, for strings arrays only so far */
 
 gretl_array *gretl_arrays_concat (const gretl_array *A,
                                   const gretl_array *B,

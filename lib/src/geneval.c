@@ -8963,25 +8963,34 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
 {
     NODE *ret = NULL;
-    NODE *mn = rstr ? l : r; /* the matrix or array node */
+    NODE *mn = rstr ? l : r; /* the MAT, ARRAY or NUM node */
     NODE *sn = rstr ? r : l; /* the string node */
     const char *s = sn->v.str;
+    gretl_array *S = NULL;
     int dim = 0;
 
     if (mn->t == ARRAY) {
         dim = gretl_array_get_length(mn->v.a);
     } else if (mn->t == MAT) {
         dim = gretl_vector_get_length(mn->v.m);
+    } else if (mn->t == NUM) {
+	dim = 1;
     }
     if (dim == 0) {
         p->err = E_INVARG;
         return NULL;
     }
 
-    ret = aux_array_node(p);
+    if (mn->t == NUM) {
+	ret = aux_string_node(p);
+    } else {
+	ret = aux_array_node(p);
+	if (ret != NULL) {
+	    S = gretl_array_new(GRETL_TYPE_STRINGS, dim, &p->err);
+	}
+    }
 
-    if (ret != NULL) {
-        gretl_array *S = gretl_array_new(GRETL_TYPE_STRINGS, dim, &p->err);
+    if (!p->err) {
         gchar *tmp, *ds;
         int i, d;
 
@@ -8990,10 +8999,13 @@ static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
             if (mn->t == ARRAY) {
                 d = 0;
                 ds = g_strdup((char *) gretl_array_get_data(mn->v.a, i));
-            } else {
+            } else if (mn->t == MAT) {
                 d = floor(mn->v.m->val[i]);
                 ds = g_strdup_printf("%d", d);
-            }
+            } else {
+		d = floor(mn->v.m->val[i]);
+		ds = g_strdup_printf("%d", d);
+	    }
             if (d < 0) {
                 p->err = E_INVARG;
             } else {
@@ -9002,12 +9014,18 @@ static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
                 } else {
                     tmp = g_strdup_printf("%s%s", s, ds);
                 }
-                gretl_array_set_string(S, i, tmp, 1);
+		if (S != NULL) {
+		    gretl_array_set_string(S, i, tmp, 1);
+		} else {
+		    ret->v.str = gretl_strdup(tmp);
+		}
                 g_free(tmp);
             }
             g_free(ds);
         }
-        ret->v.a = S;
+	if (ret->t == ARRAY) {
+	    ret->v.a = S;
+	}
     }
 
     return ret;
@@ -9019,19 +9037,30 @@ static int is_strings_array_node (NODE *n)
         gretl_array_get_type(n->v.a) == GRETL_TYPE_STRINGS;
 }
 
+/* "horizontal" concatenation of two gretl objects: we try to be as
+   flexible as reasonably possible.
+*/
+
 static NODE *horizontal_concat_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
     if (l->t == STR && r->t == STR) {
+	/* (a) stick one string onto another */
         ret = two_string_func(l, r, NULL, B_HCAT, p);
     } else if (ok_matrix_node(l) && ok_matrix_node(r)) {
+	/* (b) stick two conformable matrices together */
         ret = matrix_matrix_calc(l, r, B_HCAT, p);
     } else if (l->t == STR && (ok_matrix_node(r) || is_strings_array_node(r))) {
+	/* (c) "multi-media" concatenation, string on left */
         ret = strseq_node(l, r, 0, p);
     } else if ((ok_matrix_node(l) || is_strings_array_node(l)) && r->t == STR) {
+	/* (a) the converse of (c) */
         ret = strseq_node(l, r, 1, p);
     } else if (is_strings_array_node(l) && is_strings_array_node(r)) {
+	/* (e) concatenation of strings, element by element, if the
+	   two arrays are of the same length
+	*/
         ret = aux_array_node(p);
         if (ret != NULL) {
             ret->v.a = gretl_arrays_concat(l->v.a, r->v.a, &p->err);
