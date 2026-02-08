@@ -112,6 +112,14 @@
 	  </para>
 	</li>
       </ilist>
+      <para context="cli">
+	On successful completion of the <opt>auto</opt> variant of
+	<lit>add</lit>, the bundle provided by the <fncref
+	targ="$model"/> accessor (which points to the augmented model)
+	contains a list named <lit>add_order</lit>. This list contains
+	the ID numbers of the added series in the order in which they
+	were added.
+      </para>
       <para context="gui">
 	You have three options here:
       </para>
@@ -11089,6 +11097,14 @@
         If no <repl>criterion</repl> is specified with the
         <opt>auto</opt> option, the default is to use the
         <math>P</math>-value method with &alpha; = 0.10.
+      </para>
+      <para>
+	On successful completion of the <opt>auto</opt> variant of
+	<lit>omit</lit>, the bundle provided by the <fncref
+	targ="$model"/> accessor (which points to the reduced model)
+	contains a list named <lit>omit_order</lit>. This list
+	contains the ID numbers of the omitted series in the order in
+	which they were omitted.
       </para>
     </description>
 
