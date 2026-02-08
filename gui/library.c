@@ -9784,7 +9784,7 @@ static int gui_exec_callback (ExecState *s, void *ptr,
         mark_dataset_as_modified();
     } else if (ci == SMPL) {
         set_sample_label(dataset);
-    } else if (ci == DATAMOD || ci == LABELS) {
+    } else if (ci == DATAMOD || ci == LABELS || ci == DATA) {
         mark_dataset_as_modified();
         populate_varlist();
     } else if (ci == MARKERS) {

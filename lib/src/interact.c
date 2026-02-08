@@ -3587,12 +3587,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case DATA:
-        err = db_get_series(cmd->param, dset, cmd->opt, prn);
-        break;
-
     case DATAMOD:
-        err = modify_dataset(dset, cmd->auxint, cmd->list,
-                             cmd->parm2, cmd->opt, prn);
+	if (cmd->ci == DATA) {
+	    err = db_get_series(cmd->param, dset, cmd->opt, prn);
+	} else {
+	    err = modify_dataset(dset, cmd->auxint, cmd->list,
+				 cmd->parm2, cmd->opt, prn);
+	}
         if (!err) {
             schedule_callback(s);
         }
