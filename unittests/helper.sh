@@ -22,7 +22,6 @@ function delete_file {
 
 function count_number_of_inp_files {
 	N=$(find . -maxdepth 1 -name '*.inp' -type f | wc -l)
-	#N=$(ls -f *.inp | wc -l)
 
 	if [ "$N" = 0 ]; then
     	printf "INFO: No files found. Finish.\n"
