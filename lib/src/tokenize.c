@@ -1915,8 +1915,10 @@ static int cmd_get_sepcount (CMD *c)
     return n;
 }
 
-/* Convert token @k to an non-negative integer. This is used for
-   tokens that should hold a command order and for vecm rank.
+/* Convert token @k to an integer. This is used for tokens that should
+   hold a command order, and for vecm rank. Note than in some cases
+   (e.g. adf, kpss) order is allowed to be negative, indicating that the
+   actual order will be set automatically.
 */
 
 static int token_to_int (CMD *c, int k)
@@ -1935,11 +1937,7 @@ static int token_to_int (CMD *c, int k)
     }
 
     if (!c->err) {
-	if (ret < 0) {
-	    c->err = E_INVARG;
-	} else {
-	    tok->flag |= TOK_DONE;
-	}
+	tok->flag |= TOK_DONE;
     }
 
     return ret;
