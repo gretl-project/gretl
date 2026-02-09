@@ -13171,7 +13171,7 @@
 	  entrecomillada, o bien el nombre de una cadena de texto que hayas
 	  definido previamente. El argumento <repl>formato</repl> se indica de
 	  modo similar a la cadena del argumento <quote>formato</quote> en
-	  <cmdref targ="printf"/> (mira más abajo). Los argumentos siguientes
+	  <cmdref targ="printf"/> (mira más abajo). Los argumentos siguientes 
 	  &mdash;los nombres de las variables predefinidas que son los objetivos
 	  de la conversión&mdash; deben estar separados por comas. (Para los
 	  acostumbrados a C: podéis fijar previamente los nombres de las

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-24 08:54-0500\n"
-"PO-Revision-Date: 2025-09-19 22:21+0200\n"
+"PO-Revision-Date: 2026-01-28 16:15+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -1146,7 +1146,7 @@ msgstr "Asumindo que a comiña simple é o carácter pertinente de citación\n"
 
 #: lib/src/csvdata.c:1586
 msgid "unmatched quotation marks in CSV file"
-msgstr ""
+msgstr "Comiñas non coincidentes no ficheiro CSV"
 
 #: lib/src/csvdata.c:1587
 msgid "Quotation broken: marks not paired\n"
@@ -1281,9 +1281,9 @@ msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- non se fixo conversión numérica!"
 
 #: lib/src/csvdata.c:3273
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %d strings were truncated.\n"
-msgstr "Aviso: Tronzáronse %d etiquetas.\n"
+msgstr "Aviso: Tronzáronse %d cadeas de texto.\n"
 
 #: lib/src/csvdata.c:3315
 msgid "scanning for data...\n"
@@ -2775,9 +2775,8 @@ msgid "White's test for heteroskedasticity"
 msgstr "Proba de heterocedasticidade de White"
 
 #: lib/src/estimate.c:3315
-#, fuzzy
 msgid "At least one regressor is required"
-msgstr "Non é necesario contrasinal"
+msgstr "Requírese un regresor cando menos"
 
 #: lib/src/estimate.c:3362
 msgid "Generalized Cochrane-Orcutt estimation"
@@ -3646,9 +3645,9 @@ msgid "Actual and fitted %s versus %s"
 msgstr "*%s* (observada e estimada) fronte a *%s*"
 
 #: lib/src/graphing.c:2847
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with separation by %s"
-msgstr "*%s* fronte a *%s* (con axuste cadrado)"
+msgstr "*%s* fronte a *%s* con separación por %s"
 
 #: lib/src/graphing.c:3098 gui/gpt_dialog.c:677
 #, c-format
@@ -4376,9 +4375,8 @@ msgid "Matrix argument contains non-finite values"
 msgstr "O argumento de matriz contén valores non finitos"
 
 #: lib/src/gretl_errors.c:93
-#, fuzzy
 msgid "This command requires time-series data"
-msgstr "Esta función require datos de series temporais"
+msgstr "Esta instrución require datos de series temporais"
 
 #: lib/src/gretl_errors.c:101
 msgid "gradient is not close to zero"
@@ -5366,7 +5364,6 @@ msgid "No first-order autocorrelation (rho = -0.5)"
 msgstr "Sen autocorrelación de 1ª orde (rho = -0.5)"
 
 #: lib/src/gretl_model.c:4381
-#, fuzzy
 msgid "BDS test for nonlinearity"
 msgstr "Proba BDS de non linearidade"
 
@@ -8484,9 +8481,8 @@ msgid "%s: inapplicable option"
 msgstr "%s: Opción non aplicable"
 
 #: lib/src/plotbands.c:366
-#, fuzzy
 msgid "Invalid band specification"
-msgstr "Especificación incorrecta de unión"
+msgstr "Especificación incorrecta de banda"
 
 #: lib/src/plotbands.c:747
 msgid ""
@@ -9068,7 +9064,7 @@ msgstr "Fóra de memoria na codificación XML"
 #: lib/src/strutils.c:3562
 #, c-format
 msgid "Unknown escape sequence '\\%c'"
-msgstr ""
+msgstr "Secuencia descoñecida '\\%c' de fuxida"
 
 #: lib/src/subsample.c:744
 msgid "You cannot subsample a resampled dataset"
@@ -17221,9 +17217,8 @@ msgid "Set %d observations to \"missing\""
 msgstr "Poñer %d observacións como \"ausentes\""
 
 #: gui/library.c:5292
-#, fuzzy
 msgid "No name was given"
-msgstr "Non se indicou fórmula"
+msgstr "Non se indicou ningún nome"
 
 #: gui/library.c:5438
 msgid "gretl: residual dist."
@@ -21493,12 +21488,12 @@ msgid "Largest s within one s.e. of best criterion: %#g (\"+\")\n"
 msgstr "Maior s dentro de unha d.p. do mellor criterio: %#g (\"+\")\n"
 
 #: plugin/regls.c:3094
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Invoking MPI with %d processes...\n"
 "\n"
 msgstr ""
-"Invocando o MPI...\n"
+"Invocando o MPI con %d procesos...\n"
 "\n"
 
 #: plugin/sas_import.c:614 plugin/sas_import.c:649

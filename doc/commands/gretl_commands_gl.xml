@@ -112,6 +112,14 @@
 	  </para>
 	</li>
       </ilist>
+      <para context="cli">
+	Cando se completa con éxito a variante <opt>auto</opt> da instrución
+	<lit>add</lit>, o paquete proporcionado polo accesorio
+	<fncref targ="$model"/> (que sinala ao modelo aumentado) contén
+	unha lista chamada <lit>add_order</lit>. Esta lista contén os
+	números ID das series engadidas na orde na que foron
+	agregadas.
+      </para>
       <para context="gui">
 	Aquí dispós de tres opcións:
       </para>
@@ -5803,14 +5811,15 @@
       <para>
 	Podes utilizar a opción <opt>band</opt> para representar unha
 	<quote>franxa</quote> dalgún tipo (tipicamente representa un intervalo
-	de confianza) xunto con outros datos. O xeito recomendado de especificar
-	esa franxa é mediante un paquete (bundle), cuxo nome se indica como
-	parámetro desa opción. Un paquete <lit>band</lit> require dous
-	elementos que son necesarios: na clave <lit>center</lit>, o nome
-	dunha serie para o centro da franxa; e una clave <lit>width</lit>, o
-	nome dunha serie que represente o ancho da franxa (ambos indicados
-	como cadeas de texto entre comiñas). Ademais, admítense outros catro
-	elementos opcionais, do xeito que se indica a continuación.
+	de confianza) xunto con outros datos. Esa franxa especifícase mediante
+	un paquete (bundle), cuxo nome se indica como parámetro desa opción.
+	Co uso básico desa opción, o paquete require dous elementos para
+	especificar: o centro da franxa (baixo a clave <lit>center</lit>)
+	e o seu ancho (baixo a clave <lit>width</lit>). Cada elemento debe
+	indicarse, ben como o nome dunha serie entre comiñas, ou ben como
+  unha constante númerica (se acontece que o elemento en cuestión
+  é constante). Ademais, admítense outros catro elementos opcionais,
+  do xeito que se indica a continuación.
       </para>
       <ilist>
 	<li>
@@ -5867,7 +5876,7 @@
 	gnuplot y --time-series --with-lines --bands=bb
       </code>
       <para>
-	Cando se representa graficamente unha matriz, en troques de datos de
+	Cando se representa graficamente unha matriz de datos, en troques de
 	series, a única diferenza é que os elementos <lit>centro</lit> (center)
 	e <lit>ancho</lit> (width) do paquete da franxa substitúense por un
 	único elemento na clave <lit>bandmat</lit>. Este ten que indicar unha
@@ -5878,13 +5887,13 @@
 	vaise reutilizar con distintos valores do factor, dado que evita ter
 	que duplicar a matriz na memoria.
       </para>
-      <subhead>Barras de recesión</subhead>
+      <subhead>Barras de períodos</subhead>
       <para>
-	Tamén podes utilizar a opción <quote>band</quote> para engadir
-	<quote>barras de recesión</quote> a unha gráfica. Deste xeito estámonos
-	a referir a barras verticais que ocupan todo o rango da dimensión
-	<math>y</math> da gráfica, e que indican a presenza (coa barra) ou a
-	ausencia (sen barra) dalgunha característica cualitativa, nunha gráfica
+	Unha utilización alternativa da opción <opt>band</opt> consiste en
+	engadir	<quote>barras de períodos</quote> a unha gráfica. Deste xeito
+	estámonos a referir a barras verticais que ocupan todo o rango da
+	dimensión <math>y</math> da gráfica, e que indican a presenza (coa barra)
+	ou a ausencia (sen barra) dalgunha característica cualitativa, nunha gráfica
 	de series temporais. Estas barras utilízanse habitualmente para indicar
 	períodos de recesión; pero tamén podes usalas para sinalar períodos de
 	guerra, ou calquera cousa que poda codificarse cunha variable ficticia 0/1.
@@ -5897,7 +5906,7 @@
 	para as observacións nas que esa serie ou vector tome o valor 1 e
 	<quote>inactivas</quote> cando sexa 0. As claves de <lit>centro</lit>
 	(center), <lit>ancho</lit> (width), <lit>factor</lit> e <lit>estilo</lit>
-	(style) non son pertinentes, pero pódese usar <lit>color</lit>. Observa
+	(style) non son aplicables, pero pódese usar <lit>color</lit>. Observa
 	que só pode usarse unha desas especificacións por cada gráfica. Aquí
 	tes un exemplo:
       </para>
@@ -5938,7 +5947,7 @@
 	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
       </code>
       <para>
-	Para acadar un resultado esteticamente agradable, pode interesarte
+	Para acadar resultados esteticamente agradables, pode interesarte
 	usar a función <fncref targ="rgbmix"/>.
       </para>
       <subhead>Controlando a saída de resultados</subhead>
@@ -11089,6 +11098,14 @@
         <opt>auto</opt>, por defecto se utiliza o método do valor
         <math>P</math> con &alpha; = 0.10.
       </para>
+      <para>
+	Cando se completa con éxito a variante <opt>auto</opt> da instrución
+	<lit>omit</lit>, o paquete proporcionado polo accesorio
+	<fncref targ="$model"/> (que sinala ao modelo reducido) contén
+	unha lista chamada <lit>omit_order</lit>. Esta lista contén os
+	números ID das series omitidas na orde na que foron
+	suprimidas.
+      </para>
     </description>
 
     <gui-access>
@@ -12982,9 +12999,9 @@
 	A lonxitude máxima dunha cadea de formato é de 127 caracteres.
 	Recoñécense as secuencias de escape <lit>\n</lit> (nova liña),
 	<lit>\r</lit> (salto de liña), <lit>\t</lit> (tabulación), <lit>\v</lit>
-	(tabulación vertical) e <lit>\\</lit> (barra inclinada á esquerda
-	literal). Para presentar un signo por cento literal, utiliza
-	<lit>%%</lit>.
+	(tabulación vertical), <lit>\"</lit> (comiñas literal) e <lit>\\</lit>
+	(barra inclinada á esquerda literal). Para presentar o signo
+	porcentual literal, utiliza <lit>%%</lit>.
       </para>
       <para>
 	Como en C, podes indicar os valores numéricos que forman parte
@@ -13485,12 +13502,26 @@
 	trocar isto engadindo un nivel de confianza (expresado como unha fracción
 	decimal) á opción de intervalos, como en <opt>intervals=0.95</opt>.
       </para>
+      <subhead>
+	Estimación con un vector de cuantís
+      </subhead>
       <para>
-	Vector <repl>tau</repl> de valores: en troques de proporcionar un escalar,
-	podes indicar o nome dunha matriz definida previamente. Neste caso, as
-	estimacións calcúlanse para todos os valores <repl>tau</repl> indicados,
-	e os resultados preséntanse nun formato especial, amosando a secuencia
-	das estimacións de cuantís para cada regresor, de un en un.
+	En troques de proporcionar un escalar, podes indicar como
+	<repl>tau</repl> o nome dunha matriz definida previamente.
+	Neste caso, as estimacións calcúlanse para todos os valores
+	<repl>tau</repl> indicados, e os resultados preséntanse nun formato
+	especial, amosando a secuencia das estimacións de cuantís para
+	cada regresor, de un en un.
+      </para>
+      <para>
+	Cando se especifica un vector de cuantís, os accesorios
+	<lit>$coeff</lit> e <lit>$stderr</lit> proporcionan matrices
+	<by r="k" c="n"/>, nas que <math>k</math> é o número de regresores,
+	e <math>n</math> é o número de cuantís. Tamén se pode obter
+	unha matriz que conteña os coeficientes e os erros padrón no formato
+	que se presenta na lista de impresión de <lit>quantreg</lit>,
+	baixo a clave <lit>rq_sequence</lit> no paquete ('bundle') de
+	<fncref targ="$model"/>.
       </para>
     </description>
 
