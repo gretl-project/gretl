@@ -603,6 +603,9 @@ static int print_arg (const char **pfmt, const char **pargs,
 		x = dset->Z[v][t];
 		got_scalar = 1;
 	    }
+	} else if (t >= 0) {
+	    /* doing "genr markers" */
+	    err = E_INVARG;
 	} else {
 	    /* try treating as generated value */
 	    err = gen_arg_val(arg, dset, &x, &m, &v, &got_scalar);
@@ -1415,7 +1418,7 @@ int generate_obs_markers (const char *s, DATASET *dset)
 {
     char format[16] = {0};
     char args[32] = {0};
-    PRN *prn;
+    PRN *prn = NULL;
     int n, t, err = 0;
 
     n = sscanf(s, "\"%15[^\"]\", %31[^\r\n]", format, args);

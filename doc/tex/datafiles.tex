@@ -605,16 +605,19 @@ the command following the equals sign is taken as a C-style format
 string (which must be wrapped in double quotes), followed by a
 comma-separated list of arguments.  The arguments will be printed
 according to the given format to create a new set of observation
-markers.  Valid arguments are either the names of variables in the
-dataset, or the string \texttt{marker} which denotes the pre-existing
-observation marker.  The format specifiers which are likely to be
-useful in this context are \texttt{\%s} for a string and \texttt{\%d}
-for an integer.  Strings can be truncated: for example \texttt{\%.3s}
-will use just the first three characters of the string.  To chop
-initial characters off an existing observation marker when
-constructing a new one, you can use the syntax \texttt{marker + n},
-where \texttt{n} is a positive integer: in the case the first
-\texttt{n} characters will be skipped.
+markers.  The only valid arguments in this context are
+\begin{itemize}
+\item the string \texttt{marker}, which denotes the current observation
+  marker, or
+\item the name of an existing series.
+\end{itemize}
+The format specifiers which are likely to be useful in this context are
+\texttt{\%s} for a string and \texttt{\%d} for an integer.  Strings can
+be truncated: for example \texttt{\%.3s} will use just the first three
+characters of the string.  To chop initial characters off an existing
+observation marker when constructing a new one, you can use the syntax
+\texttt{marker + n}, where \texttt{n} is a positive integer: in the case
+the first \texttt{n} characters will be skipped.
 
 After the commands above are processed, then, the observation markers
 will look like, for example, \texttt{AR:1965}, where the two-letter
