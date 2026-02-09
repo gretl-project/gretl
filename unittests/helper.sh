@@ -39,7 +39,7 @@ function execute_inp_files {
 
 	for f in *.inp; do
 		echo "$(date '+ %F %T')"
-		echo `basename $f`
+		echo "$(basename "$f")"
 
     	gretlcli -b -e -q $f #> /dev/null 2>&1
 
