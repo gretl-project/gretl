@@ -4,7 +4,8 @@
 fails=()
 
 # Store the current directory path
-HERE=`pwd`
+HERE=$(pwd)
+
 
 # Initialize status variable
 exitcode=0
