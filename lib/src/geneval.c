@@ -9003,7 +9003,7 @@ static NODE *strseq_node (NODE *l, NODE *r, int rstr, parser *p)
                 d = floor(mn->v.m->val[i]);
                 ds = g_strdup_printf("%d", d);
             } else {
-		d = floor(mn->v.m->val[i]);
+		d = floor(mn->v.xval);
 		ds = g_strdup_printf("%d", d);
 	    }
             if (d < 0) {
