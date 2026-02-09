@@ -1,0 +1,32 @@
+# Test for bug in string concatenation (inside loop foreach)
+# See: https://gretlml.univpm.it/hyperkitty/list/gretl-devel@gretlml.univpm.it/message/KUFI3TSKOCRZQZYDFQQ5OBQBT2VCTOKM/
+
+function void test_concat_index()
+    strings A = defarray("a")
+    loop foreach which A
+        string renamed = "_" ~ "$which"
+        print "$which"
+    endloop
+end function
+print "Testing concatenation of index variable"
+test_concat_index()
+print "Passed index variable test"
+
+
+function void test_concat_value()
+    strings A = defarray("a")
+    loop foreach which A
+        string renamed = "_" ~ which   # Produced a crash before 2026a
+    endloop
+end function
+print "Testing concatenation of value variable"
+test_concat_value()
+print "Passed value variable test"
+
+
+function void test_simple_concat()
+    string s = "_" ~ 1
+end function
+print "Testing simple concatenation"
+test_simple_concat()
+print "Passed simple concatenation test"
