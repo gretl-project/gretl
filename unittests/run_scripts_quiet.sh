@@ -14,7 +14,7 @@ fi
 rm -f fails
 
 # Store the current directory path
-HERE=`pwd`
+HERE=$(pwd)
 
 # Initialize exit status variable
 my_status=0
@@ -24,7 +24,7 @@ echo "*** practice scripts ***"
 cd $INPPATH/practice_scripts
 for f in `find . -name "*.inp"` ; do
    # Print the name of the script being tested
-   bname=`basename $f`
+   bname=$(basename $f)
    echo -n $bname
 
    # Run the script with gretlcli in batch and quiet mode
@@ -47,7 +47,7 @@ for d in commands functions fundamentals ; do
    echo "*** $d ***"
    cd $INPPATH/test_scripts/$d
    for f in `find . -name "*.inp"` ; do
-      bname=`basename $f`
+      bname=$(basename $f)
       echo -n $bname
       ${GRETLCLI} -b -q -e $f > /dev/null 2>&1
       if [ $? != 0 ] ; then
