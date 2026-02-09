@@ -21,45 +21,48 @@ my_status=0
 
 # Test scripts in the 'practice_scripts' directory
 echo "*** practice scripts ***"
-cd $INPPATH/practice_scripts
-for f in `find . -name "*.inp"` ; do
+cd "$INPPATH/practice_scripts" || exit
+for f in $(find . -name "*.inp") ; do
    # Print the name of the script being tested
-   bname=$(basename $f)
-   echo -n $bname
+   bname=$(basename "$f")
+   echo -n "$bname"
 
    # Run the script with gretlcli in batch and quiet mode
-   ${GRETLCLI} -b -q -e $f > /dev/null 2>&1
+   "${GRETLCLI}" -b -q -e "$f" > /dev/null 2>&1
 
    # Check if the script failed
    if [ $? != 0 ] ; then
       # Print 'Failed', update status variable, and log the failed script
       echo -e " [\e[0;31mFailed\e[0m]"
       my_status=1
-      echo $INPPATH/practice_scripts/$bname >> $HERE/fails
+      echo "$INPPATH/practice_scripts/$bname" >> "$HERE/fails"
    else
       # Print 'OK' if the script succeeded
       echo -e " [\e[0;32mOK\e[0m]"
    fi
 done
 
+# Return to the original directory before testing other directories
+cd "$HERE" || exit
+
 # Test scripts in the 'commands', 'functions', and 'fundamentals' directories
 for d in commands functions fundamentals ; do
    echo "*** $d ***"
-   cd $INPPATH/test_scripts/$d
-   for f in `find . -name "*.inp"` ; do
-      bname=$(basename $f)
-      echo -n $bname
-      ${GRETLCLI} -b -q -e $f > /dev/null 2>&1
+   cd "$INPPATH/test_scripts/$d" || exit
+   for f in $(find . -name "*.inp") ; do
+      bname=$(basename "$f")
+      echo -n "$bname"
+      "${GRETLCLI}" -b -q -e "$f" > /dev/null 2>&1
       if [ $? != 0 ] ; then
            echo -e " [\e[0;31mFailed\e[0m]"
            my_status=1
-           echo $INPPATH/test_scripts/$d/$bname >> $HERE/fails
+           echo "$INPPATH/test_scripts/$d/$bname" >> "$HERE/fails"
       else
            echo -e " [\e[0;32mOK\e[0m]"
       fi
    done
    # Return to the original directory
-   cd $HERE
+   cd "$HERE" || exit
 done
 
 # If there were any failures, print the names of the failed scripts
