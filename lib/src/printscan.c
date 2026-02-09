@@ -594,7 +594,10 @@ static int print_arg (const char **pfmt, const char **pargs,
 	    x = gretl_scalar_get_value(arg, NULL);
 	    got_scalar = 1;
 	} else if ((m = get_matrix_by_name(arg)) != NULL) {
-	    ; /* printing a named matrix */
+	    /* printing a named matrix */
+	    if (t >= 0) {
+		err = E_INVARG;
+	    }
 	} else if ((v = current_series_index(dset, arg)) >= 0) {
 	    /* printing a named series, unless t >= 0 */
 	    if (t < 0) {
