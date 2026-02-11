@@ -552,17 +552,13 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opt, DATASET *dset,
 
     if (reject_missing) {
 	/* reject missing obs within adjusted sample */
-	missv = model_adjust_sample(pmod, dset->n,
-				    (const double **) dset->Z,
-				    misst);
+	missv = model_adjust_sample(pmod, dset, misst);
 	if (reject_missing == 2) {
 	    gretl_errmsg_append(_("HAC standard errors not available"), 0);
 	}
     } else {
 	/* we'll try to work around missing obs */
-	missv = model_adjust_sample(pmod, dset->n,
-				    (const double **) dset->Z,
-				    NULL);
+	missv = model_adjust_sample(pmod, dset, NULL);
     }
 
 #if SMPL_DEBUG
@@ -4009,7 +4005,7 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
  * Estimate the model given in @list using the method of Least
  * Absolute Deviation (LAD).
  *
- * Returns: a #MODEL struct, containing the estimates.
+ * Returns: a #MODEL struct containing the estimates.
  */
 
 MODEL lad_model (const int *list, DATASET *dset, gretlopt opt)
@@ -4020,15 +4016,12 @@ MODEL lad_model (const int *list, DATASET *dset, gretlopt opt)
     /* run an initial OLS to "set the model up" and check for errors.
        the lad_driver function will overwrite the coefficients etc.
     */
-
     mod = lsq(list, dset, OLS, OPT_A);
-
     if (mod.errcode) {
         return mod;
     }
 
     lad_driver = get_plugin_function("lad_driver");
-
     if (lad_driver == NULL) {
 	mod.errcode = E_FOPEN;
 	return mod;

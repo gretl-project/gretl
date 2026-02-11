@@ -144,12 +144,16 @@ static char *model_missmask (const int *list, int t1, int t2,
  * the missing obs mask, otherwise 0.
  */
 
-int model_adjust_sample (MODEL *pmod, int n, const double **Z,
+int model_adjust_sample (MODEL *pmod, const DATASET *dset,
 			 int *misst)
 {
-    int i, t, dwt = 0, t1min = pmod->t1, t2max = pmod->t2;
-    int vi, missobs, ret = 0;
+    const double **Z = (const double **) dset->Z;
+    int i, t, dwt = 0;
+    int t1min = pmod->t1;
+    int t2max = pmod->t2;
+    int vi, missobs;
     int move_ends = 1;
+    int ret = 0;
 
     if (gretl_model_get_int(pmod, "wt_dummy")) {
 	/* we have a weight variable which is a 0/1 dummy */
@@ -225,14 +229,13 @@ int model_adjust_sample (MODEL *pmod, int n, const double **Z,
 		}
 	    }
 	}
-
 	if (missobs == t2max - t1min + 1) {
 	    /* no valid observations */
 	    pmod->errcode = E_MISSDATA;
 	    ret = 1;
 	} else if (missobs > 0) {
 	    pmod->missmask = model_missmask(pmod->list, pmod->t1, pmod->t2,
-					    n, Z, dwt, NULL);
+					    dset->n, Z, dwt, NULL);
 	    move_ends = 0;
 	    if (pmod->missmask == NULL) {
 		pmod->errcode = E_ALLOC;
