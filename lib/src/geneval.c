@@ -9722,10 +9722,19 @@ static int strptime_error (const char *s, double x, int t, int ntype)
     return E_INVARG;
 }
 
+static int am_pm_error (const char *s)
+{
+    char tmp[3] = {0};
+
+    strncat(tmp, s, 2);
+    gretl_errmsg_sprintf(_("Unrecognized content '%s' in time string"), tmp);
+    return E_INVARG;
+}
+
 /* strptime_node() implements both strptime() and strpday(). In the
-   primary use case the @l node contains a string, array of
-   strings, or string-valued series. In the secondary case @l
-   contains ISO 8601 "basic" dates (scalar, series or vector).
+   primary use case the @l node contains a string, array of strings,
+   or string-valued series. In the secondary case @l contains ISO 8601
+   "basic" dates (scalar, series or vector).
 */
 
 static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
@@ -9803,7 +9812,7 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
             targ = &ret->v.xval;
         }
 
-        for (t=t1; t<=t2; t++) {
+        for (t=t1; t<=t2 && !p->err; t++) {
             struct tm tm = {0,0,0,1,0,0,0,0,-1};
             int handled = 0;
             double x = NADBL;
@@ -9857,6 +9866,8 @@ static NODE *strptime_node (NODE *l, NODE *r, int f, parser *p)
                 /* strptime() failed */
                 p->err = strptime_error(src, x, t, l->t);
                 break;
+	    } else if (!strncmp(s, "AM", 2) || !strncmp(s, "PM", 2)) {
+		p->err = am_pm_error(s);
             } else if (f == F_STRPDAY) {
                 int y = tm.tm_year + 1900;
                 int m = tm.tm_mon + 1;
