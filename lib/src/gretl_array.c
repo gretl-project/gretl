@@ -176,10 +176,9 @@ static int array_extend_content (gretl_array *A, int plus)
     }
 }
 
-/* Create a new array of type @type. The idea is that it's OK
-   to have n = 0: in that case the array starts empty but can
-   be extended by the += operator. Or it can be sized in
-   advance.
+/* Create a new array of type @type. The idea is that it's OK to have
+   n = 0: in that case the array starts empty but can be extended by
+   the += operator. Or it can be sized in advance.
 */
 
 gretl_array *gretl_array_new (GretlType type, int n, int *err)
@@ -554,10 +553,10 @@ void *gretl_array_get_element (gretl_array *A, int i,
 {
     void *ret = NULL;
 
-    /* Note that the data returned here are not "deep copied",
-       we just pass the pointer. It's up to the caller to
-       decide if a copy has to be made, given that the
-       pointer from here should not be modified.
+    /* Note that the data returned here are not "deep copied", we just
+       pass the pointer. It's up to the caller to decide if a copy has
+       to be made, given that the pointer from here should not be
+       modified.
     */
 
     if (A == NULL) {
