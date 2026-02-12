@@ -9449,6 +9449,18 @@ static int handle_array_return (fncall *call, void *ptr, int copy)
         ret = gretl_array_pull_from_stack(name, &err);
     }
 
+    if (ret != NULL) {
+	GretlType atype = gretl_array_get_type(ret);
+
+	if (atype != call->rtype) {
+	    if (atype == GRETL_TYPE_ANY) {
+		gretl_array_set_type(ret, call->rtype);
+	    } else {
+		err = E_TYPES;
+	    }
+	}
+    }
+
     *(gretl_array **) ptr = ret;
 
     return err;
