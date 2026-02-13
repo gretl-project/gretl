@@ -12309,18 +12309,21 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
         goto push_data;
     }
 
-    /* Note: @targ is the gretl type specified by the caller for
-       the bundle member (if any, this need not be supplied), and
-       @type is the gretl type of the object arising on the RHS.
-       It's an error if @targ is non-zero and @type does not
-       agree with it -- except for the case where @targ is given
-       as "series" and we get a suitable matrix on the right. As
-       of 2015-10-03, when we get a request to put a series into
-       a bundle we actually put in a matrix, which in fact makes it
-       easier to get a series back out again.
+    /* Note: @targ is the gretl type specified by the caller for the
+       bundle member (if any, this need not be supplied), and @type is
+       the gretl type of the object arising on the RHS.  It's an error
+       if @targ is non-zero and @type does not agree with it -- except
+       for the case where @targ is given as "series" and we get a
+       suitable matrix on the right. As of 2015-10-03, when we get a
+       request to put a series into a bundle we actually put in a
+       matrix, which in fact makes it easier to get a series back out
+       again.
     */
 
     if (p->targ == ARRAY) {
+	/* This may be either the type of a pre-existing LHS array, or
+	   a specific array-type passed to generate().
+	*/
         targ = p->lh.gtype;
     } else {
         targ = gretl_type_from_gen_type(p->targ);
@@ -12842,13 +12845,13 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
     return p->err;
 }
 
-/* Here we're replacing a submatrix, by either straight or
-   inflected assignment.
+/* Here we're replacing a submatrix, by either straight or inflected
+   assignment.
 
-   @lhs must be a binary node holding the target matrix
-   on its L branch and a matrix subspec on its R branch.
-   @rhs must hold the replacement value: either a matrix
-   or a scalar (or a series standing in for a matrix).
+   @lhs must be a binary node holding the target matrix on its L
+   branch and a matrix subspec on its R branch.  @rhs must hold the
+   replacement value: either a matrix or a scalar (or a series
+   standing in for a matrix).
 */
 
 static int set_matrix_chunk (NODE *lhs, NODE *rhs, parser *p)
@@ -12883,9 +12886,8 @@ static int set_matrix_chunk (NODE *lhs, NODE *rhs, parser *p)
         return E_DATA;
     }
 
-    /* check the validity of the subspec we got, and
-       adjust it if need be in the light of the
-       dimensions of @m.
+    /* check the validity of the subspec we got, and adjust it if need
+       be in the light of the dimensions of @m.
     */
     if (!spec->checked) {
         p->err = check_matrix_subspec(spec, m1);
@@ -12907,9 +12909,9 @@ static int set_matrix_chunk (NODE *lhs, NODE *rhs, parser *p)
     }
 #endif
 
-    /* Is the assignment straight or inflected?  Note that in
-       this context there's no distinction between '=' and '.='
-       and the latter doesn't count as inflected.
+    /* Is the assignment straight or inflected?  Note that in this
+       context there's no distinction between '=' and '.=' and the
+       latter doesn't count as inflected.
     */
     if (p->op != B_ASN && p->op != B_DOTASN) {
         inflected = 1;
@@ -22311,11 +22313,7 @@ static int save_generated_var (parser *p, PRN *prn)
             gretl_array *a = NULL;
 
             if (p->lh.gtype > 0 && atype != p->lh.gtype) {
-                if (atype == GRETL_TYPE_ANY) {
-                    gretl_array_set_type(r->v.a, p->lh.gtype);
-                } else {
-                    p->err = E_TYPES;
-                }
+		p->err = E_TYPES;
             } else if (is_tmp_node(r) || (p->flags & P_UFRET)) {
                 /* grabbing r->v.a is OK */
                 a = r->v.a;
