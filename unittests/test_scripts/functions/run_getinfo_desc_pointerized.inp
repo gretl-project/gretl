@@ -1,0 +1,22 @@
+/*
+https://www.mail-archive.com/gretl-devel@gretlml.univpm.it/msg12949.html
+*/
+
+set verbose off
+clear
+set assert stop
+
+function void assign_normal_to_series(series *e)
+    e = normal()
+end function
+
+nulldata 10
+series e
+print "Start testing getinfo() description propagation from pointerized series argument."
+
+loop 2
+    assign_normal_to_series(&e)
+endloop
+string ret = getinfo(e).description
+assert(ret == "normal()")
+
