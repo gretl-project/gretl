@@ -189,8 +189,7 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
 	type != GRETL_TYPE_MATRICES &&
 	type != GRETL_TYPE_BUNDLES &&
 	type != GRETL_TYPE_LISTS &&
-	type != GRETL_TYPE_ARRAYS &&
-	type != GRETL_TYPE_ANY) {
+	type != GRETL_TYPE_ARRAYS) {
 	*err = E_TYPES;
 	return NULL;
     } else if (n < 0) {
@@ -563,37 +562,37 @@ void *gretl_array_get_element (gretl_array *A, int i,
 	*err = E_UNKVAR;
     } else if (i < 0 || i >= A->n) {
 	*err = E_INVARG;
-    } else if (A->type == GRETL_TYPE_ANY) {
-	*err = E_TYPES;
-    } else {
-	if (type != NULL) {
-	    *type = gretl_type_get_singular(A->type);
+    } else if (A->type == GRETL_TYPE_ARRAYS && A->data[i] == NULL) {
+	*err = E_INVARG;
+    }
+    if (*err) {
+	return NULL;
+    }
+
+    if (type != NULL) {
+	*type = gretl_type_get_singular(A->type);
+    }
+    if (A->type == GRETL_TYPE_STRINGS) {
+	if (A->data[i] == NULL) {
+	    A->data[i] = gretl_strdup("");
 	}
-	if (A->type == GRETL_TYPE_STRINGS) {
-	    if (A->data[i] == NULL) {
-		A->data[i] = gretl_strdup("");
-	    }
-	} else if (A->type == GRETL_TYPE_MATRICES) {
-	    if (A->data[i] == NULL) {
-		A->data[i] = gretl_null_matrix_new();
-	    }
-	} else if (A->type == GRETL_TYPE_BUNDLES) {
-	    if (A->data[i] == NULL) {
-		A->data[i] = gretl_bundle_new();
-	    }
-	} else if (A->type == GRETL_TYPE_ARRAYS) {
-	    if (A->data[i] == NULL) {
-		A->data[i] = gretl_array_new(GRETL_TYPE_ANY, 0, err);
-	    }
-	} else if (A->type == GRETL_TYPE_LISTS) {
-	    if (A->data[i] == NULL) {
-		A->data[i] = gretl_list_new(0);
-	    }
+    } else if (A->type == GRETL_TYPE_MATRICES) {
+	if (A->data[i] == NULL) {
+	    A->data[i] = gretl_null_matrix_new();
 	}
-	ret = A->data[i];
-	if (ret == NULL) {
-	    *err = E_ALLOC;
+    } else if (A->type == GRETL_TYPE_BUNDLES) {
+	if (A->data[i] == NULL) {
+	    A->data[i] = gretl_bundle_new();
 	}
+    } else if (A->type == GRETL_TYPE_LISTS) {
+	if (A->data[i] == NULL) {
+	    A->data[i] = gretl_list_new(0);
+	}
+    }
+
+    ret = A->data[i];
+    if (ret == NULL) {
+	*err = E_ALLOC;
     }
 
     return ret;
@@ -1250,10 +1249,7 @@ static int set_list (gretl_array *A, int i,
 static int set_type_error (gretl_array *A,
 			   GretlType required)
 {
-    if (A->type == GRETL_TYPE_ANY) {
-	A->type = required;
-	return 0;
-    } else if (A->type != required) {
+    if (A->type != required) {
 	GretlType reqt = gretl_type_get_singular(required);
 
 	gretl_errmsg_sprintf("Cannot add %s to array of %s",

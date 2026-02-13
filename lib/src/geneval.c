@@ -15633,8 +15633,18 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
         return NULL;
     }
 
+    if (f == F_DEFARRAY && p->lh.gtype == 0) {
+	if (p->targ != UNK && p->targ != ARRAY) {
+	    p->err = E_TYPES;
+	} else {
+	    gretl_errmsg_set(_("defarray: no type was specified"));
+	    p->err = E_DATA;
+	}
+	return NULL;
+    }
+
     if (f == F_DEFARRAY) {
-        gretl_array *A = gretl_array_new(GRETL_TYPE_ANY, 0, &p->err);
+        gretl_array *A = gretl_array_new(p->lh.gtype, 0, &p->err);
         int donate;
         void *ptr;
 
@@ -16553,8 +16563,12 @@ static NODE *gen_array_node (NODE *n, parser *p)
     if (!null_or_scalar(n)) {
         p->err = e_types(n);
     } else if (p->lh.gtype == 0) {
-        gretl_errmsg_set(_("array: no type was specified"));
-        p->err = E_DATA;
+	if (p->targ != UNK && p->targ != ARRAY) {
+	    p->err = E_TYPES;
+	} else {
+	    gretl_errmsg_set(_("array: no type was specified"));
+	    p->err = E_DATA;
+	}
     } else {
         int len = 0;
 
@@ -20520,6 +20534,8 @@ static int ok_array_decl (parser *p, const char *s)
         p->lh.gtype = GRETL_TYPE_BUNDLES;
     } else if (!strncmp(s, "lists ", 6)) {
         p->lh.gtype = GRETL_TYPE_LISTS;
+    } else if (!strncmp(s, "arrays ", 7)) {
+	p->lh.gtype = GRETL_TYPE_ARRAYS;
     }
 
     return p->lh.gtype != 0;
