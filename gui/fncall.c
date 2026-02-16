@@ -1438,8 +1438,30 @@ static void launch_scalar_maker (GtkWidget *button, call_info *cinfo)
 		VARCLICK_INSERT_NAME, cinfo->dlg);
 }
 
+/* Try getting the runtime default for a boolean parameter */
+
+static double default_from_ui (gretl_bundle *ui, int *err)
+{
+    double val = NADBL;
+    const char *s;
+
+    s = gretl_bundle_get_string(ui, "default", NULL);
+    if (s != NULL) {
+	val = generate_boolean(s, dataset, NULL, err);
+	if (!*err && na(val)) {
+	    *err = E_INVARG;
+	}
+	if (*err) {
+	    fprintf(stderr, "ui: default_from_ui failed\n");
+	}
+    }
+
+    return val;
+}
+
 static GtkWidget *bool_arg_selector (call_info *cinfo, int i,
-				     const char *prior_val)
+				     const char *prior_val,
+				     gretl_bundle *ui)
 {
     GtkWidget *button;
     int active;
@@ -1447,8 +1469,15 @@ static GtkWidget *bool_arg_selector (call_info *cinfo, int i,
     if (prior_val != NULL) {
 	active = *prior_val == '1';
     } else {
-	double deflt = fn_param_default(cinfo->func, i);
+	double deflt = NADBL;
+	int err = 0;
 
+	if (ui != NULL) {
+	    deflt = default_from_ui(ui, &err);
+	}
+	if (na(deflt)) {
+	    deflt = fn_param_default(cinfo->func, i);
+	}
 	active = !na(deflt) && deflt != 0.0;
     }
 
@@ -2260,7 +2289,7 @@ static int function_call_dialog (call_info *cinfo)
 	} else if (fn_param_uses_mylist(cinfo->func, i)) {
 	    sel = mylist_int_selector(cinfo, i);
 	} else if (ptype == GRETL_TYPE_BOOL) {
-	    sel = bool_arg_selector(cinfo, i, prior_val);
+	    sel = bool_arg_selector(cinfo, i, prior_val, ui);
 	} else if (ptype == GRETL_TYPE_INT || ptype == GRETL_TYPE_OBS) {
 	    sel = int_arg_selector(cinfo, i, ptype, prior_val, ui);
 	} else if (spinnable) {
