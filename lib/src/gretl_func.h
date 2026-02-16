@@ -214,6 +214,8 @@ char **gretl_function_retrieve_code (ufunc *u, int *nlines);
 int print_function_package_sample (const char *fname, int tabwidth,
 				   PRN *prn);
 
+void print_function_signature (ufunc *fun, PRN *prn);
+
 void set_current_function_package (fnpkg *pkg);
 
 fnpkg *function_package_new (const char *fname, 

@@ -2819,7 +2819,7 @@ static int write_function_xml (ufunc *fun, PRN *prn, int mpi)
 
 /* script-style output */
 
-static void print_function_start (ufunc *fun, PRN *prn)
+void print_function_signature (ufunc *fun, PRN *prn)
 {
     const char *s;
     int i, pos = 0;
@@ -2829,15 +2829,13 @@ static void print_function_start (ufunc *fun, PRN *prn)
     } else {
         const char *typestr = gretl_type_get_name(fun->rettype);
 
-        pos += pprintf(prn, "function %s %s ", typestr, fun->name);
+        pos += pprintf(prn, "function %s %s (", typestr, fun->name);
     }
 
     gretl_push_c_numeric_locale();
 
     if (fun->n_params == 0) {
-        pputs(prn, "(void)");
-    } else {
-        pos += pputc(prn, '(');
+        pputs(prn, "void)");
     }
 
     for (i=0; i<fun->n_params; i++) {
@@ -2944,7 +2942,7 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
     }
 
     ptmp = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
-    print_function_start(u, ptmp);
+    print_function_signature(u, ptmp);
 
     for (i=0; i<u->n_lines; i++) {
         maybe_toggle_foreign(u->lines[i].s, &in_foreign);
