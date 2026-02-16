@@ -489,10 +489,10 @@ static gint go_to_line (windata_t *vwin)
     return TRUE;
 }
 
-/* Signal attached to editor/viewer windows. Note that @w is
-   generally the top-level GtkWidget vwin->main; exceptions
-   are (a) tabbed windows, where @w is the embedding window,
-   and (b) help windows, where @w is the text area.
+/* Signal attached to editor/viewer windows. Note that @w is generally
+   the top-level GtkWidget vwin->main; exceptions are (a) tabbed
+   windows, where @w is the embedding window, and (b) help windows,
+   where @w is the text area.
 */
 
 gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
@@ -1704,12 +1704,12 @@ static void add_text_closer (windata_t *vwin)
     gtk_text_buffer_apply_tag(tbuf, tag, &iter, &iend);
 }
 
-/* For use when we want to display a piece of formatted text -- such
-   as help for a gretl function package or a help bibliography entry
-   -- in a window of its own, without any menu apparatus on the
-   window. In the case of VIEW_BIBITEM, this should be a minimal window
-   with no decorations and a simple "closer" button embedded in the
-   GtkTextView (bibliographical popup).
+/* For use when we want to display a piece of formatted text, such as
+   help for a gretl function package or a help bibliography entry, in
+   a window of its own, without any menu apparatus on the window. If
+   @role is VIEW_BIBITEM (bibliographical popup) or VIEW_SIGNATURE,
+   this should be a minimal window with no decorations and a simple
+   "closer" button embedded in the GtkTextView.
 */
 
 windata_t *view_formatted_text_buffer (const gchar *title,
@@ -1717,6 +1717,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 				       int hsize, int vsize,
 				       int role)
 {
+    int special = role == VIEW_BIBITEM || role == VIEW_SIGNATURE;
     windata_t *vwin;
 
     vwin = gretl_viewer_new_with_parent(NULL, role, title, NULL);
@@ -1725,7 +1726,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     /* non-editable text */
     create_text(vwin, hsize, vsize, 0, FALSE);
 
-    if (role == VIEW_BIBITEM) {
+    if (special) {
 	/* no scrolling apparatus */
 	gtk_container_add(GTK_CONTAINER(vwin->vbox), vwin->text);
 	gtk_widget_show(vwin->text);
@@ -1736,13 +1737,13 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 
     gretl_viewer_set_formatted_buffer(vwin, buf, role);
 
-    if (role == VIEW_BIBITEM) {
+    if (special) {
 	add_text_closer(vwin);
     }
 
     gtk_widget_show(vwin->vbox);
 
-    if (role != VIEW_BIBITEM) {
+    if (!special) {
 	gtk_widget_show(vwin->main);
 	gtk_widget_grab_focus(vwin->text);
 	connect_text_sizer(vwin);

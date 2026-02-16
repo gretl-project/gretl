@@ -123,6 +123,8 @@ static gboolean insert_text_with_markup (GtkTextBuffer *tbuf,
 static void connect_link_signals (GtkWidget *w, windata_t *vwin);
 static void auto_indent_script (GtkWidget *w, windata_t *vwin);
 static int maybe_insert_smart_tab (GtkWidget *w, int *comp_ok);
+static void make_function_signature_window (const char *buf,
+					    GtkWidget *tview);
 #ifndef GRETL_EDIT
 static gchar *textview_get_current_line_with_newline (GtkWidget *view);
 #endif
@@ -874,6 +876,80 @@ static void set_source_tabs (GtkWidget *w, int cw)
     gtk_text_view_set_tabs(GTK_TEXT_VIEW(w), ta);
 }
 
+static gchar *get_identifier_at_cursor (GtkTextBuffer *tbuf)
+{
+    GtkTextMark *mark;
+    GtkTextIter point;
+    GtkTextIter start;
+    GtkTextIter end;
+    gint pos, last;
+    gchar *line;
+    gchar *word = NULL;
+
+    mark = gtk_text_buffer_get_insert(tbuf);
+    if (mark == NULL) {
+	return NULL;
+    }
+    gtk_text_buffer_get_iter_at_mark(tbuf, &point, mark);
+    pos = gtk_text_iter_get_line_index(&point);
+    start = end = point;
+    gtk_text_iter_set_line_index(&start, 0);
+    gtk_text_iter_forward_to_line_end(&end);
+    last = gtk_text_iter_get_line_index(&end);
+    line = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+    if (line != NULL) {
+	int i, p0 = pos;
+	int p1 = pos;
+
+	for (i=pos-1; i>=0; i--) {
+	    if (!isalnum(line[i]) && line[i] != '_') {
+		break;
+	    } else {
+		p0--;
+	    }
+	}
+	for (i=pos; i<last; i++) {
+	    if (!isalnum(line[i]) && line[i] != '_') {
+		break;
+	    } else {
+		p1++;
+	    }
+	}
+	word = g_strndup(line + p0, p1 - p0);
+	g_free(line);
+    }
+
+    return word;
+}
+
+#ifndef GRETL_EDIT
+
+static void hansl_func_help (GtkWidget *w, windata_t *vwin)
+{
+    GtkTextBuffer *tbuf;
+    gchar *id = NULL;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    id = get_identifier_at_cursor(tbuf);
+    if (id != NULL) {
+	ufunc *uf = get_user_function_by_name(id);
+
+	if (uf != NULL) {
+	    const char *buf;
+	    PRN *prn = NULL;
+
+	    bufopen(&prn);
+	    print_function_signature(uf, prn);
+	    buf = gretl_print_get_buffer(prn);
+	    make_function_signature_window(buf, vwin->text);
+	    gretl_print_destroy(prn);
+	}
+	g_free(id);
+    }
+}
+
+#endif
+
 #define tabkey(k) (k == GDK_Tab || \
 		   k == GDK_ISO_Left_Tab || \
 		   k == GDK_KP_Tab)
@@ -925,6 +1001,9 @@ static gint script_key_handler (GtkWidget *w,
 		}
 		g_free(str);
 	    }
+	    ret = TRUE;
+	} else if (keyval == GDK_question) {
+	    hansl_func_help(w, vwin);
 	    ret = TRUE;
 	}
 #endif
@@ -2184,6 +2263,22 @@ static void make_bibitem_window (const char *buf,
     GtkWidget *top, *vmain;
 
     vwin = view_formatted_text_buffer(NULL, buf, 64, 100, VIEW_BIBITEM);
+    vmain = vwin_toplevel(vwin);
+    top = gtk_widget_get_toplevel(tview);
+    gtk_window_set_transient_for(GTK_WINDOW(vmain), GTK_WINDOW(top));
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(vmain), TRUE);
+    gtk_window_set_position(GTK_WINDOW(vmain),
+			    GTK_WIN_POS_CENTER_ON_PARENT);
+    gtk_widget_show(vmain);
+}
+
+static void make_function_signature_window (const char *buf,
+					    GtkWidget *tview)
+{
+    windata_t *vwin;
+    GtkWidget *top, *vmain;
+
+    vwin = view_formatted_text_buffer(NULL, buf, 64, 100, VIEW_SIGNATURE);
     vmain = vwin_toplevel(vwin);
     top = gtk_widget_get_toplevel(tview);
     gtk_window_set_transient_for(GTK_WINDOW(vmain), GTK_WINDOW(top));

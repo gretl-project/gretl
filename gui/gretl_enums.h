@@ -52,6 +52,7 @@ enum extra_cmds {
     VIEW_FILE,
     VIEW_DOC,
     VIEW_BIBITEM,
+    VIEW_SIGNATURE,
     VIEW_DBSEARCH,
     VIEW_STDERR,
     DATA_REPORT,
