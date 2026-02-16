@@ -15643,6 +15643,10 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
 	    p->err = E_DATA;
 	}
 	return NULL;
+    } else if (f == F_DEFARRAY && k == 0) {
+	gretl_errmsg_set(_("defarray: at least one argument must be given"));
+	p->err = E_DATA;
+	return NULL;
     }
 
     if (f == F_DEFARRAY) {
