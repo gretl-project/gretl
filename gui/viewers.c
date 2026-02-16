@@ -1721,7 +1721,9 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     windata_t *vwin;
 
     vwin = gretl_viewer_new_with_parent(NULL, role, title, NULL);
-    if (vwin == NULL) return NULL;
+    if (vwin == NULL) {
+	return NULL;
+    }
 
     /* non-editable text */
     create_text(vwin, hsize, vsize, 0, FALSE);

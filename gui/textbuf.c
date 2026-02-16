@@ -123,9 +123,9 @@ static gboolean insert_text_with_markup (GtkTextBuffer *tbuf,
 static void connect_link_signals (GtkWidget *w, windata_t *vwin);
 static void auto_indent_script (GtkWidget *w, windata_t *vwin);
 static int maybe_insert_smart_tab (GtkWidget *w, int *comp_ok);
+#ifndef GRETL_EDIT
 static void make_function_signature_window (const char *buf,
 					    GtkWidget *tview);
-#ifndef GRETL_EDIT
 static gchar *textview_get_current_line_with_newline (GtkWidget *view);
 #endif
 
@@ -876,6 +876,8 @@ static void set_source_tabs (GtkWidget *w, int cw)
     gtk_text_view_set_tabs(GTK_TEXT_VIEW(w), ta);
 }
 
+#ifndef GRETL_EDIT
+
 static gchar *get_identifier_at_cursor (GtkTextBuffer *tbuf)
 {
     GtkTextMark *mark;
@@ -922,8 +924,6 @@ static gchar *get_identifier_at_cursor (GtkTextBuffer *tbuf)
     return word;
 }
 
-#ifndef GRETL_EDIT
-
 static void hansl_func_help (GtkWidget *w, windata_t *vwin)
 {
     GtkTextBuffer *tbuf;
@@ -948,7 +948,7 @@ static void hansl_func_help (GtkWidget *w, windata_t *vwin)
     }
 }
 
-#endif
+#endif /* GRETL_EDIT not defined */
 
 #define tabkey(k) (k == GDK_Tab || \
 		   k == GDK_ISO_Left_Tab || \
@@ -1673,6 +1673,7 @@ static GtkTextTagTable *gretl_tags_new (int role)
 #define no_tags(r) ((r >= VIEW_SERIES &&	\
 		     r <= VIEW_PKG_SAMPLE &&	\
 		     r != VIEW_PKG_INFO) ||	\
+		    r == VIEW_SIGNATURE ||	\
 		    r < NC)
 
 static GtkTextBuffer *gretl_text_buf_new (int role)
@@ -2272,6 +2273,8 @@ static void make_bibitem_window (const char *buf,
     gtk_widget_show(vmain);
 }
 
+#ifndef GRETL_EDIT
+
 static void make_function_signature_window (const char *buf,
 					    GtkWidget *tview)
 {
@@ -2287,6 +2290,8 @@ static void make_function_signature_window (const char *buf,
 			    GTK_WIN_POS_CENTER_ON_PARENT);
     gtk_widget_show(vmain);
 }
+
+#endif
 
 static void open_bibitem_link (GtkTextTag *tag, GtkWidget *tview)
 {
@@ -5183,7 +5188,9 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	    }
         } else if (role == SCRIPT_OUT && vsize < 0.65 * sv) {
             vsize = 0.65 * sv;
-	} else if (role != VIEW_BIBITEM && vsize < 0.62 * hsize) {
+	} else if (role != VIEW_BIBITEM &&
+		   role != VIEW_SIGNATURE &&
+		   vsize < 0.62 * hsize) {
 	    vsize = 0.62 * hsize;
 	}
     }
