@@ -189,7 +189,8 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
 	type != GRETL_TYPE_MATRICES &&
 	type != GRETL_TYPE_BUNDLES &&
 	type != GRETL_TYPE_LISTS &&
-	type != GRETL_TYPE_ARRAYS) {
+	type != GRETL_TYPE_ARRAYS &&
+	type != GRETL_TYPE_ANY) {
 	*err = E_TYPES;
 	return NULL;
     } else if (n < 0) {

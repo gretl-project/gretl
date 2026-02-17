@@ -14579,7 +14579,7 @@ static int check_array_element_type (gretl_array *A, NODE *n)
     int ok = 0;
 
     if (t == GRETL_TYPE_ANY) {
-        /* The array type is not yet determinate; this will be
+        /* The array type is not yet determinate; this may be
            the case when when we're looking at the first element.
            If the type n->t is acceptable we use it to set the
            type of @A.
@@ -15635,22 +15635,23 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
         return NULL;
     }
 
-    if (f == F_DEFARRAY && p->lh.gtype == 0) {
-	if (p->targ != UNK && p->targ != ARRAY) {
-	    p->err = E_TYPES;
-	} else {
-	    gretl_errmsg_set(_("defarray: no type was specified"));
-	    p->err = E_DATA;
-	}
+    if (f == F_DEFARRAY && p->lh.gtype == 0 && k == 0) {
+	/* FIXME lh.gtype */
+	gretl_errmsg_set(_("defarray: no type was specified"));
+	p->err = E_DATA;
 	return NULL;
-    } else if (f == F_DEFARRAY && k == 0) {
+    }
+#if 0
+    /* 2026-02-16: maybe there's too much history to enforce this? */
+    else if (f == F_DEFARRAY && k == 0) {
 	gretl_errmsg_set(_("defarray: at least one argument must be given"));
 	p->err = E_DATA;
 	return NULL;
     }
+#endif
 
     if (f == F_DEFARRAY) {
-        gretl_array *A = gretl_array_new(p->lh.gtype, 0, &p->err);
+        gretl_array *A = gretl_array_new(GRETL_TYPE_ANY, 0, &p->err);
         int donate;
         void *ptr;
 
@@ -16581,7 +16582,6 @@ static NODE *gen_array_node (NODE *n, parser *p)
         if (!null_node(n)) {
             len = node_get_int(n, p);
         }
-
         if (!p->err) {
             ret = aux_array_node(p);
             if (!p->err) {
@@ -22309,7 +22309,7 @@ static int save_generated_var (parser *p, PRN *prn)
         } else if (p->op == B_SUB) {
             do_array_subtract(p);
         } else if (null_node(r)) {
-            /* as in, e.g., "strings A = null" */
+            /* as in, e.g., "strings A = empty" */
             p->err = assign_null_to_array(p);
         } else if (r->t == ARRAY) {
             /* full assignment of RHS array */
