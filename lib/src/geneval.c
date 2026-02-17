@@ -16577,25 +16577,23 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *gen_array_node (NODE *n, parser *p)
+static NODE *gen_array_node (NODE *t, NODE *n, parser *p)
 {
     NODE *ret = NULL;
 
     if (!null_or_scalar(n)) {
         p->err = e_types(n);
-    } else if (p->lh.gtype == 0) {
-	if (p->targ != UNK && p->targ != ARRAY) {
-	    p->err = E_TYPES;
-	} else {
-	    gretl_errmsg_set(_("array: no type was specified"));
-	    p->err = E_DATA;
-	}
+    } else if (t == p->tree && p->lh.gtype > 0) {
+	; /* OK, we have a type specification */
+    } else if (p->targ != UNK && p->targ != ARRAY) {
+	p->err = E_TYPES;
     } else {
-        int len = 0;
+	gretl_errmsg_set(_("array: no type was specified"));
+	p->err = E_DATA;
+    }
+    if (!p->err) {
+        int len = null_node(n) ? 0 : node_get_int(n, p);
 
-        if (!null_node(n)) {
-            len = node_get_int(n, p);
-        }
         if (!p->err) {
             ret = aux_array_node(p);
             if (!p->err) {
@@ -19788,7 +19786,7 @@ static NODE *eval (NODE *t, parser *p)
         ret = gen_series_node(l, r, p);
         break;
     case F_ARRAY:
-        ret = gen_array_node(l, p);
+        ret = gen_array_node(t, l, p);
         break;
     case F_STRVALS:
         if (!useries_node(l)) {
