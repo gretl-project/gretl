@@ -15635,15 +15635,21 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
         return NULL;
     }
 
-    if (f == F_DEFARRAY && p->lh.gtype == 0 && k == 0) {
-	/* FIXME lh.gtype */
-	gretl_errmsg_set(_("defarray: no type was specified"));
-	p->err = E_DATA;
-	return NULL;
+    if (f == F_DEFARRAY && t == p->tree) {
+	/* If genr simply defines an array, a type is needed:
+	   we can get this from p->lh.gtype or from the first
+	   argument to defarray().
+	*/
+	if (p->lh.gtype == 0 && k == 0) {
+	    gretl_errmsg_set(_("defarray: no type was specified"));
+	    p->err = E_DATA;
+	    return NULL;
+	}
     }
+
 #if 0
     /* 2026-02-16: maybe there's too much history to enforce this? */
-    else if (f == F_DEFARRAY && k == 0) {
+    if (f == F_DEFARRAY && k == 0) {
 	gretl_errmsg_set(_("defarray: at least one argument must be given"));
 	p->err = E_DATA;
 	return NULL;
@@ -15651,9 +15657,17 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
 #endif
 
     if (f == F_DEFARRAY) {
-        gretl_array *A = gretl_array_new(GRETL_TYPE_ANY, 0, &p->err);
+        gretl_array *A;
         int donate;
         void *ptr;
+
+	if (t == p->tree && p->lh.gtype > 0) {
+	    /* respect the array type specified on input */
+	    A = gretl_array_new(p->lh.gtype, 0, &p->err);
+	} else {
+	    /* we'll get the type from the first arg */
+	    A = gretl_array_new(GRETL_TYPE_ANY, 0, &p->err);
+	}
 
         for (i=0; i<k && !p->err; i++) {
             donate = 0;
@@ -15669,7 +15683,7 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
                 ptr = node_get_ptr(e, t->t, p, &donate);
             }
             if (donate) {
-                /* copy not required */
+                /* copying is not required */
                 p->err = gretl_array_append_object(A, ptr, 0);
             } else {
                 p->err = gretl_array_append_object(A, ptr, 1);
