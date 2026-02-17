@@ -1,11 +1,11 @@
 clear
-set verbose off
+# set verbose off
 set assert stop
 
+print "Start testing augmentation of an array of bundles"
 
 function void test_bundles_extend_string (void)
-    print "Start testing initiating a null bundles and try\
-        augmenting it with a string."
+    print "Augment with a bundle containing a string"
 
     # Given
     bundles B
@@ -24,10 +24,8 @@ function void test_bundles_extend_string (void)
 end function
 test_bundles_extend_string()
 
-
 function void test_bundles_extend_bundle (void)
-    print "Start testing initiating empty bundles and try\
-        augmenting it with a bundle."
+    print "Augment with a bundle containing a bundle, 1"
 
     # Given
     bundles B
@@ -47,10 +45,8 @@ function void test_bundles_extend_bundle (void)
 end function
 test_bundles_extend_bundle()
 
-
 function void test_bundles_extend_bundle_dir (void)
-    print "Start testing initiating empty bundles and try\
-        augmenting it with a bundle."
+    print "Augment with a bundle containing a bundle, 2"
 
     # Given
     bundles B
@@ -69,11 +65,8 @@ function void test_bundles_extend_bundle_dir (void)
 end function
 test_bundles_extend_bundle_dir()
 
-
-
 function void test_bundles_extend_marray (void)
-    print "Start testing initiating empty bundles and try\
-        augmenting it with an array of matrices."
+    print "Augment with a bundle containing an array of matrices"
 
     # Given
     bundles B
@@ -93,20 +86,18 @@ function void test_bundles_extend_marray (void)
 end function
 test_bundles_extend_marray()
 
-
 function void test_bundles_extend_marray_dir (void)
-    print "Start testing initiating empty bundles and try\
-        augmenting it with an array of matrices."
+    print "Augment with a bundle containing an array of unspecified type"
 
     # Given
     bundles B
 
     # When
-    scalar expected_length = 1
-    scalar expected_err = FALSE
+    scalar expected_length = 0
+    scalar expected_err = TRUE
 
     catch B = B + _(value = array(3))
-    scalar actual_err = $error
+    scalar actual_err = $error != 0
     scalar actual_length = nelem(B)
 
     # Then
@@ -115,10 +106,8 @@ function void test_bundles_extend_marray_dir (void)
 end function
 test_bundles_extend_marray_dir()
 
-
 function void test_bundles_extend_strarray (void)
-    print "Start testing initiating a null bundles and try\
-        augmenting it with an array of strings."
+    print "Augment with a bundle containing an array of strings, 1"
 
     # Given
     bundles B
@@ -138,10 +127,8 @@ function void test_bundles_extend_strarray (void)
 end function
 test_bundles_extend_strarray()
 
-
 function void test_bundles_strarray (void)
-    print "Start testing initiating a null bundles and try\
-        augmenting it with an array of strings."
+    print "Augment with a bundle containing an array of strings, 2"
 
     # Given
     bundles B = array(1)
@@ -160,10 +147,8 @@ function void test_bundles_strarray (void)
 end function
 test_bundles_strarray()
 
-
 function void test_bundles_extend_strarray_dr (void)
-    print "Start testing initiating a null bundles and try\
-        augmenting it with an array of strings."
+    print "Augment with a bundle containing an array of strings, 3"
 
     # Given
     bundles B
@@ -172,20 +157,18 @@ function void test_bundles_extend_strarray_dr (void)
     scalar expected_length = 1
     scalar expected_err = FALSE
 
-    catch B = B + _(value = defarray("A", "B", "C"))    # FAILS
+    catch B = B + _(value = defarray("A", "B", "C"))
     scalar actual_err = $error
-    scalar actual_length = nelem(B)                 # length is zero
+    scalar actual_length = nelem(B)
 
     # Then
-    assert(actual_length == expected_length)        # FAILS
+    assert(actual_length == expected_length)
     assert(actual_err == expected_err)
 end function
 test_bundles_extend_strarray_dr()
 
-
-
-function void test_defbundle_trailing_commata (void)
-    print "Start testing defbundle() with trailing commata."
+function void test_defbundle_trailing_comma (void)
+    print "Testing defbundle() with trailing comma."
 
     # Given
     scalar err_expected = TRUE
@@ -197,8 +180,7 @@ function void test_defbundle_trailing_commata (void)
     # Then
     assert(err_actual == err_expected)
 end function
-test_defbundle_trailing_commata()
+test_defbundle_trailing_comma()
 
-
-print "Succesfully finished tests."
+print "Successfully finished tests."
 quit
