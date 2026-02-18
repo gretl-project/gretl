@@ -3038,27 +3038,17 @@ static void iconview_bg_style (GtkWidget *widget, gpointer data)
 
 #else
 
-static GdkColor *get_white (void)
-{
-    GdkColormap *cmap;
-    GdkColor *white;
-
-    white = mymalloc(sizeof *white);
-    if (white == NULL) return NULL;
-
-    cmap = gdk_colormap_get_system();
-    gdk_color_parse("white", white);
-    gdk_colormap_alloc_color(cmap, white, FALSE, TRUE);
-
-    return white;
-}
-
 static void iconview_bg_style (GtkWidget *widget, gpointer data)
 {
     static GdkColor *white;
 
     if (white == NULL) {
-	white = get_white();
+	GdkColormap *cmap;
+
+	white = g_malloc(sizeof *white);
+	cmap = gdk_colormap_get_system();
+	gdk_color_parse("white", white);
+	gdk_colormap_alloc_color(cmap, white, FALSE, TRUE);
     }
 
     gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, white);

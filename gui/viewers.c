@@ -1704,6 +1704,26 @@ static void add_text_closer (windata_t *vwin)
     gtk_text_buffer_apply_tag(tbuf, tag, &iter, &iend);
 }
 
+#if GTK_MAJOR_VERSION == 2
+
+static void set_blue_bg (GtkWidget *widget)
+{
+    static GdkColor *blue;
+
+    if (blue == NULL) {
+	GdkColormap *cmap;
+
+	blue = g_malloc(sizeof *blue);
+	cmap = gdk_colormap_get_system();
+	gdk_color_parse("#A9ECF0", blue);
+	gdk_colormap_alloc_color(cmap, blue, FALSE, TRUE);
+    }
+
+    gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, blue);
+}
+
+#else
+
 static void set_blue_bg (GtkWidget *widget)
 {
     static GdkRGBA rgbp;
@@ -1717,6 +1737,8 @@ static void set_blue_bg (GtkWidget *widget)
 					 GTK_STATE_FLAG_NORMAL,
 					 &rgbp);
 }
+
+#endif
 
 /* For use when we want to display a piece of formatted text, such as
    help for a gretl function package or a help bibliography entry, in
