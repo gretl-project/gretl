@@ -2088,7 +2088,7 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     gchar tagname[TAGLEN];
 
     if (page == GUIDE_PAGE) {
-	char *p = strrchr(text, '#');
+	const char *p = strrchr(text, '#');
 
 	if (p != NULL) {
 	    show = g_strndup(text, p - text);
@@ -2113,7 +2113,7 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	    show = g_strdup(text); /* OK? */
 	}
     } else if (page == BIB_PAGE) {
-	char *p = strrchr(text, ';');
+	const char *p = strrchr(text, ';');
 
 	if (p != NULL) {
 	    strcpy(tagname, p + 1);

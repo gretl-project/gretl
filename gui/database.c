@@ -2434,7 +2434,7 @@ static int parse_db_header (const char *buf, unsigned *idxlen,
 			    unsigned *datalen, unsigned *cblen,
 			    int *pdfdoc)
 {
-    char *p;
+    const char *p;
     int err = 0;
 
     *cblen = 0;

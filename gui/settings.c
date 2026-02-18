@@ -609,7 +609,7 @@ void force_english_help (void)
 
 static int fontname_get_size (const char *fontname)
 {
-    char *p = strrchr(fontname, ' ');
+    const char *p = strrchr(fontname, ' ');
 
     return (p != NULL)? atoi(p+1) : 10;
 }
