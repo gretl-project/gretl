@@ -129,9 +129,9 @@ int gretl_matrix_fols (const gretl_vector *y,
     fy = gretl_matrix_copy(y);
     fX = gretl_matrix_copy(X);
     means = malloc((k+1) * sizeof *means);
-    njs = malloc((k+1) * sizeof *njs);
+    ns = malloc((k+1) * sizeof *ns);
     
-    if (fy == NULL || fX == NULL || means == NULL || njs == NULL) {
+    if (fy == NULL || fX == NULL || means == NULL || ns == NULL) {
         err = E_ALLOC;
         goto bailout;
     }    
@@ -141,8 +141,10 @@ int gretl_matrix_fols (const gretl_vector *y,
         goto bailout;
     }
 
-    nfvals = gretl_vector_get_length(fvals);
-
+    int nfvals = gretl_vector_get_length(fvals);
+    int fvi;
+    double x;
+    
     for (i=0; i<nfvals; i++) {
         fvi = fvals->val[i];
         for (j=0; j<=k; j++) {
@@ -186,7 +188,7 @@ int gretl_matrix_fols (const gretl_vector *y,
     gretl_matrix_free(fX);
     gretl_matrix_free(fvals);
     free(means);
-    free(njs);
+    free(ns);
 
     return err;
 }
