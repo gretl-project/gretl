@@ -1706,31 +1706,31 @@ static void add_text_closer (windata_t *vwin)
 
 #if GTK_MAJOR_VERSION == 2
 
-static void set_blue_bg (GtkWidget *widget)
+static void set_popup_bg (GtkWidget *widget)
 {
-    static GdkColor *blue;
+    static GdkColor *popup;
 
-    if (blue == NULL) {
+    if (popup == NULL) {
 	GdkColormap *cmap;
 
-	blue = g_malloc(sizeof *blue);
+	popup = g_malloc(sizeof *popup);
 	cmap = gdk_colormap_get_system();
-	gdk_color_parse("#A9ECF0", blue);
-	gdk_colormap_alloc_color(cmap, blue, FALSE, TRUE);
+	gdk_color_parse("#EDE28D", popup);
+	gdk_colormap_alloc_color(cmap, popup, FALSE, TRUE);
     }
 
-    gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, blue);
+    gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, popup);
 }
 
 #else
 
-static void set_blue_bg (GtkWidget *widget)
+static void set_popup_bg (GtkWidget *widget)
 {
     static GdkRGBA rgbp;
     static int done;
 
     if (!done) {
-	gdk_rgba_parse(&rgbp, "#A9ECF0");
+	gdk_rgba_parse(&rgbp, "#EDE28D");
         done = 1;
     }
     gtk_widget_override_background_color(widget,
@@ -1769,7 +1769,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 	gtk_container_add(GTK_CONTAINER(vwin->vbox), vwin->text);
 	gtk_widget_show(vwin->text);
 	gtk_window_set_decorated(GTK_WINDOW(vwin->main), FALSE);
-	set_blue_bg(vwin->text);
+	set_popup_bg(vwin->text);
     } else {
 	text_table_setup(vwin->vbox, vwin->text);
     }
