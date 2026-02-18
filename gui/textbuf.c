@@ -124,8 +124,6 @@ static void connect_link_signals (GtkWidget *w, windata_t *vwin);
 static void auto_indent_script (GtkWidget *w, windata_t *vwin);
 static int maybe_insert_smart_tab (GtkWidget *w, int *comp_ok);
 #ifndef GRETL_EDIT
-static void make_function_signature_window (const char *buf,
-					    GtkWidget *tview);
 static gchar *textview_get_current_line_with_newline (GtkWidget *view);
 #endif
 
@@ -876,79 +874,48 @@ static void set_source_tabs (GtkWidget *w, int cw)
     gtk_text_view_set_tabs(GTK_TEXT_VIEW(w), ta);
 }
 
-#ifndef GRETL_EDIT
-
-static gchar *get_identifier_at_cursor (GtkTextBuffer *tbuf)
+gchar *get_identifier_at_cursor (GtkTextBuffer *tbuf,
+				 int *role)
 {
-    GtkTextMark *mark;
     GtkTextIter point;
     GtkTextIter start;
     GtkTextIter end;
-    gint pos, last;
-    gchar *line;
     gchar *word = NULL;
+    gchar u8[6] = {0};
 
-    mark = gtk_text_buffer_get_insert(tbuf);
-    if (mark == NULL) {
-	return NULL;
-    }
-    gtk_text_buffer_get_iter_at_mark(tbuf, &point, mark);
-    pos = gtk_text_iter_get_line_index(&point);
-    start = end = point;
-    gtk_text_iter_set_line_index(&start, 0);
-    gtk_text_iter_forward_to_line_end(&end);
-    last = gtk_text_iter_get_line_index(&end);
-    line = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
-    if (line != NULL) {
-	int i, p0 = pos;
-	int p1 = pos;
+    gtk_text_buffer_get_iter_at_mark(tbuf, &point,
+				     gtk_text_buffer_get_insert(tbuf));
+    g_unichar_to_utf8(gtk_text_iter_get_char(&point), u8);
 
-	for (i=pos-1; i>=0; i--) {
-	    if (!isalnum(line[i]) && line[i] != '_') {
+    if (isalnum(u8[0]) || u8[0] == '_') {
+	start = end = point;
+	while (gtk_text_iter_backward_char(&start)) {
+	    /* find the relevant starting point */
+	    g_unichar_to_utf8(gtk_text_iter_get_char(&start), u8);
+	    if (!isalnum(u8[0]) && u8[0] != '_') {
+		if (u8[0] == '$') {
+		    *role = FUNC_HELP;
+		} else {
+		    gtk_text_iter_forward_char(&start);
+		}
 		break;
-	    } else {
-		p0--;
 	    }
 	}
-	for (i=pos; i<last; i++) {
-	    if (!isalnum(line[i]) && line[i] != '_') {
+	while (gtk_text_iter_forward_char(&end)) {
+	    /* find the relevant ending point */
+	    g_unichar_to_utf8(gtk_text_iter_get_char(&end), u8);
+	    if (!isalnum(u8[0]) && u8[0] != '_') {
+		if (u8[0] == '(') {
+		    *role = FUNC_HELP;
+		}
 		break;
-	    } else {
-		p1++;
 	    }
 	}
-	word = g_strndup(line + p0, p1 - p0);
-	g_free(line);
+	word = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
     }
 
     return word;
 }
-
-static void hansl_func_help (GtkWidget *w, windata_t *vwin)
-{
-    GtkTextBuffer *tbuf;
-    gchar *id = NULL;
-
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-    id = get_identifier_at_cursor(tbuf);
-    if (id != NULL) {
-	ufunc *uf = get_user_function_by_name(id);
-
-	if (uf != NULL) {
-	    const char *buf;
-	    PRN *prn = NULL;
-
-	    bufopen(&prn);
-	    print_function_signature(uf, prn);
-	    buf = gretl_print_get_buffer(prn);
-	    make_function_signature_window(buf, vwin->text);
-	    gretl_print_destroy(prn);
-	}
-	g_free(id);
-    }
-}
-
-#endif /* GRETL_EDIT not defined */
 
 #define tabkey(k) (k == GDK_Tab || \
 		   k == GDK_ISO_Left_Tab || \
@@ -1001,9 +968,6 @@ static gint script_key_handler (GtkWidget *w,
 		}
 		g_free(str);
 	    }
-	    ret = TRUE;
-	} else if (keyval == GDK_question) {
-	    hansl_func_help(w, vwin);
 	    ret = TRUE;
 	}
 #endif
@@ -2272,26 +2236,6 @@ static void make_bibitem_window (const char *buf,
 			    GTK_WIN_POS_CENTER_ON_PARENT);
     gtk_widget_show(vmain);
 }
-
-#ifndef GRETL_EDIT
-
-static void make_function_signature_window (const char *buf,
-					    GtkWidget *tview)
-{
-    windata_t *vwin;
-    GtkWidget *top, *vmain;
-
-    vwin = view_formatted_text_buffer(NULL, buf, 64, 100, VIEW_SIGNATURE);
-    vmain = vwin_toplevel(vwin);
-    top = gtk_widget_get_toplevel(tview);
-    gtk_window_set_transient_for(GTK_WINDOW(vmain), GTK_WINDOW(top));
-    gtk_window_set_destroy_with_parent(GTK_WINDOW(vmain), TRUE);
-    gtk_window_set_position(GTK_WINDOW(vmain),
-			    GTK_WIN_POS_CENTER_ON_PARENT);
-    gtk_widget_show(vmain);
-}
-
-#endif
 
 static void open_bibitem_link (GtkTextTag *tag, GtkWidget *tview)
 {

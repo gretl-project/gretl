@@ -1704,6 +1704,20 @@ static void add_text_closer (windata_t *vwin)
     gtk_text_buffer_apply_tag(tbuf, tag, &iter, &iend);
 }
 
+static void set_blue_bg (GtkWidget *widget)
+{
+    static GdkRGBA rgbp;
+    static int done;
+
+    if (!done) {
+	gdk_rgba_parse(&rgbp, "#A9ECF0");
+        done = 1;
+    }
+    gtk_widget_override_background_color(widget,
+					 GTK_STATE_FLAG_NORMAL,
+					 &rgbp);
+}
+
 /* For use when we want to display a piece of formatted text, such as
    help for a gretl function package or a help bibliography entry, in
    a window of its own, without any menu apparatus on the window. If
@@ -1733,6 +1747,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 	gtk_container_add(GTK_CONTAINER(vwin->vbox), vwin->text);
 	gtk_widget_show(vwin->text);
 	gtk_window_set_decorated(GTK_WINDOW(vwin->main), FALSE);
+	set_blue_bg(vwin->text);
     } else {
 	text_table_setup(vwin->vbox, vwin->text);
     }

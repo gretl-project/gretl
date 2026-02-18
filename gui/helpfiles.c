@@ -23,6 +23,7 @@
 #include "textbuf.h"
 #include "gretl_www.h"
 #include "addons_utils.h"
+#include "gretl_func.h"
 #include "dlgutils.h"
 #include "toolbar.h"
 #include "winstack.h"
@@ -1505,50 +1506,39 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
     return pos;
 }
 
-/* Having found a 'word' at the cursor, see whether it's immediately
-   preceded by '$': if so, the word should be extended backward to
-   include that character.
-*/
-
-static int is_dollar_word (GtkTextBuffer *buf,
-			   GtkTextIter *w_start,
-			   gchar **textp)
+static void make_function_signature_window (const char *buf,
+					    GtkWidget *tview)
 {
-    GtkTextIter d_start = *w_start;
-    int ret = 0;
+    windata_t *vwin;
+    GtkWidget *top, *vmain;
 
-    if (gtk_text_iter_backward_char(&d_start)) {
-	gchar *dtest = gtk_text_buffer_get_text(buf, &d_start,
-						w_start, FALSE);
-
-	if (*dtest == '$') {
-	    gchar *s = g_strdup_printf("$%s", *textp);
-
-	    g_free(*textp);
-	    *textp = s;
-	    ret = 1;
-	}
-	g_free(dtest);
-    }
-
-    return ret;
+    vwin = view_formatted_text_buffer(NULL, buf, 64, 100, VIEW_SIGNATURE);
+    vmain = vwin_toplevel(vwin);
+    top = gtk_widget_get_toplevel(tview);
+    gtk_window_set_transient_for(GTK_WINDOW(vmain), GTK_WINDOW(top));
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(vmain), TRUE);
+    gtk_window_set_position(GTK_WINDOW(vmain),
+			    GTK_WIN_POS_CENTER_ON_PARENT);
+    gtk_widget_show(vmain);
 }
 
-/* In case a given identifier has both a command and a function form,
-   try to determine if we're looking at the function form, using the
-   fact that the identifier can be followed by left parenthesis only
-   in the function case.
-*/
+/* try getting the signature of a hansl function */
 
-static int probably_function (GtkTextBuffer *buf, GtkTextIter *w_end)
+static int hansl_func_help (const gchar *id, windata_t *vwin)
 {
-    gunichar gu = gtk_text_iter_get_char(w_end);
-    gchar *chk = g_ucs4_to_utf8(&gu, 1, NULL, NULL, NULL);
+    ufunc *uf = get_user_function_by_name(id);
     int ret = 0;
 
-    if (chk != NULL) {
-        ret = *chk == '(';
-	g_free(chk);
+    if (uf != NULL) {
+	const char *buf;
+	PRN *prn = NULL;
+
+	bufopen(&prn);
+	print_function_signature(uf, prn);
+	buf = gretl_print_get_buffer(prn);
+	make_function_signature_window(buf, vwin->text);
+	gretl_print_destroy(prn);
+	ret = 1;
     }
 
     return ret;
@@ -1561,46 +1551,21 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	/* command help not activated */
 	return FALSE;
     } else {
-	gchar *text = NULL;
 	int role = CMD_HELP;
-	GtkTextBuffer *buf;
-	GtkTextIter iter;
+	gchar *text = NULL;
+	GtkTextBuffer *tbuf;
 
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-	gtk_text_buffer_get_iter_at_mark(buf, &iter,
-					 gtk_text_buffer_get_insert(buf));
-
-	if (gtk_text_iter_inside_word(&iter)) {
-	    GtkTextIter w_start = iter;
-	    GtkTextIter w_end = iter;
-
-	    if (!gtk_text_iter_starts_word(&iter)) {
-		gtk_text_iter_backward_word_start(&w_start);
-	    }
-	    if (!gtk_text_iter_ends_word(&iter)) {
-		gtk_text_iter_forward_word_end(&w_end);
-	    }
-	    text = gtk_text_buffer_get_text(buf, &w_start, &w_end, FALSE);
-
-	    if (text != NULL) {
-		if (is_dollar_word(buf, &w_start, &text)) {
-		    /* got $<word> */
-		    role = FUNC_HELP;
-		} else if (probably_function(buf, &w_end)) {
-		    /* got <word>( */
-		    role = FUNC_HELP;
-		}
-	    }
-	}
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+	text = get_identifier_at_cursor(tbuf, &role);
 
 	if (text != NULL && *text != '\0') {
-	    int idx, pos;
+	    int pos, idx = 0;
 
 	    pos = help_pos_from_string(text, &idx, &role);
-	    if (pos <= 0) {
-		warnbox(_("Sorry, help not found"));
-	    } else {
+	    if (pos > 0) {
 		real_do_help(idx, pos, role);
+	    } else if (!hansl_func_help(text, vwin)) {
+		warnbox(_("Sorry, help not found"));
 	    }
 	}
 

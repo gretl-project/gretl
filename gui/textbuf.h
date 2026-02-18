@@ -167,6 +167,9 @@ gboolean script_bracket_handler (GtkWidget *w, guint keyval);
 
 gchar *unctrlr (const char *buf);
 
+gchar *get_identifier_at_cursor (GtkTextBuffer *tbuf,
+				 int *role);
+
 #ifdef HAVE_GTKSV_COMPLETION
 
 int maybe_try_completion (GtkWidget *w, int role);
