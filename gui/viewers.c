@@ -1794,8 +1794,8 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     return vwin;
 }
 
-/* Called on destroying an editing window: give the user a chance
-   to save if the content is changed, or to cancel the close.
+/* Called on destroying an editing window: give the user a chance to
+   save if the content is changed, or to cancel the close.
 */
 
 gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)

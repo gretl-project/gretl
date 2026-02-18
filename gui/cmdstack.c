@@ -24,21 +24,19 @@
 #include "session.h"
 
 /* This module contains apparatus for handling a log of commands
-   generated via point-and-click, or via the GUI console.  If
-   the user is working in the context of a saved session file, the
-   log goes to "session.inp" inside the session directory,
-   otherwise it goes to a temporary file in the user's personal
-   "dotdir".
+   generated via point-and-click, or via the GUI console.  If the user
+   is working in the context of a saved session file, the log goes to
+   "session.inp" inside the session directory, otherwise it goes to a
+   temporary file in the user's personal "dotdir".
 
    The command log may well be unusable as a script without
    modification, due to possible "nonlinearities" in the GUI (e.g.
-   having several model windows open at once and performing
-   tests on the models out of the order of estimation), but
-   nonetheless it may be useful as a record and for pedagogical
-   purposes.
+   having several model windows open at once and performing tests on
+   the models out of the order of estimation), but nonetheless it may
+   be useful as a record and for pedagogical purposes.
 
-   We flag errors via the GUI only in response to specific requests
-   to view or update the log.
+   We flag errors via the GUI only in response to specific requests to
+   view or update the log.
 */
 
 #define CMD_DEBUG 0
@@ -54,9 +52,8 @@ static int logfile_init (void);
 
 /* Called in response to the refresh/reload button in the viewer
    window for the command log: retrieve the updated log content.
-   Display of any error messages is handled by the caller, which
-   is also responsible for freeing the value returned by this
-   function.
+   Display of any error messages is handled by the caller, which is
+   also responsible for freeing the value returned by this function.
 */
 
 gchar *get_logfile_content (int *err)
@@ -102,11 +99,9 @@ void view_command_log (void)
 	if (logprn == NULL) {
 	    err = logfile_init();
 	}
-
 	if (!err) {
 	    logbuf = gretl_print_read_tempfile(logprn, &err);
 	}
-
 	if (!err) {
 	    /* stick the buffer onto a temporary PRN */
 	    tmp = gretl_print_new_with_buffer(logbuf);
@@ -114,7 +109,6 @@ void view_command_log (void)
 		err = E_ALLOC;
 	    }
 	}
-
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -145,8 +139,8 @@ static void send_entry_to_window (const char *s)
 
 /* Close down the logfile writing apparatus.  If we were writing to a
    temporary file, this will be deleted by gretl_print_destroy.
-   Designed so that it doesn't hurt to call this function more
-   times than is strictly necessary (to ensure cleanup).
+   Designed so that it doesn't hurt to call this function more times
+   than is strictly necessary (to ensure cleanup).
 */
 
 void free_command_stack (void)
@@ -166,7 +160,8 @@ void free_command_stack (void)
 }
 
 /* For use with an existing session log file, whose name is registered
-   in 'logname' */
+   in 'logname'
+*/
 
 static int session_logfile_init (void)
 {
@@ -196,9 +191,10 @@ static int session_logfile_init (void)
     return 0;
 }
 
-/* For use when the current gretl session is not associated
-   with a session file (starting from scratch): we use a
-   PRN with a temporary file */
+/* For use when the current gretl session is not associated with a
+   session file (starting from scratch): we use a PRN with a temporary
+   file
+*/
 
 static int scratch_logfile_init (void)
 {
