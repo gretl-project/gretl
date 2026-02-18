@@ -1530,10 +1530,16 @@ static int hansl_func_help (const gchar *id, windata_t *vwin)
     int ret = 0;
 
     if (uf != NULL) {
+	fnpkg *pkg = gretl_function_get_package(uf);
 	const char *buf;
 	PRN *prn = NULL;
 
 	bufopen(&prn);
+	if (pkg != NULL) {
+	    pprintf(prn, "In package %s:",
+		    function_package_get_name(pkg));
+	    pputs(prn, "\n\n");
+	}
 	print_function_signature(uf, prn);
 	buf = gretl_print_get_buffer(prn);
 	make_function_signature_window(buf, vwin->text);
