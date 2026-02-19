@@ -11238,6 +11238,10 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
         pputs(prn, "none\n\n");
     }
 
+    if (fun->docstr != NULL) {
+	pprintf(prn, "%s\n", fun->docstr);
+    }
+
     if (pkg != NULL && pkg->help != NULL) {
         if (is_pdf_ref(pkg->help)) {
             gchar *pdfname = g_strdup(pkg->fname);
