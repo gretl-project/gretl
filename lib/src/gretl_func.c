@@ -181,6 +181,7 @@ struct ufunc_ {
     int n_params;          /* number of parameters */
     fn_param *params;      /* parameter info array */
     int rettype;           /* return type (if any) */
+    gchar *docstr;         /* short (optional) documentation string */
 };
 
 /* structure representing a function package */
@@ -376,6 +377,11 @@ static void set_function_private (ufunc *u, gboolean s)
 int gretl_compiling_function (void)
 {
     return compiling;
+}
+
+ufunc *get_docstring_target (void)
+{
+    return current_fdef;
 }
 
 int gretl_compiling_python (const char *line)
@@ -1397,6 +1403,32 @@ int user_func_must_assign (const ufunc *fun)
 }
 
 /**
+ * user_func_add_docstr:
+ * @fun: pointer to user-function.
+ * @str: the string to append.
+ *
+ * Adds @str as a line to @fun's docstr.
+
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int user_func_add_docstr (ufunc *fun, const char *str)
+{
+    if (fun == NULL) {
+        return E_DATA;
+    } else if (fun->docstr == NULL) {
+	fun->docstr = g_strdup(str);
+    } else {
+	gchar *tmp = g_strdup_printf("%s\n%s", fun->docstr, str);
+
+	g_free(fun->docstr);
+	fun->docstr = tmp;
+    }
+
+    return 0;
+}
+
+/**
  * user_function_name_by_index:
  * @i: the position of a user-function in the array of
  * loaded functions.
@@ -1836,6 +1868,7 @@ static ufunc *ufunc_new (void)
     fun->params = NULL;
 
     fun->rettype = GRETL_TYPE_NONE;
+    fun->docstr = NULL;
 
     return fun;
 }
@@ -1908,6 +1941,8 @@ static void clear_ufunc_data (ufunc *fun)
     destroy_ufunc_calls(fun);
 
     fun->rettype = GRETL_TYPE_NONE;
+    g_free(fun->docstr);
+    fun->docstr = NULL;
 }
 
 static void ufunc_free (ufunc *fun)
@@ -1917,6 +1952,7 @@ static void ufunc_free (ufunc *fun)
     free_params_array(fun->params, fun->n_params);
     /* destroy_ufunc_calls() handles attached genrs */
     destroy_ufunc_calls(fun);
+    g_free(fun->docstr);
     free(fun);
 }
 
@@ -2819,7 +2855,7 @@ static int write_function_xml (ufunc *fun, PRN *prn, int mpi)
 
 /* script-style output */
 
-void print_function_signature (ufunc *fun, PRN *prn)
+void print_function_signature (ufunc *fun, int doc, PRN *prn)
 {
     const char *s;
     int i, pos = 0;
@@ -2872,8 +2908,11 @@ void print_function_signature (ufunc *fun, PRN *prn)
     }
 
     pputc(prn, '\n');
-
     gretl_pop_c_numeric_locale();
+
+    if (doc && fun->docstr != NULL) {
+	pprintf(prn, "\n%s\n", fun->docstr);
+    }
 }
 
 /* The following is an attempt at generic indentation based
@@ -2942,7 +2981,7 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
     }
 
     ptmp = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
-    print_function_signature(u, ptmp);
+    print_function_signature(u, 0, ptmp);
 
     for (i=0; i<u->n_lines; i++) {
         maybe_toggle_foreign(u->lines[i].s, &in_foreign);

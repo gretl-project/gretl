@@ -161,16 +161,24 @@ static int tail_is_blank (const char *s)
     return 1;
 }
 
-/* filter_comments: strip comments out of line; return non-zero if
-   the whole line is a comment
+/* filter_comments(): strip comments out of line; return non-zero if
+   the whole line is a comment. But if @preserve is non-zero, which
+   will be the case if we're called from get_command_index(),
+   preserve the comments.
 */
 
 static int filter_comments (char *s, CMD *cmd, int preserve)
 {
+    static int gotdoc;
+    ufunc *uf = NULL;
     char tmp[MAXLINE];
     char *p = s;
     int ccmt, quoted = 0;
     int j = 0, filt = 0;
+
+    if (gretl_compiling_function()) {
+	uf = get_docstring_target();
+    }
 
     if (strlen(s) >= MAXLINE) {
         cmd->err = E_TOOLONG;
@@ -190,16 +198,25 @@ static int filter_comments (char *s, CMD *cmd, int preserve)
             if (starts_ccmt(p)) {
                 ccmt = 1;
                 p += 2;
+		if (uf != NULL && !strncmp(p, " doc", 4)) {
+		    gotdoc = 1;
+		    break;
+		}
             } else if (ends_ccmt(p)) {
                 if (!ccmt) {
                     cmd->err = E_PARSE;
                     fprintf(stderr, "unbalanced close comment\n");
                     return 0;
                 }
-                ccmt = 0;
+		gotdoc = ccmt = 0;
                 p += 2;
                 p += strspn(p, " ");
-            }
+            } else if (gotdoc) {
+		user_func_add_docstr(uf, p);
+		if (!preserve) {
+		    break;
+		}
+	    }
         }
         if (!ccmt && *p != '\r') {
             tmp[j++] = *p;
@@ -4361,7 +4378,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
  * get_command_index:
  * @s: pointer to execution state
  * @cmode: compilation mode: LOOP or FUNC
-  *
+ * @preserve: if non-zero, preserve comments.
+ *
  * Parse @line and assign to the %ci field of @s->cmd the index number of
  * the command embedded in @s->line.  Note: this is a "lite" version of
  * parse_command_line().  It is used when commands are being stacked

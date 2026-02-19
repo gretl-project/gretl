@@ -1540,7 +1540,7 @@ static int hansl_func_help (const gchar *id, windata_t *vwin)
 		    function_package_get_name(pkg));
 	    pputs(prn, "\n\n");
 	}
-	print_function_signature(uf, prn);
+	print_function_signature(uf, 1, prn);
 	buf = gretl_print_get_buffer(prn);
 	make_function_signature_window(buf, vwin->text);
 	gretl_print_destroy(prn);
