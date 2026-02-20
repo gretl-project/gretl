@@ -1258,12 +1258,12 @@ static GtkWidget *create_duplicate_source_view (windata_t *vwin)
 }
 
 void create_source (windata_t *vwin, int hsize, int vsize,
-		    gboolean editable)
+		    int nlines, gboolean editable)
 {
     GtkSourceLanguageManager *lm = NULL;
     GtkSourceBuffer *sbuf;
     GtkTextView *view;
-    int cw;
+    int cx, cy;
 
     if (textview_use_highlighting(vwin->role)) {
 	lm = gtk_source_language_manager_get_default();
@@ -1304,24 +1304,26 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 #endif
 
     gtk_widget_modify_font(GTK_WIDGET(vwin->text), fixed_font);
-
-    cw = get_char_width(vwin->text);
-    set_source_tabs(vwin->text, cw);
+    get_char_width_and_height(vwin->text, &cx, &cy);
+    set_source_tabs(vwin->text, cx);
 
     if (hsize > 0) {
-	hsize *= cw;
-	hsize += 48;
+	hsize = hsize * cx + 48;
     }
 
     if (!(vwin->flags & VWIN_SWALLOW) && hsize > 0 && vsize > 0) {
 	GtkWidget *vmain = vwin_toplevel(vwin);
 
-	if (window_is_tab(vwin)) {
-	    vsize += 15;
-	}
-	if (vsize < 0.62 * hsize) {
-	    /* approx golden ratio */
-	    vsize = 0.62 * hsize;
+	if (nlines > 0) {
+	    vsize = (nlines + 2) * cy + 20;
+	} else {
+	    if (window_is_tab(vwin)) {
+		vsize += 15;
+	    }
+	    if (vsize < 0.62 * hsize) {
+		/* approx golden ratio */
+		vsize = 0.62 * hsize;
+	    }
 	}
 	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
     }
@@ -1329,7 +1331,8 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     gtk_text_view_set_editable(view, editable);
     gtk_text_view_set_cursor_visible(view, editable);
 
-    if (vwin->role != EDIT_HEADER) {
+    if (vwin->role != EDIT_HEADER &&
+	vwin->role != VIEW_SIGNATURE) {
 	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
 					      script_line_numbers);
     }

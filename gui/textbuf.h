@@ -28,6 +28,7 @@
 				       r == EDIT_PKG_SAMPLE ||		\
 				       r == VIEW_PKG_SAMPLE ||		\
 				       r == VIEW_LOG ||			\
+				       r == VIEW_SIGNATURE ||		\
 				       r == CONSOLE))
 
 #define lbracket(k) (k == GDK_parenleft || \
@@ -131,7 +132,7 @@ gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event,
 			     gpointer p);
 
 void create_source (windata_t *vwin, int hsize, int vsize, 
-		    gboolean editable);
+		    int nlines, gboolean editable);
 
 GtkWidget *create_sample_source (const char *style);
 

@@ -1240,9 +1240,9 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 
 #ifndef GRETL_EDIT
     if (role == VIEW_PKG_CODE || role == VIEW_PKG_SAMPLE || role == VIEW_LOG) {
-	create_source(vwin, hsize, vsize, FALSE);
+	create_source(vwin, hsize, vsize, 0, FALSE);
     } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
-	create_source(vwin, hsize, vsize, TRUE);
+	create_source(vwin, hsize, vsize, 0, TRUE);
     } else if (role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
 	/* editable text */
 	create_text(vwin, hsize, vsize, nlines, TRUE);
@@ -1455,7 +1455,7 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 #endif
 
     if (textview_use_highlighting(role) || editable) {
-	create_source(vwin, hsize, vsize, editable);
+	create_source(vwin, hsize, vsize, 0, editable);
     } else {
 	create_text(vwin, hsize, vsize, 0, editable);
     }
@@ -1722,7 +1722,7 @@ static void set_popup_bg (GtkWidget *widget)
     gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, popup);
 }
 
-#else
+#else /* GTK3 or higher */
 
 static void set_popup_bg (GtkWidget *widget)
 {
@@ -1738,7 +1738,25 @@ static void set_popup_bg (GtkWidget *widget)
 					 &rgbp);
 }
 
-#endif
+#endif /* GTK versions */
+
+static int line_count (const char *buf)
+{
+    const char *p, *s = buf;
+    int n = 1;
+
+    while (1) {
+	p = strchr(s, '\n');
+	if (p == NULL) {
+	    break;
+	} else {
+	    s = p + 1;
+	    n++;
+	}
+    }
+
+    return n;
+}
 
 /* For use when we want to display a piece of formatted text, such as
    help for a gretl function package or a help bibliography entry, in
@@ -1762,7 +1780,13 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     }
 
     /* non-editable text */
-    create_text(vwin, hsize, vsize, 0, FALSE);
+    if (role == VIEW_SIGNATURE) {
+	int nl = line_count(buf);
+
+	create_source(vwin, hsize, vsize, nl, FALSE);
+    } else {
+	create_text(vwin, hsize, vsize, 0, FALSE);
+    }
 
     if (special) {
 	/* no scrolling apparatus */
@@ -1774,7 +1798,11 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 	text_table_setup(vwin->vbox, vwin->text);
     }
 
-    gretl_viewer_set_formatted_buffer(vwin, buf, role);
+    if (role == VIEW_SIGNATURE) {
+	sourceview_insert_buffer(vwin, buf);
+    } else {
+	gretl_viewer_set_formatted_buffer(vwin, buf, role);
+    }
 
     if (special) {
 	add_text_closer(vwin);
@@ -1834,7 +1862,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
 #endif
 
-    create_source(vwin, hsize, vsize, TRUE);
+    create_source(vwin, hsize, vsize, 0, TRUE);
     text_table_setup(vwin->vbox, vwin->text);
 
     /* insert the buffer text */
