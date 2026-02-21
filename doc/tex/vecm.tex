@@ -1243,7 +1243,7 @@ reference:
     \Delta y_{t-i} + \epsilon_t \qquad \epsilon_t \sim N(0, \Omega)
 \]
 Innovations in period $t$ have an immediate effect on the changes in
-the endogenous variables, $\Delta y_t$, which in turn affect their
+the endogenous variables, $\Delta y_t$, which in turn affects their
 levels in the following period. This primary effect may then be
 compounded in two ways:
 \begin{itemize}
@@ -1255,7 +1255,7 @@ compounded in two ways:
   $\Delta y$ will result in further changes via the $\Gamma_i$ matrices.
 \end{itemize}
 
-The apparatus for summing these effects in a matrix called $C$ is set
+The apparatus for summing these effects, in a matrix called $C$, is set
 out in \cite[p.\ 49]{johansen95}\footnote{In the following equations
 our notation differs slightly from Johansen's.}
 \[
@@ -1267,26 +1267,55 @@ matrix, with $C_{ij}$ giving the long-run effect of an innovation to
 variable $i$ on variable $j$ (?CHECK?).
 
 For inference regarding these effects one wants associated standard
-errors. The asymptotic distribution of the estimator of $C$
-\cite[p.\ 190]{johansen95} is
+errors. The asymptotic distribution of the estimator of $C$ is given by
+\citet[p.\ 190]{johansen95} as
 \[
-  T^{\frac12}(\hat{C} - C) \overset{w}{\rightarrow} N_{p\times p}(0,
+  T^{\frac12}(\hat{C} - C) \overset{w}{\rightarrow} N(0,
   C\Omega C' \otimes \xi'\Sigma^{-1}\xi)
 \]
 where (see pages 190, 50, 188, 187 respectively)
 \begin{align*}
   \xi' &= ((C'\Gamma' - I)\bar{\alpha}, i'_{p-1}\otimes C') \\
   \bar{\alpha} &= \alpha(\alpha'\alpha)^{-1} \\
-  \Sigma &= {\rm Var}(z_t(\beta)) \\
+  \Sigma &= {\rm Cov}(z_t(\beta)) \\
   z_t(\beta)' &= (y'_{t-1}\beta,\, \Delta y'_{t-1},\, \ldots,\,\Delta y'_{t-p+1})
 \end{align*}
+Note that the terms appearing in $z_t(\beta)$ are the stationary forms
+of the endogenous variables: deviations from equilbrium and first
+differences. The covariance of $z_t(\beta)$ is taken to be conditional
+on the exogenous terms in the system (including seasonal dummies), if
+any.
 
-These results imply the following expression for the covariance of ${\rm
-  vec}(\hat{C})$:
+From the results above we obtain the following expression for the
+covariance of the vectorization of $\hat{C}$:
 \[
-T^{-1}(\xi'\Sigma^{-1}\xi \otimes C\Omega C')
-\]%
-where $T$ is the number of observations.
+{\rm Cov}({\rm vec}(\hat{C})) = T^{-1}(\xi'\Sigma^{-1}\xi \otimes C\Omega C')
+\]
+where $T$ is the number of observations. This matrix is $n^2 \times
+n^2$; standard errors for the $C_{ij}$s can be found by taking the
+square root of its diagonal elements.
+
+\subsection{Accessors}
+
+Following estimation of a regular VAR or VECM in gretl, the
+\verb|$system| accessor returns a bundle containing various quantities
+of interest. In the cointegrated case there's a sub-bundle called
+\dtk{vecm_info} holding additional information, including the $C$ matrix
+described above under the name \dtk{long_run} and the covariance of its
+vectorization under \dtk{cov_long_run}. One can therefore print out
+the long-run effects with their standard errors using something like
+the following code:
+\begin{code}
+bundle b = $system.vecm_info
+matrix C = b.long_run
+n = rows(C)
+Cse = mshape(sqrt(diag(b.cov_long_run)), n, n)
+loop i=1..n
+   loop j=1..n
+      printf "C[%d,%d] = %6.3f (%.3f)\n", i, j, C[i,j], Cse[i,j]
+   endloop
+endloop
+\end{code}
 
 %%% Local Variables: 
 %%% mode: latex
