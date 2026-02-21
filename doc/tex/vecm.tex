@@ -4,14 +4,14 @@
 \section{Introduction}
 \label{sec:VECM-intro}
 
-The attraction of the Vector Error Correction Model (VECM) is that it
-allows the researcher to embed a representation of economic
-equilibrium relationships within a relatively rich time-series
-specification.  This approach overcomes the dichotomy between (a)
-structural models that faithfully represented macroeconomic theory but
-failed to fit the data, and (b) time-series models that were
-accurately tailored to the data but difficult if not impossible to
-interpret in economic terms.
+The attraction of the Vector Error Correction Model (VECM)---also
+known as a cointegrated VAR or CVAR---is that it allows the researcher
+to embed a representation of economic equilibrium relationships within
+a relatively rich time-series specification.  This approach overcomes
+the dichotomy between (a) structural models that faithfully
+represented macroeconomic theory but failed to fit the data, and (b)
+time-series models that were accurately tailored to the data but
+difficult if not impossible to interpret in economic terms.
 
 The basic idea of cointegration relates closely to the concept of unit
 roots (see section~\ref{sec:uroot}).  Suppose we have a set of
@@ -1229,6 +1229,64 @@ restrictions were removed.  On that criterion the above example is not
 just identified, since the removal of the second restriction would not
 affect identification; and gretl would in fact perform scale removal
 by default.
+
+\section{Long-run effects}
+\label{sec:vecm-lr}
+
+A question that may be of interest following estimation of a
+cointegrated VAR is, what are the long-run effects on the endogenous
+variables of the innovations, $\epsilon_t$? This can be quite
+complicated. Here we recall the CVAR equation~\ref{eq:VECMab} for
+reference:
+\[
+    \Delta y_t = \mu_t + \alpha \beta' y_{t-1} + \sum_{i=1}^{p-1} \Gamma_i 
+    \Delta y_{t-i} + \epsilon_t \qquad \epsilon_t \sim N(0, \Omega)
+\]
+Innovations in period $t$ have an immediate effect on the changes in
+the endogenous variables, $\Delta y_t$, which in turn affect their
+levels in the following period. This primary effect may then be
+compounded in two ways:
+\begin{itemize}
+\item To the extent that changes in $y_t$ disturb the equilibrium
+  conditions represented by the cointegrating vectors in $\beta$, this
+  impacts $\Delta y_{t+1}$ via the adjustment coefficients in
+  $\alpha$.
+\item If the lag order of the CVAR is greater than 1, past changes in
+  $\Delta y$ will result in further changes via the $\Gamma_i$ matrices.
+\end{itemize}
+
+The apparatus for summing these effects in a matrix called $C$ is set
+out in \cite[p.\ 49]{johansen95}\footnote{In the following equations
+our notation differs slightly from Johansen's.}
+\[
+  C = \beta_{\perp}(\alpha'_{\perp} \Gamma \beta_{\perp})^{-1}
+  \alpha'_{\perp} \qquad \Gamma \equiv I - \sum_{i=1}^{p-1}\Gamma_i
+\]
+For a system with $n$ endogenous variables $C$ is an $n \times n$
+matrix, with $C_{ij}$ giving the long-run effect of an innovation to
+variable $i$ on variable $j$ (?CHECK?).
+
+For inference regarding these effects one wants associated standard
+errors. The asymptotic distribution of the estimator of $C$
+\cite[p.\ 190]{johansen95} is
+\[
+  T^{\frac12}(\hat{C} - C) \overset{w}{\rightarrow} N_{p\times p}(0,
+  C\Omega C' \otimes \xi'\Sigma^{-1}\xi)
+\]
+where (see pages 190, 50, 188, 187 respectively)
+\begin{align*}
+  \xi' &= ((C'\Gamma' - I)\bar{\alpha}, i'_{p-1}\otimes C') \\
+  \bar{\alpha} &= \alpha(\alpha'\alpha)^{-1} \\
+  \Sigma &= {\rm Var}(z_t(\beta)) \\
+  z_t(\beta)' &= (y'_{t-1}\beta,\, \Delta y'_{t-1},\, \ldots,\,\Delta y'_{t-p+1})
+\end{align*}
+
+These results imply the following expression for the covariance of ${\rm
+  vec}(\hat{C})$:
+\[
+T^{-1}(\xi'\Sigma^{-1}\xi \otimes C\Omega C')
+\]%
+where $T$ is the number of observations.
 
 %%% Local Variables: 
 %%% mode: latex
