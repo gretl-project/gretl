@@ -1856,6 +1856,7 @@ static int vecm_id_check (Jwrap *J, GRETL_VAR *jvar,
 
     if (!err) {
 	if (!silent) {
+	    pputc(prn, '\n');
 	    pprintf(prn, _("Rank of Jacobian = %d, number of free "
 			   "parameters = %d\n"), J->jr, npar);
 	}
