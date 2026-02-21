@@ -198,7 +198,7 @@ static int filter_comments (char *s, CMD *cmd, int preserve)
             if (starts_ccmt(p)) {
                 ccmt = 1;
                 p += 2;
-		if (uf != NULL && !strncmp(p, " doc", 4)) {
+		if (uf != NULL && !strncmp(p, " -doc-", 6)) {
 		    gotdoc = 1;
 		    break;
 		}
