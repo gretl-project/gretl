@@ -1506,13 +1506,14 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
     return pos;
 }
 
-static void make_function_signature_window (const char *buf,
-					    GtkWidget *tview)
+static void function_info_popup (const char *sig,
+				 const char *doc,
+				 GtkWidget *tview)
 {
-    windata_t *vwin;
     GtkWidget *top, *vmain;
+    windata_t *vwin;
 
-    vwin = view_formatted_text_buffer(NULL, buf, 64, 100, VIEW_SIGNATURE);
+    vwin = view_function_signature(sig, doc);
     vmain = vwin_toplevel(vwin);
     top = gtk_widget_get_toplevel(tview);
     gtk_window_set_transient_for(GTK_WINDOW(vmain), GTK_WINDOW(top));
@@ -1530,20 +1531,38 @@ static int hansl_func_help (const gchar *id, windata_t *vwin)
     int ret = 0;
 
     if (uf != NULL) {
+	const char *docstr = user_func_get_docstr(uf);
 	fnpkg *pkg = gretl_function_get_package(uf);
-	const char *buf;
+	char *buf1 = NULL;
+	char *buf2 = NULL;
 	PRN *prn = NULL;
 
+	/* signature (highlighting to be applied) */
 	bufopen(&prn);
-	if (pkg != NULL) {
-	    pprintf(prn, "In package %s:",
-		    function_package_get_name(pkg));
-	    pputs(prn, "\n\n");
-	}
-	print_function_signature(uf, 1, prn);
-	buf = gretl_print_get_buffer(prn);
-	make_function_signature_window(buf, vwin->text);
+	print_function_signature(uf, prn);
+	buf1 = gretl_print_steal_buffer(prn);
 	gretl_print_destroy(prn);
+
+	if (docstr != NULL || pkg != NULL) {
+	    /* plain text portion of output */
+	    bufopen(&prn);
+	    if (docstr != NULL) {
+		pputc(prn, '\n');
+		pputs(prn, docstr);
+		pputs(prn, "\n\n");
+	    }
+	    if (pkg != NULL) {
+		pprintf(prn, "In package %s:",
+			function_package_get_name(pkg));
+		pputs(prn, "\n\n");
+	    }
+	    buf2 = gretl_print_steal_buffer(prn);
+	    gretl_print_destroy(prn);
+	}
+
+	function_info_popup(buf1, buf2, vwin->text);
+	free(buf1);
+	free(buf2);
 	ret = 1;
     }
 

@@ -155,4 +155,6 @@ const char *get_author_mail (void);
 
 const char *get_sourceview_style (void);
 
+int sourceview_style_is_dark (void);
+
 #endif /* SETTINGS_H */

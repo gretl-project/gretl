@@ -1262,6 +1262,8 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 {
     GtkSourceLanguageManager *lm = NULL;
     GtkSourceBuffer *sbuf;
+    GtkTextTagTable *table = NULL;
+    GtkTextTag *tag = NULL;
     GtkTextView *view;
     int cx, cy;
 
@@ -1270,16 +1272,22 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	ensure_sourceview_path(lm);
     }
 
-    if (editing_hansl(vwin->role)) {
-	GtkTextTagTable *table = gtk_text_tag_table_new();
-	GtkTextTag *htag = gtk_text_tag_new("hidden");
+    if (editing_hansl(vwin->role) || vwin->role == VIEW_SIGNATURE) {
+	table = gtk_text_tag_table_new();
+	if (editing_hansl(vwin->role)) {
+	    tag = gtk_text_tag_new("hidden");
+	    g_object_set(tag, "invisible", 1, NULL);
+	} else {
+	    int dark = sourceview_style_is_dark();
 
-	g_object_set(htag, "invisible", 1, NULL);
-	gtk_text_tag_table_add(table, htag);
-	sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(table));
-    } else {
-	sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
+	    tag = gtk_text_tag_new("plain");
+	    g_object_set(tag, "foreground", dark ? "white" : "black",
+			 "weight", PANGO_WEIGHT_NORMAL, NULL);
+	}
+	gtk_text_tag_table_add(table, tag);
     }
+
+    sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(table));
 
     if (lm != NULL) {
 	g_object_set_data(G_OBJECT(sbuf), "languages-manager", lm);
@@ -1927,6 +1935,23 @@ void textview_append_text (GtkWidget *view, const char *text)
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     gtk_text_buffer_get_end_iter(tbuf, &iter);
     gtk_text_buffer_insert(tbuf, &iter, text, -1);
+}
+
+/* For use when we want to add plain (non-highlighted) text to
+   a window that employs syntax highlighting.
+*/
+
+void textview_append_plain_text (GtkWidget *view, const char *text)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter iter;
+
+    g_return_if_fail(GTK_IS_TEXT_VIEW(view));
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    gtk_text_buffer_get_end_iter(tbuf, &iter);
+    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter, text,
+					     -1, "plain", NULL);
 }
 
 void textview_insert_text (GtkWidget *view, const char *text)

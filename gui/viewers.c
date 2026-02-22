@@ -1708,18 +1708,18 @@ static void add_text_closer (windata_t *vwin)
 
 static void set_popup_bg (GtkWidget *widget)
 {
-    static GdkColor *popup;
+    static GdkColor *color;
 
     if (popup == NULL) {
 	GdkColormap *cmap;
 
-	popup = g_malloc(sizeof *popup);
+	color = g_malloc(sizeof *color);
 	cmap = gdk_colormap_get_system();
-	gdk_color_parse("#EDE28D", popup);
-	gdk_colormap_alloc_color(cmap, popup, FALSE, TRUE);
+	gdk_color_parse("#EDE28D", color);
+	gdk_colormap_alloc_color(cmap, color, FALSE, TRUE);
     }
 
-    gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, popup);
+    gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, color);
 }
 
 #else /* GTK3 or higher */
@@ -1740,27 +1740,6 @@ static void set_popup_bg (GtkWidget *widget)
 
 #endif /* GTK versions */
 
-static void maybe_set_popup_bg (windata_t *vwin)
-{
-    if (vwin->role == VIEW_BIBITEM) {
-	set_popup_bg(vwin->text);
-    } else {
-	const char *light[] = {
-	    "classic", "build", "kate",
-	    "solarized-light", "tango", NULL
-	};
-	const char *s = get_sourceview_style();
-	int i;
-
-	for (i=0; light[i] != NULL; i++) {
-	    if (!strcmp(s, light[i])) {
-		set_popup_bg(vwin->text);
-		break;
-	    }
-	}
-    }
-}
-
 static int line_count (const char *buf)
 {
     const char *p, *s = buf;
@@ -1780,11 +1759,11 @@ static int line_count (const char *buf)
 }
 
 /* For use when we want to display a piece of formatted text, such as
-   help for a gretl function package or a help bibliography entry, in
-   a window of its own, without any menu apparatus on the window. If
-   @role is VIEW_BIBITEM (bibliographical popup) or VIEW_SIGNATURE,
-   this should be a minimal window with no decorations and a simple
-   "closer" button embedded in the GtkTextView.
+   help for a gretl function package or a help bibliography entry, in a
+   window of its own, without any menu apparatus on the window. If @role
+   is VIEW_BIBITEM (bibliographical popup) this should be a minimal
+   window with no decorations and a simple "closer" button embedded in
+   the GtkTextView.
 */
 
 windata_t *view_formatted_text_buffer (const gchar *title,
@@ -1792,7 +1771,6 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 				       int hsize, int vsize,
 				       int role)
 {
-    int special = role == VIEW_BIBITEM || role == VIEW_SIGNATURE;
     windata_t *vwin;
 
     vwin = gretl_viewer_new_with_parent(NULL, role, title, NULL);
@@ -1801,37 +1779,25 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     }
 
     /* non-editable text */
-    if (role == VIEW_SIGNATURE) {
-	int nl = line_count(buf);
+    create_text(vwin, hsize, vsize, 0, FALSE);
 
-	create_source(vwin, hsize, vsize, nl, FALSE);
-    } else {
-	create_text(vwin, hsize, vsize, 0, FALSE);
-    }
-
-    if (special) {
+    if (role == VIEW_BIBITEM) {
 	/* no scrolling apparatus */
 	gtk_container_add(GTK_CONTAINER(vwin->vbox), vwin->text);
 	gtk_widget_show(vwin->text);
 	gtk_window_set_decorated(GTK_WINDOW(vwin->main), FALSE);
-	maybe_set_popup_bg(vwin);
+	set_popup_bg(vwin->text);
     } else {
 	text_table_setup(vwin->vbox, vwin->text);
     }
 
-    if (role == VIEW_SIGNATURE) {
-	sourceview_insert_buffer(vwin, buf);
-    } else {
-	gretl_viewer_set_formatted_buffer(vwin, buf, role);
-    }
+    gretl_viewer_set_formatted_buffer(vwin, buf, role);
 
-    if (special) {
+    if (role == VIEW_BIBITEM) {
 	add_text_closer(vwin);
-    }
-
-    gtk_widget_show(vwin->vbox);
-
-    if (!special) {
+	gtk_widget_show(vwin->vbox);
+    } else {
+	gtk_widget_show(vwin->vbox);
 	gtk_widget_show(vwin->main);
 	gtk_widget_grab_focus(vwin->text);
 	connect_text_sizer(vwin);
@@ -1839,6 +1805,40 @@ windata_t *view_formatted_text_buffer (const gchar *title,
         g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
                          G_CALLBACK(catch_viewer_key), vwin);
     }
+
+    return vwin;
+}
+
+windata_t *view_function_signature (const char *sig,
+				    const char *doc)
+{
+    windata_t *vwin;
+    int nl;
+
+    vwin = gretl_viewer_new_with_parent(NULL, VIEW_SIGNATURE, NULL, NULL);
+    if (vwin == NULL) {
+	return NULL;
+    }
+
+    nl = line_count(sig);
+    if (doc != NULL) {
+	nl += line_count(doc);
+    }
+
+    create_source(vwin, 64, 100, nl, FALSE);
+    gtk_container_add(GTK_CONTAINER(vwin->vbox), vwin->text);
+    gtk_widget_show(vwin->text);
+    gtk_window_set_decorated(GTK_WINDOW(vwin->main), FALSE);
+    if (!sourceview_style_is_dark()) {
+	set_popup_bg(vwin->text);
+    }
+    sourceview_insert_buffer(vwin, sig);
+    if (doc != NULL) {
+	textview_append_plain_text(vwin->text, doc);
+    }
+
+    add_text_closer(vwin);
+    gtk_widget_show(vwin->vbox);
 
     return vwin;
 }

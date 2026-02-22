@@ -459,6 +459,23 @@ const char *get_sourceview_style (void)
     return sview_style;
 }
 
+int sourceview_style_is_dark (void)
+{
+    const char *styles[] = {
+	"classic", "build", "kate",
+	"solarized-light", "tango", NULL
+    };
+    int i;
+
+    for (i=0; styles[i] != NULL; i++) {
+	if (!strcmp(sview_style, styles[i])) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 #ifndef GRETL_EDIT
 
 int autoicon_on (void)

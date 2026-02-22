@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef TEXTBUF_H
@@ -84,6 +84,8 @@ int textview_set_text (GtkWidget *view, const gchar *text);
 
 void textview_append_text (GtkWidget *view, const char *text);
 
+void textview_append_plain_text (GtkWidget *view, const char *text);
+
 void textview_insert_text (GtkWidget *view, const char *text);
 
 void textview_clear_text (GtkWidget *view);
@@ -119,7 +121,7 @@ void textview_set_text_dbsearch (windata_t *vwin, const char *buf);
 
 void textview_insert_file (windata_t *vwin, const char *fname);
 
-void create_text (windata_t *vwin, int hsize, int vsize, 
+void create_text (windata_t *vwin, int hsize, int vsize,
 		  int nlines, gboolean editable);
 
 void text_set_word_wrap (GtkWidget *w, gboolean wrap);
@@ -128,10 +130,10 @@ void text_table_setup (GtkWidget *vbox, GtkWidget *w);
 
 int set_help_topic_buffer (windata_t *hwin, int pos);
 
-gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event, 
+gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event,
 			     gpointer p);
 
-void create_source (windata_t *vwin, int hsize, int vsize, 
+void create_source (windata_t *vwin, int hsize, int vsize,
 		    int nlines, gboolean editable);
 
 GtkWidget *create_sample_source (const char *style);

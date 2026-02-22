@@ -1429,6 +1429,23 @@ int user_func_add_docstr (ufunc *fun, const char *str)
 }
 
 /**
+ * user_func_get_docstr:
+ * @fun: pointer to user-function.
+ *
+ * Returns: the doc string set on to @fun, or NULL if
+ * nothing has been set.
+ */
+
+const char *user_func_get_docstr (const ufunc *fun)
+{
+    if (fun != NULL) {
+        return fun->docstr;
+    } else {
+	return NULL;
+    }
+}
+
+/**
  * user_function_name_by_index:
  * @i: the position of a user-function in the array of
  * loaded functions.
@@ -2855,7 +2872,7 @@ static int write_function_xml (ufunc *fun, PRN *prn, int mpi)
 
 /* script-style output */
 
-void print_function_signature (ufunc *fun, int doc, PRN *prn)
+void print_function_signature (ufunc *fun, PRN *prn)
 {
     const char *s;
     int i, pos = 0;
@@ -2909,10 +2926,6 @@ void print_function_signature (ufunc *fun, int doc, PRN *prn)
 
     pputc(prn, '\n');
     gretl_pop_c_numeric_locale();
-
-    if (doc && fun->docstr != NULL) {
-	pprintf(prn, "\n%s\n", fun->docstr);
-    }
 }
 
 /* The following is an attempt at generic indentation based
@@ -2981,7 +2994,7 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn)
     }
 
     ptmp = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
-    print_function_signature(u, 0, ptmp);
+    print_function_signature(u, ptmp);
 
     for (i=0; i<u->n_lines; i++) {
         maybe_toggle_foreign(u->lines[i].s, &in_foreign);
