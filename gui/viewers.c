@@ -1809,6 +1809,23 @@ windata_t *view_formatted_text_buffer (const gchar *title,
     return vwin;
 }
 
+/* support moving an undecorated window */
+
+static void drag_to_move (GtkWidget *src, GdkEventButton *event,
+			  gpointer data)
+{
+    gtk_window_begin_move_drag(GTK_WINDOW(data),
+			       event->button,
+			       event->x_root,
+			       event->y_root,
+			       event->time);
+}
+
+/* A text viewer window specialized to the case of showing the signature
+   (plus doc string if available) for a hansl function. The window will
+   be undecorated.
+*/
+
 windata_t *view_function_signature (const char *sig,
 				    const char *doc)
 {
@@ -1839,6 +1856,9 @@ windata_t *view_function_signature (const char *sig,
 
     add_text_closer(vwin);
     gtk_widget_show(vwin->vbox);
+
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
+		     G_CALLBACK(drag_to_move), vwin->main);
 
     return vwin;
 }

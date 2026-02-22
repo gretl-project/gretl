@@ -1552,7 +1552,10 @@ static int hansl_func_help (const gchar *id, windata_t *vwin)
 		pputs(prn, "\n\n");
 	    }
 	    if (pkg != NULL) {
-		pprintf(prn, "In package %s:",
+		if (docstr == NULL) {
+		    pputc(prn, '\n');
+		}
+		pprintf(prn, _("Belongs to package: %s"),
 			function_package_get_name(pkg));
 		pputs(prn, "\n\n");
 	    }
