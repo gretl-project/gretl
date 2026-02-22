@@ -1710,7 +1710,7 @@ static void set_popup_bg (GtkWidget *widget)
 {
     static GdkColor *color;
 
-    if (popup == NULL) {
+    if (color == NULL) {
 	GdkColormap *cmap;
 
 	color = g_malloc(sizeof *color);
