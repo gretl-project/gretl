@@ -447,7 +447,7 @@ void tex_print_double (double x, PRN *prn)
 
 static void tex_make_cname (char *cname, const char *src)
 {
-    char *p;
+    const char *p;
     unsigned char c;
 
     if (src == NULL || *src == '\0') return;

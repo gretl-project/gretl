@@ -3754,7 +3754,7 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
     int h = 20, boot = 0;
     double alpha = 0.10;
     int err = 0;
-    char *s;
+    const char *s;
 
     s = strstr(line, "--targ=");
     if (s != NULL) {

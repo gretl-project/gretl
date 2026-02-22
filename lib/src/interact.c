@@ -2150,7 +2150,7 @@ static int check_import_subsetting (CMD *cmd, OpenOp *op)
 
 static int no_suffix (const char *fname)
 {
-    char *s = strrchr(fname, '.');
+    const char *s = strrchr(fname, '.');
 
     if (s != NULL) {
         /* check that the rightmost dot is in the basename */
