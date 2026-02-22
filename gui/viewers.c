@@ -1740,6 +1740,27 @@ static void set_popup_bg (GtkWidget *widget)
 
 #endif /* GTK versions */
 
+static void maybe_set_popup_bg (windata_t *vwin)
+{
+    if (vwin->role == VIEW_BIBITEM) {
+	set_popup_bg(vwin->text);
+    } else {
+	const char *light[] = {
+	    "classic", "build", "kate",
+	    "solarized-light", "tango", NULL
+	};
+	const char *s = get_sourceview_style();
+	int i;
+
+	for (i=0; light[i] != NULL; i++) {
+	    if (!strcmp(s, light[i])) {
+		set_popup_bg(vwin->text);
+		break;
+	    }
+	}
+    }
+}
+
 static int line_count (const char *buf)
 {
     const char *p, *s = buf;
@@ -1793,7 +1814,7 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 	gtk_container_add(GTK_CONTAINER(vwin->vbox), vwin->text);
 	gtk_widget_show(vwin->text);
 	gtk_window_set_decorated(GTK_WINDOW(vwin->main), FALSE);
-	set_popup_bg(vwin->text);
+	maybe_set_popup_bg(vwin);
     } else {
 	text_table_setup(vwin->vbox, vwin->text);
     }
