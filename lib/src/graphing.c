@@ -9610,7 +9610,7 @@ static void inbuf_inject_literal (const char *buf,
                                   const char *literal,
                                   FILE *fp)
 {
-    char *p = strstr(buf, "\nplot ");
+    const char *p = strstr(buf, "\nplot ");
 
     if (p != NULL) {
         int n = p - buf;

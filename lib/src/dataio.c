@@ -4017,7 +4017,7 @@ void dataset_add_import_info (DATASET *dset, const char *fname,
     print_time(tstr);
 
     if (g_utf8_validate(fname, -1, NULL)) {
-        const char *p = strrslash(fname);
+        const char *p = strrslash((char *) fname);
 
         if (p != NULL) {
             fname = p + 1;

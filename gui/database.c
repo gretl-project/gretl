@@ -2700,7 +2700,7 @@ static int gui_install_gfn (const gchar *objname,
 			    gchar *depends,
 			    windata_t *vwin)
 {
-    const gchar *p = strrslash(target);
+    const gchar *p = strrslash((char *) target);
     gchar *instpath = g_strndup(target, p - target + 1);
     int err = 0;
 

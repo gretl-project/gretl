@@ -1718,8 +1718,9 @@ static int get_oldstyle_stack_args (const char *s, char **arg,
 
 static int stack_update_parser_input (parser *p)
 {
-    char *arg = NULL, *opt1 = NULL, *opt2 = NULL;
-    char *s, *start;
+    char *opt1 = NULL, *opt2 = NULL;
+    char *arg = NULL, *start = NULL;
+    const char *s;
     gchar *tmp = NULL;
     GString *gs;
     int offset;

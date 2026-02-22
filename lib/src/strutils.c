@@ -171,7 +171,7 @@ int gretl_slashpos (const char *str)
  * forward slash, or NULL is no 'SLASH' is found.
  */
 
-char *strrslash (const char *s)
+char *strrslash (char *s)
 {
 #ifdef WIN32
     char *p1 = strrchr(s, '\\');
@@ -2900,7 +2900,7 @@ char *append_dir (char *fname, const char *dir)
 
 const char *path_last_element (const char *path)
 {
-    const char *p = strrslash(path);
+    const char *p = strrslash((char *) path);
 
     if (p == NULL) {
 	p = path;

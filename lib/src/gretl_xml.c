@@ -211,15 +211,15 @@ static int compact_string_to_int (const char *str)
 
 static char *simple_fname (char *dest, const char *src)
 {
-    char *p;
     const char *s;
+    char *p;
 
     if (src == NULL) {
 	strcpy(dest, "gdttmp");
 	return dest;
     }
 
-    s = strrslash(src);
+    s = strrslash((char *) src);
 
     /* take last part of src filename */
     if (s != NULL) {

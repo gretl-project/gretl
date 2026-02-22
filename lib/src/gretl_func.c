@@ -4206,7 +4206,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
         failed = "failed\n";
     }
 
-    if (strrslash(fname) != NULL) {
+    if (strrslash((char *) fname) != NULL) {
         /* directory change needed */
         char dirname[FILENAME_MAX];
 
@@ -8402,7 +8402,8 @@ int gretl_start_compiling_function (const char *line,
     int rettype = 0;
     char s1[FN_NAMELEN];
     char s2[FN_NAMELEN];
-    char *p = NULL, *name = NULL;
+    const char *p = NULL;
+    char *name = NULL;
     int err = 0;
 
     if (gretl_function_depth() > 0) {
@@ -11372,7 +11373,7 @@ void *function_package_get_editor (fnpkg *pkg)
 
 int delete_function_package (const char *gfnpath)
 {
-    char *p = strrslash(gfnpath);
+    char *p = strrslash((char *) gfnpath);
     gchar *pkgname = NULL;
     gchar *pkgdir = NULL;
     gchar *pkgsub = NULL;

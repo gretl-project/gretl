@@ -67,7 +67,7 @@ int gretl_dotpos (const char *str);
 
 int gretl_slashpos (const char *str);
 
-char *strrslash (const char *s);
+char *strrslash (char *s);
 
 char *gretl_delchar (int c, char *str);
 

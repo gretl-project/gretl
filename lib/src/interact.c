@@ -3082,7 +3082,7 @@ static int install_package (const char *pkgname,
             const char *p;
 
             gretl_maybe_switch_dir(pkgname);
-            p = strrslash(pkgname);
+            p = strrslash((char *) pkgname);
             if (p != NULL) {
                 fname = gretl_strdup(p + 1);
             }

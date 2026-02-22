@@ -235,7 +235,7 @@ void *myrealloc (void *ptr, size_t size)
 
 const char *path_last_slash_const (const char *path)
 {
-    return (const char *) strrslash(path);
+    return (const char *) strrslash((char *) path);
 }
 
 char *gretl_basename (char *dest, const char *src, int addscore)

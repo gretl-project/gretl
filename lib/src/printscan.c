@@ -31,10 +31,9 @@
 #define PSDEBUG 0
 
 /* For the point of "x *= (1 + 0x1p-52)" below, see
-   http://sourceware.org/bugzilla/show_bug.cgi?id=4943 ,
-   contribution from Eric Postpischil, 2007-10-05.
-   It is designed to produce the generally expected
-   rounding behavior on printing a double.
+   http://sourceware.org/bugzilla/show_bug.cgi?id=4943 , contribution
+   from Eric Postpischil, 2007-10-05.  It is designed to produce the
+   generally expected rounding behavior on printing a double.
 */
 
 static void printf_series (int v, const DATASET *dset,
@@ -444,7 +443,8 @@ static void maybe_adjust_string_format (char *str,
 
     if (adj > 0) {
 	const char *s = *fmt;
-	char *p, *tmp = NULL;
+	const char *p;
+	char *tmp = NULL;
 	int uwid = 0, uprec = 0;
 
 	if (*wstar) {

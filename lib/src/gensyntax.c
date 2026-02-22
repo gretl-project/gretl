@@ -1235,7 +1235,8 @@ static void get_args (NODE *t, parser *p, int f, int np,
 
 static void get_assertion (NODE *t, parser *p)
 {
-    char *str, *s = strrchr(p->point, ')');
+    const char *s = strrchr(p->point, ')');
+    char *str;
     int n = s - p->point + 1;
     int next = 0;
 

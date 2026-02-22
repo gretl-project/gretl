@@ -1057,7 +1057,7 @@ int gretl_model_get_coeff_separator (const MODEL *pmod, char **ps, int *ppos)
 
 static void make_cname (const char *orig, char *cname)
 {
-    char *p;
+    const char *p;
 
     if (orig == NULL || *orig == 0) {
 	return;

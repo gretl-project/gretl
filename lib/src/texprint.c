@@ -46,7 +46,7 @@ const char *tex_column_format (int i)
 
 void set_tex_use_pdf (const char *prog)
 {
-    const char *p = strrslash(prog);
+    const char *p = strrslash((char *) prog);
     char test[4];
 
     /* looking for "pdflatex", possibly preceded by

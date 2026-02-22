@@ -1295,7 +1295,7 @@ int get_package_data_path (int ci, const char *fname, char *fullname)
             }
 
             /* trim path from @fname if present */
-            needle = strrslash(fname);
+            needle = strrslash((char *) fname);
             if (needle != NULL) {
                 needle++;
             } else {
