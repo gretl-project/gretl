@@ -520,11 +520,9 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    return TRUE;
 	}
     }
-
     if (is_control_key(event->keyval)) {
 	return FALSE;
     }
-
     if (!gdk_keyval_is_upper(key)) {
 	upkey = gdk_keyval_to_upper(key);
     }
@@ -632,15 +630,12 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	   below: this won't do if we're in editing/typing mode
 	*/
 	return FALSE;
-    }
-
-    if (!event->state && vwin->finder != NULL && GTK_IS_ENTRY(vwin->finder)) {
+    } else if (!event->state && vwin->finder != NULL && GTK_IS_ENTRY(vwin->finder)) {
 	if (jump_to_finder(event->keyval, vwin)) {
 	    /* FIXME is this really wanted? */
 	    return TRUE;
 	}
     }
-
     if (!Alt) {
 	if (upkey == GDK_A && Ctrl) {
 	    vwin_select_all(vwin);
@@ -1740,19 +1735,22 @@ static void set_popup_bg (GtkWidget *widget)
 
 #endif /* GTK versions */
 
-static int line_count (const char *buf)
+/* Return the count of the lines in @buf, and if the longest line in
+   @buf exceeds @maxlen in length, increment @maxlen to match.
+*/
+
+static int line_count (const char *buf, int *maxlen)
 {
     const char *p, *s = buf;
-    int n = 1;
+    int len, n = 1;
 
-    while (1) {
-	p = strchr(s, '\n');
-	if (p == NULL) {
-	    break;
-	} else {
-	    s = p + 1;
-	    n++;
+    while ((p = strchr(s, '\n')) != NULL) {
+	len = p - s;
+	if (len > *maxlen) {
+	    *maxlen = len;
 	}
+	s = p + 1;
+	n++;
     }
 
     return n;
@@ -1830,19 +1828,19 @@ windata_t *view_function_signature (const char *sig,
 				    const char *doc)
 {
     windata_t *vwin;
-    int nl;
+    int nl, hsize = 0;
 
     vwin = gretl_viewer_new_with_parent(NULL, VIEW_SIGNATURE, NULL, NULL);
     if (vwin == NULL) {
 	return NULL;
     }
 
-    nl = line_count(sig);
+    nl = line_count(sig, &hsize);
     if (doc != NULL) {
-	nl += line_count(doc);
+	nl += line_count(doc, &hsize);
     }
 
-    create_source(vwin, 64, 100, nl, FALSE);
+    create_source(vwin, hsize, 100, nl, FALSE);
     gtk_container_add(GTK_CONTAINER(vwin->vbox), vwin->text);
     gtk_widget_show(vwin->text);
     gtk_window_set_decorated(GTK_WINDOW(vwin->main), FALSE);

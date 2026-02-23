@@ -1265,6 +1265,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     GtkTextTagTable *table = NULL;
     GtkTextTag *tag = NULL;
     GtkTextView *view;
+    int lmargin = 4;
     int cx, cy;
 
     if (textview_use_highlighting(vwin->role)) {
@@ -1283,6 +1284,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	    tag = gtk_text_tag_new("plain");
 	    g_object_set(tag, "foreground", dark ? "white" : "black",
 			 "weight", PANGO_WEIGHT_NORMAL, NULL);
+	    lmargin = 10;
 	}
 	gtk_text_tag_table_add(table, tag);
     }
@@ -1305,7 +1307,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 
     view = GTK_TEXT_VIEW(vwin->text);
     gtk_text_view_set_wrap_mode(view, GTK_WRAP_NONE);
-    gtk_text_view_set_left_margin(view, 4);
+    gtk_text_view_set_left_margin(view, lmargin);
     gtk_text_view_set_right_margin(view, 4);
 #if GTK_MAJOR_VERSION > 2
     gtk_text_view_set_bottom_margin(view, 10);
@@ -1316,7 +1318,12 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     set_source_tabs(vwin->text, cx);
 
     if (hsize > 0) {
-	hsize = hsize * cx + 48;
+	hsize *= cx;
+	if (vwin->role == VIEW_SIGNATURE) {
+	    hsize += 6 * cx;
+	} else {
+	    hsize += 48;
+	}
     }
 
     if (!(vwin->flags & VWIN_SWALLOW) && hsize > 0 && vsize > 0) {
@@ -1339,15 +1346,15 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     gtk_text_view_set_editable(view, editable);
     gtk_text_view_set_cursor_visible(view, editable);
 
-    if (vwin->role != EDIT_HEADER &&
-	vwin->role != VIEW_SIGNATURE) {
+    if (vwin->role != EDIT_HEADER && vwin->role != VIEW_SIGNATURE) {
 	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
 					      script_line_numbers);
     }
     if (lm != NULL) {
 	set_style_for_buffer(sbuf, get_sourceview_style(), vwin->role);
     }
-    if (!(vwin->flags & WVIN_KEY_SIGNAL_SET)) {
+    if (!(vwin->flags & WVIN_KEY_SIGNAL_SET) &&
+	vwin->role != VIEW_SIGNATURE) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(catch_viewer_key), vwin);
     }
