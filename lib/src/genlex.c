@@ -418,6 +418,7 @@ struct str_table funcs[] = {
     { F_MOLS,     "mols" },
     { F_MPOLS,    "mpols" },
     { F_MRLS,     "mrls" },
+    { F_FOLS,     "fols" },
     { F_MREAD,    "mread" },
     { F_MWRITE,   "mwrite" },
     { F_BREAD,    "bread" },

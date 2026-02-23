@@ -1796,6 +1796,7 @@ static gretl_matrix *null_OLS (const gretl_matrix *Y,
 
 gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 			       const gretl_matrix *X,
+			       const gretl_matrix *F,
 			       gretl_matrix *U,
 			       gretl_matrix *V,
 			       gretlopt opt,
@@ -1806,22 +1807,32 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 
     if (gretl_is_null_matrix(Y) || X == NULL) {
 	*err = E_DATA;
+    } else if (opt & OPT_F) {
+	/* factorized */
+	if (gretl_vector_get_length(F) != Y->rows) {
+	    *err = E_DATA;
+	}
+    }
+
+    if (*err) {
 	return NULL;
     }
 
     if (gretl_is_complex(Y) || gretl_is_complex(X) ||
-	gretl_is_complex(U) || gretl_is_complex(V)) {
+	gretl_is_complex(U) || gretl_is_complex(V) ||
+	gretl_is_complex(F)) {
 	fprintf(stderr, "E_CMPLX in user_matrix_ols\n");
 	*err = E_CMPLX;
-	return NULL;
+    } else {
+	T = Y->rows;
+	k = X->cols;
+	g = Y->cols;
+	if (X->rows != T) {
+	    *err = E_NONCONF;
+	}
     }
 
-    T = Y->rows;
-    k = X->cols;
-    g = Y->cols;
-
-    if (X->rows != T) {
-	*err = E_NONCONF;
+    if (*err) {
 	return NULL;
     }
 
@@ -1864,6 +1875,8 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	    if (opt & OPT_M) {
 		/* use multiple precision */
 		*err = gretl_matrix_mp_ols(Y, X, B, V, U, ps2);
+	    } else if (opt & OPT_F) {
+		*err = gretl_matrix_factorized_ols(Y, X, F, B, V, U, ps2);
 	    } else {
 		*err = gretl_matrix_ols(Y, X, B, V, U, ps2);
 	    }

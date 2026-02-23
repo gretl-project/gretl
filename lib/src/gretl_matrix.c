@@ -12868,9 +12868,12 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
-                      gretl_vector *b, gretl_matrix *vcv,
-                      gretl_vector *uhat, double *s2)
+int gretl_matrix_ols (const gretl_vector *y,
+		      const gretl_matrix *X,
+                      gretl_vector *b,
+		      gretl_matrix *vcv,
+                      gretl_vector *uhat,
+		      double *s2)
 {
     gretl_matrix *XTX = NULL;
     gretl_matrix *c = NULL;
@@ -13090,6 +13093,107 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
     if (free_B) {
         gretl_matrix_free(B);
     }
+
+    return err;
+}
+
+int gretl_matrix_factorized_ols (const gretl_vector *y,
+				 const gretl_matrix *X,
+				 const gretl_vector *fac,
+				 gretl_vector *b,
+				 gretl_matrix *vcv,
+				 gretl_vector *uhat,
+				 double *s2)
+{
+    gretl_vector *fvals = NULL;
+    gretl_vector *fy = NULL;
+    gretl_matrix *fX = NULL;
+    double *means = NULL;
+    double x;
+    int *ns = NULL;
+    int T = X->rows;
+    int k = X->cols;
+    int nfvals, fvi;
+    int i, j, t;
+    int err = 0;
+
+    if (y->rows != T || fac->rows != T) {
+	return E_INVARG;
+    }
+
+    fy = gretl_matrix_copy(y);
+    fX = gretl_matrix_copy(X);
+    means = malloc((k+1) * sizeof *means);
+    ns = malloc((k+1) * sizeof *ns);
+
+    if (fy == NULL || fX == NULL || means == NULL || ns == NULL) {
+        err = E_ALLOC;
+        goto bailout;
+    }
+
+    fvals = gretl_matrix_values(fac->val, T, OPT_S, &err);
+    if (err) {
+        goto bailout;
+    }
+
+    nfvals = gretl_vector_get_length(fvals);
+
+    for (i=0; i<nfvals; i++) {
+        fvi = fvals->val[i];
+        for (j=0; j<=k; j++) {
+            means[j] = 0.0;
+            ns[j] = 0;
+        }
+        for (t=0; t<T; t++) {
+            if (fac->val[t] == fvi) {
+                for (j=0; j<=k; j++) {
+                    if (j == 0) {
+                        means[j] += y->val[t];
+                    } else {
+                        means[j] += gretl_matrix_get(X, t, j-1);
+                    }
+                    ns[j] += 1;
+                }
+            }
+        }
+        for (j=0; j<=k; j++) {
+            means[j] /= ns[j];
+        }
+        for (t=0; t<T; t++) {
+            if (fac->val[t] == fvi) {
+                for (j=0; j<=k; j++) {
+                    if (j == 0) {
+                        fy->val[t] -= means[j];
+                    } else {
+                        x = gretl_matrix_get(X, t, j-1);
+                        gretl_matrix_set(fX, t, j-1, x - means[j]);
+                    }
+                }
+            }
+        }
+    }
+
+    err = gretl_matrix_ols(fy, fX, b, vcv, uhat, s2);
+
+    if (!err && (vcv != NULL || s2 != NULL)) {
+	/* correct the degrees of freedom */
+	double adj = (T - k) / (double) (T - k - nfvals);
+
+	if (vcv != NULL) {
+	    gretl_matrix_multiply_by_scalar(vcv, adj);
+	}
+	if (s2 != NULL) {
+	    *s2 *= adj;
+	}
+    }
+
+ bailout:
+
+    gretl_matrix_free(fy);
+    gretl_matrix_free(fX);
+    gretl_matrix_free(fvals);
+    free(means);
+    free(ns);
 
     return err;
 }

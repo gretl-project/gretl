@@ -493,6 +493,7 @@ enum {
     F_MOLS,
     F_MPOLS,
     F_MRLS,
+    F_FOLS,
     F_FILTER,
     F_MCOVG,
     F_KFILTER,
