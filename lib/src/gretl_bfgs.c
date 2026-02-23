@@ -855,8 +855,8 @@ static void optim_get_user_values (double *b, int n, int *maxit,
     double utol;
 
     if (opt & OPT_U) {
-        /* We first check to see if we've been a usable initialization
-           for the parameter estimates.
+        /* We first check to see if we've been given a usable
+	   initialization for the parameter estimates.
         */
         gretl_matrix *uinit;
         int i, uilen;
