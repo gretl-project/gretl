@@ -5,11 +5,10 @@
 \section{Introduction}
 
 This chapter gives a brief account of the issue of correction for
-degrees of freedom in the context of econometric modeling, leading up
-to a discussion of the policies adopted in gretl in this regard.  We
-also explain how to supplement the results produced automatically by
-gretl if you want to apply such a correction where gretl does not, or
-vice versa.
+degrees of freedom in the context of econometric modeling, leading up to
+a discussion of the policies adopted by gretl in this regard.  We also
+explain how to make adjustments if you want to apply such a correction
+where gretl does not, or vice versa.
 
 The first few sections are quite basic; experts are invited to skip to
 section~\ref{sec:df-grey}.
@@ -44,27 +43,25 @@ as
 \sigma^2 = E\left[(x_i - \mu)^2\right]
 \]
 %
-where $\mu = E(x)$. It is clear that if $\mu$ were observable, a
-perfectly good estimator would be
+where $\mu = E(x)$. It is clear that if $\mu$ were known, a perfectly
+good estimator would be
 %
 \[
 \tilde{\sigma}^2 = \frac{1}{n} \sum_{i=1}^n (x_i - \mu)^2.
 \]
 %
-But this is not a practical option: $\mu$ is generally
-unobservable. We therefore substitute $\bar{x}$ for the unknown
-$\mu$. It is easily shown that $\bar{x}$ is the least-squares
-estimator of $\mu$, and also (assuming normality) the ML estimator.
-It is unbiased, but is of course subject to sampling error; in any
-given sample it is highly unlikely that $\bar{x} = \mu$.  Given that
-$\bar{x}$ is the least-squares estimator, the sum of squared
-deviations of the $x_i$ from \textit{any} value other than $\bar{x}$
-must be greater than the summation in (\ref{eq:sigma-hat}).  But since
-$\mu$ is almost certainly not equal to $\bar{x}$, the sum of squared
-deviations of the $x_i$ from $\mu$ will surely be greater than the sum
-of squared deviations in (\ref{eq:sigma-hat}). It follows that the
-expected value of $\hat{\sigma}^2$ falls short of the population
-variance.
+But this is not a practical option: $\mu$ is generally unknown. We
+therefore substitute $\bar{x}$ for the unknown $\mu$. It is easily shown
+that $\bar{x}$ is the least-squares estimator of $\mu$, and also
+(assuming normality) the ML estimator.  It is unbiased, but is of course
+subject to sampling error.  Given that $\bar{x}$ is the least-squares
+estimator, the sum of squared deviations of the $x_i$ from \textit{any}
+value other than $\bar{x}$ must be greater than the summation in
+(\ref{eq:sigma-hat}).  But since $\mu$ is almost certainly not equal to
+$\bar{x}$ in a finite sample, the sum of squared deviations of the $x_i$
+from $\mu$ will surely be greater than the sum of squared deviations in
+(\ref{eq:sigma-hat}). It follows that the expected value of
+$\hat{\sigma}^2$ falls short of the population variance.
 
 The proof that $s^2$ is indeed the unbiased estimator can be found in
 any good statistics textbook, where we also learn that the magnitude
@@ -416,21 +413,21 @@ print GC pvals
 
 Vector Error Correction Models are more complex than VARs in this
 respect, since we employ Johansen's variance estimator for the
-``$\beta$'' terms. 
-This means for example that the \dollar{xtxinv} accessor treats each estimated 
+``$\beta$'' terms.
+This means for example that the \dollar{xtxinv} accessor treats each estimated
 error correction (EC) term as one regressor on its own, such that the sampling uncertainty
-of the loading coefficients is thereby addressed (after Kronecker-multiplying with 
+of the loading coefficients is thereby addressed (after Kronecker-multiplying with
 \dollar{sigma} as before) . The ``internals'' of the EC terms
 are of course made up of the integrated (levels) variables, and the special
 \dollar{jvbeta} accessor is responsible for the variance of the cointegration coefficients,
-where degrees-of-freedom corrections are not available. 
+where degrees-of-freedom corrections are not available.
 
-But as soon as the loading coefficients attached to the EC terms are restricted, there is 
+But as soon as the loading coefficients attached to the EC terms are restricted, there is
 no common set of regressors with freely varying coefficients in the VECM system anymore,
-and therefore in these cases the formulas above are misleading. The \dollar{xtxinv} 
-accessor can still be retrieved (because it does not involve the coefficients), but in 
-the restricted $\alpha$ case it should no longer be used as shown above. 
-The notion of system degrees of freedom then also becomes fuzzier since the number of 
+and therefore in these cases the formulas above are misleading. The \dollar{xtxinv}
+accessor can still be retrieved (because it does not involve the coefficients), but in
+the restricted $\alpha$ case it should no longer be used as shown above.
+The notion of system degrees of freedom then also becomes fuzzier since the number of
 regressors can vary across equations.
 
 %%% Local Variables:
