@@ -13097,6 +13097,30 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
     return err;
 }
 
+/**
+ * gretl_matrix_factorized_ols:
+ * @y: dependent variable vector.
+ * @X: matrix of independent variables.
+ * @fac: discrete factor vector.
+ * @b: vector to hold coefficient estimates, or NULL if this
+ * is not needed.
+ * @vcv: matrix to hold the covariance matrix of the coefficients,
+ * or NULL if this is not needed.
+ * @uhat: vector to hold the regression residuals, or NULL if
+ * these are not needed.
+ * @s2: pointer to receive residual variance, or NULL.  Note:
+ * if @s2 is NULL, the "vcv" estimate will be plain (X'X)^{-1}.
+ *
+ * Works like gretl_matrix_ols() except that prior to the OLS
+ * computation both @y and @X are demeaned, using group means
+ * based on the values of @fac. This is equivalent to regressing
+ * @y on @X along with a set of dummy variables coding for the
+ * value of @fac, but potentially much more efficient if @fac
+ * has many distinct values.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
 int gretl_matrix_factorized_ols (const gretl_vector *y,
 				 const gretl_matrix *X,
 				 const gretl_vector *fac,
