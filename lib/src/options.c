@@ -563,6 +563,7 @@ struct gretl_option gretl_opts[] = {
     { PANPLOT,  OPT_B, "boxplots", 0 },
     { PANPLOT,  OPT_C, "boxplot", 0 },
     { PANPLOT,  OPT_Y, "single-yaxis", 0 },
+    { PANPLOT,  OPT_W, "font", 2 },
     { PANSPEC,  OPT_M, "matrix-diff", 0 },
     { PANSPEC,  OPT_N, "nerlove", 0 },
     { POISSON,  OPT_R, "robust", 0 },

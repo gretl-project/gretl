@@ -7714,6 +7714,7 @@ int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt)
    In addition there are some gnuplot-compatible options:
 
    OPT_Y --single-yaxis
+   OPT_W --font
    OPT_U --output=...
    OPT_b --outbuf=...
 */
@@ -7770,7 +7771,7 @@ int cli_panel_plot (const int *list, const char *literal,
     /* transcribe any gnuplot-compatible flags from the
        incoming @opt to @gp_opt
     */
-    transcribe_option_flags(&gp_opt, opt, OPT_U | OPT_b | OPT_Y);
+    transcribe_option_flags(&gp_opt, opt, OPT_U | OPT_b | OPT_Y | OPT_W);
 
     if (opt & (OPT_U | OPT_b)) {
         /* handle output or outbuf spec */
