@@ -7488,9 +7488,9 @@ static int panel_overlay_ts_plot (const int vnum,
         const char *vname = panel_group_names_varname(dset);
 
         if (vname != NULL) {
-            title = g_strdup_printf("%s by %s", gname, vname);
+            title = g_strdup_printf(_("%s by %s"), gname, vname);
         } else {
-            title = g_strdup_printf("%s by group", gname);
+            title = g_strdup_printf(_("%s by group"), gname);
         }
         my_literal = g_strdup_printf("set title '%s' ; set xlabel ;", title);
     }
