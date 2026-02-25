@@ -175,7 +175,7 @@ static int prn_add_tempfile (PRN *prn)
     }
 
     sprintf(prn->fname, "%sprntmp.XXXXXX", dotdir);
-    prn->fp = gretl_mktemp(prn->fname, "w+");
+    prn->fp = gretl_mktemp(prn->fname, "w+b");
 
 #if PRN_DEBUG
     fprintf(stderr, "prn_add_tempfile: '%s' at %p\n",

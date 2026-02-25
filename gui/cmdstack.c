@@ -168,7 +168,7 @@ static int session_logfile_init (void)
     char timestr[64];
     FILE *fp;
 
-    fp = gretl_fopen(logname, "a+");
+    fp = gretl_fopen(logname, "a+b");
     if (fp == NULL) {
 	return E_FOPEN;
     }
