@@ -12913,7 +12913,7 @@ int gretl_matrix_ols (const gretl_vector *y,
     }
 
     /* It should be worth using lapack's Cholesky routine if the input
-       is big enough, but this condition could do with some more tuning?
+       is big enough, but what's the best definition of "big enough"?
     */
     if (k >= 50 || (T >= 250 && k >= 30)) {
         use_lapack = 1;
