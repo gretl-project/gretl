@@ -392,11 +392,11 @@ The gretl command \cmd{johansen} performs these two
 tests. The corresponding menu entry in the GUI is ``Model, Time
 Series, Cointegration Test, Johansen''.
 
-As in the ADF test, the asymptotic distribution of the tests varies
-with the deterministic component $\mu_t$ one includes in the VAR (see
-section \ref{sec:coint-5cases} above). The following code uses the
-\cmd{denmark} data file, supplied with gretl, to replicate
-Johansen's example found in his 1995 book.
+As in the ADF test, the asymptotic distribution of the tests varies with
+the deterministic component $\mu_t$ one includes in the VAR (see section
+\ref{sec:coint-5cases} above). The following code uses the \cmd{denmark}
+data file, supplied with gretl, to replicate an example found in
+Johansen's 1995 book.
 %
 \begin{code}
 open denmark
@@ -1143,11 +1143,11 @@ restrict
 end restrict
 \end{code}
 
-In this example---from \cite{johansen95}---the cointegration rank is 1
-and there are four variables.  However, the model includes a
-restricted constant (the \option{rc} flag) so $\beta$ has 5 elements.
-The $\alpha$ matrix has 4 elements, one per equation.  So the matrix
-\texttt{BA} may be read as
+In this example---from \cite[pp.\ 114--115]{johansen95}---the
+cointegration rank is 1 and there are four variables.  However, the
+model includes a restricted constant (the \option{rc} flag) so $\beta$
+has 5 elements.  The $\alpha$ matrix has 4 elements, one per equation.
+So the matrix \texttt{BA} may be read as
 \[
 \left(\beta_1, \beta_2, \beta_3, \beta_4, \beta_5,
  \alpha_1, \alpha_2, \alpha_3, \alpha_4 \right)
