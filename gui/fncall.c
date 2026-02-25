@@ -1799,7 +1799,7 @@ static GtkWidget *double_arg_selector (call_info *cinfo, int i,
 	err = min_max_def_from_ui(ui, dvals, 0);
         if (!err) {
             minv = dvals[0];
-            minv = dvals[1];
+            maxv = dvals[1];
             dflt = dvals[2];
         }
     }
