@@ -3,13 +3,13 @@
 # SPDX-FileCopyrightText: 2025 Juan I. Modroño <juan.modrono@ehu.eus>
 # This file is distributed under the same license as the gretl package.
 #
-# Juan I. Modroño <juan.modrono@ehu.eus>, 2025.
+# Juan I. Modroño <juan.modrono@ehu.eus>, 2026.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-2025c\n"
+"Project-Id-Version: gretl-2026b\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-24 08:54-0500\n"
-"PO-Revision-Date: 2025-06-26 17:50+0200\n"
+"PO-Revision-Date: 2026-02-25 12:20+0100\n"
 "Last-Translator: Juan I. Modroño <juan.modrono@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Lokalize 23.08.5\n"
+"X-Generator: Emacs (PO-Edit package)\n"
 
 #: lib/src/addons_utils.c:187
 msgid "try"
@@ -648,6 +648,8 @@ msgid ""
 "replicate_estimator() failed:\n"
 " %d observations used versus %d for the original model"
 msgstr ""
+"Ha fallado replicate_estimator():\n"
+" %d observaciones usadas versus %d en el modelo original"
 
 #: lib/src/compare.c:967 lib/src/compare.c:2586 lib/src/graphing.c:4759
 #: lib/src/graphing.c:4771 lib/src/graphing.c:6973 lib/src/printout.c:1552
@@ -1146,7 +1148,7 @@ msgstr "Suponiendo que la comilla simple es el carácter adecuado para citas\n"
 
 #: lib/src/csvdata.c:1586
 msgid "unmatched quotation marks in CSV file"
-msgstr ""
+msgstr "Comillas no emparejadas en el fichero CSV"
 
 #: lib/src/csvdata.c:1587
 msgid "Quotation broken: marks not paired\n"
@@ -2279,7 +2281,7 @@ msgstr "Percentil del 95%"
 
 #: lib/src/describe.c:5112
 msgid "Interquartile range"
-msgstr "Rango intercuartílico"
+msgstr "Recorrido intercuartílico"
 
 #: lib/src/describe.c:5113 lib/src/describe.c:5335 lib/src/describe.c:6009
 #: gui/guiprint.c:337 gui/guiprint.c:774
@@ -2949,8 +2951,8 @@ msgstr "Tipo de operando incorrecto para el operador de un solo parámetro '&'"
 #: lib/src/geneval.c:6448
 msgid "The first argument must be a named series in the current dataset"
 msgstr ""
-"El primer argumento debe ser una serie con nombre que esté en el conjunto "
-"de  datos actual"
+"El primer argumento debe ser una serie con nombre que esté en\n"
+"el conjunto de datos actual"
 
 #: lib/src/geneval.c:8491 lib/src/geneval.c:8529 lib/src/gretl_func.c:10222
 #, c-format
@@ -9122,7 +9124,7 @@ msgstr "Fuera de memoria en la codificación XML"
 #: lib/src/strutils.c:3562
 #, c-format
 msgid "Unknown escape sequence '\\%c'"
-msgstr ""
+msgstr "Secuencia de escape '\\%c' desconocida"
 
 #: lib/src/subsample.c:744
 msgid "You cannot subsample a resampled dataset"
@@ -13872,6 +13874,9 @@ msgid ""
 "that assignment of the return value from the function is not optional, when\n"
 "it is called from the graphical interface."
 msgstr ""
+"Al marcar la opción \"debe asignarse\" para una función pública, vd. especifica\n"
+"que la asignación del valor devuelto por la función no es opcional, cuando\n"
+"se le llama desde el interfaz gráfico."
 
 #: gui/fnsave.c:2793
 #, fuzzy
@@ -13880,7 +13885,7 @@ msgstr "Guardar funciones"
 
 #: gui/fnsave.c:2796
 msgid "must assign"
-msgstr ""
+msgstr "debe asignarse"
 
 #: gui/fnsave.c:2832
 msgid ""
@@ -13928,7 +13933,7 @@ msgstr "Dependencias"
 
 #: gui/fnsave.c:3798
 msgid "Must assign"
-msgstr ""
+msgstr "Debe asignarse"
 
 #: gui/fnsave.c:3907
 msgid "Email"
@@ -15174,7 +15179,7 @@ msgstr "Recuperar el rango _completo"
 
 #: gui/gretl.c:2004
 msgid "_Show status"
-msgstr "_Ver el status actual"
+msgstr "_Ver el estado actual"
 
 #: gui/gretl.c:2005
 msgid "_Restrict, based on criterion..."
@@ -19163,7 +19168,7 @@ msgstr "Guardar como TeX..."
 
 #: gui/session.c:193 gui/session.c:3658
 msgid "View using gnuplot"
-msgstr ""
+msgstr "Ver usando gnuplot"
 
 #: gui/session.c:194 gui/session.c:3652
 msgid "Edit plot commands"
