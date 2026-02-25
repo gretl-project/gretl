@@ -1,3 +1,9 @@
+version 2026b, in progress
+
+The option to suppress the printout from the "corrgm" and
+"xcorrgm" commands has been renamed from --silent to --quiet,
+but --silent will still work until further notice.
+
 2026-01-30 version 2026a
 
 Random number generation: switch from SFMT to xoshiro256+, so

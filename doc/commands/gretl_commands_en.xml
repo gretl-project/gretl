@@ -2293,7 +2293,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print anything</effect>
+	  <effect>suppress printed output</effect>
         </option>
 	<option>
 	  <flag>--acf-only</flag>
