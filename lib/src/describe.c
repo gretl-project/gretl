@@ -3730,6 +3730,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     int do_pacf = 1;
     int t1 = dset->t1;
     int t2 = dset->t2;
+    int quiet = 0;
     int err = 0;
 
     if (!dataset_is_time_series(dset)) {
@@ -3737,6 +3738,10 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     } else if (order < 0) {
 	gretl_errmsg_sprintf(_("Invalid lag order %d"), order);
 	return E_DATA;
+    }
+
+    if (opt & (OPT_Q | OPT_S)) {
+	quiet = 1;
     }
 
     gretl_error_clear();
@@ -3760,7 +3765,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
 	return E_DATA;
     }
 
-    if (opt & OPT_Q) {
+    if (quiet) {
 	do_print = 0;
 	BPMcols = 1;
     }
@@ -4215,7 +4220,7 @@ int xcorrgram (const int *list, int order, DATASET *dset,
 	return err;
     }
 
-    if (opt & OPT_Q) {
+    if (opt & (OPT_Q | OPT_S)) {
 	/* suppress printing */
 	do_print = 0;
     }
