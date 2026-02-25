@@ -7784,6 +7784,8 @@ int cli_panel_plot (const int *list, const char *literal,
         }
     }
 
+    set_effective_plot_ci(PANPLOT);
+
     if (opt & OPT_M) {
         /* --means */
         err = panel_means_ts_plot(vnum, literal, dset, gp_opt);
@@ -7808,6 +7810,8 @@ int cli_panel_plot (const int *list, const char *literal,
         gp_opt &= ~OPT_Y;
         err = boxplots(list, literal, dset, gp_opt);
     }
+
+    reset_effective_plot_ci();
 
     return err;
 }

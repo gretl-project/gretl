@@ -12020,6 +12020,11 @@
 	  <flag>--boxplot</flag>
 	  <effect>single boxplot, all groups</effect>
         </option>
+        <option>
+	  <flag>--font</flag>
+	  <optparm>fontspec</optparm>
+	  <effect>see below</effect>
+        </option>
 	<option>
 	  <flag>--output</flag>
 	  <optparm>filename</optparm>
@@ -12058,9 +12063,10 @@
 	smpl full
       </code>
       <para>
-	The <opt>output=</opt><repl>filename</repl> option can be
-	used to control the form and destination of the output; see
-	the <cmdref targ="gnuplot"/> command for details.
+	The <opt>output=</opt><repl>filename</repl> option can be used
+	to control the form and destination of the output. For details
+	on this option and also <opt>font</opt> see the <cmdref
+	targ="gnuplot"/> command.
       </para>
 
     </description>
