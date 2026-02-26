@@ -125,6 +125,7 @@ struct str_table dvars[] = {
     { R_HUGE,      "$huge" },
     { R_NOW,       "$now" },
     { R_RESULT,    "$result" },
+    { R_GRPNAMES,  "$grpnames" },
     { R_PNGFONT,   "$pngfont" },
     { R_MAPFILE,   "$mapfile" },
     { R_MAP,       "$map" },

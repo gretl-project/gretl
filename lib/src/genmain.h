@@ -55,6 +55,7 @@ typedef enum {
     R_TEST_PVAL,  /* last test p-value(s) (scalar or matrix) */
     R_NOW,        /* current date/time (matrix) */
     R_RESULT,     /* result of a "result-compatible" command */
+    R_GRPNAMES,   /* panel group names (array of strings) */
     R_PNGFONT,    /* name of font selected for plots */
     R_MAPFILE,    /* name of current map file, if any */
     R_MAP,        /* current map (if any) as bundle */

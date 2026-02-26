@@ -6062,12 +6062,11 @@ int is_panel_group_names_series (const DATASET *dset, int v)
     }
 }
 
-/* For plotting purposes, try to get labels for panel groups,
-   subject to the constraint that they should be no longer
-   than @maxlen. If successful, this will return an array of
-   at least N strings, where N is the cross-sectional
-   dimension of the panel. This array should be treated as
-   read-only.
+/* For plotting purposes, try to get labels for panel groups, subject
+   to the constraint that they should be no longer than @maxlen. If
+   successful, this will return an array of at least N strings, where
+   N is the cross-sectional dimension of the panel. This array should
+   be treated as read-only.
 */
 
 series_table *get_panel_group_table (const DATASET *dset,
@@ -6100,6 +6099,34 @@ series_table *get_panel_group_table (const DATASET *dset,
     return st;
 }
 
+/* For a panel dataset, when a group-names series is in place,
+   returns an array holding the unique names applicable in the
+   current sample range.
+*/
+
+void *get_panel_group_names (const DATASET *dset, int *err)
+{
+    gretl_array *a = NULL;
+
+    if (dataset_is_panel(dset) && dset->pangrps != NULL) {
+	int v = current_series_index(dset, dset->pangrps);
+
+	if (v < 0) {
+	    *err = E_UNKVAR;
+	} else {
+	    char **S;
+	    int ns;
+
+	    S = series_get_string_vals(dset, v, &ns, 1);
+	    if (S != NULL) {
+		a = gretl_array_from_strings(S, ns, 1, err);
+	    }
+	}
+    }
+
+    return a;
+}
+
 int is_dataset_series (const DATASET *dset, const double *x)
 {
     int i;
@@ -6113,9 +6140,9 @@ int is_dataset_series (const DATASET *dset, const double *x)
     return 0;
 }
 
-/* Given a @delta in epoch days, a day-of-week in @wd, and
-   days-per-week in @pd, determine the number of days
-   skipped relative to a "full calendar".
+/* Given a @delta in epoch days, a day-of-week in @wd, and days per
+   week in @pd, determine the number of days skipped relative to a
+   "full calendar".
 */
 
 static int effective_daily_skip (int delta, int wd, int pd)

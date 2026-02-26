@@ -17273,6 +17273,11 @@ static NODE *dollar_var_node (NODE *t, parser *p)
             if (ret != NULL) {
                 ret->v.str = gretl_png_font_string();
             }
+	} else if (idx == R_GRPNAMES) {
+	    ret = aux_array_node(p);
+            if (ret != NULL) {
+                ret->v.a = get_panel_group_names(p->dset, &p->err);
+            }
         } else if (idx == R_MAPFILE) {
             const char *fname = dataset_get_mapfile(p->dset);
 

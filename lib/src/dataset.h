@@ -620,6 +620,8 @@ int is_panel_group_names_series (const DATASET *dset, int v);
 series_table *get_panel_group_table (const DATASET *dset,
 				     int maxlen, int *pv);
 
+void *get_panel_group_names (const DATASET *dset, int *err);
+
 int is_dataset_series (const DATASET *dset, const double *x);
 
 int postprocess_daily_data (DATASET *dset, const int *list);
