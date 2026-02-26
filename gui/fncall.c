@@ -89,6 +89,7 @@ struct call_info_ {
     gchar **args;        /* its arguments */
     gchar *ret;          /* return assignment name */
     gchar *label;        /* the function's label */
+    gchar *errmsg;       /* error message */
 };
 
 #define scalar_arg(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_SCALAR_REF)
@@ -182,12 +183,20 @@ static call_info *cinfo_new (fnpkg *pkg, int is_addon, windata_t *vwin)
 
     cinfo->args = NULL;
     cinfo->ret = NULL;
+    cinfo->errmsg = NULL;
 
     cinfo->dreq = FN_NEEDS_DATA;
     cinfo->modelreq = 0;
     cinfo->label = NULL;
 
     return cinfo;
+}
+
+static void post_cinfo_error (call_info *cinfo)
+{
+    errbox(cinfo->errmsg);
+    g_free(cinfo->errmsg);
+    cinfo->errmsg = NULL;
 }
 
 static int *mylist; /* custom list constructed by gfn */
@@ -520,6 +529,7 @@ static int cinfo_args_init (call_info *cinfo)
 
     cinfo->args = NULL;
     cinfo->ret = NULL;
+    cinfo->errmsg = NULL;
 
     if (cinfo->n_params > 0) {
 	cinfo->args = glib_str_array_new(cinfo->n_params);
@@ -568,6 +578,7 @@ static void cinfo_free (call_info *cinfo)
     g_free(cinfo->pkgver);
 
     g_free(cinfo->label);
+    g_free(cinfo->errmsg);
     free(cinfo->publist);
     free(cinfo);
 }
@@ -1708,12 +1719,9 @@ static int fn_min_max_deflt (call_info *cinfo, int i,
     mmd[1] = fn_param_maxval(cinfo->func, i);
     mmd[2] = fn_param_default(cinfo->func, i);
 
-    fprintf(stderr, "(1) %g: %g: %g\n", mmd[0], mmd[1], mmd[2]);
-
     if (ui != NULL) {
 	/* check for run-time updates */
 	err = min_max_def_from_ui(ui, mmd);
-	fprintf(stderr, "(2) %g: %g: %g, err %d\n", mmd[0], mmd[1], mmd[2], err);
 	if (!err) {
 	    if (mmd[0] > mmd[1] || mmd[2] < mmd[0] || mmd[2] > mmd[1]) {
                 err = 1;
@@ -1990,6 +1998,18 @@ static void arg_combo_set_default (call_info *cinfo,
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);
 }
 
+static void maybe_attach_min_max (GtkWidget *w, double *mmd)
+{
+    if (!na(mmd[0]) || !na(mmd[1])) {
+	gretl_matrix *v = gretl_matrix_alloc(1,2);
+
+	v->val[0] = mmd[0];
+	v->val[1] = mmd[1];
+	g_object_set_data_full(G_OBJECT(w), "minmax", v,
+			       (GDestroyNotify) gretl_matrix_free);
+    }
+}
+
 /* Create an argument selector widget in the form of a GtkComboBox,
    with an entry field plus a drop-down list (which may initially be
    empty).
@@ -2006,17 +2026,21 @@ static GtkWidget *combo_arg_selector (call_info *cinfo,
     double mmd[3];
     int null_OK = 0;
 
+    combo = combo_box_text_new_with_entry();
+
     if (ptype == GRETL_TYPE_DOUBLE &&
 	fn_param_has_default(cinfo->func, i)) {
 	int err;
 
 	err = fn_min_max_deflt(cinfo, i, ui, mmd);
 	if (err) {
+	    gtk_widget_destroy(combo);
 	    return NULL;
+	} else {
+	    maybe_attach_min_max(combo, mmd);
 	}
     }
 
-    combo = combo_box_text_new_with_entry();
     entry = gtk_bin_get_child(GTK_BIN(combo));
     widget_set_int(combo, "argnum", i);
     g_object_set_data(G_OBJECT(entry), "cinfo", cinfo);
@@ -2608,14 +2632,51 @@ static int needs_quoting (call_info *cinfo, int i)
 	    *s != '"');
 }
 
+/* scalar_bounds_check(): we're looking at a scalar arg for which
+   we're not able to construct a spin-button selector with min, max
+   and default set. If min and max have been recorded for this arg, in
+   the form of a little matrix attached to the combo box selector, we
+   can check here for the validity of the current value.
+*/
+
+static int scalar_bounds_check (call_info *cinfo, int i)
+{
+    gretl_matrix *v;
+    double x;
+    int err = 0;
+
+    x = gretl_double_from_string(cinfo->args[i], &err);
+    if (err) {
+	cinfo->errmsg = g_strdup_printf("'%s': invalid argument", cinfo->args[i]);
+	return err;
+    }
+
+    v = g_object_get_data(G_OBJECT(cinfo->sels[i]), "minmax");
+    if (v != NULL) {
+	if (x < v->val[0]) {
+	    cinfo->errmsg = g_strdup_printf("Argument %d has a minimum of %g",
+					    i+1, v->val[0]);
+	    err = E_INVARG;
+	} else if (x > v->val[1]) {
+	    cinfo->errmsg = g_strdup_printf("Argument %d has a maximum of %g",
+					    i+1, v->val[1]);
+	    err = E_INVARG;
+	}
+    }
+
+    return err;
+}
+
 static int pre_process_args (call_info *cinfo, int *autolist,
-			     PRN *prn)
+			     int *badpos, PRN *prn)
 {
     char auxline[MAXLINE];
     char auxname[VNAMELEN+2];
     int i, add = 0, err = 0;
 
     for (i=0; i<cinfo->n_params && !err; i++) {
+	GretlType ptype = fn_param_type(cinfo->func, i);
+
 	if (should_addressify_var(cinfo, i)) {
 	    sprintf(auxname, "FNARG%d", i + 1);
 	    sprintf(auxline, "%s=%s", auxname, cinfo->args[i]);
@@ -2628,7 +2689,12 @@ static int pre_process_args (call_info *cinfo, int *autolist,
 	    }
 	}
 
-	err = maybe_add_amp(cinfo, i, prn, &add);
+	if (!err) {
+	    err = maybe_add_amp(cinfo, i, prn, &add);
+	}
+	if (err) {
+	    break;
+	}
 
 	if (add) {
 	    strcpy(auxname, "&");
@@ -2643,22 +2709,32 @@ static int pre_process_args (call_info *cinfo, int *autolist,
 	    cinfo->args[i] = g_strdup(auxname);
 	}
 
-	if (fn_param_type(cinfo->func, i) == GRETL_TYPE_OBS) {
+	if (ptype == GRETL_TYPE_DOUBLE &&
+	    GTK_IS_COMBO_BOX(cinfo->sels[i])) {
+	    err = scalar_bounds_check(cinfo, i);
+	} else if (ptype == GRETL_TYPE_OBS) {
 	    /* convert integer value from 0- to 1-based */
 	    int val = atoi(cinfo->args[i]) + 1;
 
 	    g_free(cinfo->args[i]);
 	    cinfo->args[i] = g_strdup_printf("%d", val);
-	} else if (fn_param_type(cinfo->func, i) == GRETL_TYPE_LIST) {
+	} else if (ptype == GRETL_TYPE_LIST) {
 	    /* do we have an automatic (main window) list arg? */
 	    if (!strcmp(cinfo->args[i], SELNAME)) {
-		user_var_add(AUTOLIST, GRETL_TYPE_LIST,
-			     main_window_selection_as_list());
-		g_free(cinfo->args[i]);
-		cinfo->args[i] = g_strdup(AUTOLIST);
-		*autolist = i;
+		err = user_var_add(AUTOLIST, GRETL_TYPE_LIST,
+				   main_window_selection_as_list());
+		if (!err) {
+		    g_free(cinfo->args[i]);
+		    cinfo->args[i] = g_strdup(AUTOLIST);
+		    *autolist = i;
+		}
 	    }
 	}
+    }
+
+    if (err) {
+	/* identify the argument that generated an error */
+	*badpos = i;
     }
 
     return err;
@@ -3015,15 +3091,23 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
     } else {
 	PRN *prn = NULL;
 	int autopos = -1;
+	int badpos = -1;
 	int close_on_exec;
 	int err;
 
 	err = bufopen(&prn);
 
 	if (!err && cinfo->args != NULL) {
-	    err = pre_process_args(cinfo, &autopos, prn);
+	    err = pre_process_args(cinfo, &autopos, &badpos, prn);
 	    if (err) {
-		gui_errmsg(err);
+		if (cinfo->errmsg != NULL) {
+		    post_cinfo_error(cinfo);
+		} else {
+		    errbox_printf("Error processing argument %d", badpos);
+		}
+		gtk_widget_grab_focus(cinfo->sels[badpos-1]);
+		gretl_print_destroy(prn);
+		return;
 	    }
 	}
 
