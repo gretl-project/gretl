@@ -1880,6 +1880,11 @@ static gboolean real_find_in_listbox (windata_t *vwin,
                vwin->role == DBNOMICS_CATS) {
 	search_cols[0] = 1;  /* content */
 	search_cols[1] = 0;  /* code */
+    } else if (vwin->role == TEXTBOOK_DATA &&
+	       gtk_tree_view_get_n_columns(GTK_TREE_VIEW(vwin->listbox)) == 3) {
+	search_cols[0] = 1;  /* summary */
+	search_cols[1] = 0;  /* filename */
+	search_cols[2] = 2;  /* type */
     } else {
 	/* databases, datafiles */
 	search_cols[0] = 1; /* description */

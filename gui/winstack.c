@@ -49,18 +49,15 @@ static gint select_other_window (gpointer self, int seq);
 
 /* Below: apparatus for keeping track of open gretl windows.
 
-   This provides the basis for a pop-up listing of windows as
-   a means of navigating the multi-window gretl GUI; it also
-   gives the basis for checking whether a window performing
-   a given role is already open, so as to avoid duplication,
-   and for closing any windows that are "invalidated" when
-   the gretl session is switched (e.g. by opening a new
-   data file).
+   This provides the basis for a pop-up listing of windows as a means
+   of navigating the multi-window gretl GUI; it also gives the basis
+   for checking whether a window performing a given role is already
+   open, so as to avoid duplication, and for closing any windows that
+   are "invalidated" when the gretl session is switched (e.g. by
+   opening a new data file).
 */
 
-/* get the top-level widget associated with pre-defined
-   @action
-*/
+/* get the top-level widget associated with pre-defined @action */
 
 static GtkWidget *window_from_action (GtkAction *action)
 {

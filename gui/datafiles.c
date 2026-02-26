@@ -2108,6 +2108,7 @@ static void make_browser_window (int role, const gchar *path,
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 
+    /* add a toolbar */
     make_files_toolbar(vwin);
 
     if (notebook_needed(role)) {
