@@ -1819,6 +1819,19 @@ static void find_in_text (GtkWidget *button, GtkWidget *dialog)
 
 #ifndef GRETL_EDIT
 
+static int tree_view_n_cols (GtkWidget *w)
+{
+# if GTK_MAJOR_VERSION == 2
+    GList *L = gtk_tree_view_get_columns(GTK_TREE_VIEW(w));
+    int n = g_list_length(L);
+
+    g_list_free(L);
+    return n;
+# else
+    return gtk_tree_view_get_n_columns(GTK_TREE_VIEW(w));
+# endif
+}
+
 static gboolean real_find_in_listbox (windata_t *vwin,
 				      const gchar *s,
 				      gboolean sensitive,
@@ -1881,7 +1894,7 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 	search_cols[0] = 1;  /* content */
 	search_cols[1] = 0;  /* code */
     } else if (vwin->role == TEXTBOOK_DATA &&
-	       gtk_tree_view_get_n_columns(GTK_TREE_VIEW(vwin->listbox)) == 3) {
+	       tree_view_n_cols(vwin->listbox) == 3) {
 	search_cols[0] = 1;  /* summary */
 	search_cols[1] = 0;  /* filename */
 	search_cols[2] = 2;  /* type */
