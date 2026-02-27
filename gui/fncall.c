@@ -2336,22 +2336,14 @@ static int function_call_dialog (call_info *cinfo)
 
 	add_table_cell(tbl, sel, 1, 2, row);
 
-	/* hook up signals and "+" add buttons for the
-	   selectors for most types of arguments (though
-	   not for bool and spin-type args)
+	/* Hook up "+" define-variable buttons for the selectors for
+	   certain types of arguments.
 	*/
-
 	if (series_arg(ptype)) {
 	    button = add_new_object_button(ptype, sel, parname);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked",
 			     G_CALLBACK(launch_series_maker),
-			     cinfo);
-	} else if (0 /* scalar_arg(ptype) && !spinnable */) {
-	    button = add_new_object_button(ptype, sel, parname);
-	    add_table_cell(tbl, button, 2, 3, row);
-	    g_signal_connect(G_OBJECT(button), "clicked",
-			     G_CALLBACK(launch_scalar_maker),
 			     cinfo);
 	} else if (matrix_arg(ptype)) {
 	    button = add_new_object_button(ptype, sel, parname);
