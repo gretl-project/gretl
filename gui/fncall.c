@@ -1439,16 +1439,6 @@ static void launch_series_maker (GtkWidget *button, call_info *cinfo)
 		VARCLICK_INSERT_NAME, cinfo->dlg);
 }
 
-static void launch_scalar_maker (GtkWidget *button, call_info *cinfo)
-{
-    GtkWidget *combo = g_object_get_data(G_OBJECT(button), "combo");
-
-    edit_dialog(GENR, _("add scalar"),
-		_("Enter name=formula for new scalar"), NULL,
-		do_fncall_genr, combo,
-		VARCLICK_INSERT_NAME, cinfo->dlg);
-}
-
 /* Try getting the runtime default for a boolean parameter */
 
 static double default_from_ui (gretl_bundle *ui, int *err)

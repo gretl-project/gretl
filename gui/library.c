@@ -5138,52 +5138,35 @@ void do_selector_genr (GtkWidget *w, dialog_t *dlg)
     }
 }
 
-/* callback for defining new series or scalar variable
-   from the GUI function-call dialog
+/* Callback for defining a new series from the GUI function-call
+   dialog.
 */
 
 void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
 {
     gchar *s = get_genr_string(NULL, dlg);
     gpointer p = edit_dialog_get_data(dlg);
-    int scalargen = 0, oldv = -1;
-    int type, err;
+    int oldv = dataset->v;
+    int err;
 
     if (s == NULL) {
         return;
+    } else {
+	while (isspace((unsigned char) *s)) s++;
     }
 
-    while (isspace((unsigned char) *s)) s++;
-
-    type = widget_get_int(p, "ptype");
-
-    if (type == GRETL_TYPE_SERIES) {
-        if (!strncmp(s, "series", 6)) {
-            lib_command_strcpy(s);
-        } else {
-            lib_command_sprintf("series %s", s);
-        }
-        oldv = dataset->v;
-    } else if (type == GRETL_TYPE_DOUBLE) {
-        if (!strncmp(s, "scalar", 6)) {
-            lib_command_strcpy(s);
-        } else {
-            lib_command_sprintf("scalar %s", s);
-        }
-        oldv = n_user_scalars();
-        scalargen = 1;
+    if (!strncmp(s, "series ", 7)) {
+	lib_command_strcpy(s);
+    } else {
+	lib_command_sprintf("series %s", s);
     }
 
     g_free(s);
 
     err = finish_genr(NULL, dlg, 0);
 
-    if (!err) {
-        int newv = (scalargen)? n_user_scalars(): dataset->v;
-
-        if (oldv >= 0 && newv > oldv) {
-            fncall_register_genr(newv - oldv, p);
-        }
+    if (!err && dataset->v > oldv) {
+	fncall_register_genr(dataset->v - oldv, p);
     }
 }
 
