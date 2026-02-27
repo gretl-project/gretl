@@ -46,6 +46,7 @@ struct JohansenInfo_ {
     gretl_matrix *Gamma;  /* I - sum of \Gamma_i matrices */
     gretl_matrix *JC;     /* Johansen's 'C' (Lütkepohl's $\Xi$) */
     gretl_matrix *JVC;    /* Variance of vec(C) */
+    gretl_matrix *Cse;    /* Standard errors of C */
     gretl_matrix *Bvar;   /* variance matrix of beta */
     gretl_matrix *Bse;    /* standard errors of beta */
     gretl_matrix *Ase;    /* standard errors of alpha */

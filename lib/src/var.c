@@ -927,6 +927,7 @@ static void johansen_info_free (GRETL_VAR *var)
     gretl_matrix_free(jv->Gamma);
     gretl_matrix_free(jv->JC);
     gretl_matrix_free(jv->JVC);
+    gretl_matrix_free(jv->Cse);
     gretl_matrix_free(jv->Bvar);
     gretl_matrix_free(jv->Bse);
     gretl_matrix_free(jv->Ase);
@@ -3330,6 +3331,7 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
     jv->Gamma = NULL;
     jv->JC = NULL;
     jv->JVC = NULL;
+    jv->Cse = NULL;
     jv->Bse = NULL;
     jv->Ase = NULL;
     jv->Bvar = NULL;
@@ -4711,6 +4713,7 @@ static void johansen_serialize (JohansenInfo *j, PRN *prn)
     gretl_matrix_serialize(j->Gamma, "Gamma", prn);
     gretl_matrix_serialize(j->JC, "long_run", prn);
     gretl_matrix_serialize(j->JVC, "cov_long_run", prn);
+    gretl_matrix_serialize(j->Cse, "se_long_run", prn);
     gretl_matrix_serialize(j->R, "R", prn);
     gretl_matrix_serialize(j->q, "q", prn);
     gretl_matrix_serialize(j->Ra, "Ra", prn);
@@ -4912,8 +4915,10 @@ static gretl_matrix *johansen_Sigma (const GRETL_VAR *var,
     return S;
 }
 
-/* See Johansen's 1995 book, around page 190: produce the
-   variance matrix of the vec of the "long-run matrix", C.
+/* See Johansen's 1995 book, around page 190: produce the variance
+   matrix of the vec of the "long-run matrix", C, and also, as a
+   convenience, a matrix holding the standard errors of the elements
+   of C.
 */
 
 static int add_johansen_lr_variance (const GRETL_VAR *var,
@@ -4924,6 +4929,7 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
     gretl_matrix *VC = NULL;
     gretl_matrix *V1 = NULL;
     gretl_matrix *V2 = NULL;
+    gretl_matrix *Cse = NULL;
     gretl_matrix *aa = NULL;
     gretl_matrix *abar = NULL;
     gretl_matrix *b = NULL;
@@ -5045,6 +5051,10 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
 	/* VC = (V2 ** V1) / T */
 	gretl_matrix_kronecker_product(V2, V1, VC);
 	gretl_matrix_divide_by_scalar(VC, var->T);
+	Cse = gretl_matrix_alloc(p, p);
+	for (i=0; i<p*p; i++) {
+	    Cse->val[i] = sqrt(gretl_matrix_get(VC, i, i));
+	}
     }
 
  bailout:
@@ -5058,6 +5068,7 @@ static int add_johansen_lr_variance (const GRETL_VAR *var,
 	gretl_matrix_free(VC);
     } else {
 	ji->JVC = VC;
+	ji->Cse = Cse;
     }
 
     return err;
@@ -5239,10 +5250,12 @@ static gretl_bundle *johansen_bundlize (const GRETL_VAR *var,
         add_johansen_C(j);
         if (j->JC != NULL) {
             gretl_bundle_set_matrix(b, "long_run", j->JC);
-	    /* note: still somewhat experimental */
 	    add_johansen_lr_variance(var, dset);
 	    if (j->JVC != NULL) {
 		gretl_bundle_set_matrix(b, "cov_long_run", j->JVC);
+	    }
+	    if (j->Cse != NULL) {
+		gretl_bundle_set_matrix(b, "se_long_run", j->Cse);
 	    }
 	}
     }
