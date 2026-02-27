@@ -15648,11 +15648,26 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
     return ret;
 }
 
+static GretlType get_type_for_array (NODE *t, parser *p)
+{
+    if (p->lh.gtype > 0) {
+	if (t == p->tree) {
+	    return p->lh.gtype;
+	} else if (p->tree->t == QUERY &&
+		   (t == p->tree->M || t == p->tree->R)) {
+	    return p->lh.gtype;
+	}
+    }
+
+    return GRETL_TYPE_NONE;
+}
+
 /* evaluate an object definition function (bundle, array, list) */
 
 static NODE *object_def_node (NODE *t, NODE *n, parser *p)
 {
     NODE *e, *ret = NULL;
+    GretlType ptype = 0;
     int i, f = t->t;
     int k = n->v.bn.n_nodes;
 
@@ -15663,12 +15678,13 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
         return NULL;
     }
 
-    if (f == F_DEFARRAY && t == p->tree) {
+    if (f == F_DEFARRAY) {
 	/* If genr simply defines an array, a type is needed:
 	   we can get this from p->lh.gtype or from the first
 	   argument to defarray().
 	*/
-	if (p->lh.gtype == 0 && k == 0) {
+	ptype = get_type_for_array(t, p);
+	if (ptype == 0 && k == 0) {
 	    gretl_errmsg_set(_("defarray: no type was specified"));
 	    p->err = E_DATA;
 	    return NULL;
@@ -15689,9 +15705,9 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
         int donate;
         void *ptr;
 
-	if (t == p->tree && p->lh.gtype > 0) {
+	if (ptype > 0) {
 	    /* respect the array type specified on input */
-	    A = gretl_array_new(p->lh.gtype, 0, &p->err);
+	    A = gretl_array_new(ptype, 0, &p->err);
 	} else {
 	    /* we'll get the type from the first arg */
 	    A = gretl_array_new(GRETL_TYPE_ANY, 0, &p->err);
@@ -16607,11 +16623,14 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 
 static NODE *gen_array_node (NODE *t, NODE *n, parser *p)
 {
+    GretlType ptype;
     NODE *ret = NULL;
+
+    ptype = get_type_for_array(t, p);
 
     if (!null_or_scalar(n)) {
         p->err = e_types(n);
-    } else if (t == p->tree && p->lh.gtype > 0) {
+    } else if (ptype > 0) {
 	; /* OK, we have a type specification */
     } else if (p->targ != UNK && p->targ != ARRAY) {
 	p->err = E_TYPES;
@@ -16625,7 +16644,7 @@ static NODE *gen_array_node (NODE *t, NODE *n, parser *p)
         if (!p->err) {
             ret = aux_array_node(p);
             if (!p->err) {
-                ret->v.a = gretl_array_new(p->lh.gtype, len, &p->err);
+                ret->v.a = gretl_array_new(ptype, len, &p->err);
             }
         }
     }
