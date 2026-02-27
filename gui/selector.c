@@ -8308,7 +8308,8 @@ static void selector_add_list_name_entry (selector *sr)
                 lname = NULL;
             } else if (!strcmp(lname, "null") ||
                        !strcmp(lname, "[null]") ||
-                       !strcmp(lname, "[auto]")) {
+                       !strcmp(lname, "[auto]") ||
+		       !strcmp(lname, "automatic")) {
                 lname = NULL;
             }
         }
