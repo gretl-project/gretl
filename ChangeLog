@@ -10,6 +10,11 @@ version 2026b, in progress
   the augmented or reduced $model bundle a list giving the
   order in which regressors were added ("add_order") or
   omitted ("omit_order")
+- "vecm" command: in the vecm_info bundle in the $system
+  accessor we now provide new matrices: "long_run"
+  (Johansen's C), "cov_long_run" (the covariance of vec(C))
+  and "se_long_run" (standard errors of the elements of C),
+  along with additional documentation in the User's Guide
 
 2026-01-30 version 2026a
 - mat2list(): fix potential crashing bug; enhance by using
