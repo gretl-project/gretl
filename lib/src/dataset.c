@@ -6108,7 +6108,13 @@ void *get_panel_group_names (const DATASET *dset, int *err)
 {
     gretl_array *a = NULL;
 
-    if (dataset_is_panel(dset) && dset->pangrps != NULL) {
+    if (!dataset_is_panel(dset)) {
+	gretl_errmsg_set(_("This command needs panel data"));
+	*err = E_DATA;
+    } else if (dset->pangrps == NULL) {
+	gretl_errmsg_set(_("Group names have not been set"));
+	*err = E_DATA;
+    } else {
 	int v = current_series_index(dset, dset->pangrps);
 
 	if (v < 0) {
