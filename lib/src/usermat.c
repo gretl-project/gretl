@@ -551,6 +551,11 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     subspec_debug_print(spec, m);
 #endif
 
+    if (spec->ltype == SEL_NULL && spec->rtype == SEL_NULL) {
+	/* empty selection */
+	goto check_done;
+    }
+
     if (spec->rtype == SEL_NULL && m->rows == 1 && m->cols > 1) {
 	/* row vector: transfer spec to column dimension */
 	commute_selectors(spec);
@@ -985,7 +990,10 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	}
     }
 
-    if (spec->ltype == SEL_DIAG) {
+    if (spec->ltype == SEL_NULL && spec->rtype == SEL_NULL) {
+	S = gretl_null_matrix_new();
+	return S;
+    } else if (spec->ltype == SEL_DIAG) {
 	return gretl_matrix_get_diagonal(M, err);
     } else if (spec->ltype == SEL_UPPER || spec->ltype == SEL_LOWER) {
 	int upper = (spec->ltype == SEL_UPPER);

@@ -5344,6 +5344,18 @@ static int set_sel_vector (matrix_subspec *spec, int r,
     int i, n = gretl_vector_get_length(m);
     int err = 0;
 
+    if (n == 0 && m != NULL) {
+	/* (valid) empty selection */
+	if (r) {
+	    spec->rsel.m = m;
+	    spec->rtype = SEL_NULL;
+	} else {
+	    spec->lsel.m = m;
+	    spec->ltype = SEL_NULL;
+	}
+	return 0;
+    }
+
     if (n > 0) {
         double x;
         int nneg = 0;
