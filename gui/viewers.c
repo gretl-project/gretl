@@ -99,6 +99,15 @@ gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
 #ifdef GRETL_EDIT
 	window_copy(vwin, GRETL_FORMAT_TXT);
 #else
+	if (vwin->role == VIEW_MATRIX) {
+	    gretl_matrix *m = vwin->data;
+
+	    if (m != NULL && m->is_complex) {
+		/* no point in fancy options */
+		window_copy(vwin, GRETL_FORMAT_TXT);
+		return TRUE;
+	    }
+	}
 	copy_format_dialog(vwin, W_COPY);
 #endif
     }

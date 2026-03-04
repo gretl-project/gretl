@@ -4048,7 +4048,7 @@ static void display_complex_matrix (gretl_matrix *m,
     gretl_cmatrix_print(m, name, prn);
     title = g_strdup_printf("gretl: %s %s", _("complex matrix"), name);
     preset_viewer_flag(VWIN_NO_SAVE);
-    view_buffer(prn, hsize, vsize, title, PRINT, m);
+    view_buffer(prn, hsize, vsize, title, VIEW_MATRIX, m);
     g_free(title);
 }
 

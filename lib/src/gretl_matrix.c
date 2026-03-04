@@ -686,6 +686,10 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
         }
     }
 
+    /* FIXME the tests in the next block of code are not applicable
+       for complex matrices.
+    */
+
     if (ret == GRETL_MATRIX_SQUARE) {
         double x;
         guint8 uzero = 1;
@@ -4241,7 +4245,11 @@ double gretl_matrix_infinity_norm (const gretl_matrix *m)
     for (i=0; i<m->rows; i++) {
         rsum = 0.0;
         for (j=0; j<m->cols; j++) {
-            rsum += fabs(gretl_matrix_get(m, i, j));
+	    if (m->is_complex) {
+		rsum += cabs(gretl_cmatrix_get(m, i, j));
+	    } else {
+		rsum += fabs(gretl_matrix_get(m, i, j));
+	    }
         }
         if (rsum > rmax) {
             rmax = rsum;
@@ -4272,7 +4280,11 @@ double gretl_matrix_one_norm (const gretl_matrix *m)
     for (j=0; j<m->cols; j++) {
         csum = 0.0;
         for (i=0; i<m->rows; i++) {
-            csum += fabs(gretl_matrix_get(m, i, j));
+	    if (m->is_complex) {
+		csum += cabs(gretl_cmatrix_get(m, i, j));
+	    } else {
+		csum += fabs(gretl_matrix_get(m, i, j));
+	    }
         }
         if (csum > cmax) {
             cmax = csum;

@@ -404,9 +404,9 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 }
 
 /* Adjust the number of significant figures used in printing
-   coefficients and standard errors in a model viewer window,
-   or descriptive statistics in a "summary" window. Also record
-   the number of digits for use via Copy.
+   coefficients and standard errors in a model viewer window, or
+   descriptive statistics in a "summary" window. Also record the
+   number of digits for use via Copy.
 */
 
 static void display_digits_callback (GtkWidget *w, windata_t *vwin)
@@ -1593,10 +1593,9 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	func = NULL;
 	menu = NULL;
 
-	/* Is there anything to hook up, in context? We
-	   try first for a menu to attach to the toolbar
-	   button; failing that we test for a "direct"
-	   callback function.
+	/* Is there anything to hook up, in context? We try first for
+	   a menu to attach to the toolbar button; failing that we
+	   test for a "direct" callback function.
 	*/
 	menu = tool_item_get_menu(item, vwin, &insensitive);
 	if (menu == NULL && item->func != NULL) {

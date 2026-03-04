@@ -51,6 +51,7 @@
 #include "uservar.h"
 #include "gretl_zip.h"
 #include "dbread.h"
+#include "gretl_cmatrix.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -3511,7 +3512,7 @@ static void matrix_popup_callback (GtkWidget *widget, gpointer data)
 	m = user_var_get_value(u);
 	if (m != NULL && bufopen(&prn) == 0) {
 	    gretl_matrix_print_to_prn(m, name, prn);
-	    view_buffer(prn, 78, 400, name, PRINT, NULL);
+	    view_buffer(prn, 78, 400, name, VIEW_MATRIX, m);
 	}
     } else if (!strcmp(item, _("Edit"))) {
 	edit_or_view_matrix(name, iconview);
@@ -3521,7 +3522,9 @@ static void matrix_popup_callback (GtkWidget *widget, gpointer data)
     } else if (!strcmp(item, _("Copy as CSV..."))) {
 	m = user_var_get_value(u);
 	if (gretl_is_null_matrix(m)) {
-	    warnbox("matrix is null");
+	    warnbox(_("matrix is null"));
+	} else if (m->is_complex) {
+	    warnbox(_("matrix is complex"));
 	} else {
 	    matrix_to_clipboard_as_csv(m, iconview);
 	}
@@ -4070,32 +4073,6 @@ static void session_build_popups (void)
     }
 }
 
-#if 0
-
-/* The reorganization of icons carried out by the following callback
-   is not at all intuitive -- 2022-07-12
-*/
-
-static gboolean
-iconview_resize_callback (GtkWidget *w, GdkEventConfigure *e, gpointer p)
-{
-    if (e->width != iconview_width) {
-	if (iconview_width > 0) {
-	    int cols = e->width / 100;
-
-	    if (cols >= ICONVIEW_MIN_COLS && cols != iconview_cols) {
-		iconview_cols = cols;
-		rearrange_icons();
-	    }
-	}
-	iconview_width = e->width;
-    }
-
-    return FALSE;
-}
-
-#endif
-
 void view_session (void)
 {
     GtkWidget *ebox, *scroller;
@@ -4150,10 +4127,6 @@ void view_session (void)
     window_list_add(iconview, OPEN_SESSION);
     g_signal_connect(G_OBJECT(iconview), "key-press-event",
 		     G_CALLBACK(catch_iconview_key), NULL);
-#if 0 /* scrubbed 2022-07-12 */
-    g_signal_connect(G_OBJECT(iconview), "configure-event",
-		     G_CALLBACK(iconview_resize_callback), NULL);
-#endif
 
     gtk_widget_show_all(iconview);
 
@@ -4439,7 +4412,11 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 	return;
     }
 
-    pprintf(prn, _("Properties of matrix %s"), (name != NULL)? name : "");
+    if (m->is_complex) {
+	pprintf(prn, _("Properties of complex matrix %s"), (name != NULL)? name : "");
+    } else {
+	pprintf(prn, _("Properties of matrix %s"), (name != NULL)? name : "");
+    }
     pputs(prn, "\n\n");
 
     if (m->rows == 0 || m->cols == 0) {
@@ -4506,18 +4483,33 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
     print_double_formatted(_("Infinity-norm"), gretl_matrix_infinity_norm(m), prn);
 
     if (m->rows == m->cols) {
-	double det;
+	int err = 0;
 
-	print_double_formatted(_("Trace"), gretl_matrix_trace(m), prn);
+	if (m->is_complex) {
+	    gretl_matrix *tr = gretl_cmatrix_trace(m, &err);
+
+	    gretl_cmatrix_print(tr, _("Trace"), prn);
+	} else {
+	    print_double_formatted(_("Trace"), gretl_matrix_trace(m), prn);
+	}
 	if (A == NULL) {
 	    A = gretl_matrix_copy(m);
 	} else {
 	    gretl_matrix_copy_values(A, m);
 	}
 	if (A != NULL) {
-	    det = gretl_matrix_determinant(A, &err);
-	    if (!err) {
-		print_double_formatted(_("Determinant"), det, prn);
+	    if (A->is_complex) {
+		gretl_matrix *det = gretl_cmatrix_determinant(A, 0, &err);
+
+		if (!err) {
+		    gretl_cmatrix_print(det, _("Determinant"), prn);
+		}
+	    } else {
+		double det = gretl_matrix_determinant(A, &err);
+
+		if (!err) {
+		    print_double_formatted(_("Determinant"), det, prn);
+		}
 	    }
 	}
     }

@@ -1323,8 +1323,12 @@ int gretl_cmatrix_print_range (const gretl_matrix *A,
     }
 
     if (name != NULL && *name != '\0') {
-        pprintf(prn, "%s (%d x %d)", name, r, c);
-        pputs(prn, "\n\n");
+	if (r > 1 || c > 1) {
+	    pprintf(prn, "%s (%d x %d)", name, r, c);
+	    pputs(prn, "\n\n");
+	} else {
+	    pprintf(prn, "%s: ", name);
+	}
     }
 
     for (i=rmin; i<rmax; i++) {

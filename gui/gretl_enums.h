@@ -48,6 +48,7 @@ enum extra_cmds {
     VIEW_PKG_CODE,
     VIEW_PKG_SAMPLE,
     VIEW_BUNDLE,
+    VIEW_MATRIX,
     VIEW_DBNOMICS,
     VIEW_FILE,
     VIEW_DOC,
