@@ -1708,7 +1708,20 @@ static int write_csv_data (const DATASET *dset, FILE *fp, int lang)
 	} else if (lang == LANG_PYTHON) {
 	    fputs("# load data from gretl\n", fp);
 	    fputs("import pandas as pd\n", fp);
-	    fprintf(fp, "gretldata = pd.read_csv(\"%spandas.csv\");\n", get_export_dotdir());
+	    fprintf(fp, "gretldata = pd.read_csv(\"%spandas.csv\", index_col=\"obs\");\n",
+		    get_export_dotdir());
+
+	    if (dataset_is_time_series(dset)) {
+		fputs("gretldata.index = pd.to_datetime(gretldata.index", fp);
+		/* format string is not necessarily needed */
+		if (dset->pd == 1) {
+		    fputs(", format=\"%Y\")\n", fp);
+		} else if (dset->pd == 12) {
+		    fputs(", format=\"%YM%m\")\n", fp);
+		} else {
+		    fputs(")\n", fp);
+		}
+	    }
 	}
     }
 
