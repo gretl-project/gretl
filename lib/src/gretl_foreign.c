@@ -1667,8 +1667,7 @@ static int write_gretl_mpi_script (gretlopt opt, DATASET *dset)
 
 #endif /* HAVE_MPI */
 
-static int write_data_for_stata (const DATASET *dset,
-                                 FILE *fp)
+static int write_csv_data (const DATASET *dset, FILE *fp, int lang)
 {
     int *list = NULL;
     char save_na[8];
@@ -1686,18 +1685,31 @@ static int write_data_for_stata (const DATASET *dset,
 
         *save_na = '\0';
         strncat(save_na, get_csv_na_write_string(), 7);
-        set_csv_na_write_string(".");
-        sdata = gretl_make_dotpath("stata.csv");
+
+	if (lang == LANG_STATA) {
+	    set_csv_na_write_string(".");
+	    sdata = gretl_make_dotpath("stata.csv");
+	} else if (lang == LANG_PYTHON) {
+	    set_csv_na_write_string("NA");
+	    sdata = gretl_make_dotpath("pandas.csv");
+	}
+
         err = write_data(sdata, list, dset, OPT_C, NULL);
         set_csv_na_write_string(save_na);
         g_free(sdata);
     }
 
     if (err) {
-        gretl_errmsg_sprintf("write_data_for_stata: failed with err = %d\n", err);
+        gretl_errmsg_sprintf("write_csv_stata: failed with err = %d\n", err);
     } else {
-        fputs("* load data from gretl\n", fp);
-        fprintf(fp, "insheet using \"%sstata.csv\"\n", get_export_dotdir());
+	if (lang == LANG_STATA) {
+	    fputs("* load data from gretl\n", fp);
+	    fprintf(fp, "insheet using \"%sstata.csv\"\n", get_export_dotdir());
+	} else if (lang == LANG_PYTHON) {
+	    fputs("# load data from gretl\n", fp);
+	    fputs("import pandas as pd\n", fp);
+	    fprintf(fp, "gretldata = pd.read_csv(\"%spandas.csv\");\n", get_export_dotdir());
+	}
     }
 
     return err;
@@ -1798,8 +1810,8 @@ int write_gretl_foreign_script (const char *buf, int lang,
             /* --send-data */
             if (lang == LANG_OCTAVE) {
                 err = write_data_for_octave(dset, fp);
-            } else if (lang == LANG_STATA) {
-                err = write_data_for_stata(dset, fp);
+            } else if (lang == LANG_STATA || lang == LANG_PYTHON) {
+                err = write_csv_data(dset, fp, lang);
             }
         }
         if (!err && buf != NULL) {
