@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-2026b\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-24 08:54-0500\n"
-"PO-Revision-Date: 2026-02-25 12:20+0100\n"
+"PO-Revision-Date: 2026-03-05 14:09+0100\n"
 "Last-Translator: Juan I. Modroño <juan.modrono@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -151,7 +151,7 @@ msgstr "con constante y tendencia"
 
 #: lib/src/adf_kpss.c:698
 msgid "with constant, linear and quadratic trend"
-msgstr "con constante y tendencia cuadrática"
+msgstr "con constante, tendencia lineal y tendencia cuadrática"
 
 #: lib/src/adf_kpss.c:725 lib/src/adf_kpss.c:731 lib/src/adf_kpss.c:2478
 #: lib/src/adf_kpss.c:2480 lib/src/bootstrap.c:694 lib/src/compare.c:384
@@ -196,7 +196,7 @@ msgstr "modelo"
 
 #: lib/src/adf_kpss.c:767
 msgid "plus seasonal dummies"
-msgstr "más variables ficticias estacionales"
+msgstr "mas variables ficticias estacionales"
 
 #: lib/src/adf_kpss.c:793 lib/src/adf_kpss.c:1834
 msgid "estimated value of (a - 1)"
@@ -275,7 +275,7 @@ msgstr "orden de retardos"
 
 #: lib/src/adf_kpss.c:1938
 msgid "H0: all groups have unit root"
-msgstr "H0: [Todos los grupos tienen raíz unitaria]"
+msgstr "H0: Todos los grupos tienen raíz unitaria"
 
 #: lib/src/adf_kpss.c:2358
 msgid "Robust estimate of variance"
@@ -509,7 +509,7 @@ msgstr "mediana"
 #: lib/src/boxplots.c:364
 #, no-c-format
 msgid "(90% interval)"
-msgstr "(intervalo 90% i)"
+msgstr "(intervalo del 90%)"
 
 #: lib/src/boxplots.c:372 lib/src/describe.c:7637 lib/src/gmm.c:1611
 #: lib/src/prog_loop.c:710 lib/src/prog_loop.c:711 gui/calculator.c:2067
@@ -525,8 +525,7 @@ msgstr "grupo"
 
 #: lib/src/boxplots.c:904 gui/library.c:7813
 msgid "You must supply two variables, the second of which is discrete"
-msgstr ""
-"Se deben suministrar dos variables, la última de ellas ha de ser discreta"
+msgstr "Se deben suministrar dos variables, la última de ellas ha de ser discreta"
 
 #: lib/src/boxplots.c:966
 #, c-format
@@ -689,14 +688,14 @@ msgid "Failed to add %d variable(s)"
 msgstr "Fallo al añadir %d variable(s)"
 
 #: lib/src/compare.c:1489
-#, fuzzy, c-format
+#, c-format
 msgid "Sequential elimination using %s"
-msgstr "Eliminación secuencial utilizando alfa= %.2f a dos colas"
+msgstr "Eliminación secuencial utilizando %s"
 
 #: lib/src/compare.c:1496
-#, fuzzy, c-format
+#, c-format
 msgid " Dropping %-16s (%s %#g)\n"
-msgstr " Quitando %-16s (valor p %.3f)\n"
+msgstr " Quitando %-16s (%s %#g)\n"
 
 #: lib/src/compare.c:1690
 #, c-format
@@ -793,8 +792,7 @@ msgstr ""
 #: lib/src/compare.c:3062
 #, c-format
 msgid "The maximum Wald test = %g occurs at observation %s"
-msgstr ""
-"El valor máximo del estadístico de Wald = %g corresponde a la observación %s"
+msgstr "El valor máximo del estadístico de Wald = %g corresponde a la observación %s"
 
 #: lib/src/compare.c:3065
 #, c-format
@@ -856,7 +854,7 @@ msgstr ""
 
 #: lib/src/compare.c:3700
 msgid "CUSUMSQ test for stability of parameters"
-msgstr "Contraste CUSUMSQ de estabilidad de los parámetros"
+msgstr "Contraste CUSUM cuadrado de estabilidad de los parámetros"
 
 #: lib/src/compare.c:3717
 msgid "Cumulated sum of squared residuals"
@@ -1287,7 +1285,7 @@ msgid "'%s' -- no numeric conversion performed!"
 msgstr "'%s' -- ¡no se ha realizado conversión numérica!"
 
 #: lib/src/csvdata.c:3273
-#, fuzzy, c-format
+#, c-format
 msgid "warning: %d strings were truncated.\n"
 msgstr "atención: se han truncado %d etiquetas.\n"
 
@@ -1513,9 +1511,8 @@ msgid "Can't concatenate string-valued and numeric series"
 msgstr "No pueden concatenarse valores de cadena con series numéricas"
 
 #: lib/src/dataio.c:2226
-#, fuzzy
 msgid "Panel data not conformable for appending"
-msgstr "Los nuevos datos no tienen la estructura adecuada para añadirlos\n"
+msgstr "Los nuevos datos de panel no tienen la estructura adecuada para añadirlos"
 
 #: lib/src/dataio.c:2313
 msgid "Data frequency does not match\n"
@@ -1589,7 +1586,7 @@ msgstr "No hay disponible una descripción\n"
 
 #: lib/src/dataio.c:3169
 msgid "dataset description written OK\n"
-msgstr "la descripción del conjunto de datos se ha guardado correctamente\n"
+msgstr "descripción del conjunto de datos guardada correctamente\n"
 
 #: lib/src/dataio.c:3179
 msgid "description replaced OK\n"
@@ -1625,12 +1622,12 @@ msgstr " Se encontró la matriz '%s' con %d filas y %d columnas\n"
 #: lib/src/dataio.c:3456
 #, c-format
 msgid "   number of observations: %d\n"
-msgstr " Número de observaciones : %d\n"
+msgstr "   número de observaciones: %d\n"
 
 #: lib/src/dataio.c:3457
 #, c-format
 msgid "   number of data blocks: %d\n"
-msgstr "   Número de bloques de datos: %d\n"
+msgstr "   número de bloques de datos: %d\n"
 
 #: lib/src/dataio.c:3582 lib/src/dataio.c:3638 gui/gui_utils.c:686
 msgid "Unrecognized data type"
@@ -1663,16 +1660,12 @@ msgstr "Datos importados desde %s, %s\n"
 
 #: lib/src/dataio.c:4151
 msgid "This dataset is on 7-day calendar, but weekends are blank."
-msgstr ""
-"Este conjunto de datos es de un calendario de 7 días, pero los fines de "
-"semana están en blanco."
+msgstr "Este conjunto de datos es de un calendario de 7 días, pero los fines de semana están en blanco."
 
 #: lib/src/dataio.c:4153
 #, c-format
 msgid "This dataset is on 6-day calendar, but %s are blank."
-msgstr ""
-"Este conjunto de datos es de un calendario de 6 días, pero los %s están en "
-"blanco."
+msgstr "Este conjunto de datos es de un calendario de 6 días, pero los %s están en blanco."
 
 #: lib/src/dataio.c:4154
 msgid "Sundays"
@@ -2780,9 +2773,8 @@ msgid "White's test for heteroskedasticity"
 msgstr "Contraste de heterocedasticidad de White"
 
 #: lib/src/estimate.c:3315
-#, fuzzy
 msgid "At least one regressor is required"
-msgstr "No se necesita una clave"
+msgstr "Se necesita al menos un regresor"
 
 #: lib/src/estimate.c:3362
 msgid "Generalized Cochrane-Orcutt estimation"
@@ -3665,9 +3657,9 @@ msgid "Actual and fitted %s versus %s"
 msgstr "%s con respecto a %s, observada y estimada"
 
 #: lib/src/graphing.c:2847
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with separation by %s"
-msgstr "%s con respecto a %s (con ajuste cuadrático)"
+msgstr "%s frente a %s separado por %s"
 
 #: lib/src/graphing.c:3098 gui/gpt_dialog.c:677
 #, c-format
@@ -3856,9 +3848,9 @@ msgid "ACF for"
 msgstr "FAC de"
 
 #: lib/src/graphing.c:8723
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% Bartlett interval"
-msgstr "Intervalo de 95%"
+msgstr "Intervalo de Bartlett al 95%"
 
 #: lib/src/graphing.c:8758
 msgid "Residual PACF"
@@ -4396,14 +4388,12 @@ msgid "Dependencies not met"
 msgstr "Dependencias no cumplidas"
 
 #: lib/src/gretl_errors.c:92
-#, fuzzy
 msgid "Matrix argument contains non-finite values"
-msgstr "se han generado valores no finitos"
+msgstr "El argumento de la matriz contiene valores no finitos"
 
 #: lib/src/gretl_errors.c:93
-#, fuzzy
 msgid "This command requires time-series data"
-msgstr "Esta función requiere datos de series temporales"
+msgstr "Este comando requiere datos de series temporales"
 
 #: lib/src/gretl_errors.c:101
 msgid "gradient is not close to zero"
@@ -5397,9 +5387,8 @@ msgid "No first-order autocorrelation (rho = -0.5)"
 msgstr "No autocorrelación de primer orden (rho= -0.5)"
 
 #: lib/src/gretl_model.c:4381
-#, fuzzy
 msgid "BDS test for nonlinearity"
-msgstr "Contraste de no linealidad BDS"
+msgstr "Contraste BDS de no linealidad"
 
 #: lib/src/gretl_model.c:4389 lib/src/gretl_panel.c:5582
 msgid "Distribution free Wald test for heteroskedasticity"
@@ -8537,9 +8526,8 @@ msgid "%s: inapplicable option"
 msgstr "%s: Opción no aplicable"
 
 #: lib/src/plotbands.c:366
-#, fuzzy
 msgid "Invalid band specification"
-msgstr "Especificación inválida de unión"
+msgstr "Especificación de banda inválida"
 
 #: lib/src/plotbands.c:747
 msgid ""
@@ -11234,9 +11222,9 @@ msgid "No database files found"
 msgstr "No se han encontrado ficheros de base de datos"
 
 #: gui/database.c:3575
-#, fuzzy, c-format
+#, c-format
 msgid "showing categories 1-%d of %d"
-msgstr "Mostrando las series %d-%d de %d"
+msgstr "mostrando las categorías 1-%d de %d"
 
 #: gui/database.c:3606
 #, c-format
@@ -12387,9 +12375,9 @@ msgid "Compact hourly data to:"
 msgstr "Compactar datos horarios a:"
 
 #: gui/dialogs.c:4136
-#, fuzzy, c-format
+#, c-format
 msgid "Compact data frequency %d to 1"
-msgstr "Compacta la frecuencia de los datos = %d al valor 1"
+msgstr "Compacta la frecuencia de los datos %d al valor 1"
 
 #: gui/dialogs.c:4220
 msgid "gretl: expand data"
@@ -13451,9 +13439,8 @@ msgid "Argument %d (%s) is missing"
 msgstr "Falta el argumento %d (%s)"
 
 #: gui/fncall.c:684
-#, fuzzy
 msgid "The return value must be assigned"
-msgstr "Los valores de la serie deben ser enteros"
+msgstr "El valor devuelto debe ser asignado"
 
 #: gui/fncall.c:724 gui/gretl.c:2120
 msgid "State space model"
@@ -13510,9 +13497,8 @@ msgid "Select arguments:"
 msgstr "Elegir argumentos:"
 
 #: gui/fncall.c:2336
-#, fuzzy
 msgid "Assign return value:"
-msgstr "Poner el resultado en: (es opcional)"
+msgstr "Asignar el valor devuelto:"
 
 #: gui/fncall.c:2339
 msgid "Save return value (optional, clear box for no assignment):"
@@ -13879,9 +13865,8 @@ msgstr ""
 "se le llama desde el interfaz gráfico."
 
 #: gui/fnsave.c:2793
-#, fuzzy
 msgid "function"
-msgstr "Guardar funciones"
+msgstr "función"
 
 #: gui/fnsave.c:2796
 msgid "must assign"
@@ -14153,9 +14138,8 @@ msgid "Save to session as icon"
 msgstr "Guardar en la sesión como icono"
 
 #: gui/gpt_control.c:4737 gui/gpt_control.c:4845
-#, fuzzy
 msgid "View gnuplot commands"
-msgstr "Guardar instrucciones de gnuplot"
+msgstr "Ver comandos de gnuplot"
 
 #: gui/gpt_control.c:4743 gui/gpt_control.c:4846
 msgid "Freeze data labels"
@@ -16718,9 +16702,8 @@ msgid "this window"
 msgstr "Esta ventana"
 
 #: gui/helpfiles.c:1020
-#, fuzzy
 msgid "this provider"
-msgstr "proveedor?"
+msgstr "este proveedor"
 
 #: gui/helpfiles.c:1022
 msgid "selected dataset"
@@ -16731,9 +16714,8 @@ msgid "this dataset"
 msgstr "Este conjunto de datos"
 
 #: gui/helpfiles.c:1026
-#, fuzzy
 msgid "selected provider"
-msgstr "conjunto de datos seleccionado"
+msgstr "proveedor seleccionado"
 
 #: gui/helpfiles.c:1027
 msgid "all DB.NOMICS"
@@ -17286,9 +17268,8 @@ msgid "Set %d observations to \"missing\""
 msgstr "Poner %d observaciones como \"perdidas\""
 
 #: gui/library.c:5292
-#, fuzzy
 msgid "No name was given"
-msgstr "No se ha suministrado fórmula"
+msgstr "No se ha suministrado nombre"
 
 #: gui/library.c:5438
 msgid "gretl: residual dist."
@@ -17929,19 +17910,16 @@ msgid "Daily (7 days, incomplete)"
 msgstr "Diario (7 días, incompleto)"
 
 #: gui/menustate.c:1022
-#, fuzzy
 msgid "Daily (5 days, undated)"
-msgstr "Diario (5 días, incompleto)"
+msgstr "Diario (5 días, sin fecha)"
 
 #: gui/menustate.c:1023
-#, fuzzy
 msgid "Daily (6 days, undated)"
-msgstr "Diario (6 días, incompleto)"
+msgstr "Diario (6 días, sin fecha)"
 
 #: gui/menustate.c:1024
-#, fuzzy
 msgid "Daily (7 days, undated)"
-msgstr "Diario (7 días, incompleto)"
+msgstr "Diario (7 días, sin fecha)"
 
 #: gui/menustate.c:1065
 msgid "Unknown"
@@ -18795,19 +18773,16 @@ msgid "Wald test, based on covariance matrix"
 msgstr "Contraste de Wald basado en la matriz de covarianzas"
 
 #: gui/selector.c:6974
-#, fuzzy
 msgid "Or stepwise elimination"
-msgstr "Estimación en una etapa"
+msgstr "O eliminación mediate Stepwise"
 
 #: gui/selector.c:6983
-#, fuzzy
 msgid "using two-sided p-value:"
-msgstr "Valor p a dos colas"
+msgstr "usando el valor-p del contraste a dos colas:"
 
 #: gui/selector.c:6992
-#, fuzzy
 msgid "using information criterion: "
-msgstr "Criterio de información de Akaike"
+msgstr "usando el criterio de información:"
 
 #: gui/selector.c:7004
 msgid "Test only selected variables"
@@ -21566,13 +21541,11 @@ msgid "Largest s within one s.e. of best criterion: %#g (\"+\")\n"
 msgstr "La s más grande dentro de una D.T. del mejor criterio: %#g (\"+\")\n"
 
 #: plugin/regls.c:3094
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Invoking MPI with %d processes...\n"
 "\n"
-msgstr ""
-"Invocando MPI...\n"
-"\n"
+msgstr "Invocando MPI con %d procesos...\n\n"
 
 #: plugin/sas_import.c:614 plugin/sas_import.c:649
 msgid "This file does not seem to be a valid SAS xport file"
@@ -22939,15 +22912,15 @@ msgstr "Nivel de detalle"
 
 #, fuzzy
 #~ msgid "Installed"
-#~ msgstr "Instalar"
+#~ msgstr "Instalado"
 
 #, fuzzy
 #~ msgid "On server"
-#~ msgstr "En el _servidor..."
+#~ msgstr "En el servidor"
 
 #, fuzzy
 #~ msgid "Comment"
-#~ msgstr "Marcar como línea de comentarios"
+#~ msgstr "Comentario"
 
 #, c-format
 #~ msgid ""
@@ -22959,7 +22932,7 @@ msgstr "Nivel de detalle"
 
 #, fuzzy
 #~ msgid "Can be updated"
-#~ msgstr "Separado por comas"
+#~ msgstr "Puede actualizarse"
 
 #, c-format
 #~ msgid "Requires gretl %s"
@@ -22967,7 +22940,7 @@ msgstr "Nivel de detalle"
 
 #, fuzzy
 #~ msgid "Local is newer"
-#~ msgstr "Máquina local"
+#~ msgstr "Local es más reciente"
 
 #, c-format
 #~ msgid "invalid number of folds %d\n"
@@ -23048,11 +23021,11 @@ msgstr "Nivel de detalle"
 
 #, fuzzy
 #~ msgid "%s: not a recognized script file"
-#~ msgstr "'%s': Nombre no reconocido"
+#~ msgstr "%s: Nombre de script no reconocido"
 
 #, fuzzy
 #~ msgid "gretlcli command failed"
-#~ msgstr "Falló la instrucción gnuplot"
+#~ msgstr "Falló el comando gretlcli"
 
 #~ msgid "Replace _All"
 #~ msgstr "Reemplazar _todo"
@@ -23365,39 +23338,39 @@ msgstr "Nivel de detalle"
 
 #, fuzzy
 #~ msgid "Copy as plain text"
-#~ msgstr "texto plano"
+#~ msgstr "Copiar como texto plano"
 
 #, fuzzy
 #~ msgid "Copy as tab-separated"
-#~ msgstr "Separado por comas"
+#~ msgstr "Copiar separado por tabuladores"
 
 #, fuzzy
 #~ msgid "Copy as comma-separated"
-#~ msgstr "Separado por comas"
+#~ msgstr "Copiar separado por comas"
 
 #, fuzzy
 #~ msgid "Copy as LaTeX"
-#~ msgstr "Copiar como:"
+#~ msgstr "Copiar como LaTeX"
 
 #, fuzzy
 #~ msgid "Copy as RTF"
-#~ msgstr "Copiar como:"
+#~ msgstr "Copiar como texto enriquecido RTF"
 
 #, fuzzy
 #~ msgid "Save as plain text"
-#~ msgstr "texto plano"
+#~ msgstr "Copiar como texto plano"
 
 #, fuzzy
 #~ msgid "Save as tab-separated"
-#~ msgstr "Separado por tabuladores"
+#~ msgstr "Guardar en formato separado por tabuladores"
 
 #, fuzzy
 #~ msgid "Save as comma-separated"
-#~ msgstr "Separado por comas"
+#~ msgstr "Guardar en formato separado por comas"
 
 #, fuzzy
 #~ msgid "Save as RTF"
-#~ msgstr "Guardar como"
+#~ msgstr "Guardar como texto enriquecido RTF"
 
 #~ msgid "gretl: iteration info"
 #~ msgstr "gretl: información de iteración"
@@ -23592,14 +23565,14 @@ msgstr "Nivel de detalle"
 
 #, fuzzy
 #~ msgid "genrcli_hlp.txt"
-#~ msgstr "gretlcli_hlp.txt"
+#~ msgstr "genrcli_hlp.txt"
 
 #~ msgid "gretlcmd_hlp.txt"
 #~ msgstr "gretlcmd_hlp.txt"
 
 #, fuzzy
 #~ msgid "genrgui_hlp.txt"
-#~ msgstr "gretlgui_hlp.txt"
+#~ msgstr "genrgui_hlp.txt"
 
 #~ msgid "No Kalman filter is defined"
 #~ msgstr "No se ha definido ningún filtro de Kalman"
@@ -24239,7 +24212,7 @@ msgstr "Nivel de detalle"
 
 #, fuzzy
 #~ msgid "Predicted values"
-#~ msgstr "predicciones"
+#~ msgstr "Valores predecidos"
 
 #~ msgid ""
 #~ "\n"
@@ -24350,7 +24323,7 @@ msgstr "Nivel de detalle"
 
 #, fuzzy
 #~ msgid "Edit..."
-#~ msgstr "Editar"
+#~ msgstr "Editar..."
 
 #~ msgid ""
 #~ "Data set is not recognized as a panel.\n"
