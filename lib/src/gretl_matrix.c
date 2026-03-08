@@ -691,43 +691,84 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
     */
 
     if (ret == GRETL_MATRIX_SQUARE) {
-        double x;
         guint8 uzero = 1;
         guint8 lzero = 1;
         guint8 symm = 1;
         guint8 udiag = 1;
+	guint8 hermt = 0;
         int i, j;
         int k = 0;
 
-        for (j=0; j<m->cols; j++) {
-            for (i=0; i<m->rows; i++) {
-                x = m->val[k++];
-                if (j > i) {
-                    if (uzero && x != 0.0) {
-                        uzero = 0;
-                    }
-                } else if (i > j) {
-                    if (lzero && x != 0.0) {
-                        lzero = 0;
-                    }
-                } else if (i == j) {
-                    if (udiag && x != 1.0) {
-                        udiag = 0;
-                    }
-                }
-                if (j != i && symm) {
-                    if (x != gretl_matrix_get(m,j,i)) {
-                        symm = 0;
-                    }
-                }
-                if (!uzero && !lzero && !symm) {
-                    break;
-                }
-            }
-            if (!uzero && !lzero && !symm) {
-                break;
-            }
-        }
+	if (m->is_complex) {
+	    double complex z_0 = 0.0 + 0.0 * I;
+	    double complex z_1 = 1.0 + 0.0 * I;
+	    double complex zij;
+
+	    hermt = 1;
+	    for (j=0; j<m->cols; j++) {
+		for (i=0; i<m->rows; i++) {
+		    zij = m->z[k++];
+		    if (j > i) {
+			if (uzero && zij != z_0) {
+			    uzero = 0;
+			}
+		    } else if (i > j) {
+			if (lzero && zij != z_0) {
+			    lzero = 0;
+			}
+		    } else if (i == j) {
+			if (udiag && zij != z_1) {
+			    udiag = 0;
+			}
+		    }
+		    if (j != i && symm) {
+			if (zij != gretl_cmatrix_get(m,j,i)) {
+			    symm = 0;
+			}
+		    }
+		    if (j != i && hermt) {
+			if (zij != conj(gretl_cmatrix_get(m,j,i))) {
+			    hermt = 0;
+			}
+		    }
+		}
+		if (!uzero && !lzero && !symm && !hermt) {
+		    break;
+		}
+	    }
+	} else {
+	    double x;
+
+	    for (j=0; j<m->cols; j++) {
+		for (i=0; i<m->rows; i++) {
+		    x = m->val[k++];
+		    if (j > i) {
+			if (uzero && x != 0.0) {
+			    uzero = 0;
+			}
+		    } else if (i > j) {
+			if (lzero && x != 0.0) {
+			    lzero = 0;
+			}
+		    } else if (i == j) {
+			if (udiag && x != 1.0) {
+			    udiag = 0;
+			}
+		    }
+		    if (j != i && symm) {
+			if (x != gretl_matrix_get(m,j,i)) {
+			    symm = 0;
+			}
+		    }
+		    if (!uzero && !lzero && !symm) {
+			break;
+		    }
+		}
+		if (!uzero && !lzero && !symm) {
+		    break;
+		}
+	    }
+	}
 
         if (udiag && uzero && lzero) {
             ret = GRETL_MATRIX_IDENTITY;
@@ -739,7 +780,9 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
             ret = GRETL_MATRIX_UPPER_TRIANGULAR;
         } else if (symm) {
             ret = GRETL_MATRIX_SYMMETRIC;
-        }
+        } else if (hermt) {
+	    ret = GRETL_MATRIX_HERMITIAN;
+	}
     }
 
     return ret;
@@ -10042,9 +10085,9 @@ static void maybe_eigen_trim (gretl_matrix *lam)
     gretl_matrix_reuse(lam, -1, 1);
 }
 
-/* The @legacy case supports some non-updated usage in var.c,
-   kalman.c and genfuncs.c. But we know that @VR and @VL will
-   be NULL in such cases: only eigenvalues are wanted.
+/* The @legacy case supports some non-updated usage in var.c, kalman.c
+   and genfuncs.c. But we know that @VR and @VL will be NULL in such
+   cases: only eigenvalues are wanted.
 */
 
 static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,

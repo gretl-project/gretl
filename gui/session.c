@@ -4463,9 +4463,11 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
 	    err = 0;
 	    evals = gretl_symmetric_matrix_eigenvals(A, 0, &err);
 	}
+    } else if (s == GRETL_MATRIX_HERMITIAN) {
+	pprintf(prn, "%s\n", _("Hermitian"));
     }
 
-    if (s > 0 && (s != GRETL_MATRIX_SYMMETRIC || evals == NULL)) {
+    if (s > 0 && !m->is_complex && (s != GRETL_MATRIX_SYMMETRIC || evals == NULL)) {
 	evals = gretl_dgeev(m, NULL, NULL, &err);
     }
 
