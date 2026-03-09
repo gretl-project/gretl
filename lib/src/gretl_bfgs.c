@@ -2018,6 +2018,11 @@ static int user_gen_setup (umax *u,
     formula = g_strdup_printf("$umax=%s", fncall);
     u->gf = genr_compile(formula, dset, u->gentype, OPT_P,
                          u->prn, &err);
+    if (err) {
+	fprintf(stderr, "user_gen_setup: err %d\n", err);
+	fprintf(stderr, " formula: '%s'\n", formula);
+	errmsg(err, u->prn);
+    }
 
     if (!err && gradcall != NULL) {
         /* process gradient formula */
@@ -2093,7 +2098,6 @@ double user_BFGS (gretl_matrix *b,
     if (verbose) {
         opt |= OPT_V;
     }
-
     if (minimize) {
         opt |= OPT_I;
     }
