@@ -1183,18 +1183,15 @@ parser *genr_compile (const char *s, DATASET *dset,
 	/* internal use of generate() */
 	flags |= P_PRIV;
     }
-
     if (opt & OPT_O) {
 	/* special for function call, no assignment */
 	targtype = EMPTY;
         flags |= P_VOID;
     }
-
     if (opt & OPT_N) {
 	/* "no exec": compile but don't run */
 	flags |= P_NOEXEC;
     }
-
     if (opt & OPT_A) {
 	/* anonymous: no assignment to named variable */
 	flags |= P_ANON;
