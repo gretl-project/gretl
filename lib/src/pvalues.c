@@ -3118,8 +3118,6 @@ int dist_code_from_string (const char *s)
         { D_DIRICHLET, "dir" },
         { D_DISCRETE,  "disc" },
         { D_TNORMAL,   "tn" },
-        { D_IGAMMA,    "ig" },
-        { D_NORMAL2,   "n2" },
         { D_NONE,      NULL }
     };
     char test[8];

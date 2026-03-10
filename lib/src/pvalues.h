@@ -46,8 +46,6 @@ typedef enum {
     D_LOGISTIC,
     D_DIRICHLET,
     D_DISCRETE,
-    D_IGAMMA,
-    D_NORMAL2,
     D_TNORMAL
 } DistCode;
 
