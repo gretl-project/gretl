@@ -2068,7 +2068,9 @@ double user_BFGS (gretl_matrix *b,
     umax *u;
     gretlopt opt = OPT_NONE;
     int maxit = BFGS_MAXITER_DEFAULT;
-    int verbose, fcount = 0, gcount = 0;
+    int fcount = 0;
+    int gcount = 0;
+    int verbose;
     double tol;
     double ret = NADBL;
 
@@ -2093,6 +2095,7 @@ double user_BFGS (gretl_matrix *b,
     }
 
     tol = libset_get_double(BFGS_TOLER);
+    /* verbose = libset_get_int(MAX_VERBOSE) || !gretl_looping(); */
     verbose = libset_get_int(MAX_VERBOSE);
 
     if (verbose) {
@@ -2116,7 +2119,7 @@ double user_BFGS (gretl_matrix *b,
                         u, NULL, opt, prn);
     }
 
-    if (fcount > 0 && (verbose || !gretl_looping())) {
+    if (fcount > 0 && verbose) {
         pprintf(prn, _("Function evaluations: %d\n"), fcount);
         pprintf(prn, _("Evaluations of gradient: %d\n"), gcount);
     }
