@@ -3117,6 +3117,7 @@ int dist_code_from_string (const char *s)
         { D_LOGISTIC,  "s" },
         { D_DIRICHLET, "dir" },
         { D_DISCRETE,  "disc" },
+        { D_TNORMAL,   "tn" },
         { D_IGAMMA,    "ig" },
         { D_NORMAL2,   "n2" },
         { D_NONE,      NULL }
@@ -3757,12 +3758,13 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
     } else if (dist == D_BETABIN) {
         double shape1 = parm[1], shape2 = parm[2];
         int n = parm[0];
-
         err = gretl_rand_beta_binomial(x, t1, t2, n, shape1, shape2);
     } else if (dist == D_LOGISTIC) {
         double loc = parm[0], shape = parm[1];
-
         err = gretl_rand_logistic(x, t1, t2, loc, shape);
+    } else if (dist == D_TNORMAL) {
+        double lo = parm[0], hi = parm[1];
+        err = gretl_rand_tnormal(x, t1, t2, lo, hi);
     }
 
     return err;

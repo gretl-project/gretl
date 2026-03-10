@@ -1659,6 +1659,13 @@ static int check_dist_count (int d, int f, int *np, int *argc)
         } else {
             err = E_INVARG;
         }
+    } else if (d == D_TNORMAL) {
+        /* randgen and mrandgen only */
+        if (randgen(f)) {
+            *np = 2; /* truncation limits */
+        } else {
+            err = E_INVARG;
+        }
     } else {
         err = E_INVARG;
     }

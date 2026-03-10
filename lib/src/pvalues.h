@@ -47,7 +47,8 @@ typedef enum {
     D_DIRICHLET,
     D_DISCRETE,
     D_IGAMMA,
-    D_NORMAL2
+    D_NORMAL2,
+    D_TNORMAL
 } DistCode;
 
 double gammafun (double x);

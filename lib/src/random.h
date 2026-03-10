@@ -85,6 +85,9 @@ int gretl_rand_beta (double *x, int t1, int t2,
 int gretl_rand_beta_binomial (double *x, int t1, int t2, 
 			      int n, double s1, double s2);
 
+int gretl_rand_tnormal (double *x, int t1, int t2,
+			double l, double u);
+
 int gretl_rand_discrete (double *x, int t1, int t2,
                          const gretl_vector *p);
 
