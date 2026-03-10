@@ -1270,30 +1270,30 @@ int gretl_rand_beta_binomial (double *x, int t1, int t2,
     return err;
 }
 
+/* Samples from the standard normal distribution truncated over the
+   region [l,u], where 0 < l < u, using acceptance-rejection from
+   Rayleigh distribution, similar to Marsaglia (1964).
+*/
+
 static double ntail (double l, double u)
 {
-    /*
-    Samples from the standard normal distribution truncated over the region
-    [l,u], where 0<l<u, using acceptance-rejection from Rayleigh distr.
-    similar to Marsaglia (1964)
-    */
     double c, f, x, y, u01;
     int rej, iter = 0;
 
     c = 0.5 * l*l;
     f = expm1(c - 0.5 * u*u);
-    /* sample from Raleigh */
+    /* sample from Rayleigh */
     x = c - log1p(gretl_rand_01() * f);
     u01 = gretl_rand_01();
     rej = (x*u01*u01) > c;
 
-    while(rej && iter<1000) {
+    while (rej && iter < 1000) {
         /* find the threshold */
         y = c - logp1(gretl_rand_01() * f);
 	u01 = gretl_rand_01();
 	rej = (y*u01*u01) > c;
         if (!rej) {
-	    /* found!!! */
+	    /* found! */
             x = y;
 	}
         iter++;
@@ -1328,25 +1328,22 @@ int gretl_rand_tnormal (double *x, int t1, int t2,
 			double l, double u)
 {
     /*
-    truncated normal generator
-    efficient generator of a double from the standard normal distribution,
-    truncated over the region [l,u]
+      Efficient generator of a double from the standard normal
+      distribution, truncated over the region [l,u]. Adapted from
+      Zdravko Botev's Matlab code at
+      https://web.maths.unsw.edu.au/~zdravkobotev/
 
-    Adapted from Zdravko Botev's Matlab code at
-    https://web.maths.unsw.edu.au/~zdravkobotev/
+      Remark: If you wish to simulate a random variable 'Z' from the
+      non-standard Gaussian N(m,s^2) conditional on l < Z < u, then
+      first simulate X = tmnormal((l-m)/s, (u-m)/s) and set Z = m+s*X
 
-    * Remark:
-    If you wish to simulate a random variable 'Z' from the non-standard
-    Gaussian N(m,s^2) conditional on l<Z<u, then first simulate
-    X=tmnormal((l-m)/s,(u-m)/s) and set Z=m+s*X
-
-    Reference:
-    Botev, Z. I. (2016). "The normal law under linear restrictions:
-    simulation and estimation via minimax tilting". Journal of the
-    Royal Statistical Society: Series B (Statistical Methodology).
-    doi:10.1111/rssb.12162
+      Reference: Botev, Z. I. (2016). "The normal law under linear
+      restrictions: simulation and estimation via minimax
+      tilting". Journal of the Royal Statistical Society: Series B
+      (Statistical Methodology).  doi:10.1111/rssb.12162
     */
-
+    double a = 0.66;
+    double tol = 2.0;
     double ret;
     int t;
 
@@ -1356,9 +1353,6 @@ int gretl_rand_tnormal (double *x, int t1, int t2,
 
     /* thresholds for switching between methods; they can be tuned
        for maximum speed */
-
-    double a = 0.66;
-    double tol = 2.0;
 
     if (l > a) {
 	for (t=t1; t<=t2; t++) {
@@ -1370,10 +1364,11 @@ int gretl_rand_tnormal (double *x, int t1, int t2,
 	}
     } else {
 	if (fabs(l-u) > tol) {
-	    /* simulate from truncated normal via acceptance-rejection  */
+	    /* simulate from truncated normal via acceptance-rejection */
 	    for (t=t1; t<=t2; t++) {
 		int out = 1;
 		double z;
+
 		while (out) {
 		    z = gretl_one_snormal();
 		    out = (z < l) || (z > u);
@@ -1384,6 +1379,7 @@ int gretl_rand_tnormal (double *x, int t1, int t2,
 	    /* simulate from truncated normal via inversion */
 	    double P0 = normal_cdf(l);
 	    double P1 = normal_cdf(u);
+
 	    for (t=t1; t<=t2; t++) {
 		x[t] = normal_cdf_inverse(P1 - (P1-P0) * gretl_rand_01());
 	    }
