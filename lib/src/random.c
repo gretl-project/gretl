@@ -1273,28 +1273,31 @@ int gretl_rand_beta_binomial (double *x, int t1, int t2,
 /* Samples from the standard normal distribution truncated over the
    region [l,u], where 0 < l < u, using acceptance-rejection from
    Rayleigh distribution, similar to Marsaglia (1964).
+
+   Use u = NADBL for setting a right-unbounded region (ie u = \infty)
 */
 
 static double ntail (double l, double u)
 {
-    double c, f, x, y, u01;
-    int rej, iter = 0;
+    double c, f, x, u01;
+    int acc, iter = 0;
 
     c = 0.5 * l*l;
-    f = expm1(c - 0.5 * u*u);
+    f = na(u) ? -1.0 : expm1(c - 0.5 * u*u);
+
     /* sample from Rayleigh */
     x = c - log1p(gretl_rand_01() * f);
     u01 = gretl_rand_01();
-    rej = (x*u01*u01) > c;
+    acc = (x*u01*u01) < c;
 
-    while (rej && iter < 1000) {
+    while (!acc && iter < 1000) {
         /* find the threshold */
-        y = c - logp1(gretl_rand_01() * f);
+        x = c - logp1(gretl_rand_01() * f);
 	u01 = gretl_rand_01();
-	rej = (y*u01*u01) > c;
-        if (!rej) {
+	acc = (x*u01*u01) < c;
+        if (acc) {
 	    /* found! */
-            x = y;
+	    break;
 	}
         iter++;
     }
@@ -1314,8 +1317,8 @@ static double ntail (double l, double u)
  * @x: target array.
  * @t1: start of the fill range.
  * @t2: end of the fill range.
- * @lo: left truncation.
- * @hi: right truncation.
+ * @lo: left truncation (NADBL for -infty).
+ * @hi: right truncation (NADBL for +infty).
  *
  * Fill the selected range of array @x with pseudo-random drawings
  * from the truncated standard normal distribution between @lo and
@@ -1347,6 +1350,9 @@ int gretl_rand_tnormal (double *x, int t1, int t2,
     double ret;
     int t;
 
+    int ok_l = !na(l);
+    int ok_u = !na(u);
+
     if (l >= u) {
 	return E_INVARG;
     }
@@ -1354,16 +1360,18 @@ int gretl_rand_tnormal (double *x, int t1, int t2,
     /* thresholds for switching between methods; they can be tuned
        for maximum speed */
 
-    if (l > a) {
+    if (ok_l && (l > a)) {
+	/* right tail */
 	for (t=t1; t<=t2; t++) {
 	    x[t] = ntail(l, u);
 	}
-    } else if (u < -a) {
+    } else if (ok_u && (u < -a)) {
+	/* left tail */
 	for (t=t1; t<=t2; t++) {
-	    x[t] = -ntail(l, u);
+	    x[t] = -ntail(-u, -l);
 	}
     } else {
-	if (fabs(l-u) > tol) {
+	if (ok_l && ok_u && fabs(l-u) > tol) {
 	    /* simulate from truncated normal via acceptance-rejection */
 	    for (t=t1; t<=t2; t++) {
 		int out = 1;
@@ -1377,8 +1385,8 @@ int gretl_rand_tnormal (double *x, int t1, int t2,
 	    }
 	} else {
 	    /* simulate from truncated normal via inversion */
-	    double P0 = normal_cdf(l);
-	    double P1 = normal_cdf(u);
+	    double P0 = ok_l ? normal_cdf(l) : 0.0;
+	    double P1 = ok_u ? normal_cdf(u) : 1.0;
 
 	    for (t=t1; t<=t2; t++) {
 		x[t] = normal_cdf_inverse(P1 - (P1-P0) * gretl_rand_01());
