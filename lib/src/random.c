@@ -1360,7 +1360,12 @@ int gretl_rand_tnormal (double *x, int t1, int t2,
     /* thresholds for switching between methods; they can be tuned
        for maximum speed */
 
-    if (ok_l && (l > a)) {
+    if (!ok_l && !ok_u) {
+	/* no limits! */
+	for (t=t1; t<=t2; t++) {
+	    x[t] = gretl_one_snormal();
+	}
+    } else if (ok_l && (l > a)) {
 	/* right tail */
 	for (t=t1; t<=t2; t++) {
 	    x[t] = ntail(l, u);
