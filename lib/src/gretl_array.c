@@ -1250,7 +1250,10 @@ static int set_list (gretl_array *A, int i,
 static int set_type_error (gretl_array *A,
 			   GretlType required)
 {
-    if (A->type != required) {
+    if (A->type == GRETL_TYPE_ANY) {
+	A->type = required;
+	return 0;
+    } else if (A->type != required) {
 	GretlType reqt = gretl_type_get_singular(required);
 
 	gretl_errmsg_sprintf("Cannot add %s to array of %s",
