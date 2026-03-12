@@ -1292,7 +1292,8 @@ static double ntail (double l, double u)
 
     while (!acc && iter < 1000) {
         /* find the threshold */
-        x = c - logp1(gretl_rand_01() * f);
+	// x = c - logp1(gretl_rand_01() * f);
+	x = c - log1p(gretl_rand_01() * f);
 	u01 = gretl_rand_01();
 	acc = (x*u01*u01) < c;
         if (acc) {
