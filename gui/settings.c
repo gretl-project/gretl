@@ -833,8 +833,6 @@ static void set_workdir (const gchar *wdir)
 
     if (err) {
         fprintf(stderr, "%s\n", gretl_errmsg_get());
-    } else {
-        fprintf(stderr, "working dir = '%s'\n", wdir);
     }
 }
 
