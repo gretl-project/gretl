@@ -207,16 +207,17 @@ where \textsl{rows} can take any of these forms:
 1. & empty & selects all rows \\
 2. & a single integer & selects the single specified row \\
 3. & two integers separated by a colon & selects a range of rows \\
-4. & the name of a matrix & selects the specified rows \\
+4. & a selection vector & selects the specified rows \\
 \end{tabular}
 \end{center}
 
-With regard to option 2, the integer value can be given numerically,
-as the name of an existing scalar variable, or as an expression that
-evaluates to a scalar.  With option 4, the index matrix given in the
-\textsl{rows} field must be either $p\times 1$ or $1\times p$, and
-should contain integer values in the range 1 to $n$, where $n$ is the
-number of rows in the matrix from which the selection is to be made.
+With regard to option 2, the integer value can be given numerically, as
+the name of an existing scalar variable, or as an expression that
+evaluates to a scalar.  With option 4, the selection vector given in the
+\textsl{rows} field should contain integer values in the range 1 to $r$,
+where $r$ is the number of rows in the matrix from which the selection
+is to be made---or as a special case it can be an empty vector, which
+selects zero rows, resulting in an empty matrix.
 
 The \textsl{cols} specification works in the same way, \textit{mutatis
   mutandis}.  Here are some examples.
