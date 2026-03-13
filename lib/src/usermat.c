@@ -2120,17 +2120,21 @@ gretl_matrix *user_matrix_which (const gretl_matrix *cond, int *err)
     for (i=0; i<n; i++) {
 	m += cond->val[i] != 0;
     }
-
     if (m == 0) {
 	return gretl_null_matrix_new();
     }
 
     if (MIN(r, c) > 1) {
 	ret = gretl_matrix_alloc(m, 2);
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	    goto bailout;
-	}
+    } else {
+	ret = gretl_matrix_alloc(m, 1);
+    }
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (MIN(r, c) > 1) {
 	k = 0;
 	for (j=0; j<c; j++) {
 	    for (i=0; i<r; i++) {
@@ -2146,21 +2150,13 @@ gretl_matrix *user_matrix_which (const gretl_matrix *cond, int *err)
 	    }
 	}
     } else {
-	ret = gretl_matrix_alloc(m, 1);
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	    goto bailout;
-	}
 	k = 0;
-	int dim = MAX(r,c);
-	for (i=0; i<dim; i++) {
-	    if(cond->val[i] != 0) {
+	for (i=0; i<m; i++) {
+	    if (cond->val[i] != 0) {
 		ret->val[k++] = i+1;
 	    }
 	}
     }
-
- bailout:
 
     return ret;
 }
