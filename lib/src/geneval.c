@@ -4952,6 +4952,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
         case F_CTRANS:
             ret->v.m = gretl_ctrans(m, 1, &p->err);
             break;
+        case F_WHICH:
+            ret->v.m = user_matrix_which(m, &p->err);
+            break;
         default:
             break;
         }
@@ -19182,6 +19185,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_FFTI:
     case F_POLROOTS:
     case F_CTRANS:
+    case F_WHICH:
         /* matrix -> matrix functions */
         if (l->t == MAT || l->t == NUM) {
             ret = matrix_to_matrix_func(l, r, t->t, p);

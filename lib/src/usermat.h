@@ -194,5 +194,7 @@ int gretl_matrix_set_part (gretl_matrix *targ,
 			   const gretl_matrix *src,
 			   double x, SelType sel);
 
+gretl_matrix *user_matrix_which (const gretl_matrix *cond,
+				 int *err);
 
 #endif /* USERMAT_H_ */

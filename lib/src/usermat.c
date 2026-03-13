@@ -2110,3 +2110,63 @@ int gretl_matrix_set_part (gretl_matrix *targ,
 
     return err;
 }
+
+gretl_matrix *user_matrix_which (const gretl_matrix *cond, int *err)
+{
+    gretl_matrix *ret = NULL;
+    double cij;
+    int r = cond->rows;
+    int c = cond->cols;
+    int n = r * c;
+    int m = 0;
+    int i, j, k;
+
+    *err = 0;
+
+    for (i=0; i<n; i++) {
+	m += cond->val[i] != 0;
+    }
+
+    if (m == 0) {
+	return gretl_null_matrix_new();
+    }
+
+    if (MIN(r, c) > 1) {
+	ret = gretl_matrix_alloc(m, 2);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+	k = 0;
+	for (j=0; j<c; j++) {
+	    for (i=0; i<r; i++) {
+		cij = gretl_matrix_get(cond, i, j);
+		if (cij != 0) {
+		    cij = r == 1 ? j+1 : i+1;
+		    gretl_matrix_set(ret, k, 0, cij);
+		    if (c > 1) {
+			gretl_matrix_set(ret, k, 1, j+1);
+		    }
+		    k++;
+		}
+	    }
+	}
+    } else {
+	ret = gretl_matrix_alloc(m, 1);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+	k = 0;
+	int dim = MAX(r,c);
+	for (i=0; i<dim; i++) {
+	    if(cond->val[i] != 0) {
+		ret->val[k++] = i+1;
+	    }
+	}
+    }
+
+ bailout:
+
+    return ret;
+}
