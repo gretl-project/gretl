@@ -121,6 +121,8 @@ double student_critval (double df, double a);
 
 double log_normal_pdf (double x);
 
+double tnormal_cdf (double lo, double hi, double x);
+
 double gamma_cdf (double s1, double s2, double x, int control);
 
 double gamma_cdf_comp (double s1, double s2, double x, int control);

@@ -1660,11 +1660,11 @@ static int check_dist_count (int d, int f, int *np, int *argc)
             err = E_INVARG;
         }
     } else if (d == D_TNORMAL) {
-        /* randgen and mrandgen only */
-        if (randgen(f)) {
-            *np = 2; /* truncation limits */
-        } else {
+        /* inverse cdf not supported */
+        if (f == F_INVCDF) {
             err = E_INVARG;
+        } else {
+            *np = 2; /* truncation limits */
         }
     } else {
         err = E_INVARG;

@@ -1373,6 +1373,31 @@ static double beta_pdf (double a, double b, double x)
     return x;
 }
 
+static int tnormal_pdf_array (double lo, double hi, double *x, int n)
+{
+    int i, err = 0;
+    double P0 = na(lo) ? 0.0 : normal_cdf(lo);
+    double P1 = na(hi) ? 1.0 : normal_cdf(hi);
+    double den = P1 - P0;
+
+    for (i=0; i<n; i++) {
+	if ((x[i] < lo) || (x[i] > hi)) {
+	    x[i] = 0.0;
+	} else {
+	    x[i] = normal_pdf(x[i]) / den;
+	}
+    }
+
+    return err;
+}
+
+static double tnormal_pdf (double lo, double hi, double x)
+{
+    tnormal_pdf_array(lo, hi, &x, 1);
+
+    return x;
+}
+
 /**
  * normal_cdf:
  * @x: double-precision value.
@@ -1485,6 +1510,36 @@ double normal_pdf (double x)
 double log_normal_pdf (double x)
 {
     return -0.5 * x * x - LN_SQRT_2_PI;
+}
+
+/**
+ * tnormal_cdf:
+ * @lo: left truncation point.
+ * @hi: right truncation point.
+ * @x: reference value.
+ *
+ * Calculates the value of the CDF of the truncated normal
+ * distribution at @x, with truncation limits @lo and @hi
+
+ * Returns: the calculated probability, or #NADBL on failure.
+ */
+
+double tnormal_cdf (double lo, double hi, double x)
+{
+    double P0 = na(lo) ? 0.0 : normal_cdf(lo);
+    double P1 = na(hi) ? 1.0 : normal_cdf(hi);
+    double c = P1 - P0;
+
+    double p;
+    if (x<lo) {
+	p = 0;
+    } else if (x>hi) {
+	p = 1;
+    } else {
+	p = (normal_cdf(x) - P0) / c ;
+    }
+
+    return p;
 }
 
 /**
@@ -3405,6 +3460,8 @@ double gretl_get_cdf (int dist, const double *parm, double x)
         y = logistic_cdf(x);
     } else if (dist == D_BETA) {
         y = beta_cdf(parm[0], parm[1], x);
+    } else if (dist == D_TNORMAL) {
+        y = tnormal_cdf(parm[0], parm[1], x);
     }
 
     return y;
@@ -3461,6 +3518,8 @@ double gretl_get_pdf (int dist, const double *parm, double x)
         y = nc_chisq_pdf(parm[0], parm[1], x);
     } else if (dist == D_BETA) {
         y = beta_pdf(parm[0], parm[1], x);
+    } else if (dist == D_TNORMAL) {
+        y = tnormal_pdf(parm[0], parm[1], x);
     }
 
     return y;
@@ -3520,6 +3579,8 @@ int gretl_fill_pdf_array (int dist, const double *parm,
         err = nc_chisq_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_BETA) {
         err = beta_pdf_array(parm[0], parm[1], x, n);
+    } else if (dist == D_TNORMAL) {
+        err = tnormal_pdf_array(parm[0], parm[1], x, n);
     }
 
     return err;
