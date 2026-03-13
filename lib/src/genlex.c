@@ -1537,7 +1537,6 @@ static void look_up_dollar_word (const char *s, parser *p)
 
 #ifdef USE_RLIB
 # include "gretl_foreign.h"
-# include "libset.h"
 
 static int maybe_get_R_function (const char *s)
 {
