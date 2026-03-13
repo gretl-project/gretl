@@ -5358,10 +5358,10 @@ static int set_sel_vector (matrix_subspec *spec, int r,
 	/* (valid) empty selection */
 	if (r) {
 	    spec->rsel.m = m;
-	    spec->rtype = SEL_NULL;
+	    spec->rtype = SEL_MATRIX;
 	} else {
 	    spec->lsel.m = m;
-	    spec->ltype = SEL_NULL;
+	    spec->ltype = SEL_MATRIX;
 	}
 	return 0;
     }

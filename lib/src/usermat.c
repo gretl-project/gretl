@@ -268,6 +268,8 @@ int *mspec_make_list (int type, union msel *sel, int n,
 	if (sel->m == NULL) {
 	    gretl_errmsg_set(_("Range is non-positive!"));
 	    *err = E_DATA;
+	} else if (gretl_vector_get_length(sel->m) == 0) {
+	    ns = 0;
 	} else if (sel->m->val[0] < 0) {
 	    *err = handle_vector_exclusion(sel->m, n, &slice);
 	    return slice; /* we're done */
