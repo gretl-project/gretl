@@ -99,7 +99,7 @@ static int run_mpi_with_pipes (char **argv, struct iodata *io,
 
 static struct fmap foreign_map[] = {
      { LANG_OX,     "gretltmp.ox", "gretl_io.ox", NULL },
-     { LANG_OCTAVE, "gretltmp.m",  "gretl_io.m", NULL },
+     { LANG_OCTAVE, "gretltmp.m",  "gretl_io.txt", NULL },
      { LANG_STATA,  "gretltmp.do", "gretl_export.ado", NULL },
      { LANG_PYTHON, "gretltmp.py", "gretl_io.py", NULL },
      { LANG_JULIA,  "gretltmp.jl", "gretl_io.jl", NULL }
@@ -1055,7 +1055,6 @@ static void write_ox_io_file (FILE *fp, const char *ddir)
 
 static void write_octave_io_file (FILE *fp, const char *ddir)
 {
-    fputs("# not a 'function file' as such\n1;\n\n", fp);
     fputs("function dotdir = gretl_dotdir()\n", fp);
     fprintf(fp, "  dotdir = \"%s\";\n", ddir);
     fputs("endfunction\n\n", fp);
@@ -1401,7 +1400,7 @@ static void add_gretl_include (int lang, gretlopt opt, FILE *fp)
             fprintf(fp, "#include <%sgretl_io.ox>\n", ddir);
         }
     } else if (lang == LANG_OCTAVE) {
-        fprintf(fp, "source(\"%sgretl_io.m\")\n", ddir);
+        fprintf(fp, "source(\"%sgretl_io.txt\")\n", ddir);
     } else if (lang == LANG_JULIA) {
         fprintf(fp, "include(\"%sgretl_io.jl\")\n", ddir);
     } else if (lang == LANG_STATA) {
@@ -1443,7 +1442,7 @@ static void put_foreign_lines (FILE *fp)
                 add_gretl_include(LANG_OX, 0, fp);
             }
         } else if (foreign_lang == LANG_OCTAVE) {
-            if (strstr(foreign_lines[i], "dynare ") &&
+            if (strstr(foreign_lines[i], "pkg load ") &&
                 !strstr(foreign_lines[i], "noclearall")) {
                 add_gretl_include(LANG_OCTAVE, 0, fp);
             }
@@ -1464,7 +1463,7 @@ static void put_foreign_buffer (const char *buf, FILE *fp)
                 add_gretl_include(LANG_OX, 0, fp);
             }
         } else if (foreign_lang == LANG_OCTAVE) {
-            if (strstr(line, "dynare ") &&
+            if (strstr(line, "pkg load ") &&
                 !strstr(line, "noclearall")) {
                 add_gretl_include(LANG_OCTAVE, 0, fp);
             }
