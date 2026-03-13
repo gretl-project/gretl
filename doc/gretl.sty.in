@@ -71,10 +71,15 @@
 \newenvironment{textcode}{\par\small\ttfamily}
 {\normalfont\normalsize\par}
 
-%% basic inline code style
+%% basic code style
 \DefineVerbatimEnvironment%
 {code}{Verbatim}
 {fontsize=\small, xleftmargin=1em}
+
+%% non-small code style
+\DefineVerbatimEnvironment%
+{nscode}{Verbatim}
+{xleftmargin=1em}
 
 %% style for the first, or only, piece of hansl code inside
 %% a \script environment
