@@ -764,7 +764,7 @@ static int push_delimited_token (CMD *c, const char *tok,
 
 static int push_quoted_token (CMD *c, const char *s,
 			      int len, int pos,
-			      int bse, int esc)
+			      int esc)
 {
     char *tok = calloc(len + 1, 1);
     int err = 0;
@@ -775,27 +775,7 @@ static int push_quoted_token (CMD *c, const char *s,
 	const char *p = s + 1;
 	int i = 0;
 
-	if (c->ci == PRINT && bse) {
-	    /* apply full escaping */
-	    char c;
-	    int j;
-
-	    for (j=0; j<len && !err; ) {
-		if (p[j] == '\\') {
-		    c = printf_escape(p[j+1], &err);
-		    if (c == 0) {
-			/* tolerate_slop */
-			tok[i++] = p[j];
-			tok[i++] = p[j+1];
-		    } else {
-			tok[i++] = c;
-		    }
-		    j += 2;
-		} else {
-		    tok[i++] = p[j++];
-		}
-	    }
-	} else if (c->ci == PRINTF || (c->ci == PRINT && !esc)) {
+	if (c->ci == PRINTF || (c->ci == PRINT && !esc)) {
 	    /* either a format string, or "print" with no
 	       backslash-quote escapes: print 'as is'
 	    */
@@ -892,10 +872,8 @@ static int wild_spn (const char *s)
    of this sequence of bytes.
 */
 
-static int closing_quote_pos (const char *s, int ci,
-			      int bse, int *esc)
+static int closing_quote_pos (const char *s, int ci, int *esc)
 {
-    int raw = (bse == 0);
     int i, j, bsl;
 
 #if 0
@@ -904,7 +882,7 @@ static int closing_quote_pos (const char *s, int ci,
 #endif
 
     for (i=1; s[i]; i++) {
-	if (s[i] == '"' && raw && ci == PRINT) {
+	if (s[i] == '"' && ci == PRINT) {
 	    if (s[i-1] == '\\') {
 		if (s[i+1] == '\0') {
 		    /* got the closer */
@@ -3570,7 +3548,6 @@ static int tokenize_line (ExecState *state, DATASET *dset,
     int n, m, pos = 0;
     int wild_ok = 0;
     int want_fname = 0;
-    int bse = bs_escape_on();
     int err = 0;
 
 #if CDEBUG || TDEBUG
@@ -3655,12 +3632,12 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	} else if (*s == '"') {
 	    int esc = 0;
 
-	    n = closing_quote_pos(s, cmd->ci, bse, &esc);
+	    n = closing_quote_pos(s, cmd->ci, &esc);
 	    if (n < 0) {
 		gretl_errmsg_sprintf(_("Unmatched '%c'\n"), '"');
 		err = E_PARSE;
 	    } else {
-		err = push_quoted_token(cmd, s, n, pos, bse, esc);
+		err = push_quoted_token(cmd, s, n, pos, esc);
 	    }
 	    n += 2;
 	} else if ((n = symbol_spn(s)) > 0) {

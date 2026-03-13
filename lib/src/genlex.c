@@ -1300,37 +1300,6 @@ void set_parsing_query (int s)
     parsing_query = s;
 }
 
-static char *escape_all (char *s, int *err)
-{
-    char *e = calloc(strlen(s) + 1, 1);
-    char *p = s;
-    char c;
-    int i = 0;
-
-    while (*p && !*err) {
-	if (*p == '\\') {
-	    c = printf_escape(*(p+1), err);
-	    if (c == 0) {
-		/* tolerate slop! */
-		e[i++] = *p;
-		e[i++] = *(p+1);
-	    } else {
-		e[i++] = c;
-	    }
-	    p += 2;
-	} else {
-	    e[i++] = *p++;
-	}
-    }
-    free(s);
-
-    return e;
-}
-
-#define ESCAPE_QUOTES 1
-
-#if ESCAPE_QUOTES
-
 /* 2023-09-15: apparatus for allowing \" as an embedded quote in string
    literals. Double-quote is taken as closing a quotation (rather than
    as an embedded literal) if (a) it immediately follows an opening
@@ -1391,9 +1360,6 @@ static char *get_quoted_string (parser *p, int prevsym)
            allowance made for "\\" as itself an escape
         */
         n = double_quote_position(p->point);
-    } else if (bs_escape_on()) {
-	n = double_quote_position(p->point);
-	esc = 2;
     } else {
         /* look for a matching non-escaped double-quote when
            backslash is special only when preceding a double
@@ -1404,9 +1370,7 @@ static char *get_quoted_string (parser *p, int prevsym)
 
     if (n >= 0) {
         s = gretl_strndup(p->point, n);
-	if (esc == 2 && strchr(s, '\\')) {
-	    s = escape_all(s, &p->err);
-        } else if (esc == 1) {
+        if (esc) {
             /* "\"" is accepted as an escape, but that's all: FIXME */
             escape_quotes(s);
         }
@@ -1429,59 +1393,6 @@ static char *get_quoted_string (parser *p, int prevsym)
 
     return s;
 }
-
-#else /* !ESCAPE_QUOTES */
-
-static char *get_quoted_string (parser *p, int prevsym)
-{
-    char *s = NULL;
-    int esc = 0;
-    int n;
-
-#if LDEBUG
-    fprintf(stderr, "genlex: get_quoted_string: sym = '%s', prevsym '%s'\n",
-            getsymb(p->sym), getsymb(prevsym));
-    fprintf(stderr, " p->ch = '%c', p->point = '%s'\n", p->ch, p->point);
-#endif
-
-    if (prevsym == F_SPRINTF || prevsym == F_PRINTF) {
-        /* look for a matching non-escaped double-quote,
-           allowance made for "\\" as itself an escape
-        */
-        n = double_quote_position(p->point);
-    } else if (bs_escape_on()) {
-	n = double_quote_position(p->point);
-	esc = 1;
-    } else {
-	n = gretl_charpos('"', p->point);
-    }
-
-    if (n >= 0) {
-        s = gretl_strndup(p->point, n);
-	if (esc && strchr(s, '\\')) {
-	    s = escape_all(s, &p->err);
-        }
-        parser_advance(p, n + 1);
-    } else {
-        parser_print_input(p);
-        pprintf(p->prn, _("Unmatched '%c'\n"), '"');
-        p->err = E_PARSE;
-    }
-
-    if (!p->err) {
-        if (p->ch == '.' && *p->point == '$') {
-            /* maybe quoted name of saved model followed by
-               dollar variable? */
-            p->sym = MMEMB;
-        } else {
-            p->sym = CSTR;
-        }
-    }
-
-    return s;
-}
-
-#endif /* ESCAPE_QUOTES or not */
 
 static int might_be_date_string (const char *s, int n)
 {
