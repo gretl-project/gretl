@@ -4953,7 +4953,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
             ret->v.m = gretl_ctrans(m, 1, &p->err);
             break;
         case F_WHICH:
-            ret->v.m = user_matrix_which(m, &p->err);
+            ret->v.m = gretl_matrix_which(m, &p->err);
             break;
         default:
             break;

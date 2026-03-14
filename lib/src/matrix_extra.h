@@ -157,6 +157,9 @@ gretl_matrix *gretl_matrix_2d_convolution (const gretl_matrix *A,
 					   const gretl_matrix *B,
 					   int *err);
 
+gretl_matrix *gretl_matrix_which (const gretl_matrix *cond,
+				  int *err);
+
 gretl_matrix *vector_from_strings (char **S, int ns,
 				   const char *fmt,
 				   int *nvals,

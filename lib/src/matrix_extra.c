@@ -2965,29 +2965,6 @@ gretl_matrix *gretl_matrix_2d_convolution (const gretl_matrix *A,
     gretl_matrix *C;
     double sum;
     int ci, cj, bj, aj, bi, ai;
-#if 0
-    /* Octave: "Convolution works fastest if we choose the A matrix to be
-     *  the largest" -- but we're not really seeing any difference.
-     */
-    int Am, An, B, Bn, Cm, Cn;
-    int edgM, edgN;
-
-    if (A->rows * A->cols < B->rows * B->cols) {
-	gretl_matrix *tmp = A;
-	B = A;
-	A = tmp;
-    }
-
-    Am = A->rows;
-    An = A->cols;
-    Bm = B->rows;
-    Bn = B->cols;
-    Cm = Am + Bm - 1;
-    Cn = An + Bn - 1;
-    edgM = Bm - 1;
-    edgN = Bn - 1;
-#else
-    /* leave the input matrices alone */
     int Am = A->rows;
     int An = A->cols;
     int Bm = B->rows;
@@ -2996,7 +2973,6 @@ gretl_matrix *gretl_matrix_2d_convolution (const gretl_matrix *A,
     int Cn = An + Bn - 1;
     int edgM = Bm - 1;
     int edgN = Bn - 1;
-#endif
 
     C = gretl_matrix_alloc(Cm, Cn);
 
@@ -3016,6 +2992,62 @@ gretl_matrix *gretl_matrix_2d_convolution (const gretl_matrix *A,
     }
 
     return C;
+}
+
+gretl_matrix *gretl_matrix_which (const gretl_matrix *cond, int *err)
+{
+    gretl_matrix *ret = NULL;
+    double cij;
+    int r = cond->rows;
+    int c = cond->cols;
+    int n = r * c;
+    int m = 0;
+    int i, j, k;
+
+    *err = 0;
+
+    for (i=0; i<n; i++) {
+	m += cond->val[i] != 0;
+    }
+    if (m == 0) {
+	return gretl_null_matrix_new();
+    }
+
+    if (MIN(r, c) > 1) {
+	ret = gretl_matrix_alloc(m, 2);
+    } else {
+	ret = gretl_matrix_alloc(m, 1);
+    }
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (MIN(r, c) > 1) {
+	k = 0;
+	for (j=0; j<c; j++) {
+	    for (i=0; i<r; i++) {
+		cij = gretl_matrix_get(cond, i, j);
+		if (cij != 0) {
+		    cij = r == 1 ? j+1 : i+1;
+		    gretl_matrix_set(ret, k, 0, cij);
+		    if (c > 1) {
+			gretl_matrix_set(ret, k, 1, j+1);
+		    }
+		    k++;
+		}
+	    }
+	}
+    } else {
+	k = 0;
+	for (i=0; i<m; i++) {
+	    if (cond->val[i] != 0) {
+		ret->val[k++] = i+1;
+	    }
+	}
+    }
+
+    return ret;
 }
 
 /* scan format string: should be "%<num>m" or just "%m" */
