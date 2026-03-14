@@ -12711,6 +12711,7 @@
 	<para>
 	  <seelist>
             <fncref targ="selifr"/>
+	    <fncref targ="which"/>
 	  </seelist>
 	</para>
       </description>
@@ -12732,6 +12733,7 @@
 	  <seelist>
             <fncref targ="selifc"/>
             <fncref targ="trimr"/>
+	    <fncref targ="which"/>
 	  </seelist>
 	</para>
       </description>
@@ -14933,6 +14935,55 @@ d =  8.0000000
 	  Note that if you simply add 1 to <lit>wd</lit> you get a
 	  numbering that's valid but non-standard, namely Sunday = 1
 	  to Saturday = 7.
+	</para>
+      </description>
+    </function>
+
+    <function name="which" section="matrix" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This function answers the question, which elements of a
+	  given matrix satisfy a certain condition? Literally, the
+	  test on each element is whether it's non-zero or not but you
+	  can test for any condition you like by constructing a
+	  suitable argument.
+	</para>
+	<para>
+	  For example, suppose you have a matrix <lit>M</lit> holding
+	  standard normal variates and you want to know which elements
+	  are outliers&mdash;defined, say, as those with absolute
+	  value greater than 3. Then you might do the following,
+	  where the <quote>dot</quote> comparison operator translates
+	  the condition of interest to 1s and 0s:
+	</para>
+	<code>
+	  matrix W = which(abs(M) .> 3)
+	  print W
+	</code>
+	<para>
+	  Let <math>m</math> denote the number of matches to the
+	  specified condition.  If the argument is a vector (column or
+	  row) the return value is a column vector of length
+	  <math>m</math> holding the indices of the matches.  If the
+	  argument has both rows and columns greater than one the
+	  result is a <by r="m" c="2"/> matrix with row indices in the
+	  first column and column indices in the second. So,
+	  continuing the example above, the following return matrix
+	  would tell you that the only outliers were <lit>M[2,2]</lit>
+	  and <lit>M[5,3]</lit>.
+	</para>
+	<code>
+	  2 2
+	  5 3
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="selifc"/>
+            <fncref targ="trimr"/>
+	  </seelist>
 	</para>
       </description>
     </function>
