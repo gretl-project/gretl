@@ -1516,6 +1516,7 @@ static void print_drop (MODEL *pmod, omit_info *oi, int k,
 
 static int auto_drop_var (omit_info *oi,
                           DATASET *dset,
+			  int **orderp,
                           gretlopt opt,
                           PRN *prn,
                           int *err)
@@ -1589,6 +1590,7 @@ static int auto_drop_var (omit_info *oi,
     }
 
     if (do_drop) {
+	gretl_list_append_term(orderp, oi->list[k+2]);
         if (!(opt & OPT_I)) {
             /* not --silent */
             print_drop(pmod, oi, k, dset, prn);
@@ -1629,7 +1631,9 @@ static void list_copy_values (int *targ, const int *src)
    FIXME this probably still needs work for estimators other than OLS.
 */
 
-static MODEL auto_omit (MODEL *orig, const int *omitlist,
+static MODEL auto_omit (MODEL *orig,
+			const int *omitlist,
+			int **orderp,
 			int crit, double alpha,
                         DATASET *dset, gretlopt opt,
                         PRN *prn)
@@ -1657,7 +1661,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
     oi.use_pval = (crit == C_MAX);
     oi.tmp = oi.use_pval ? NULL : gretl_model_new();
 
-    drop = auto_drop_var(&oi, dset, opt, prn, &err);
+    drop = auto_drop_var(&oi, dset, orderp, opt, prn, &err);
     if (err) {
         omod.errcode = err;
     } else if (!drop) {
@@ -1680,7 +1684,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
             }
         }
         list_copy_values(oi.list, omod.list);
-        drop = auto_drop_var(&oi, dset, opt, prn, &err);
+        drop = auto_drop_var(&oi, dset, orderp, opt, prn, &err);
         if (drop && omod.ncoeff == 1) {
             allgone = 1; /* will break */
         }
@@ -1887,7 +1891,8 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 				 crit, alpha, dset, opt, prn);
         }
     } else if (opt & OPT_A) {
-	rmod = auto_omit(orig, omitvars, crit, alpha, dset, opt, prn);
+	rmod = auto_omit(orig, omitvars, &omit_order,
+			 crit, alpha, dset, opt, prn);
     } else {
 	gretlopt ropt = OPT_NONE;
 
