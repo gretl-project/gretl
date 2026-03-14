@@ -460,11 +460,60 @@ See the \GCR\ for more details.
 \section{Named strings}
 \label{sec:named-strings}
 
-For some purposes it may be useful to save a string (that is, a
-sequence of characters) as a named variable that can be reused.
+First, a few words about co-called string literals. A string literal is
+a sequence of characters enclosed in quotes, which in gretl means a
+sequence of UTF-8 characters enclosed in straight double quotes
+(\verb|"|). In many programming languages, backslash---a character which
+never appears in ordinary text---is given a special role as the
+``escape'' character in string literals, allowing so-called escape
+sequences for producing special characters. Among the most common such
+sequences are the following:
+\begin{center}
+\begin{tabular}{cl}
+  \verb|\t| & tab \\
+  \verb|\n| & newline \\
+  \verb|\r| & carriage return \\
+  \verb|\v| & vertical tab \\
+  \verb|\"| & literal double quote \\
+  \verb|\\| & literal backslash \\
+\end{tabular}
+\end{center}
+Note that \verb|\"| permits embedding a double quote in a string
+literal (it doesn't terminate the string), while if you want a literal
+backslash you need to double it.
 
-Some examples of the definition of a string variable are shown
-below.
+Gretl has a dual policy with regard to string literals.
+\begin{enumerate}
+\item In the context of the \texttt{printf} command and the
+  \texttt{sprintf} function backslash is the escape character,
+  supporting all of the sequences noted above.
+\item In all other contexts backslash is treated as literal---with a
+  single exception, namely that the sequence \verb|\"| inserts a literal
+  double-quote into a string.
+\end{enumerate}
+
+The exception under clause 2 means that the command
+\begin{code}
+string s = "This is a \"string literal\""
+\end{code}
+gives \texttt{s} the following value
+\begin{code}
+This is a "string literal"
+\end{code}
+
+However, the exception has a consequence that should be noted: if you
+want to produce a string that ends with a backslash you should use
+\texttt{sprintf}, as shown below.
+\begin{code}
+string s = "foo\"           # don't do this!
+string s = sprintf("foo\\") # do this instead
+\end{code}
+In the second form the doubled backslash inserts a literal backslash,
+and the final double-quote terminates the string as intended.
+
+We now move on to the various means of defining and manipulating string
+variables in gretl. Here are a few examples.
+
 %
 \begin{code}
 string s1 = "some stuff I want to save"
@@ -478,7 +527,7 @@ comes a specification of the string to be saved. This may take any of
 the following forms:
 
 \begin{itemize}
-\item a string literal (enclosed in double quotes); or
+\item a string literal; or
 \item the name of an existing string variable; or
 \item a function that returns a string (see below); or
 \item any of the above followed by \texttt{+} and an integer offset.
@@ -503,15 +552,10 @@ string s1 = "sweet"
 string s2 = "Home, " ~ s1 ~ " home."
 \end{code}
 
-Note that when you define a string variable using a string literal,
-only a single ``escape'' sequence is recognized: if a backslash is
-immediately followed by a double-quote character this is interpreted
-as an embedded quote. Otherwise all characters are treated literally.
-If you wish to use backslash-escapes to denote newlines, tabs and so
-on, use the \texttt{sprintf} function instead (see the \texttt{printf}
-command for an account of the escape-characters). This function can
-also be used to produce a string variable whose definition involves
-the values of other variables, as in
+Let us again stress the point that if you wish to use backslash-escapes
+to denote newlines, tabs and so on, you should use the \texttt{sprintf}
+function instead. This function can also be used to produce a string
+variable whose definition involves the values of other variables, as in
 %
 \begin{code}
 scalar x = 8
@@ -554,29 +598,9 @@ treated as a ``macro'': the value of the variable is sustituted
 literally into the command line before the regular parsing of the
 command is carried out.
 
-One common use of string substitution is when you want to construct
-and use the name of a series programatically. For example, suppose you
-want to create 10 random normal series named \texttt{norm1} to
-\texttt{norm10}. This can be accomplished as follows.
-%
-\begin{code}
-string sname
-loop i=1..10
-  sname = sprintf("norm%d", i)
-  series @sname = normal()
-endloop
-\end{code}
-%
-Note that plain \texttt{sname} could not be used in the second line
-within the loop: the effect would be to attempt to overwrite the
-string variable named \texttt{sname} with a series of the same
-name. What we want is for the current \textit{value} of
-\texttt{sname} to be dumped directly into the command that defines a
-series, and the ``\verb|@|'' notation achieves that.
-
-Another typical use of string substitution is when you want the
-options used with a particular command to vary depending on
-some condition. For example,
+One typical use of string substitution is when you want the options used
+with a particular command to vary depending on some condition. For
+example,
 %
 \begin{code}
 function void use_optstr (series y, list xlist, int verbose)
@@ -620,6 +644,10 @@ print Just testing
 %
 which attempts to print the values of two variables, \texttt{Just} and
 \texttt{testing}.
+
+A word of advice: it is considered bad practice to use string
+substitution in cases where use of a regular string variable is
+feasible.
 
 \subsection{Built-in strings}
 
