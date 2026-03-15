@@ -12924,6 +12924,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="selifr"/>
+	    <fncref targ="which"/>
 	  </seelist>
 	</para>
       </description>
@@ -12946,6 +12947,7 @@
 	  <seelist>
 	    <fncref targ="selifc"/>
 	    <fncref targ="trimr"/>
+	    <fncref targ="which"/>
 	  </seelist>
 	</para>
       </description>
@@ -15192,6 +15194,57 @@ d =  8.0000000
 	  Si noti che la semplice aggiunta di 1 a <lit>wd</lit>
 	  produce una numerazione valida, ma non standard, da
 	  domenica = 1 a sabato = 7.
+	</para>
+      </description>
+    </function>
+
+    <function name="which" section="matrix" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione risponde alla domanda: quali elementi di una
+	  data matrice soddisfano una determinata condizione?  In
+	  questa funzione, si controlla se ciascun elemento di
+	  <argname>C</argname> è diverso da zero, cosicché è possibile
+	  verificare qualsiasi condizione desiderata costruendo un
+	  argomento appropriato.
+	</para>
+	<para>
+	  Ad esempio, supponiamo di avere una matrice <lit>M</lit>
+	  contenente variabili normali standard e di voler sapere
+	  quali elementi sono outlier, definiti, ad esempio, come
+	  quelli con valore assoluto maggiore di 3. In tal caso,
+	  potremmo procedere come segue, dove l'operatore di confronto
+	  <quote>punto</quote> traduce la condizione di interesse in 1
+	  e 0:
+	</para>
+	<code>
+	  matrix W = which(abs(M) .> 3)
+	  print W
+	</code>
+	<para>
+	  Sia <math>m</math> il numero di corrispondenze alla
+	  condizione specificata. Se l'argomento è un vettore (colonna
+	  o riga), il valore restituito è un vettore colonna di
+	  lunghezza <math>m</math> contenente gli indici delle
+	  corrispondenze. Se l'argomento ha righe e colonne maggiori
+	  di uno, il risultato è una matrice <by r="m" c="2"/> con gli
+	  indici di riga nella prima colonna e gli indici di colonna
+	  nella seconda. Quindi, continuando l'esempio precedente, la
+	  seguente matrice di ritorno indicherebbe che gli unici
+	  valori anomali erano <lit>M[2,2]</lit> e <lit>M[5,3]</lit>.
+	</para>
+	<code>
+	  2 2
+	  5 3
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="selifc"/>
+            <fncref targ="trimr"/>
+	  </seelist>
 	</para>
       </description>
     </function>
