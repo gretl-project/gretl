@@ -217,9 +217,12 @@ Generic discrete	& \texttt{disc}	& $p_k$	& $\mathbf{p}$ \\[6pt]
       & $\frac{1}{b-a}$	&  $a,b$\\[9pt]
   Normal	& \texttt{z}
       & $\frac{1}{\sigma \sqrt{2\pi}}
-      \exp\left[-\frac{1}{2}\left(\frac{x-\mu}{\sigma}\right)^2\right]$
-
+      \exp\left[-\frac{1}{2}\left(\frac{x-\mu}{\sigma}\right)^2\right]
+        = \frac{1}{\sigma} \varphi\left[ \frac{x-\mu}{\sigma} \right]$
       & $\mu, \sigma$ \\[9pt]
+  Truncated normal & \texttt{tn}
+      & $\frac{\varphi(x)}{\Phi(h) - \Phi(l)}$
+      & $l, h$ \\[9pt]
   Student's $t$	& \texttt{t}
       & $\frac{\Gamma{\left(\frac{\nu + 1}{2}\right)}}{\sqrt{\pi\nu}\,
         \Gamma{\left(\frac{\nu}{2}\right)}}

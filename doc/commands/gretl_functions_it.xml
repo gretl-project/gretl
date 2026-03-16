@@ -2870,6 +2870,12 @@
 	  </li>
 	  <li>
             <para>
+              Normale troncata (tn): limiti inferiore e superiore (NA
+	      per meno/più infinito)
+            </para>
+	  </li>
+	  <li>
+            <para>
               Logistica (lgt): nessun argomento supplementare
             </para>
 	  </li>
@@ -2954,6 +2960,8 @@
 	  -- &amp; -- \\
 	  Normale bivariata &amp; \texttt{D} &amp;
 	  $\rho$ &amp; -- \\
+	  Normale troncata &amp; \texttt{tn} &amp;
+	  $l$ &amp; $h$ &amp; --\\
 	  Logistica &amp; \texttt{lgt} &amp;
 	  -- &amp; -- &amp; --\\
 	  $t$ di Student (centrale) &amp; \texttt{t} &amp;
@@ -12063,6 +12071,12 @@
 	    <para>
 	      Normale (z, n, o N): media, deviazione standard
 	    </para>
+	  </li>
+	  <li>
+            <para>
+              Normale troncata (tn): limiti inferiore e superiore (NA
+	      per meno/più infinito)
+            </para>
 	  </li>
 	  <li>
 	    <para>

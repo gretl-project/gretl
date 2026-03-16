@@ -2833,6 +2833,12 @@
 	  </li>
 	  <li>
             <para>
+              Truncated normal (tn): left and right truncation points
+	      (NA for minus/plus infinity, respectively)
+            </para>
+	  </li>
+	  <li>
+            <para>
               Logistic (lgt or s): no extra arguments
             </para>
 	  </li>
@@ -2915,6 +2921,8 @@
 	  -- &amp; -- &amp; --\\
 	  Bivariate normal &amp; \texttt{D} &amp;
 	  $\rho$ &amp; -- &amp; --\\
+	  Truncated normal &amp; \texttt{tn} &amp;
+	  $l$ &amp; $h$ &amp; --\\
 	  Logistic &amp; \texttt{lgt} &amp;
 	  -- &amp; -- &amp; --\\
 	  Student's $t$ (central) &amp; \texttt{t} &amp;
@@ -11855,6 +11863,12 @@
 	  </li>
 	  <li>
             <para>
+              Truncated normal (tn): left and right truncation points
+	      (NA for minus/plus infinity, respectively)
+            </para>
+	  </li>
+	  <li>
+            <para>
               Student's t (t): degrees of freedom
             </para>
 	  </li>
@@ -11929,6 +11943,7 @@
 	  Uniform (continuous) &amp; \texttt{u} or \texttt{U} &amp; minimum &amp; maximum &amp; --\\
 	  Uniform (discrete) &amp; \texttt{i} &amp; minimum &amp; maximum &amp; --\\
 	  Normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; mean &amp; standard deviation &amp; --\\
+	  Truncated normal &amp; \texttt{tn} &amp; lower &amp; upper &amp; --\\
 	  Student's $t$ &amp; \texttt{t} &amp; degrees of freedom &amp; -- &amp; --\\
 	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; degrees of freedom &amp; -- &amp; --\\
 	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; df (num.) &amp; df (den.) &amp; --\\
