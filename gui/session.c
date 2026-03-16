@@ -2827,12 +2827,7 @@ static int copy_session_object (gui_obj *obj, const char *cpyname)
     } else if (obj->sort == GRETL_OBJ_MATRIX) {
 	user_var *u = obj->data;
 
-	err = copy_matrix_as(user_var_get_value(u), cpyname, 0);
-	if (!err) {
-	    p = get_user_var_by_name(cpyname);
-	    ptype = GRETL_OBJ_MATRIX;
-	    err = (p == NULL);
-	}
+	return copy_matrix_as(user_var_get_value(u), cpyname, 0);
     }
 
     if (!err) {
@@ -3388,6 +3383,8 @@ static gboolean session_icon_click (GtkWidget *icon,
 {
     gui_obj *obj = (gui_obj *) data;
 
+    /* double click action */
+
     if (event->type == GDK_2BUTTON_PRESS) {
 	switch (obj->sort) {
 	case GRETL_OBJ_EQN:
@@ -3510,7 +3507,9 @@ static void matrix_popup_callback (GtkWidget *widget, gpointer data)
 	PRN *prn;
 
 	m = user_var_get_value(u);
-	if (m != NULL && bufopen(&prn) == 0) {
+        if (m != NULL && m->is_complex) {
+            edit_or_view_matrix(name, iconview);
+        } else if (m != NULL && bufopen(&prn) == 0) {
 	    gretl_matrix_print_to_prn(m, name, prn);
 	    view_buffer(prn, 78, 400, name, VIEW_MATRIX, m);
 	}
@@ -4262,7 +4261,8 @@ static gui_obj *gui_object_new (gchar *name, int sort, gpointer data)
     obj->data = data;
 
 #if SESSION_DEBUG
-    fprintf(stderr, "Allocated obj at %p (%s)\n", (void *) obj, obj->name);
+    fprintf(stderr, "Allocated obj at %p (%s, data %p)\n",
+            (void *) obj, obj->name, obj->data);
 #endif
 
     switch (sort) {
