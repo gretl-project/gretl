@@ -3796,7 +3796,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
         if (vecp1 != NULL || vecp2 != NULL) {
             for (t=t1; t<=t2 && !err; t++) {
                 if (vecp1 != NULL) mu = vecp1[t];
-                if (vecp2 != NULL) b = vecp1[t];
+                if (vecp2 != NULL) b = vecp2[t];
                 err = gretl_rand_laplace(x, t, t, mu, b);
             }
         } else {
@@ -3826,7 +3826,15 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
     } else if (dist == D_TNORMAL) {
         double lo = parm[0], hi = parm[1];
 
-        err = gretl_rand_tnormal(x, t1, t2, lo, hi);
+        if (vecp1 != NULL || vecp2 != NULL) {
+            for (t=t1; t<=t2 && !err; t++) {
+                if (vecp1 != NULL) lo = vecp1[t];
+                if (vecp2 != NULL) hi = vecp2[t];
+                err = gretl_rand_tnormal(x, t, t, lo, hi);
+            }
+        } else {
+	    err = gretl_rand_tnormal(x, t1, t2, lo, hi);
+	}
     }
 
     return err;
