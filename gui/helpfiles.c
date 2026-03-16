@@ -1752,17 +1752,18 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 					 gtk_text_buffer_get_selection_bound(buf));
 	gtk_text_iter_order(&sel_bound, &iter);
     } else {
-	gtk_text_buffer_get_iter_at_offset(buf, &iter, 0);
+        gtk_text_buffer_get_start_iter(buf, &iter);
     }
 
     start = end = iter;
 
     if (!gtk_text_iter_forward_chars(&end, n)) {
-	/* we're already at end of the buffer */
 	if (from_cursor && !wrapped && !search_all) {
 	    from_cursor = FALSE;
 	    wrapped = 1;
 	    goto text_search_wrap;
+        } else if (gtk_text_iter_get_chars_in_line(&iter) == n) {
+            gtk_text_buffer_get_end_iter(buf, &end);
 	} else {
 	    return 0;
 	}
