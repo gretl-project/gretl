@@ -1375,13 +1375,13 @@ static double beta_pdf (double a, double b, double x)
 
 static int tnormal_pdf_array (double lo, double hi, double *x, int n)
 {
-    int i, err = 0;
     double P0 = na(lo) ? 0.0 : normal_cdf(lo);
     double P1 = na(hi) ? 1.0 : normal_cdf(hi);
     double den = P1 - P0;
+    int i, err = 0;
 
     for (i=0; i<n; i++) {
-	if ((x[i] < lo) || (x[i] > hi)) {
+	if (x[i] < lo || x[i] > hi) {
 	    x[i] = 0.0;
 	} else {
 	    x[i] = normal_pdf(x[i]) / den;
@@ -1529,14 +1529,14 @@ double tnormal_cdf (double lo, double hi, double x)
     double P0 = na(lo) ? 0.0 : normal_cdf(lo);
     double P1 = na(hi) ? 1.0 : normal_cdf(hi);
     double c = P1 - P0;
-
     double p;
-    if (x<lo) {
+
+    if (x < lo) {
 	p = 0;
-    } else if (x>hi) {
+    } else if (x > hi) {
 	p = 1;
     } else {
-	p = (normal_cdf(x) - P0) / c ;
+	p = (normal_cdf(x) - P0) / c;
     }
 
     return p;
