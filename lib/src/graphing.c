@@ -1738,17 +1738,35 @@ static char *var_term_line (char *term_line, int ptype, GptFlags flags)
 {
     char font_string[140];
     char size_string[16];
-    const char *varterm;
+    const char *varterm = NULL;
 
 #ifdef WIN32
     varterm = "windows";
 #else
-    if (gnuplot_has_wxt()) {
-        varterm = "wxt";
-    } else if (gnuplot_has_qt()) {
-        varterm = "qt";
+    const char *pref = getenv("GNUTERM");
+    const char *strs[] = {"wxt", "qt", "x11"};
+    guint8 opts[3];
+    int i;
+
+    opts[0] = gnuplot_has_wxt();
+    opts[1] = gnuplot_has_qt();
+    opts[2] = gnuplot_has_x11();
+
+    if (pref != NULL) {
+        for (i=0; i<3; i++) {
+            if (!strcmp(pref, strs[i]) && opts[i]) {
+                varterm = strs[i];
+            }
+        }
     } else {
-        varterm = "x11";
+        for (i=0; i<3; i++) {
+            if (opts[i]) {
+                varterm = strs[i];
+            }
+        }
+    }
+    if (varterm == NULL) {
+        varterm = "x11"; /* ?? */
     }
 #endif
 
