@@ -4376,8 +4376,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
 /**
  * get_command_index:
- * @s: pointer to execution state
- * @cmode: compilation mode: LOOP or FUNC
+ * @s: pointer to execution state.
+ * @cmode: compilation mode: LOOP or FUNC.
  * @preserve: if non-zero, preserve comments.
  *
  * Parse @line and assign to the %ci field of @s->cmd the index number of
@@ -4426,7 +4426,6 @@ int get_command_index (ExecState *s, int cmode, int preserve)
     }
 
     if (!err && cmd->ci == 0) {
-        /* FIXME watch out for fallout! (2012-03-01) */
         cmd->ci = CMD_NULL;
         err = E_PARSE;
     }
