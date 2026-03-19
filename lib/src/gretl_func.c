@@ -2605,9 +2605,9 @@ static void maybe_set_menu_only (ufunc *fun, fnpkg *pkg)
     }
 }
 
-/* read a single user-function definition from XML file: if the
-   function is a child of a package, the @pkg argument will
-   be non-NULL
+/* Read a single user-function definition from XML file: if the
+   function is a child of a package, the @pkg argument will be
+   non-NULL.
 */
 
 static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
@@ -6874,10 +6874,10 @@ int read_session_functions_file (const char *fname)
     return err;
 }
 
-/* Parse an XML function package file and return an allocated
-   package struct with the functions attached. Note that this
-   function does not actually "load" the package (making it
-   available to users) and does not check dependencies.
+/* Parse an XML function package file and return an allocated package
+   struct with the functions attached. Note that this function does
+   not actually "load" the package (making it available to users) and
+   does not check dependencies.
 */
 
 static fnpkg *read_package_file (const char *fname,
@@ -7051,9 +7051,8 @@ static int load_function_package (const char *fname,
     }
 
     if (!err) {
-        /* Let's double-check that we don't have a
-           colliding package (it would have to be
-           with a different filename).
+        /* Let's double-check that we don't have a colliding package
+           (it would have to be with a different filename).
         */
         fnpkg *oldpkg;
 
