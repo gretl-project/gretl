@@ -88,7 +88,7 @@ static int run_script (const char *fname,
                        gretlopt opt,
                        PRN *prn);
 
-static int strip_inline_comments (char *s)
+static int strip_inline_comments (char *s, int preserve)
 {
     char *p = strchr(s, '#');
 
@@ -100,11 +100,12 @@ static int strip_inline_comments (char *s)
        supplement to a plotting command.
     */
 
-    if (p - s == 0) {
+    if (p == NULL) {
+        return 0;
+    } else if (p - s == 0) {
         /* the entire line is a comment */
         return 1;
-    } else if (p == NULL) {
-        /* no '#' in line */
+    } else if (preserve) {
         return 0;
     }
 
@@ -174,6 +175,7 @@ static int filter_comments (char *s, CMD *cmd, int preserve)
     char tmp[MAXLINE];
     char *p = s;
     int ccmt, quoted = 0;
+    int skip_tmp = 0;
     int j = 0, filt = 0;
 
     if (gretl_compiling_function()) {
@@ -189,6 +191,9 @@ static int filter_comments (char *s, CMD *cmd, int preserve)
 
     while (*p) {
         if (!quoted && !ccmt && *p == '#') {
+            if (preserve) {
+                skip_tmp = 1;
+            }
             break;
         }
         if (!ccmt && bare_quote(p, s)) {
@@ -227,19 +232,22 @@ static int filter_comments (char *s, CMD *cmd, int preserve)
     }
 
     tmp[j] = '\0';
+
     if (preserve && tail_is_blank(tmp)) {
         cmd->ci = CMD_COMMENT;
         toggle_ccmt(cmd, ccmt);
         return 1;
     }
-    strcpy(s, tmp);
+    if (!skip_tmp) {
+        strcpy(s, tmp);
+    }
     tailstrip(s);
 
     if (*s == '\0') {
         filt = 1;
     } else if (!ccmt) {
         /* '#' comments */
-        filt = strip_inline_comments(s);
+        filt = strip_inline_comments(s, preserve);
         tailstrip(s);
     }
 
@@ -4397,7 +4405,8 @@ int get_command_index (ExecState *s, int cmode, int preserve)
     gretl_cmd_clear(cmd);
 
 #if CMD_DEBUG
-    fprintf(stderr, "get_command_index: line='%s'\n", line);
+    fprintf(stderr, "get_command_index: line='%s' preserve=%d\n",
+            line, preserve);
 #endif
 
     if ((cmd->context == FOREIGN || cmd->context == MPI) &&
