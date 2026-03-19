@@ -3578,9 +3578,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	    want_fname = 0;
 	}
 
-	if (*s == '#') {
-	    break;
-	} else if (want_fname && *s != '"' && !isspace(*s)) {
+        if (want_fname && *s != '"' && !isspace(*s)) {
 	    n = strcspn(s, " \t");
 	    if (n < FN_NAMELEN) {
 		strncat(tok, s, n);
@@ -3676,6 +3674,9 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 	    strncat(tok, s, m);
 	    err = push_string_token(cmd, tok, s, pos);
+        } else if (*s == '#') {
+            /* inline comment */
+            break;
         } else {
 	    err = unexpected_symbol_error(*s);
 	}
