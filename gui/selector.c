@@ -3440,7 +3440,7 @@ static void get_midas_specs (selector *sr)
     }
 
     if (rows == 0) {
-        warnbox("You must specify at least one MIDAS term");
+        warnbox(_("You must specify at least one MIDAS term"));
         sr->error = 1;
         return;
     }
