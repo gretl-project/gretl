@@ -83,6 +83,12 @@ double student_pvalue_2 (double df, double x);
 
 double student_pvalue_1 (double df, double x);
 
+double student_critval (double df, double a);
+
+double student_cdf (double df, double x);
+
+double student_cdf_inverse (double df, double a);
+
 double chisq_cdf (double df, double x);
 
 double chisq_cdf_comp (double df, double x);
@@ -105,10 +111,6 @@ double normal_cdf_inverse (double x);
 
 double normal_cdf_comp (double x);
 
-double student_cdf (double df, double x);
-
-double student_cdf_inverse (double df, double a);
-
 double nc_student_cdf (double df, double delta, double x);
 
 double nc_student_pdf (double df, double delta, double x);
@@ -116,8 +118,6 @@ double nc_student_pdf (double df, double delta, double x);
 double normal_pdf (double x);
 
 double normal_critval (double a);
-
-double student_critval (double df, double a);
 
 double log_normal_pdf (double x);
 
@@ -148,10 +148,6 @@ double laplace_cdf_inverse (double mu, double b, double a);
 double tcrit95 (int df);
 
 double rhocrit (int n, double alpha);
-
-double cephes_gamma (double x);
-
-double cephes_lgamma (double x); 
 
 double gretl_get_pvalue (int dist, const double *parm, double x);
 

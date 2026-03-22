@@ -43,7 +43,7 @@
  * they return the libgretl missing value code, %NADBL).
  */
 
-static int nct_pdf_array (double df, double delta, double *x, int n);
+static int nc_student_pdf_array (double df, double delta, double *x, int n);
 
 /**
  * gammafun:
@@ -204,6 +204,26 @@ double hypergeo (double a, double b, double c, double x)
 
     return ret;
 }
+/**
+ * beta_cdf:
+ *
+ * Returns the probability that a B(a,b) random variable is
+ * between 0 and z, or #NADBL on failure.
+ */
+
+double beta_cdf (double a, double b, double z)
+{
+    double x = NADBL;
+
+    if (a > 0 && b > 0 && z >= 0 && z <= 1) {
+        x = btdtr(a, b, z);
+        if (get_cephes_errno()) {
+            x = NADBL;
+        }
+    }
+
+    return x;
+}
 
 /**
  * binomial_cdf:
@@ -222,27 +242,6 @@ double binomial_cdf (double p, int n, int k)
 
     if (p >= 0 && n >= 0 && k >= 0) {
         x = bdtr(k, n, p);
-        if (get_cephes_errno()) {
-            x = NADBL;
-        }
-    }
-
-    return x;
-}
-
-/**
- * beta_cdf:
- *
- * Returns the probability that a B(a,b) random variable is
- * between 0 and z, or #NADBL on failure.
- */
-
-double beta_cdf (double a, double b, double z)
-{
-    double x = NADBL;
-
-    if (a > 0 && b > 0 && z >= 0 && z <= 1) {
-        x = btdtr(a, b, z);
         if (get_cephes_errno()) {
             x = NADBL;
         }
@@ -432,28 +431,6 @@ static double binomial_cdf_inverse (double p, int n, double u)
 
     return x;
 }
-
-#if 0
-
-/* Returns the event probability p such that the Binomial CDF
-   for @k successes on @n trials equals @a.
-*/
-
-static double gretl_bdtri (int n, int k, double a)
-{
-    double p = NADBL;
-
-    if (a > 0 && a < 1 && n >= 0 && k >= 0 && k <= n) {
-        p = bdtri(k, n, a);
-        if (get_cephes_errno()) {
-            p = NADBL;
-        }
-    }
-
-    return p;
-}
-
-#endif
 
 /* The following is no doubt horribly inefficient */
 
@@ -767,31 +744,6 @@ double normal_cdf_comp (double x)
 }
 
 /**
- * student_pvalue_1:
- * @df: degrees of freedom.
- * @x: the cutoff point in the distribution.
- *
- * Returns: the probability that t(@df) is greater than @x,
- * or #NADBL on failure.
- */
-
-double student_pvalue_1 (double df, double x)
-{
-    double p = NADBL;
-
-    if (df > 0) {
-        p = stdtr(df, x);
-        if (get_cephes_errno()) {
-            p = NADBL;
-        } else {
-            p = (p >= 1.0)? 0.0 : 1 - p;
-        }
-    }
-
-    return p;
-}
-
-/**
  * student_pvalue_2:
  * @df: degrees of freedom.
  * @x: the cutoff point in the distribution.
@@ -815,6 +767,31 @@ double student_pvalue_2 (double df, double x)
             p = NADBL;
         } else {
             p *= 2;
+        }
+    }
+
+    return p;
+}
+
+/**
+ * student_pvalue_1:
+ * @df: degrees of freedom.
+ * @x: the cutoff point in the distribution.
+ *
+ * Returns: the probability that t(@df) is greater than @x,
+ * or #NADBL on failure.
+ */
+
+double student_pvalue_1 (double df, double x)
+{
+    double p = NADBL;
+
+    if (df > 0) {
+        p = stdtr(df, x);
+        if (get_cephes_errno()) {
+            p = NADBL;
+        } else {
+            p = (p >= 1.0)? 0.0 : 1 - p;
         }
     }
 
@@ -1571,7 +1548,8 @@ double gamma_cdf (double s1, double s2, double x, int control)
     }
 
     /* for the cephes functions, the parameterization is
-       inverse-scale (or "rate"), shape */
+       inverse-scale (or "rate"), shape
+    */
 
     p = gdtr(1.0 / scale, shape, x);
     if (get_cephes_errno()) {
@@ -1871,28 +1849,6 @@ static double poisson_cdf_inverse (double lambda, double p)
 {
     return poissinv(p, lambda);
 }
-
-#if 0
-
-/* Returns the Poisson parameter lambda such that the
-   Poisson CDF evaluated at @k equals @p.
-*/
-
-static double gretl_pdtri (int k, double p)
-{
-    double lambda = NADBL;
-
-    if (k >= 0 && p >= 0 && p <= 1) {
-        lambda = pdtri(k, p);
-        if (get_cephes_errno()) {
-            lambda = NADBL;
-        }
-    }
-
-    return lambda;
-}
-
-#endif
 
 static double weibull_critval (double shape, double scale,
                                double rtail)
@@ -2264,7 +2220,8 @@ double johansen_trace_pval (int N, int det, int T, double tr)
     return pv;
 }
 
-/* below: non-central distributions: chi-square, F and Student's t
+/* below: non-central distributions: chi-square, F and
+   Student's t
 */
 
 #define qsmall(sum,x) (sum < 1.0e-30 || (x) < 1.0e-8*sum)
@@ -2304,8 +2261,7 @@ double nc_chisq_cdf (double df, double delta, double x)
     }
 
     if (delta <= 1.0e-10) {
-        /*
-          When non-centrality parameter is (essentially) zero,
+        /* When non-centrality parameter is (essentially) zero,
           use ordinary chi-square distribution
         */
         return chisq_cdf(df, x);
@@ -2313,36 +2269,26 @@ double nc_chisq_cdf (double df, double delta, double x)
 
     xnonc = delta / 2.0;
 
-    /*
-      The following code calculates the weight, chi-square, and
-      adjustment term for the central term in the infinite series.
-      The central term is the one in which the poisson weight is
-      greatest.  The adjustment term is the amount that must
-      be subtracted from the chi-square to move up two degrees
-      of freedom.
+    /* The following code calculates the weight, chi-square, and
+       adjustment term for the central term in the infinite series.  The
+       central term is the one in which the poisson weight is greatest.
+       The adjustment term is the amount that must be subtracted from
+       the chi-square to move up two degrees of freedom.
     */
     icent = (xnonc < 1.0) ? 1 : (int) trunc(xnonc);
     chid2 = x / 2.0;
 
-    /*
-      Calculate central weight term
-    */
-
+    /* Calculate central weight term */
     T1 = (double) (icent + 1);
     lfact = lngamma(T1);
-    lcntwt = -xnonc + (double)icent*log(xnonc) - lfact;
+    lcntwt = -xnonc + (double) icent*log(xnonc) - lfact;
     centwt = exp(lcntwt);
 
-    /*
-      Calculate central chi-square
-    */
+    /* Calculate central chi-square */
     T2 = df + 2.0 * (double) icent;
     pcent = chisq_cdf(T2, x);
 
-    /*
-      Calculate central adjustment term
-    */
-
+    /* Calculate central adjustment term */
     dfd2 = df / 2.0 + icent;
     T3 = dfd2 + 1.0;
     lfact = lngamma(T3);
@@ -2350,12 +2296,11 @@ double nc_chisq_cdf (double df, double delta, double x)
     centaj = exp(lcntaj);
     sum = centwt * pcent;
 
-    /*
-      Sum backwards from the central term towards zero.
-      Quit whenever either
-      (1) the zero term is reached, or
-      (2) the term gets small relative to the sum, or
-      (3) More than NTIRED terms are totaled.
+    /* Sum backwards from the central term towards zero.
+       Quit whenever either
+       (1) the zero term is reached, or
+       (2) the term gets small relative to the sum, or
+       (3) More than NTIRED terms are totaled.
     */
 
     iterb = 0;
@@ -2366,16 +2311,13 @@ double nc_chisq_cdf (double df, double delta, double x)
 
     do {
         dfd2 = df/2.0 + i;
-        /*
-          Adjust chi-square for two fewer degrees of freedom.
-          The adjusted value ends up in PTERM.
+        /* Adjust chi-square for two fewer degrees of freedom.
+	   The adjusted value ends up in PTERM.
         */
         adj = adj * dfd2/chid2;
         sumadj += adj;
         pterm = pcent + sumadj;
-        /*
-          Adjust poisson weight for J decreased by one
-        */
+        /* Adjust poisson weight for J decreased by one */
         wt *= ((double)i/xnonc);
         term = wt * pterm;
         sum += term;
@@ -2383,11 +2325,10 @@ double nc_chisq_cdf (double df, double delta, double x)
         iterb++;
     } while (iterb <= itermax && !qsmall(sum, term) && i > 0);
 
-    /*
-      Now sum forward from the central term towards infinity.
-      Quit when either
-      (1) the term gets small relative to the sum, or
-      (2) More than NTIRED terms are totaled.
+    /* Sum forward from the central term towards infinity.
+       Quit when either
+       (1) the term gets small relative to the sum, or
+       (2) More than NTIRED terms are totaled.
     */
     iterf = 0;
     sumadj = adj = centaj;
@@ -2395,19 +2336,13 @@ double nc_chisq_cdf (double df, double delta, double x)
     i = icent;
 
     do {
-        /*
-          Update weights for next higher J
-        */
+        /* Update weights for next higher J */
         wt *= (xnonc/(double)(i+1));
-        /*
-          Calculate PTERM and add term to sum
-        */
+        /* Calculate PTERM and add term to sum */
         pterm = pcent - sumadj;
         term = wt * pterm;
         sum += term;
-        /*
-          Update adjustment term for DF for next iteration
-        */
+        /* Update DF adjustment term for next iteration */
         i++;
         dfd2 = df/2.0 + i;
         adj = adj * chid2/dfd2;
@@ -2558,7 +2493,6 @@ static double nc_chisq_cdf_inverse (double p, double c, double q)
  * Returns: the calculated probability, or #NADBL on failure.
  */
 
-
 double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
 {
     double dsum, prod, xx, yy, adn, aup, b, betdn, betup;
@@ -2575,30 +2509,23 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
     }
 
     if (delta <= 1.0e-10) {
-        /*
-          When non-centrality parameter is (essentially) zero, use
-          ordinary F distribution
+        /* When non-centrality parameter is (essentially) zero, use
+	   ordinary F distribution
         */
         return snedecor_cdf(dfn, dfd, x);
     } else {
         xnonc = delta / 2.0;
     }
 
-    /*
-      Calculate the central term of the poisson weighting factor.
-    */
+    /* Calculate the central term of the poisson weighting factor */
     icent = (xnonc < 1.0) ? 1 : (int) trunc(xnonc);
 
-    /*
-      Compute central weight term
-    */
+    /* Compute central weight term */
     T1 = (double) (icent + 1);
     centwt = exp(-xnonc + (double) icent * log(xnonc) - lngamma(T1));
 
-    /*
-      Compute central incomplete beta term
-      Assure that minimum of arg to beta and 1 - arg is computed
-      accurately.
+    /* Compute central incomplete beta term. Ensure that minimum of arg
+       to beta and 1 - arg is computed accurately.
     */
     prod = dfn * x;
     dsum = dfd + prod;
@@ -2619,9 +2546,7 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
     betup = betdn;
     sum = centwt * betdn;
 
-    /*
-      Now sum terms backward from icent until convergence or all done
-    */
+    /* Sum terms backward from icent until convergence or all done */
 
     xmult = centwt;
     i = icent;
@@ -2640,9 +2565,8 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
 
     i = icent+1;
 
-    /*
-      Now sum forwards until convergence
-    */
+    /* Sum forwards until convergence */
+
     xmult = centwt;
     if (aup-1.0+b == 0) {
         upterm = exp(-lngamma(aup) - lngamma(b) +
@@ -2664,6 +2588,7 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
 
     return sum;
 }
+
 #undef qsmall
 
 /**
@@ -2693,8 +2618,8 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
  * Returns: an error code, as appropriate.
  */
 
-static int ncf_pdf_array (double dfn, double dfd, double c,
-                          double *x, int n)
+static int nc_snedecor_pdf_array (double dfn, double dfd, double c,
+				  double *x, int n)
 {
     double ch, k1, k2, k;
     double a, b, l, pw, beta;
@@ -2710,9 +2635,8 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     }
 
     if (fabs(c) <= 1.0e-10) {
-        /*
-          When non-centrality parameter is (essentially) zero, use
-          ordinary F distribution
+        /* When non-centrality parameter is (essentially) zero,
+	   use ordinary F distribution
         */
         return snedecor_pdf_array(dfn, dfd, x, n);
     }
@@ -2760,9 +2684,7 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
         }
     }
 
-    /*
-      First, go back from start to 0
-    */
+    /* Go back from start to 0 */
 
     pwi = pw;
     betai = beta;
@@ -2782,9 +2704,7 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
         }
     }
 
-    /*
-      Then, go from start all the way up as necessary
-    */
+    /* Go from start all the way up as necessary */
 
     iter = 0;
     pwi = pw;
@@ -2812,15 +2732,15 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     return err;
 }
 
-double ncf_pdf (double dfn, double dfd, double c, double x)
+double nc_snedecor_pdf (double dfn, double dfd, double c, double x)
 {
-    ncf_pdf_array(dfn, dfd, c, &x, 1);
+    nc_snedecor_pdf_array(dfn, dfd, c, &x, 1);
 
     return x;
 }
 
 /**
- * ncf_cdf_inverse:
+ * nc_snedecor_cdf_inverse:
  * @n1: degrees of freedom (numerator).
  * @n2: degrees of freedom (denominator).
  * @c: noncentrality parameter.
@@ -2834,7 +2754,8 @@ double ncf_pdf (double dfn, double dfd, double c, double x)
  * Returns: the calculated quantile, or #NADBL on failure.
  */
 
-static double ncf_cdf_inverse (double n1, double n2, double c, double q)
+static double nc_snedecor_cdf_inverse (double n1, double n2,
+				       double c, double q)
 {
     double x, d0, d1;
     int iter, subiter;
@@ -2850,7 +2771,7 @@ static double ncf_cdf_inverse (double n1, double n2, double c, double q)
 
     while (fabs(d0) > 1.0e-10 && iter < 1000) {
         F = nc_snedecor_cdf(n1, n2, c, x);
-        f = ncf_pdf(n1, n2, c, x);
+        f = nc_snedecor_pdf(n1, n2, c, x);
         d0 = F - q;
         dir = d0/f;
         d1 = 1.0e7;
@@ -2912,9 +2833,8 @@ double nc_student_cdf (double df, double delta, double x)
     }
 
     if (fabs(delta) <= 1.0e-10) {
-        /*
-          When non-centrality parameter is (essentially) zero, use
-          ordinary t distribution
+        /* When non-centrality parameter is (essentially) zero,
+	   use ordinary t distribution
         */
         return student_cdf(df, x);
     }
@@ -2937,8 +2857,7 @@ double nc_student_cdf (double df, double delta, double x)
     c = k + 1;
     b = df * 0.5;
 
-    /*
-       Initialization to compute the P_k and Q_k terms
+    /* Initialization to compute the P_k and Q_k terms
        and the respective incomplete beta functions
     */
 
@@ -2948,9 +2867,8 @@ double nc_student_cdf (double df, double delta, double x)
     pbetaf = pbetab = incbet(a, b, y);
     qbetaf = qbetab = incbet(c, b, y);
 
-    /*
-      Initialization to compute the incomplete beta functions
-      associated with the P_i and the Q_i recursively:
+    /* Initialization to compute the incomplete beta functions
+       associated with the P_i and the Q_i recursively:
     */
 
     tmp = b * log(1-y) - lngamma(b);
@@ -2960,21 +2878,19 @@ double nc_student_cdf (double df, double delta, double x)
     qgamf = exp(lngamma(c+b-1) - lngamma(c) + (c-1) * log(y) + tmp);
     qgamb = qgamf * y * (c + b - 1)/c;
 
-    /*
-      Compute the remainder of the Poisson weights
-    */
+    /* Compute the remainder of the Poisson weights */
 
     rempois = 1.0 - pkf;
     sum = pkf * pbetaf + del * qkf * qbetaf * ISQRT_2;
 
     for (i = 1; i<=k && rempois>errtol; i++) {
-        /* first block --- backwards */
+        /* first block, backwards */
         pgamb *= (a-i+1)/(y * (a+b-i));
         pbetab += pgamb;
         pkb *= (k-i+1)/dels;
         ptermb = pkb * pbetab;
 
-        /* second block --- backwards */
+        /* second block, backwards */
         qgamb *= (c-i+1)/(y * (c+b-i));
         qbetab += qgamb;
         qkb *= (k-i+1.5)/dels;
@@ -2986,13 +2902,13 @@ double nc_student_cdf (double df, double delta, double x)
     }
 
     for (i = 1; i<maxit && rempois > errtol; i++) {
-        /* first block --- forwards */
+        /* first block, forwards */
         pgamf *= y * (a+b-2+i)/(a+i-1);
         pbetaf -= pgamf;
         pkf *= dels/(k+i);
         ptermf = pkf * pbetaf;
 
-        /* second block --- forwards */
+        /* second block, forwards */
         qgamf *= y * (c+b-2+i)/(c+i-1);
         qbetaf -= qgamf;
         qkf *= dels/(k+i+0.5);
@@ -3030,9 +2946,8 @@ double nc_student_pdf (double df, double delta, double x)
     }
 
     if (fabs(delta) <= 1.0e-10) {
-        /*
-          When non-centrality parameter is (essentially) zero, use
-          ordinary t distribution
+        /* When non-centrality parameter is (essentially) zero,
+	   use ordinary t distribution
         */
         return student_pdf(df, x);
     }
@@ -3050,7 +2965,8 @@ double nc_student_pdf (double df, double delta, double x)
 }
 
 
-static int nct_pdf_array (double df, double delta, double *x, int n)
+static int nc_student_pdf_array (double df, double delta,
+				 double *x, int n)
 {
     int i, err = 0;
 
@@ -3076,7 +2992,7 @@ static int nct_pdf_array (double df, double delta, double *x, int n)
 }
 
 /**
- * nct_cdf_inverse:
+ * nc_student_cdf_inverse:
  * @p: degrees of freedom.
  * @c: noncentrality parameter.
  * @q: probability.
@@ -3090,7 +3006,7 @@ static int nct_pdf_array (double df, double delta, double *x, int n)
  * Returns: the calculated quantile, or #NADBL on failure.
  */
 
-static double nct_cdf_inverse (double p, double c, double q)
+static double nc_student_cdf_inverse (double p, double c, double q)
 {
     double x, d0, d1;
     int iter, subiter;
@@ -3260,23 +3176,6 @@ void print_critval (int dist, const double *parm, double a, double c, PRN *prn)
     pputc(prn, '\n');
 }
 
-/* This apparatus is for use with the "batch p-value"
-   routine: it remembers the parameters (p) and
-   argument (x) from the last internal p-value
-   assessment.
-*/
-
-static double pvargs[3];
-
-static void remember_pvalue_args (const double *p, double x)
-{
-    pvargs[0] = p[0];
-    pvargs[1] = p[1];
-    pvargs[2] = x;
-}
-
-/* end remember parameters */
-
 static int pdist_check_input (int dist, const double *parm,
                               double x)
 {
@@ -3306,7 +3205,6 @@ static int pdist_check_input (int dist, const double *parm,
 
     return 0;
 }
-
 
 /**
  * gretl_get_cdf_inverse:
@@ -3348,16 +3246,15 @@ double gretl_get_cdf_inverse (int dist, const double *parm,
     } else if (dist == D_LAPLACE) {
         y = laplace_cdf_inverse(parm[0], parm[1], a);
     } else if (dist == D_NC_F) {
-        y = ncf_cdf_inverse(parm[0], parm[1], parm[2], a);
+        y = nc_snedecor_cdf_inverse(parm[0], parm[1], parm[2], a);
     } else if (dist == D_NC_CHISQ) {
         y = nc_chisq_cdf_inverse(parm[0], parm[1], a);
     } else if (dist == D_NC_T) {
-        y = nct_cdf_inverse(parm[0], parm[1], a);
+        y = nc_student_cdf_inverse(parm[0], parm[1], a);
     }
 
     return y;
 }
-
 
 /**
  * gretl_get_critval:
@@ -3511,7 +3408,7 @@ double gretl_get_pdf (int dist, const double *parm, double x)
     } else if (dist == D_LAPLACE) {
         y = laplace_pdf(parm[0], parm[1], x);
     } else if (dist == D_NC_F) {
-        y = ncf_pdf(parm[0], parm[1], parm[2], x);
+        y = nc_snedecor_pdf(parm[0], parm[1], parm[2], x);
     } else if (dist == D_NC_T) {
         y = nc_student_pdf(parm[0], parm[1], x);
     } else if (dist == D_NC_CHISQ) {
@@ -3572,9 +3469,9 @@ int gretl_fill_pdf_array (int dist, const double *parm,
     } else if (dist == D_LAPLACE) {
         err = laplace_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_NC_F) {
-        err = ncf_pdf_array(parm[0], parm[1], parm[2], x, n);
+        err = nc_snedecor_pdf_array(parm[0], parm[1], parm[2], x, n);
     } else if (dist == D_NC_T) {
-        err = nct_pdf_array(parm[0], parm[1], x, n);
+        err = nc_student_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_NC_CHISQ) {
         err = nc_chisq_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_BETA) {
@@ -3584,6 +3481,20 @@ int gretl_fill_pdf_array (int dist, const double *parm,
     }
 
     return err;
+}
+
+/* This apparatus remembers the parameters (p) and argument (x) from the
+   last internal p-value assessment, via gretl_get_pvalue or
+   batch_pvalue().
+*/
+
+static double pvargs[3];
+
+static void remember_pvalue_args (const double *p, double x)
+{
+    pvargs[0] = p[0];
+    pvargs[1] = p[1];
+    pvargs[2] = x;
 }
 
 /**

@@ -164,6 +164,12 @@ int polrt (double *xcof, double *cof, int m, cmplx *root);
 /* Gauss hypergeometric function 2F1 */
 double hyp2f1 (double a, double b, double c, double x);
 
+/* Gamma function */
+double cephes_gamma (double x);
+
+/* Logarithm of gamma function */
+double cephes_lgamma (double x);
+
 /* Accessor for cephes error code */
 int get_cephes_errno (void);
 

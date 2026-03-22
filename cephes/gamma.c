@@ -103,7 +103,6 @@ Cephes Math Library Release 2.8:  June, 2000
 Copyright 1984, 1987, 1989, 1992, 2000 by Stephen L. Moshier
 */
 
-
 #include "mconf.h"
 
 static double P[] = {
@@ -265,7 +264,6 @@ double cephes_gamma (double x)
 	return z/((1.0 + 0.5772156649015329 * x) * x);
     }
 }
-
 
 /* A[]: Stirling's formula expansion of log gamma
  * B[], C[]: log gamma function between 2 and 3
