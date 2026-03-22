@@ -4884,7 +4884,9 @@ static int build_depvar_section (selector *sr, int preselect)
 
     table_add_right(sr, tmp, 1);
 
-    tmp = pix_button(choose_inline, _("Choose"));
+    tmp = pix_button(choose_inline, _("Choose.  You can also choose the\n"
+				      "dependent variable by double-clicking\n"
+				      "on a series."));
     table_add_mid(sr, tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(set_dependent_var_callback), sr);
@@ -5156,7 +5158,8 @@ static void push_pull_buttons (selector *sr,
     vbox = gtk_vbox_new(TRUE, 5);
 
     /* "Add" button */
-    button = pix_button(add_inline, _("Add"));
+    button = pix_button(add_inline, _("Add. You can also add a series\n"
+				      "by double-clicking on it."));
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(addfunc), sr);
     g_signal_connect(G_OBJECT(sr->dlg), "key-press-event",
