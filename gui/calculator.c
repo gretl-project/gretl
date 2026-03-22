@@ -3551,3 +3551,8 @@ void dist_graph_add (gpointer p)
 {
     real_stats_calculator(CALC_GRAPH_ADD, p);
 }
+
+void show_np_tests (void)
+{
+    real_stats_calculator(CALC_NPTEST, NULL);
+}

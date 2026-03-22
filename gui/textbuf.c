@@ -33,6 +33,7 @@
 #include "datafiles.h"
 #include "database.h"
 #include "fncall.h"
+#include "calculator.h"
 #endif
 
 #ifdef G_OS_WIN32
@@ -2099,6 +2100,8 @@ static gchar *get_mnu_string (const char *key)
 	s = _("dbnomics for gretl");
     } else if (!strcmp(key, "gretlLpsolve")) {
 	s = _("gretl + lpsolve");
+    } else if (!strcmp(key, "NonparamTests")) {
+	s = _("Nonparametric tests");
     } else {
 	s = key;
     }
@@ -2168,8 +2171,7 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	if (page == GUIDE_PAGE || page == BIB_PAGE || page == MNU_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", myblue,
 					     "family", helpfont, NULL);
-	} else if (page == SCRIPT_PAGE || page == EXT_PAGE ||
-		   page == PDF_PAGE) {
+	} else if (page == SCRIPT_PAGE || page == EXT_PAGE || page == PDF_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", myblue,
 					     "font-desc", fixed_font, NULL);
 	    widget_set_int(tag, "mono", 1);
@@ -2374,6 +2376,8 @@ static void open_menu_item (GtkTextTag *tag)
 	    display_files(PKG_REGISTRY);
 	} else if (!strcmp(name, "SetSeed")) {
 	    rand_seed_dialog();
+	} else if (!strcmp(name, "NonparamTests")) {
+	    show_np_tests();
 	} else {
 	    /* should be a PDF help file */
 	    static GtkAction *action;
@@ -4758,7 +4762,7 @@ static gchar *get_string_and_instruction (const char *p, int *ins)
     if (*ins != INSERT_NONE) {
 	int i;
 
-	p += 5; /* skip 'tag="' */
+	p += 5; /* skip 3-byte tag, colon and quote */
 	for (i=0; p[i]; i++) {
 	    if (p[i] == '"' && p[i+1] == '>') {
 		break;
