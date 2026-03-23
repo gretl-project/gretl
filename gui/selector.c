@@ -5159,7 +5159,7 @@ static void push_pull_buttons (selector *sr,
 
     /* "Add" button */
     button = pix_button(add_inline, _("Add. You can also add a series\n"
-				      "by double-clicking on it."));
+				      "by right-clicking on it."));
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(addfunc), sr);
     g_signal_connect(G_OBJECT(sr->dlg), "key-press-event",
