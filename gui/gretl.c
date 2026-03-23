@@ -1296,6 +1296,21 @@ static int get_lag_or_dummy_parent (int v)
     return pv;
 }
 
+int n_ok_series (void)
+{
+    int i, nv = 0;
+
+    if (dataset != NULL) {
+	for (i=1; i<dataset->v; i++) {
+	    if (!series_is_hidden(dataset, i)) {
+		nv++;
+	    }
+	}
+    }
+
+    return nv;
+}
+
 /* populate the list of series in the main gretl window */
 
 void populate_varlist (void)
@@ -1961,7 +1976,9 @@ GtkActionEntry main_entries[] = {
     { "Summary", NULL, N_("_Summary statistics"), NULL, NULL, NULL },
     { "summary", NULL, N_("plain"), NULL, NULL, G_CALLBACK(menu_op_action) },
     { "Fsummary", NULL, N_("factorized"), NULL, NULL, G_CALLBACK(call_selector) },
-    { "corr", NULL, N_("_Correlation matrix"), NULL, NULL, G_CALLBACK(menu_op_action) },
+    { "Correlate", NULL, N_("_Correlations"), NULL, NULL, NULL },
+    { "corr", NULL, N_("_Pearson"), NULL, NULL, G_CALLBACK(menu_op_action) },
+    { "npcorr", NULL, N_("_Nonparametric"), NULL, NULL, G_CALLBACK(np_correlation) },
     { "xtab", NULL, N_("Cross _Tabulation"), NULL, NULL, G_CALLBACK(menu_op_action) },
     { "pca", NULL, N_("_Principal components"), NULL, NULL, G_CALLBACK(menu_op_action) },
     { "mahal", NULL, N_("_Mahalanobis distances"), NULL, NULL, G_CALLBACK(menu_op_action) },

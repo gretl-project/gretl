@@ -151,7 +151,10 @@
 	<menuitem action="summary"/>
 	<menuitem action="Fsummary"/>
       </menu>
-      <menuitem action="corr"/>
+      <menu action="Correlate">
+	<menuitem action="corr"/>
+	<menuitem action="npcorr"/>
+      </menu>
       <menuitem action="xtab"/>
       <menuitem action="pca"/>
       <menuitem action="mahal"/>

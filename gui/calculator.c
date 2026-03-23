@@ -2566,21 +2566,6 @@ static void add_test_check (GtkWidget *tbl, gint *row,
     test->check = tmp;
 }
 
-static int n_ok_series (void)
-{
-    int i, nv = 0;
-
-    if (dataset != NULL) {
-	for (i=1; i<dataset->v; i++) {
-	    if (!series_is_hidden(dataset, i)) {
-		nv++;
-	    }
-	}
-    }
-
-    return nv;
-}
-
 static int n_ok_dummies (void)
 {
     int i, nv = 0;
@@ -3101,7 +3086,7 @@ static int calc_help_code (int c)
     return hc;
 }
 
-static void real_stats_calculator (int code, gpointer data)
+static void real_stats_calculator (int code, gpointer data, int page)
 {
     GtkWidget *tmp = NULL;
     static GtkWidget *winptr[CALC_RAND + 1];
@@ -3166,10 +3151,14 @@ static void real_stats_calculator (int code, gpointer data)
 	configure_graph_add_tabs(child, data);
     }
 
-    if (code == CALC_NPTEST && nv < 2) {
-	calc_disable_page(child, NP_DIFF);
-	calc_disable_page(child, NP_CORR);
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(child->book), NP_RUNS);
+    if (code == CALC_NPTEST) {
+	if (nv < 2) {
+	    calc_disable_page(child, NP_DIFF);
+	    calc_disable_page(child, NP_CORR);
+	    gtk_notebook_set_current_page(GTK_NOTEBOOK(child->book), NP_RUNS);
+	} else if (page == NP_CORR) {
+	    gtk_notebook_set_current_page(GTK_NOTEBOOK(child->book), NP_CORR);
+	}
     }
 
     /* Close button */
@@ -3543,16 +3532,16 @@ void stats_calculator (GtkAction *action, gpointer data)
     if (code == CALC_PLOT) {
 	plot_a_curve();
     } else {
-	real_stats_calculator(code, data);
+	real_stats_calculator(code, data, -1);
     }
 }
 
 void dist_graph_add (gpointer p)
 {
-    real_stats_calculator(CALC_GRAPH_ADD, p);
+    real_stats_calculator(CALC_GRAPH_ADD, p, -1);
 }
 
-void show_np_tests (void)
+void np_correlation (void)
 {
-    real_stats_calculator(CALC_NPTEST, NULL);
+    real_stats_calculator(CALC_NPTEST, NULL, NP_CORR);
 }

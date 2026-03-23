@@ -73,7 +73,7 @@ void variable_menu_state (gboolean s)
 
     flip(mdata->ui, "/menubar/Variable", s);
     flip(mdata->ui, "/menubar/View/xcorrgm",
-         dataset_is_time_series(dataset));
+         dataset_is_time_series(dataset) && n_ok_series() > 1);
 }
 
 static void view_items_state (gboolean s)
@@ -82,18 +82,25 @@ static void view_items_state (gboolean s)
         "GraphVars",
         "MultiPlots",
         "Summary",
-        "corr",
+        "Correlate",
         "xtab",
         "pca",
         "mahal",
         NULL
     };
+    gboolean s2;
     char fullpath[32];
     int i;
 
+    s2 = s && n_ok_series() > 1;
+
     for (i=0; viewpaths[i] != NULL; i++) {
         sprintf(fullpath, "/menubar/View/%s", viewpaths[i]);
-        flip(mdata->ui, fullpath, s);
+	if (i == 2) {
+	    flip(mdata->ui, fullpath, s);
+	} else {
+	    flip(mdata->ui, fullpath, s2);
+	}
     }
 
     flip(mdata->ui, "/menubar/View/IconView", have_session_objects());

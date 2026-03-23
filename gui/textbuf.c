@@ -2100,8 +2100,6 @@ static gchar *get_mnu_string (const char *key)
 	s = _("dbnomics for gretl");
     } else if (!strcmp(key, "gretlLpsolve")) {
 	s = _("gretl + lpsolve");
-    } else if (!strcmp(key, "NonparamTests")) {
-	s = _("Nonparametric tests");
     } else {
 	s = key;
     }
@@ -2376,8 +2374,6 @@ static void open_menu_item (GtkTextTag *tag)
 	    display_files(PKG_REGISTRY);
 	} else if (!strcmp(name, "SetSeed")) {
 	    rand_seed_dialog();
-	} else if (!strcmp(name, "NonparamTests")) {
-	    show_np_tests();
 	} else {
 	    /* should be a PDF help file */
 	    static GtkAction *action;

@@ -38,6 +38,7 @@
 #include "ssheet.h"
 #include "toolbar.h"
 #include "treeutils.h"
+#include "calculator.h"
 #include "lib_private.h"
 #include "cmd_private.h"
 #include "flow_control.h"

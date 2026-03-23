@@ -2212,12 +2212,6 @@
 	option has an effect only if there are differing patterns of
 	missing values for the variables used.
       </para>
-      <para>
-	Note that nonparametric correlation options are also
-	available. See the item <mnu targ="NonparamTests">Nonparametric
-	tests</mnu> (under the Tools menu) and select the Correlation
-	tab.
-      </para>
     </description>
 
     <description context="cli">

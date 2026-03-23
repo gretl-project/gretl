@@ -34,6 +34,6 @@ void stats_calculator (GtkAction *action, gpointer p);
 
 void dist_graph_add (gpointer p);
 
-void show_np_tests (void);
+void np_correlation (void);
 
 #endif /* CALCULATOR_H */
