@@ -6227,9 +6227,12 @@ int plot_corrmat (VMatrix *corr, const DATASET *dset, gretlopt opt)
     fputs("if (printcorr) {\n", fp);
     fputs("plot $data matrix with image, $data matrix using 1:2:", fp);
     if (opt & OPT_T) {
-        fputs("($3!=$3 ? \"\" : sprintf(\"%.1f\",$3)) with labels\n", fp);
+        fputs("($3!=$3 ? \"\" : sprintf(\"%.1f\",$3)):"
+	      "($3 < -0.6 ? 0xffffff : 0x000000)"
+	      " with labels tc rgb var\n", fp);
     } else {
-        fputs("(sprintf(\"%.1f\",$3)) with labels\n", fp);
+        fputs("(sprintf(\"%.1f\",$3)):($3 < -0.6 ? 0xffffff : 0x000000)"
+	      " with labels tc rgb var\n", fp);
     }
     fputs("} else {\n", fp);
     fputs("plot $data matrix with image\n", fp);
