@@ -1532,11 +1532,13 @@ static int auto_drop_var (omit_info *oi,
     pmod = oi->starting ? oi->orig : oi->curr;
     imax = pmod->ncoeff;
 
-    if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
-	gretl_model_get_int(pmod, "ordered")) {
-	/* FIXME other problematic cases? */
-	imax = pmod->list[0] - 1;
-    }
+    if ((pmod->ci == LOGIT || pmod->ci == PROBIT) && gretl_model_get_int(pmod, "ordered")) {
+	  /* FIXME other problematic cases? */
+	  imax = pmod->list[0] - 1;
+    } else if (pmod->ci == LOGIT && gretl_model_get_int(pmod, "multinom")) {
+	  /* Marcin: this is to prevent SIGSEGV, Allin: please, verify!!! */
+	  imax = pmod->list[0] - 1;
+	}
 
 #if 0
     /* If the constant is the sole regressor, allow it
