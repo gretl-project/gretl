@@ -1678,6 +1678,11 @@ static void saved_object_free (stacker *s)
 
 #define sys_modtest_opt_ok(o) (o & (OPT_A | OPT_H | OPT_N))
 
+/* Here we're trying to assess, on behalf of gretl_cmd_exec() in
+   interact.c, whether the last-estimated model is a suitable target for
+   various model-testing commands.
+*/
+
 int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset,
 			PRN *prn)
 {
@@ -1695,6 +1700,7 @@ int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset,
 	MODEL *pmod = (MODEL *) ptr;
 
 	if (pmod->errcode) {
+	    /* "can't happen" */
 	    err = E_DATA;
 	} else if (!model_test_ok(ci, opt, pmod, dset)) {
 	    err = E_NOTIMP;
