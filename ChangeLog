@@ -1,9 +1,11 @@
 version 2026b, in progress
 - new function which() to determine which elements of a
   given matrix satisfy a specified condition
+- probability distribution functions; add support for the
+  truncated normal distribution
 - "join" command: fix possible crash on joining data from
   two binary gdtb data files in succession
-- Correlation matrix plot: use graph-names as set by the
+- correlation matrix plot: use graph-names as set by the
   "setinfo" command if available
 - "add" and "omit" commands with --auto option: attach to
   the augmented or reduced $model bundle a list giving the
@@ -14,6 +16,27 @@ version 2026b, in progress
   (Johansen's C), "cov_long_run" (the covariance of vec(C))
   and "se_long_run" (standard errors of the elements of C),
   along with additional documentation in the User's Guide
+- "foreign" command block: support the --send-data when
+  executing a Python script, via Pandas
+- "panplot" command: correct suport for the --font option
+- matrix "slicing": correct handling of an empty selection
+  vector
+- script editor: handle "doc strings" in hansl functions
+  via "question mark-click"
+- User's Guide: improve documentation of string literals
+- GUI: /View/Correlations now shows nonparametric option
+- GUI: Augment tooltips for model selection dialog buttons
+- GUI: "View code" for function packages: preserve inline
+  comments
+- GUI: fix broken display of complex matrices
+- GUI: enhance searching of gretl-curated data files
+- GUI: fix handling of scalar arguments in the dialog box
+  for calling function packages
+- GUI: "ui-maker" for functions packages: support setting
+  a run-time default for a boolean argument
+- GUI: fix breakage in Command Log on Windows and macOS
+- launching of gnuplot via gretl: respect the GNUTERM
+  environment variable on Linux, if present
 
 2026-01-30 version 2026a
 - mat2list(): fix potential crashing bug; enhance by using
