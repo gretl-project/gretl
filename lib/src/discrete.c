@@ -943,6 +943,8 @@ static int fill_op_model (MODEL *pmod, const int *list,
         gretl_model_set_int(pmod, "iters", fncount);
     }
 
+    pmod->xlist = gretl_list_sublist(list, 2, -1);
+
     pmod->ncoeff = npar;
     for (i=0; i<npar; i++) {
         pmod->coeff[i] = OC->theta[i];
