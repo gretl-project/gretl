@@ -2232,7 +2232,7 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     } else if (gretl_is_user_var(s)) {
         err = user_var_delete_by_name(s, prn);
     } else {
-        /* try for a bundle member? */
+	/* try for a bundle member? */
         gchar *genstr = g_strdup_printf("%s=null", s);
 
         err = generate(genstr, NULL, GRETL_TYPE_ANY, OPT_P, prn);

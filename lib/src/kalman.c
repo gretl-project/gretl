@@ -3932,7 +3932,8 @@ int maybe_delete_kalman_element (void *kptr,
     if (kalman_output_scalar(K, key) != NULL ||
         input_matrix_slot(key) >= 0 || !strcmp(key, "uhat")) {
         /* note: the matrix under the key "uhat" is part of
-           the internal kalman apparatus */
+           the internal kalman apparatus
+	*/
         gretl_errmsg_sprintf(_("%s: cannot be deleted"), key);
         *err = E_DATA;
     } else if ((pm = kalman_output_matrix(K, key)) != NULL) {
@@ -3948,7 +3949,7 @@ int maybe_delete_kalman_element (void *kptr,
             K->varying = NULL;
             done = 1;
         } else {
-            *err = E_DATA;
+            *err = E_INVARG;
         }
     }
 

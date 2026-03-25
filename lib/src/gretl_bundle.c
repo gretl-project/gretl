@@ -1711,12 +1711,22 @@ int gretl_bundle_delete_data (gretl_bundle *bundle, const char *key)
 
     if (bundle->type == BUNDLE_KALMAN) {
         done = maybe_delete_kalman_element(bundle->data, key, &err);
+	if (err) {
+	    return err;
+	}
     }
 
-    if (!done && !err) {
-        done = g_hash_table_remove(bundle->ht, key);
-        if (!done) {
-            err = E_DATA;
+    if (!done) {
+	gpointer p = g_hash_table_lookup(bundle->ht, key);
+
+	if (p == NULL) {
+	    gretl_errmsg_sprintf("\"%s\": no such item", key);
+	    err = E_UNKVAR;
+	} else {
+	    done = g_hash_table_remove(bundle->ht, key);
+	    if (!done) {
+		err = E_INVARG;
+	    }
         }
     }
 
