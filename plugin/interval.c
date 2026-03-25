@@ -1154,6 +1154,7 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
 {
     MODEL model;
     int *ilist = NULL;
+    int *xlist = NULL;
     int origv = dset->v;
     int err;
 
@@ -1170,6 +1171,8 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
 	fprintf(stderr, "intreg: initial OLS failed\n");
 	return model;
     }
+
+    xlist = gretl_list_sublist(model.list, 2, -1);
 
 #if INTDEBUG
     pprintf(prn, "tobit: llim=%g, rlim=%g\n", llim, rlim);
@@ -1201,11 +1204,14 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
 	    model.opt |= OPT_M;
 	    gretl_model_set_double(&model, "rlimit", rlim);
 	}
+	model.xlist = xlist;
+	xlist = NULL; /* donated, don't free */
     }
 
     /* clean up extra data */
     dataset_drop_last_variables(dset, dset->v - origv);
     free(ilist);
+    free(xlist);
 
     return model;
 }
