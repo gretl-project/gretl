@@ -3777,6 +3777,7 @@ MODEL logistic_model (const int *list, double lmax,
             /* already done, for the fixed-effects case */
             set_model_id(&lmod, OPT_NONE);
         }
+	lmod.xlist = gretl_list_sublist(list, 2, -1);
     }
 
     if (opt & OPT_C) {
