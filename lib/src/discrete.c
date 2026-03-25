@@ -4125,6 +4125,11 @@ MODEL duration_model (const int *list, DATASET *dset,
     return dmod;
 }
 
+/* If the incoming list has a single member following LISTSEP, pull it
+   out of @list and return it. Otherwise leave @list unchanged and
+   return 0;
+*/
+
 static int get_trailing_var (int *list)
 {
     int l0 = list[0];
@@ -4181,16 +4186,17 @@ MODEL count_model (const int *list, int ci, DATASET *dset,
 
     offvar = get_trailing_var(listcpy);
 
-    /* run an initial OLS to "set the model up" and check for errors.
-       the count_data_estimate_driver function will overwrite the
-       coefficients etc.
+    /* Run an initial OLS to "set the model up" and check for errors.
+       The count_data_estimate() function will overwrite the
+       coefficients, etc.
     */
-
     cmod = lsq(listcpy, dset, OLS, OPT_A);
     free(listcpy);
 
     if (cmod.errcode) {
         return cmod;
+    } else {
+	cmod.xlist = gretl_list_sublist(cmod.list, 2, -1);
     }
 
     count_data_estimate = get_plugin_function("count_data_estimate");

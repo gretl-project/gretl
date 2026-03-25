@@ -6334,8 +6334,8 @@ int command_ok_for_model (int test_ci, gretlopt opt,
         }
 	break;
     case OMIT:
-	if (mci == ARMA || mci == GARCH || mci == INTREG ||
-	    mci == DPANEL) {
+	if (mci == ARMA || mci == GARCH || mci == INTREG || mci == DPANEL) {
+	    /* FIXME INTREG should be workable? */
 	    ok = 0;
 	} else if (between) {
 	    ok = 0;
@@ -6425,9 +6425,6 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 {
     /* preliminary rough-and-ready test */
     int ok = command_ok_for_model(ci, opt, pmod);
-
-    fprintf(stderr, "HERE in model_test_ok: ci %s, pmod->ci %s, ok %d\n",
-	    gretl_command_word(ci), gretl_command_word(pmod->ci), ok);
 
     if (!ok) {
 	return 0;

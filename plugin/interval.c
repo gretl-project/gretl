@@ -1026,6 +1026,7 @@ MODEL interval_estimate (const int *list, DATASET *dset,
     MODEL model;
     int *mylist = gretl_list_copy(list);
     int *initlist = NULL;
+    int *xlist = NULL;
 
     gretl_model_init(&model, NULL);
 
@@ -1051,6 +1052,8 @@ MODEL interval_estimate (const int *list, DATASET *dset,
 	return model;
     }
 
+    xlist = gretl_list_sublist(model.list, 2, -1);
+
 #if INTDEBUG
     pprintf(prn, "interval_estimate: initial OLS\n");
     printmodel(&model, dset, OPT_S, prn);
@@ -1067,8 +1070,14 @@ MODEL interval_estimate (const int *list, DATASET *dset,
     /* do the actual analysis */
     model.errcode = do_interval(mylist, dset, &model, opt, prn);
 
+    if (!model.errcode) {
+	model.xlist = xlist;
+	xlist = NULL;
+    }
+
     clear_model_xpx(&model);
     free(mylist);
+    free(xlist);
 
     return model;
 }
