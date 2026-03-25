@@ -590,8 +590,8 @@ MODEL logistic_driver (const int *list, DATASET *dset,
     return logistic_model(list, lmax, dset, opt);
 }
 
-/* assemble the left and right limits for tobit using gretl's
-   option apparatus before calling the real tobit function
+/* Assemble the left and right limits for tobit using gretl's option
+   apparatus before calling the real tobit function.
 */
 
 MODEL tobit_driver (const int *list, DATASET *dset,
@@ -609,7 +609,6 @@ MODEL tobit_driver (const int *list, DATASET *dset,
 	    err = E_INVARG;
 	}
     }
-
     if (!err && (opt & OPT_M)) {
 	/* we should have an explicit upper limit */
 	rlim = get_optval_double(TOBIT, OPT_M, &err);
