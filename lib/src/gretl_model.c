@@ -3503,6 +3503,7 @@ static void model_stats_init (MODEL *pmod)
 static void gretl_model_init_pointers (MODEL *pmod)
 {
     pmod->list = NULL;
+    pmod->xlist = NULL;
     pmod->submask = NULL;
     pmod->missmask = NULL;
     pmod->coeff = NULL;
@@ -3735,6 +3736,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
     fprintf(stderr, "%s:\n"
 	    " pmod = %p\n"
 	    " pmod->list = %p\n"
+	    " pmod->xlist = %p\n"
 	    " pmod->submask = %p\n"
 	    " pmod->missmask = %p\n"
 	    " pmod->coeff = %p\n"
@@ -3749,7 +3751,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod->arinfo = %p\n"
 	    " pmod->tests = %p\n"
 	    " pmod->data_items = %p\n", msg,
-	    (void *) pmod, (void *) pmod->list,
+	    (void *) pmod, (void *) pmod->list, (void *) pmod->xlist,
 	    (void *) pmod->submask, (void *) pmod->missmask,
 	    (void *) pmod->coeff, (void *) pmod->sderr,
 	    (void *) pmod->yhat, (void *) pmod->uhat,
@@ -3809,6 +3811,7 @@ void clear_model (MODEL *pmod)
 	debug_print_model_info(pmod, "Doing clear_model");
 #endif
 	if (pmod->list != NULL) free(pmod->list);
+	if (pmod->xlist != NULL) free(pmod->xlist);
 	if (pmod->missmask != NULL) free(pmod->missmask);
 	if (pmod->coeff != NULL) free(pmod->coeff);
 	if (pmod->sderr != NULL) free(pmod->sderr);

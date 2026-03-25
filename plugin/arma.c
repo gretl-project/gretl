@@ -1213,10 +1213,9 @@ static void print_arma_sel_matrix (arma_sel *asel, PRN *prn)
     }
 }
 
-/* Specific to conditional ML estimation: ensure a
-   common sample by first estimating the biggest model
-   and restricting the sample range to the observations
-   usable in that case.
+/* Specific to conditional ML estimation: ensure a common sample by
+   first estimating the biggest model and restricting the sample range
+   to the observations usable in that case.
 */
 
 static int set_common_sample (arma_sel *asel, MODEL *amod,
@@ -1246,8 +1245,8 @@ static int set_common_sample (arma_sel *asel, MODEL *amod,
     return err;
 }
 
-/* Provides built-in means of selecting the AR and MA orders of
-   an AR(I)MA model via Information Criteria. We accept a general
+/* Provides built-in means of selecting the AR and MA orders of an
+   AR(I)MA model via Information Criteria. We accept a general
    specification of the form
 
    (p d q)(P D Q)

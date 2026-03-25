@@ -1017,6 +1017,7 @@ static int copy_mp_results (MPMODEL *mpmod, MODEL *pmod,
 	pmod->dfd = mpmod->dfd;
 	pmod->adjrsq = mpf_get_d(mpmod->adjrsq);
 	pmod->list = gretl_list_copy(mpmod->varlist);
+	pmod->xlist = gretl_list_sublist(pmod->list, 2, -1);
 	if (pmod->list == NULL) {
 	    err = E_ALLOC;
 	} else {

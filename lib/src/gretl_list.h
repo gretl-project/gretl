@@ -36,6 +36,8 @@ int gretl_list_cmp (const int *list1, const int *list2);
 
 int *gretl_null_list (void);
 
+int gretl_is_null_list (const int *list);
+
 int *gretl_consecutive_list_new (int lmin, int lmax);
 
 int **gretl_list_array_new (int nlists, int nterms);

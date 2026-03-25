@@ -379,6 +379,7 @@ typedef struct MODEL_ {
     int ncoeff, dfn, dfd;        /* number of coefficents; degrees of
                                     freedom in numerator and denominator */
     int *list;                   /* list of variables by ID number */
+    int *xlist;                  /* list of regressors */
     int ifc;                     /* = 1 if the equation includes a constant,
 				    else = 0 */
     int nwt;                     /* ID number of the weight variable (WLS) */

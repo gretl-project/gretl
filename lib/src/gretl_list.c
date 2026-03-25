@@ -424,6 +424,18 @@ int *gretl_null_list (void)
 }
 
 /**
+ * gretl_is_null_list:
+ * @list: list to check.
+ *
+ * Returns: 1 if @list is NULL or empty.
+ */
+
+int gretl_is_null_list (const int *list)
+{
+    return (list == NULL || list[0] == 0);
+}
+
+/**
  * gretl_list_copy:
  * @src: an array of integers, the first element of which holds
  * a count of the number of elements following.
@@ -2217,8 +2229,8 @@ int gretl_list_insert_list_minus (int **targ, const int *src, int pos)
 /**
  * gretl_list_sublist:
  * @list: the source list.
- * @pos0: the starting position.
- * @pos1: the ending position.
+ * @pos0: the first position.
+ * @pos1: the last position, or -1 to continue to the end.
  *
  * Returns: a newly allocated sublist containing elements @pos0
  * to @pos1 of the source.
@@ -2226,8 +2238,17 @@ int gretl_list_insert_list_minus (int **targ, const int *src, int pos)
 
 int *gretl_list_sublist (const int *list, int pos0, int pos1)
 {
-    int n = pos1 - pos0 + 1;
     int *ret = NULL;
+    int n;
+
+    if (list == NULL) {
+	return NULL;
+    }
+
+    if (pos1 < 0) {
+	pos1 = list[0];
+    }
+    n = pos1 - pos0 + 1;
 
     if (n >= 0) {
 	ret = gretl_list_new(n);

@@ -44,8 +44,8 @@ struct h_container_ {
     int millsvar;            /* location of Mills ratios in array Z */
     int clustervar;          /* location of clustering variable in array Z */
     int nclusters;           /* number of clusters (if any) */
-    int *Xlist;		     /* regressor list for the main eq. */
-    int *Zlist;		     /* regressor list for the selection eq. */
+    int *xlist;		     /* regressor list for the main eq. */
+    int *zlist;		     /* regressor list for the selection eq. */
     const char *cname;       /* name of clustering variable */
 
     gretl_matrix *y;	     /* dependent var */
@@ -91,8 +91,8 @@ static void h_container_destroy (h_container *HC)
 	return;
     }
 
-    free(HC->Xlist);
-    free(HC->Zlist);
+    free(HC->xlist);
+    free(HC->zlist);
 
     gretl_matrix_free(HC->y);
     gretl_matrix_free(HC->reg);
@@ -135,8 +135,8 @@ static h_container *h_container_new (const int *list)
     HC->nclusters = 0;
     HC->cname = NULL;
 
-    HC->Xlist = NULL;
-    HC->Zlist = NULL;
+    HC->xlist = NULL;
+    HC->zlist = NULL;
 
     HC->y = NULL;
     HC->reg = NULL;
@@ -169,15 +169,15 @@ static h_container *h_container_new (const int *list)
 
 /* The following is complicated: for the purposes of the Heckit model
    as such, we need to mask out any observations that (a) are
-   "selected" and (b) have missing values for any variables in Xlist.
+   "selected" and (b) have missing values for any variables in xlist.
    With regard to the initial probit, we have to mask in addition any
    observations that have missing values for any of the variables in
-   Zlist.
+   zlist.
 */
 
 static int
-make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
-		     const DATASET *dset)
+make_heckit_NA_mask (h_container *HC, const int *reglist,
+		     const int *sellist, const DATASET *dset)
 {
     int T = sample_size(dset);
     int cvar = HC->clustervar;
@@ -196,7 +196,6 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
 		}
 	    }
 	}
-
 	/* screen the selection equation variables */
 	for (i=1; i<=sellist[0] && !miss; i++) {
 	    if (na(dset->Z[sellist[i]][t])) {
@@ -204,7 +203,6 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
 		totmiss++;
 	    }
 	}
-
 	if (cvar > 0 && !miss) {
 	    /* we need to take care of the clustering variable too */
 	    if (na(dset->Z[cvar][t])) {
@@ -244,7 +242,6 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
 		    }
 		}
 	    }
-
 	    for (i=1; i<=sellist[0] && !miss; i++) {
 		if (na(dset->Z[sellist[i]][t])) {
 		    HC->fullmask[s] = 1;
@@ -252,7 +249,6 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
 		    miss = 1;
 		}
 	    }
-
 	    if (cvar > 0 && !miss) {
 		if (na(dset->Z[cvar][t])) {
 		    HC->fullmask[s] = 1;
@@ -338,8 +334,8 @@ static void debug_print_masks (h_container *HC,
 
 #endif
 
-/* make copies of the primary and selection lists with the first
-   terms (i.e. the dependent variable and the selection variable,
+/* make copies of the primary and selection lists with the first terms
+   (i.e. the dependent variable and the selection variable,
    respectively) removed.
 */
 
@@ -349,19 +345,17 @@ static int h_make_data_lists (h_container *HC,
 {
     int i;
 
-    HC->Xlist = gretl_list_new(HC->kmain);
-    HC->Zlist = gretl_list_new(HC->ksel);
+    HC->xlist = gretl_list_new(HC->kmain);
+    HC->zlist = gretl_list_new(HC->ksel);
 
-    if (HC->Xlist == NULL || HC->Zlist == NULL) {
+    if (HC->xlist == NULL || HC->zlist == NULL) {
 	return E_ALLOC;
     }
-
-    for (i=1; i<=HC->Xlist[0]; i++) {
-	HC->Xlist[i] = reglist[i+1];
+    for (i=1; i<=HC->xlist[0]; i++) {
+	HC->xlist[i] = reglist[i+1];
     }
-
-    for (i=1; i<=HC->Zlist[0]; i++) {
-	HC->Zlist[i] = sellist[i+1];
+    for (i=1; i<=HC->zlist[0]; i++) {
+	HC->zlist[i] = sellist[i+1];
     }
 
     return 0;
@@ -431,7 +425,6 @@ static int h_container_fill (h_container *HC, const int *Xl,
 						t1, t2,
 						HC->uncmask, &err);
     }
-
     if (!err) {
 	HC->nunc = gretl_matrix_rows(HC->y);
 	/* selection variable vector */
@@ -440,7 +433,6 @@ static int h_container_fill (h_container *HC, const int *Xl,
 						t1, t2,
 						HC->fullmask, &err);
     }
-
     if (!err) {
 	HC->ntot = gretl_matrix_rows(HC->d);
 	/* Mills ratio vector */
@@ -449,36 +441,31 @@ static int h_container_fill (h_container *HC, const int *Xl,
 						    t1, t2,
 						    HC->uncmask, &err);
     }
-
     if (!err) {
 	err = h_make_data_lists(HC, Xl, Zl);
     }
-
     if (err) {
 	return err;
     }
 
     /* regressors in primary equation */
-    HC->reg = gretl_matrix_data_subset_masked(HC->Xlist, dset,
+    HC->reg = gretl_matrix_data_subset_masked(HC->xlist, dset,
 					      t1, t2,
 					      HC->uncmask, &err);
-
     if (!err) {
 	/* regressors in selection equation */
 	HC->selreg =
-	    gretl_matrix_data_subset_masked(HC->Zlist, dset,
+	    gretl_matrix_data_subset_masked(HC->zlist, dset,
 					    t1, t2,
 					    HC->fullmask, &err);
     }
-
     if (!err) {
 	/* regressors in selection equation, uncensored sample */
 	HC->selreg_u =
-	    gretl_matrix_data_subset_masked(HC->Zlist, dset,
+	    gretl_matrix_data_subset_masked(HC->zlist, dset,
 					    t1, t2,
 					    HC->uncmask, &err);
     }
-
     if (!err && HC->clustervar > 0) {
 	/* regressors in selection equation, uncensored sample */
 	tmplist[1] = HC->clustervar;
@@ -499,7 +486,6 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	HC->delta = gretl_matrix_dot_op(tmp, HC->mills, '*', &err);
 	gretl_matrix_free(tmp);
     }
-
     if (!err) {
 	bmills = olsmod->coeff[olsmod->ncoeff-1];
 	mdelta = gretl_vector_mean(HC->delta);
@@ -507,17 +493,14 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	HC->sigma = sqrt(s2);
 	HC->rho = bmills / HC->sigma;
     }
-
     if (!err && fabs(HC->rho) > 1.0) {
 	HC->rho = (HC->rho < 0)? -1 : 1;
 	/* ensure consistency */
 	HC->sigma = HC->lambda / HC->rho;
     }
-
     if (!err) {
 	HC->VProbit = gretl_vcv_matrix_from_model(probmod, NULL, &err);
     }
-
     if (!err) {
 	HC->B = gretl_matrix_block_new(&HC->fitted, HC->nunc, 1,
 				       &HC->u,      HC->nunc, 1,
@@ -528,7 +511,6 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	if (HC->B == NULL) {
 	    err = E_ALLOC;
 	}
-
     }
 
     if (!err){
@@ -556,11 +538,9 @@ static int setup_ndx_functions (h_container *HC)
 	gretl_matrix_copy_values(HC->u, HC->y);
 	err = gretl_matrix_subtract_from(HC->u, HC->fitted);
     }
-
     if (!err) {
 	err = gretl_matrix_divide_by_scalar(HC->u, HC->sigma);
     }
-
     if (!err) {
 	err = gretl_matrix_multiply(HC->selreg, HC->gama, HC->ndx);
     }
@@ -856,7 +836,6 @@ int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	    gretl_matrix_set(H, i, j, tmp);
 	    gretl_matrix_set(H, j, i, tmp);
 	}
-
 	for (j=0; j<HC->ksel; j++) {
 	    jj = HC->kmain + j;
 	    tmp = -gretl_matrix_get(HC->H12, i, j);
@@ -913,8 +892,7 @@ static int heckit_hessian_inverse (double *theta, gretl_matrix *H,
 
 /*
    What we should do here is not entirely clear: we set yhat to the
-   linear predictor, computed over uncensored AND censored
-   observations.
+   linear predictor, computed over uncensored AND censored observations.
 
    On the contrary, uhat is defined as
    y - yhat	for uncensored observations, and as
@@ -944,7 +922,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
     for (t=dset->t1; t<=dset->t2; t++) {
 	xb = 0.0;
 	for (i=0; i<kb; i++) {
-	    v = HC->Xlist[i+1];
+	    v = HC->xlist[i+1];
 	    x = dset->Z[v][t];
 	    if (na(x)) {
 		xb = NADBL;
@@ -960,7 +938,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 
 	zg = 0.0;
 	for (i=0; i<kg; i++) {
-	    v = HC->Zlist[i+1];
+	    v = HC->zlist[i+1];
 	    x = dset->Z[v][t];
 	    if (na(x)) {
 		zg = NADBL;
@@ -1000,13 +978,14 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
     }
 }
 
-/* Reconstitute the full list for the selection equation and
-   stick it onto @hm.
+/* Reconstitute the full list for the selection equation (by prepending
+   the selection variable) and stick it onto @hm. While we're here, copy
+   HC->xlist into the MODEL.
 */
 
-static int heckit_model_add_zlist (MODEL *hm, h_container *HC)
+static int heckit_model_add_lists (MODEL *hm, h_container *HC)
 {
-    int i, nz = HC->Zlist[0] + 1;
+    int i, nz = HC->zlist[0] + 1;
     int *zlist;
 
     zlist = gretl_list_new(nz);
@@ -1016,15 +995,16 @@ static int heckit_model_add_zlist (MODEL *hm, h_container *HC)
 
     zlist[1] = HC->selvar;
     for (i=2; i<=zlist[0]; i++) {
-	zlist[i] = HC->Zlist[i-1];
+	zlist[i] = HC->zlist[i-1];
     }
+
+    hm->xlist = gretl_list_copy(HC->xlist);
 
     return gretl_model_set_list_as_data(hm, "zlist", zlist);
 }
 
 /* This function works the same way for the 2-step and the ML
-   estimators: all the relevant items are taken from @HC
-   anyway.
+   estimators: all the relevant items are taken from @HC anyway.
 */
 
 static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATASET *dset)
@@ -1053,7 +1033,7 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATASET *dset)
 	fullcoeff[kb] = HC->lambda;
 
 	for (i=0; i<HC->ksel; i++) {
-	    gretl_model_set_param_name(hm, i+kb+1, dset->varname[HC->Zlist[i+1]]);
+	    gretl_model_set_param_name(hm, i+kb+1, dset->varname[HC->zlist[i+1]]);
 	    fullcoeff[i+kb+1] = gretl_vector_get(HC->gama, i);
 	}
     }
@@ -1073,7 +1053,7 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATASET *dset)
 	hm->t2 = HC->t2;
 	gretl_model_set_coeff_separator(hm, N_("Selection equation"), kb + 1);
 	gretl_model_set_int(hm, "base-coeffs", kb);
-	heckit_model_add_zlist(hm, HC);
+	heckit_model_add_lists(hm, HC);
     }
 
     return err;

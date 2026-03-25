@@ -916,6 +916,18 @@ static int transcribe_extra_info (arma_info *ainfo, MODEL *armod)
 	gretl_model_set_int(armod, "xdiff", 1);
     }
 
+    if (ainfo->ifc || ainfo->nexo > 0) {
+	int i;
+
+	armod->xlist = gretl_list_new(ainfo->ifc + ainfo->nexo);
+	if (ainfo->ifc) {
+	    armod->xlist[1] = 0;
+	}
+	for (i=0; i<ainfo->nexo; i++) {
+	    armod->xlist[i+ainfo->ifc+1] = ainfo->xlist[i+1];
+	}
+    }
+
     return err;
 }
 

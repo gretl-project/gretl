@@ -1354,6 +1354,8 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	log_depvar_ll(&mdl, dset);
     }
 
+    mdl.xlist = gretl_list_sublist(mdl.list, 2, -1);
+
  lsq_abort:
 
     if (!(opt & (OPT_A | OPT_S))) {
@@ -2787,6 +2789,10 @@ MODEL hsk_model (const int *list, DATASET *dset, gretlopt opt)
 	hsk.opt |= OPT_N;
     }
 
+    if (!hsk.errcode) {
+	hsk.xlist = gretl_list_sublist(hsk.list, 2, -1);
+    }
+
     dataset_drop_last_variables(dset, dset->v - orig_nvar);
 
     free(hsklist);
@@ -3507,7 +3513,11 @@ MODEL ar_model (const int *list, DATASET *dset,
     if (gretl_model_get_int(&ar, "maxlag") < pmax) {
 	gretl_model_set_int(&ar, "maxlag", pmax);
     }
+
     set_model_id(&ar, opt);
+    if (!ar.errcode) {
+	ar.xlist = gretl_list_sublist(ar.list, 2, -1);
+    }
 
  bailout:
 
@@ -3947,7 +3957,7 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
     se = amod.sderr;
     amod.sderr = NULL;
 
-    /* do weighted estimation */
+    /* prepare for weighted estimation */
     wlist = gretl_list_new(list[0] + 1);
 
     if (wlist == NULL) {
@@ -3983,6 +3993,7 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
 	    gretl_model_set_data(&amod, "arch_sderr", se,
 				 GRETL_TYPE_DOUBLE_ARRAY,
 				 (order + 1) * sizeof *se);
+	    amod.xlist = gretl_list_sublist(amod.list, 2, -1);
 	}
     }
 

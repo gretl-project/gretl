@@ -3409,6 +3409,7 @@ MODEL binary_model (int ci, const int *list,
         if (opt & OPT_N) {
             mod.opt |= OPT_N;
         }
+	mod.xlist = gretl_list_sublist(mod.list, 2, -1);
     }
 
  bailout:
