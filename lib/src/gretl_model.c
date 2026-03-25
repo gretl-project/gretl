@@ -6321,19 +6321,18 @@ int command_ok_for_model (int test_ci, gretlopt opt,
     regular_panel = gretl_is_regular_panel_model(pmod);
 
     switch (test_ci) {
-
     case ADD:
 	if (mci == ARMA || mci == GARCH ||
 	    mci == HECKIT || mci == INTREG) {
 	    ok = 0;
 	} else if (mci == PANEL && (pmod->opt & OPT_B)) {
+	    /* the panel "between" model */
 	    ok = 0;
 	} else if (opt & (OPT_L | OPT_A)) {
 	    /* --lm and --auto variants: OLS only */
 	    ok = (mci == OLS);
         }
 	break;
-
     case OMIT:
 	if (mci == ARMA || mci == GARCH || mci == INTREG ||
 	    mci == DPANEL) {
@@ -6342,21 +6341,18 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 	    ok = 0;
 	}
 	break;
-
     case VIF:
 	if (mci == IVREG || mci == ARMA || mci == GARCH ||
 	    mci == PANEL || mci == DPANEL) {
 	    ok = 0;
 	}
 	break;
-
     case EQNPRINT:
 	if (mci == ARMA || mci == DPANEL ||
 	    mci == HECKIT || mci == INTREG) {
 	    ok = 0;
 	}
 	break;
-
     case MODTEST:
 	if (opt & OPT_H) {
 	    /* ARCH */
@@ -6388,7 +6384,6 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 	    }
 	}
 	break;
-
     case CHOW:
     case CUSUM:
     case QLRTEST:
@@ -6398,13 +6393,11 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 	/* OLS-only tests */
 	ok = (mci == OLS);
 	break;
-
     case RESTRICT:
 	if (mci == LAD || mci == QUANTREG) {
 	    ok = 0;
 	}
 	break;
-
     default:
 	break;
     }
@@ -6419,7 +6412,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
  * @pmod: the model to be tested.
  * @dset: dataset information.
  *
- * A more rigorous version of command_ok_for_model().  Use
+ * A more rigorous counterpart of command_ok_for_model().  Use
  * this function if the extra information is available.
  *
  * Returns: 1 if the test command @ci (with possible option
@@ -6430,7 +6423,15 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 		   const DATASET *dset)
 {
+    /* preliminary rough-and-ready test */
     int ok = command_ok_for_model(ci, opt, pmod);
+
+    fprintf(stderr, "HERE in model_test_ok: ci %s, pmod->ci %s, ok %d\n",
+	    gretl_command_word(ci), gretl_command_word(pmod->ci), ok);
+
+    if (!ok) {
+	return 0;
+    }
 
     /* for now we'll treat MIDASREG as a case of NLS */
     if (ci == MIDASREG) {
@@ -6448,6 +6449,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     }
 
     if (ok && pmod->ncoeff == 1) {
+	/* only one coefficient was estimated */
 	if (ci == COEFFSUM) {
 	    ok = 0;
 	} else if (pmod->ifc && ci == MODTEST) {
@@ -6464,7 +6466,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     }
 
     if (ok && !dataset_is_time_series(dset)) {
-	/* time-series-only tests */
+	/* rule out time-series-only tests */
 	if (ci == CUSUM || ci == QLRTEST || ci == BDS ||
 	    (ci == MODTEST && (opt & (OPT_H | OPT_A)))) {
 	    ok = 0;
@@ -6472,7 +6474,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     }
 
     if (ok && !dataset_is_panel(dset)) {
-	/* panel-only tests */
+	/* rule out panel-only tests */
 	if (ci == PANSPEC) {
 	    ok = 0;
 	} else if (ci == MODTEST && (opt & (OPT_P | OPT_D))) {
@@ -6481,7 +6483,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     }
 
     if (ok && pmod->ncoeff - pmod->ifc <= 1 && ci == VIF) {
-	/* needs at least two independent vars */
+	/* needs at least two independent variables */
 	ok = 0;
     }
 
