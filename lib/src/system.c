@@ -2227,9 +2227,9 @@ int equation_system_finalize (equation_system *sys, DATASET *dset,
     err = sys_check_lists(sys, dset);
 
     if (!err && !(opt & OPT_S) && sys_has_user_name(sys)) {
-        /* save the system for subsequent estimation: but note that we
+        /* Save the system for subsequent estimation: but note that we
            should not do this if given OPT_S, for single-equation
-           LIML
+           LIML.
         */
         err = gretl_stack_object_as(sys, GRETL_OBJ_SYS, sys->name);
     }
@@ -4912,7 +4912,8 @@ int system_supports_method (equation_system *sys, int method)
     return 1;
 }
 
-static void finalize_liml_model (MODEL *pmod, equation_system *sys)
+static void finalize_liml_model (MODEL *pmod, int *reglist,
+				 equation_system *sys)
 {
     *pmod = *sys->models[0];
 
@@ -4933,6 +4934,7 @@ static void finalize_liml_model (MODEL *pmod, equation_system *sys)
     free(sys->models);
     sys->models = NULL;
 
+    pmod->xlist = gretl_list_sublist(reglist, 2, -1);
     pmod->aux = AUX_NONE;
     pmod->opt |= OPT_L;
     pmod->rsq = pmod->adjrsq = NADBL;
@@ -4968,7 +4970,7 @@ MODEL single_equation_liml (const int *list, DATASET *dset,
     if (err) {
         model.errcode = err;
     } else {
-        finalize_liml_model(&model, sys);
+        finalize_liml_model(&model, mlist, sys);
     }
 
     equation_system_destroy(sys);

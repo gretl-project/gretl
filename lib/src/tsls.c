@@ -1203,6 +1203,8 @@ static void tsls_recreate_full_list (iv_info *ivi)
     } else {
         free(ivi->pmod->list);
         ivi->pmod->list = full_list;
+	free(ivi->pmod->xlist); /* don't leak memory */
+	ivi->pmod->xlist = gretl_list_sublist(ivi->reglist, 2, -1);
     }
 }
 
@@ -1709,13 +1711,13 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
 	err = E_DATA;
     }
 
-if (err) {
-    free(rlist);
-    free(zlist);
- } else {
-    *reglist = rlist;
-    *instlist = zlist;
- }
+    if (err) {
+	free(rlist);
+	free(zlist);
+    } else {
+	*reglist = rlist;
+	*instlist = zlist;
+    }
 
     return err;
 }

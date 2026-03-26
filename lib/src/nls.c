@@ -3964,6 +3964,9 @@ static int finalize_ivreg_model (MODEL *pmod, MODEL *ols,
 	pmod->yhat[t] = Z[yno][t] - Z[rv][t];
     }
 
+    free(pmod->xlist);
+    pmod->xlist = gretl_list_sublist(mlist, 2, -1);
+
     endolist = tsls_make_endolist(mlist, ilist, &err);
 
     if (endolist != NULL) {
