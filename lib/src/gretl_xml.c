@@ -43,6 +43,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #undef XML_DEBUG
 
@@ -735,6 +736,31 @@ uint32_t gretl_xml_get_prop_as_uint32 (xmlNodePtr node,
 
     if (tmp != NULL) {
 	ret = sscanf((const char *) tmp, "%u", u);
+	free(tmp);
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_xml_get_prop_as_uint64:
+ * @node: XML node pointer.
+ * @tag: name by which unsigned integer property is known.
+ * @u: location to write value.
+ *
+ * Returns: 1 if an 64-bit unsigned int is found and read successfully,
+ * 0 otherwise.
+ */
+
+uint64_t gretl_xml_get_prop_as_uint64 (xmlNodePtr node,
+                                       const char *tag,
+                                       uint64_t *u)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) tag);
+    int ret = 0;
+
+    if (tmp != NULL) {
+	ret = sscanf((const char *) tmp, "%" SCNu64, u);
 	free(tmp);
     }
 
@@ -2583,7 +2609,7 @@ static int real_write_gdt (const char *fname,
 
     if (dset->rseed > 0) {
 	/* record resampling info */
-	pprintf(prn, " rseed=\"%u\"", dset->rseed);
+	pprintf(prn, " rseed=\"%" PRIu64 "\"", dset->rseed);
     }
     if (dset->mapfile != NULL) {
 	/* record map link */
@@ -4101,7 +4127,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
     readsmpl = gretl_xml_get_prop_as_bool(cur, "mpi-transfer");
 
     /* optional */
-    gretl_xml_get_prop_as_uint32(cur, "rseed", &tmpset->rseed);
+    gretl_xml_get_prop_as_uint64(cur, "rseed", &tmpset->rseed);
 
     /* optional */
     gretl_xml_get_prop_as_string(cur, "mapfile", &tmpset->mapfile);

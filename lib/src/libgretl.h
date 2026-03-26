@@ -328,7 +328,7 @@ typedef struct DATASET_ {
     char *restriction;  /* record of sub-sampling restriction */
     char *padmask;      /* record of padding to re-balance panel data */
     char *mapfile;      /* name of associated map (polygons) file, if any */
-    unsigned int rseed; /* resampling seed */
+    uint64_t rseed;     /* resampling seed */
     int auxiliary;      /* 0 for regular dataset, 1 for auxiliary dataset */
     int n_varinfo;      /* # of named series with metadata, if < @v above */
     char *pangrps;      /* panel-only: name of series holding group names */
@@ -353,7 +353,7 @@ typedef struct VMatrix_ {
 typedef struct SAMPLE_ {
     int t1;
     int t2;
-    unsigned int rseed;
+    uint64_t rseed;
 } SAMPLE;
 
 typedef struct ARINFO_ {

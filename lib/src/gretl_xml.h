@@ -73,6 +73,10 @@ uint32_t gretl_xml_get_prop_as_uint32 (xmlNodePtr node,
                                        const char *tag,
                                        uint32_t *u);
 
+uint64_t gretl_xml_get_prop_as_uint64 (xmlNodePtr node,
+                                       const char *tag,
+                                       uint64_t *u);
+
 int gretl_xml_get_prop_as_uchar (xmlNodePtr node, const char *tag,
 				 unsigned char *u);
 
