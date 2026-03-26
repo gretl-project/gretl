@@ -4001,9 +4001,8 @@ MODEL tobit_model (const int *list, double llim, double rlim,
     return tmod;
 }
 
-/* run several checks on the data supplied for a duration
-   model, before invoking the duration plugin to complete
-   the business
+/* Run several checks on the data supplied for a duration model, before
+   invoking the duration plugin to complete the business.
 */
 
 static int duration_precheck (const int *list,
@@ -4027,7 +4026,7 @@ static int duration_precheck (const int *list,
     }
 
     if (seppos) {
-        /* the censoring variable, if present, must be a dummy */
+        /* The censoring variable, if present, must be a dummy. */
         censvar = list[l0];
         if (!gretl_isdummy(dset->t1, dset->t2, dset->Z[censvar])) {
             gretl_errmsg_sprintf(_("The variable '%s' is not a 0/1 variable."),
@@ -4038,8 +4037,9 @@ static int duration_precheck (const int *list,
             if (olslist == NULL) {
                 err = E_ALLOC;
             } else {
-                /* include the censoring dummy. to ensure the
-                   sample is right */
+                /* include the censoring dummy to ensure the
+                   sample is right
+		*/
                 olslist[l0 - 1] = censvar;
                 olslist[0] -= 1;
             }
@@ -4047,7 +4047,7 @@ static int duration_precheck (const int *list,
     }
 
     if (!err) {
-        /* run an initial OLS to "set the model up" and check for errors;
+        /* Run an initial OLS to "set the model up" and check for errors;
            the duration_estimate_driver function will overwrite the
            coefficients etc.
         */
@@ -4066,6 +4066,9 @@ static int duration_precheck (const int *list,
         }
         err = pmod->errcode;
         *pcensvar = censvar;
+	if (!err) {
+	    pmod->xlist = gretl_list_sublist(pmod->list, 2, -1);
+	}
     }
 
     if (!err) {
