@@ -3740,9 +3740,10 @@
 	Os nomes de linguagem são reconhecidos sem considerar capitalização.
       </para>
       <para>
-	A opção <opt>--send-data</opt> é válida apenas quando em ligação
-	com R e Octave; tem o efeito de tornar o corrente conjunto de dados de
-	gretl disponível dentro do programa alvo, usando o nome <lit>gretldata</lit>.
+	A opção <opt>--send-data</opt> é válida apenas quando em
+	ligação com R, Octave, Python e Stata; tem o efeito de tornar
+	o corrente conjunto de dados de gretl disponível dentro do
+	programa alvo, usando o nome <lit>gretldata</lit>.
       </para>
       <code>
 	list Rlist = x1 x2 x3

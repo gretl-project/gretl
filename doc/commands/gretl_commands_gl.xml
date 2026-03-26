@@ -4389,7 +4389,7 @@
 	que non distinguen maiúsculas e minúsculas.
       </para>
       <para>
-	Xunto con R, Octave e Stata, a opción <opt>send-data</opt>
+	Xunto con R, Octave, Python e Stata, a opción <opt>send-data</opt>
 	ten como efecto o de facer accesibles os datos do espazo de
 	traballo do GRETL dentro do programa sinalado. Por defecto, se
 	envía o conxunto completo de datos, pero ti podes limitar os

@@ -13,11 +13,14 @@ rapid application development in many areas on most platforms.''
 
 Indeed, \app{Python} is widely used in a great variety of
 contexts. Numerous add-on modules are available; the ones likely to be
-of greatest interest to econometricians include \app{NumPy} (``the
-fundamental package for scientific computing with Python''---see
-\url{www.numpy.org}); \app{SciPy} (which builds on \app{NumPy}---see
-\url{www.scipy.org}); and \app{Statsmodels}
-(\url{http://statsmodels.sourceforge.net/}).
+of greatest interest to econometricians include \app{pandas} for data
+processing, \app{NumPy} (``the fundamental package for scientific
+computing with Python''---see \url{www.numpy.org}); \app{SciPy} (which
+builds on \app{NumPy}---see \url{www.scipy.org}); and
+\app{Statsmodels} (\url{http://statsmodels.sourceforge.net/}). A
+special mention goes to \app{gretl4py}, which makes many gretl methods
+available in Python, and can be seen as a mirror feature to the one
+we're describing here.
 
 \section{Python support in gretl}
 \label{sec:Python-support}
@@ -43,6 +46,11 @@ directory.''  The first function loads a matrix of the given
 function, and the second writes matrix \texttt{M}, under the given
 \texttt{filename}, in the format wanted by gretl.
 
+Additionally, the \option{send-data} option makes the currently open
+dataset available to the Python environment as a Pandas dataframe,
+under the name \texttt{gretldata}. A short example is provided below,
+in section \ref{sec:Python-send-data}.
+
 By default the traffic in matrices goes via the dot directory on the
 \app{Python} side; that is, the name of this directory is prepended to
 \texttt{filename} for both reading and writing. (This is complementary
@@ -60,7 +68,7 @@ Note that \verb|gretl_loadmat| and \verb|gretl_export| depend on
 \app{NumPy} is not an absolute requirement if you don't need
 to use these two functions.
 
-\section{Illustration: linear regression with multicollinearity}
+\section{Illustration 1: linear regression with multicollinearity}
 \label{sec:Python-longley}
 
 Listing~\ref{ex:python-longley} compares the numerical accuracy of
@@ -127,6 +135,78 @@ Log-relative errors, Longley coefficients:
 
 Column means
       12.725      12.617
+\end{outbit}
+\end{script}
+
+\section{Illustration 2: passing data via Pandas}
+\label{sec:Python-send-data}
+
+In this example, we assume that the user's Python environment has the
+\app{statsmodels} module available, and we'll use the data from
+\cite{mroz87} for estimating a simple probit model on women's labor
+force participation. The dataset is available in gretl as an example
+dataset as \texttt{mroz87.gdt}.
+
+After having loaded the dataset, the probit model is estimated in
+gretl using the native \cmd{probit} command. The data is then passed
+to the Python environment, where \app{statsmodels} is used to estimate
+the same model.
+
+\begin{script}[htbp]
+  \scriptinfo{python-probit}{Comparing probit results with \app{Python}}
+\begin{scode}
+set verbose off
+
+open mroz87 -q
+list LX = const WA WE HA HE
+probit LFP LX --p-values
+
+foreign language=python --send-data
+	import statsmodels.formula.api as sf;
+	f = 'LFP ~ WA + WE + HA + HE';
+	model = sf.probit(formula=f, data=gretldata).fit();
+	print(model.summary());
+end foreign
+\end{scode}
+  Output:
+\begin{outbit}
+Model 1: Probit, using observations 1-753
+Dependent variable: LFP
+Standard errors based on Hessian
+
+             coefficient    std. error      z       p-value 
+  ----------------------------------------------------------
+  const      -0.485099      0.407364     -1.191     0.2337  
+  WA         -0.0105331     0.0125299    -0.8406    0.4006  
+  WE          0.145865      0.0265928     5.485     4.13e-08 ***
+  HA         -0.000646206   0.0126691    -0.05101   0.9593  
+  HE         -0.0520389     0.0198418    -2.623     0.0087   ***
+
+Mean dependent var   0.568393   S.D. dependent var   0.495630
+McFadden R-squared   0.035600   Adjusted R-squared   0.025889
+Log-likelihood      -496.5435   Akaike criterion     1003.087
+Schwarz criterion    1026.207   Hannan-Quinn         1011.994
+
+[... other output lines omitted ...]
+  
+                          Probit Regression Results                           
+==============================================================================
+Dep. Variable:                    LFP   No. Observations:                  753
+Model:                         Probit   Df Residuals:                      748
+Method:                           MLE   Df Model:                            4
+Date:                Thu, 26 Mar 2026   Pseudo R-squ.:                 0.03560
+Time:                        11:25:59   Log-Likelihood:                -496.54
+converged:                       True   LL-Null:                       -514.87
+Covariance Type:            nonrobust   LLR p-value:                 2.117e-07
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept     -0.4851      0.407     -1.191      0.234      -1.284       0.313
+WA            -0.0105      0.013     -0.841      0.401      -0.035       0.014
+WE             0.1459      0.027      5.485      0.000       0.094       0.198
+HA            -0.0006      0.013     -0.051      0.959      -0.025       0.024
+HE            -0.0520      0.020     -2.623      0.009      -0.091      -0.013
+==============================================================================
 \end{outbit}
 \end{script}
 

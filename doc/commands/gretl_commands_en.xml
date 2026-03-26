@@ -4389,7 +4389,7 @@
 	basis.
       </para>
       <para>
-	In connection with R, Octave and Stata the
+	In connection with R, Octave, Python and Stata the
 	<opt>send-data</opt> option has the effect of making data
 	from gretl's workspace available within the target program. By
 	default the entire dataset is sent, but you can limit the data

@@ -4501,7 +4501,7 @@
 	I nomi dei programmi esterni sono case-insensitive.
       </para>
       <para>
-	Con R, Octave e Stata l'opzione <opt>send-data</opt> ha
+	Con R, Octave, Python e Stata l'opzione <opt>send-data</opt> ha
 	l'effetto di rendere disponibile all'interno del programma di
 	destinazione l'intero dataset corrente. È possibile limitare
 	l'invio dell'intero dataset al programma di destinazione attraverso
