@@ -29,6 +29,8 @@
 #include "gretl_array.h"
 #include "qr_estimate.h"
 
+#include <inttypes.h>
+
 /**
  * SECTION:gretl_model
  * @short_description: handling of the MODEL struct
@@ -973,11 +975,13 @@ int *gretl_model_get_list (const MODEL *pmod, const char *key)
 	return NULL;
     }
 
+    if (!strcmp(key, "xlist") && pmod->xlist != NULL) {
+	return pmod->xlist;
+    }
+
     for (i=0; i<pmod->n_data_items; i++) {
-	if (pmod->data_items[i]->type != GRETL_TYPE_LIST) {
-	    continue;
-	}
-	if (!strcmp(key, pmod->data_items[i]->key)) {
+	if (pmod->data_items[i]->type == GRETL_TYPE_LIST &&
+	    !strcmp(key, pmod->data_items[i]->key)) {
 	    list = (int *) pmod->data_items[i]->ptr;
 	    break;
 	}
@@ -3336,24 +3340,24 @@ static int discard_model_data_item (MODEL *pmod, const char *key,
     if (junk == NULL) {
 	err = 1;
     } else {
-	int n_items = pmod->n_data_items - 1;
+	int new_n_items = pmod->n_data_items - 1;
 
-	if (n_items == 0) {
+	if (new_n_items == 0) {
 	    free(pmod->data_items);
 	    pmod->data_items = NULL;
 	} else {
 	    model_data_item **items;
 
-	    for (i=targ; i<n_items; i++) {
+	    for (i=targ; i<new_n_items; i++) {
 		pmod->data_items[i] = pmod->data_items[i+1];
 	    }
-	    items = realloc(pmod->data_items, n_items * sizeof *items);
+	    items = realloc(pmod->data_items, new_n_items * sizeof *items);
 	    if (items != NULL) {
 		pmod->data_items = items;
 	    }
 	}
 
-	pmod->n_data_items -= 1;
+	pmod->n_data_items = new_n_items;
 
 	if (free_data) {
 	    /* deep free the data item */
@@ -3394,8 +3398,8 @@ int gretl_model_destroy_data_item (MODEL *pmod, const char *key)
  * @pmod: pointer to model.
  * @key: key string.
  *
- * Looks up the data item, attached to @pmod, that is
- * identified by @key, and if an item is found, removes
+ * Look up the data item, attached to @pmod, that is
+ * identified by @key, and if an item is found remove
  * it from the model's list of such items.  The data
  * pointer associated with @key is not touched.  If you
  * want the underlying resources associated with @key to be
@@ -5521,7 +5525,7 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     pputs(prn, ">\n");
 
     if (pmod->smpl.rseed > 0) {
-	pprintf(prn, "<sample t1=\"%d\" t2=\"%d\" rseed=\"%u\"/>\n",
+	pprintf(prn, "<sample t1=\"%d\" t2=\"%d\" rseed=\"%" PRIu64 "\"/>\n",
 		pmod->smpl.t1, pmod->smpl.t2, pmod->smpl.rseed);
     } else {
 	pprintf(prn, "<sample t1=\"%d\" t2=\"%d\"/>\n",
@@ -5552,7 +5556,6 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     if (pmod->xpx != NULL) {
 	gretl_xml_put_double_array("xpx", pmod->xpx, m, prn);
     }
-
     if (pmod->vcv != NULL) {
 	gretl_xml_put_double_array("vcv", pmod->vcv, m, prn);
     }
@@ -5579,6 +5582,9 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 
     if (pmod->list != NULL) {
 	gretl_xml_put_tagged_list("list", pmod->list, prn);
+    }
+    if (pmod->xlist != NULL) {
+	gretl_xml_put_tagged_list("xlist", pmod->xlist, prn);
     }
 
     if (pmod->n_data_items > 0) {
@@ -5803,20 +5809,6 @@ static void maybe_convert_listsep (int *list, const DATASET *dset)
     }
 }
 
-static gretl_matrix *data_list_to_matrix (const int *list)
-{
-    gretl_matrix *y = gretl_column_vector_alloc(list[0]);
-    int i;
-
-    if (y != NULL) {
-	for (i=0; i<y->rows; i++) {
-	    y->val[i] = list[i+1];
-	}
-    }
-
-    return y;
-}
-
 #define XDEBUG 0
 
 static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
@@ -5883,27 +5875,10 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 		err = gretl_model_set_double(pmod, key, xval);
 	    }
 	} else if (t == GRETL_TYPE_LIST) {
-	    if (!strcmp(key, "xlist")) {
-		/* ad hoc (for forecasting): will be recreated if need be */
-		;
-	    } else if (!strcmp(key, "yvals")) {
-		/* backward compatibility for mnlogit models */
-		int *list = gretl_xml_get_list(cur, doc, &err);
+	    int *list = gretl_xml_get_list(cur, doc, &err);
 
-		if (!err && list != NULL) {
-		    gretl_matrix *yv = data_list_to_matrix(list);
-
-		    if (yv != NULL) {
-			err = gretl_model_set_matrix_as_data(pmod, key, yv);
-		    }
-		}
-		free(list);
-	    } else {
-		int *list = gretl_xml_get_list(cur, doc, &err);
-
-		if (!err && list != NULL) {
-		    err = gretl_model_set_list_as_data(pmod, key, list);
-		}
+	    if (!err && list != NULL) {
+		err = gretl_model_set_list_as_data(pmod, key, list);
 	    }
 	} else if (t == GRETL_TYPE_STRING) {
 	    char *s;
@@ -6107,8 +6082,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	if (!xmlStrcmp(cur->name, (XUC) "sample")) {
 	    gretl_xml_get_prop_as_int(cur, "t1", &pmod->smpl.t1);
 	    gretl_xml_get_prop_as_int(cur, "t2", &pmod->smpl.t2);
-            /* FIXME */
-	    gretl_xml_get_prop_as_uint32(cur, "rseed", &pmod->smpl.rseed);
+	    gretl_xml_get_prop_as_uint64(cur, "rseed", &pmod->smpl.rseed);
 	} else if (!xmlStrcmp(cur->name, (XUC) "coeff")) {
 	    pmod->coeff = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "sderr")) {
@@ -6124,6 +6098,8 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	    pmod->vcv = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "list")) {
 	    pmod->list = gretl_xml_get_list(cur, doc, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "xlist")) {
+	    pmod->xlist = gretl_xml_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "tests")) {
 	    *err = attach_model_tests_from_xml(pmod, cur);
 	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
@@ -6334,7 +6310,8 @@ int command_ok_for_model (int test_ci, gretlopt opt,
         }
 	break;
     case OMIT:
-	if (mci == ARMA || mci == GARCH || mci == INTREG || mci == DPANEL) {
+	if (mci == ARMA || mci == GARCH ||
+	    mci == INTREG || mci == DPANEL) {
 	    /* FIXME INTREG should be workable? */
 	    ok = 0;
 	} else if (between) {
@@ -6412,7 +6389,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
  * @pmod: the model to be tested.
  * @dset: dataset information.
  *
- * A more rigorous counterpart of command_ok_for_model().  Use
+ * A more rigorous superset of command_ok_for_model().  Use
  * this function if the extra information is available.
  *
  * Returns: 1 if the test command @ci (with possible option
@@ -6423,7 +6400,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 		   const DATASET *dset)
 {
-    /* preliminary rough-and-ready test */
+    /* preliminary screening */
     int ok = command_ok_for_model(ci, opt, pmod);
 
     if (!ok) {
