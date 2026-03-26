@@ -2351,8 +2351,8 @@ static int mn_value_count (const double *y, MODEL *pmod,
     return n;
 }
 
-/* transcribe multinomial logit results into @pmod, which was
-   initialized via OLS, and add covariance matrix
+/* Transcribe multinomial logit results into @pmod, which was
+   initialized via OLS, and add covariance matrix.
 */
 
 static void mnl_finish (mnl_info *mnl, MODEL *pmod,

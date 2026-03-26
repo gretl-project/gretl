@@ -1550,16 +1550,16 @@ static int auto_drop_var (omit_info *oi,
 
     if (k >= 0) {
         if (oi->use_pval) {
-            /* using the p-value approach: we just have to see if
+            /* Using the p-value approach: we just have to see if
                regressor with the smallest t-ratio has a p-value
-               above the max for retention
+               above the max for retention.
             */
             oi->cval = coeff_pval(pmod->ci, tmin, pmod->dfd);
             do_drop = oi->cval > oi->alpha;
         } else {
-            /* using an info criterion: we have to re-estimate the
+            /* Using an info criterion: we have to re-estimate the
                model without the regressor with the smallest t-ratio
-               to see if its omission improves the criterion
+               to see if its omission improves the criterion.
             */
             int *ltmp = gretl_list_copy(oi->list);
             double crit0 = pmod->criterion[oi->crit];
