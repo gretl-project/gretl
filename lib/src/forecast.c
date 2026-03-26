@@ -423,16 +423,19 @@ FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset,
 
 static const int *model_xlist (MODEL *pmod)
 {
-    int *xlist = gretl_model_get_list(pmod, "xlist");
-
-    if (xlist == NULL) {
-	xlist = gretl_model_get_x_list(pmod);
-	if (xlist != NULL) {
-	    gretl_model_set_list_as_data(pmod, "xlist", xlist);
+    if (pmod->xlist == NULL) {
+	/* try for an existing 'data item' */
+	pmod->xlist = gretl_model_get_list(pmod, "xlist");
+	if (pmod->xlist != NULL) {
+	    /* remove as data item */
+	    gretl_model_detach_data_item(pmod, "xlist");
+	} else {
+	    /* try x_list constructor function */
+	    pmod->xlist = gretl_model_get_x_list(pmod);
 	}
     }
 
-    return xlist;
+    return pmod->xlist;
 }
 
 static inline int xy_equal(double x, double y)
