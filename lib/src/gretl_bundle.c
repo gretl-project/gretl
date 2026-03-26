@@ -3467,8 +3467,8 @@ void *sysinfo_bundle_get_data (const char *key, GretlType *type,
     return ret;
 }
 
-/* For a single-equation model, create a bundle containing
-   all the data available via $-accessors.
+/* For a single-equation model, create a bundle containing all the data
+   available via $-accessors.
 */
 
 gretl_bundle *bundle_from_model (MODEL *pmod,
@@ -3562,7 +3562,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
         /* model lists */
         list = NULL;
         if (i == M_XLIST) {
-            list = gretl_model_get_x_list(pmod);
+            list = gretl_list_copy(pmod->xlist);
         } else if (i == M_YLIST) {
             list = gretl_model_get_y_list(pmod);
         }
