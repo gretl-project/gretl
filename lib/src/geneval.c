@@ -11642,9 +11642,9 @@ static NODE *bundled_series_node (parser *p, const double *x,
     return ret;
 }
 
-/* Getting an object from within a bundle: on the left is the
-   bundle reference, on the right should be a string -- the
-   key to look up to get content.
+/* Getting an object from within a bundle: on the left is the bundle
+   reference, on the right should be a string: the key to look up to get
+   content.
 */
 
 static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
