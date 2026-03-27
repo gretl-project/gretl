@@ -13188,6 +13188,7 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
     gretl_vector *fy = NULL;
     gretl_matrix *fX = NULL;
     double *means = NULL;
+    int *ffreq = NULL;
     double x;
     int *ns = NULL;
     int T = X->rows;
@@ -13254,6 +13255,36 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
 
     err = gretl_matrix_ols(fy, fX, b, vcv, uhat, s2);
 
+    if (!err) {
+	/* compute "fixed-effects" */
+	double e;
+	gretl_matrix *a = gretl_zero_matrix_new(nfvals, 1);
+	ffreq = malloc(nfvals * sizeof *ffreq);
+
+	for (j=0; j<nfvals; j++) {
+	    ffreq[j] = 0;
+	}
+
+        for (t=0; t<T; t++) {
+            fvi = fac->val[t] - 1;
+	    ffreq[fvi] += 1;
+	    e = y->val[t];
+
+	    for (j=0; j<k; j++) {
+		x = gretl_matrix_get(X, t, j);
+		e -= x * b->val[j];
+            }
+	    a->val[fvi] += e;
+	}
+
+	for (j=0; j<nfvals; j++) {
+	    a->val[j] /= ffreq[j];
+	}
+#if 0
+	gretl_matrix_print(a, "a");
+#endif
+    }
+
     if (!err && (vcv != NULL || s2 != NULL)) {
 	/* correct the degrees of freedom */
 	double adj = (T - k) / (double) (T - k - nfvals);
@@ -13273,6 +13304,7 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
     gretl_matrix_free(fvals);
     free(means);
     free(ns);
+    free(ffreq);
 
     return err;
 }
