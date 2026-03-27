@@ -1355,6 +1355,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	log_depvar_ll(&mdl, dset);
     }
 
+    free(mdl.xlist);
     mdl.xlist = gretl_list_sublist(mdl.list, 2, -1);
 
  lsq_abort:

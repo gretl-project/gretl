@@ -5139,6 +5139,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	int *xlist = gretl_list_sublist(list, 2, -1);
 	int lerr = 0;
 
+	free(mod.xlist);
 	if (dropped != NULL) {
 	    int *tmp = gretl_list_drop(xlist, dropped, &lerr);
 

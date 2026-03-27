@@ -998,6 +998,7 @@ static int heckit_model_add_lists (MODEL *hm, h_container *HC)
 	zlist[i] = HC->zlist[i-1];
     }
 
+    free(hm->xlist);
     hm->xlist = gretl_list_copy(HC->xlist);
 
     return gretl_model_set_list_as_data(hm, "zlist", zlist);

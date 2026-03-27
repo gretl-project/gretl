@@ -859,6 +859,7 @@ static MODEL garch_run_ols (const int *list, DATASET *dset,
     free(ols_list);
 
     if (!model.errcode) {
+	free(model.xlist);
 	model.xlist = gretl_list_sublist(model.list, 2, -1);
 	clear_model_xpx(&model);
     }

@@ -1348,6 +1348,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
        we'll use the list of regressors for the first equation, which in
        some cases will also carry over to the second.
     */
+    free(pmod->xlist);
     pmod->xlist = gretl_list_copy(bp->X1list);
 
     pmod->rho = tanh(bp->arho);

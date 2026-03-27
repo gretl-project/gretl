@@ -1213,6 +1213,7 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
 	    model.opt |= OPT_M;
 	    gretl_model_set_double(&model, "rlimit", rlim);
 	}
+	free(model.xlist);
 	model.xlist = xlist;
 	xlist = NULL; /* donated, don't free */
     }

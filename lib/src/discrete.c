@@ -943,6 +943,7 @@ static int fill_op_model (MODEL *pmod, const int *list,
         gretl_model_set_int(pmod, "iters", fncount);
     }
 
+    free(pmod->xlist);
     pmod->xlist = gretl_list_sublist(list, 2, -1);
 
     pmod->ncoeff = npar;
@@ -3411,6 +3412,7 @@ MODEL binary_model (int ci, const int *list,
         if (opt & OPT_N) {
             mod.opt |= OPT_N;
         }
+	free(mod.xlist);
 	mod.xlist = gretl_list_sublist(mod.list, 2, -1);
     }
 
@@ -4067,6 +4069,7 @@ static int duration_precheck (const int *list,
         err = pmod->errcode;
         *pcensvar = censvar;
 	if (!err) {
+	    free(pmod->xlist);
 	    pmod->xlist = gretl_list_sublist(pmod->list, 2, -1);
 	}
     }
