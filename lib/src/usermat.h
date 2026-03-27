@@ -137,6 +137,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 			       const gretl_matrix *F,
 			       gretl_matrix *U,
 			       gretl_matrix *V,
+			       gretl_matrix *A,
 			       gretlopt opt,
 			       int *err);
 

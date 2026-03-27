@@ -14749,7 +14749,7 @@ static int check_argc (int f, int k, parser *p)
         { F_FILTER,    1, 5 },
         { F_MCOVG,     4, 4 },
         { F_MRLS,      4, 6 },
-	{ F_FOLS,      3, 5 },
+	{ F_FOLS,      3, 6 },
         { F_LOESS,     2, 6 },
         { F_GHK,       4, 5 },
         { F_QUADTAB,   1, 4 },
@@ -14967,7 +14967,8 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
-            ret->v.m = user_matrix_ols(M[0], M[1], NULL, U, V, opt, &p->err);
+            ret->v.m = user_matrix_ols(M[0], M[1], NULL, U, V, NULL,
+				       opt, &p->err);
         }
         if (freemat[0]) gretl_matrix_free(M[0]);
         if (freemat[1]) gretl_matrix_free(M[1]);
@@ -15002,6 +15003,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         gretl_matrix *M[3] = {NULL};
         gretl_matrix *U = NULL;
         gretl_matrix *V = NULL;
+	gretl_matrix *A = NULL;
 
         for (i=0; i<k && !p->err; i++) {
             e = n->v.bn.n[i];
@@ -15014,16 +15016,19 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                     node_type_error(t->t, i+1, U_ADDR, e, p);
                 } else if (i == 3) {
                     U = ptr_node_get_matrix(e, p);
-                } else {
+                } else if (i == 4) {
                     V = ptr_node_get_matrix(e, p);
-                }
+                } else {
+		    A = ptr_node_get_matrix(e, p);
+		}
             }
         }
         if (!p->err) {
             ret = aux_matrix_node(p);
         }
         if (!p->err) {
-            ret->v.m = user_matrix_ols(M[0], M[1], M[2], U, V, OPT_F, &p->err);
+            ret->v.m = user_matrix_ols(M[0], M[1], M[2], U, V, A,
+				       OPT_F, &p->err);
         }
     } else if (t->t == F_NRMAX) {
         gretl_matrix *b = NULL;

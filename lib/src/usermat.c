@@ -1801,6 +1801,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 			       const gretl_matrix *F,
 			       gretl_matrix *U,
 			       gretl_matrix *V,
+			       gretl_matrix *A,
 			       gretlopt opt,
 			       int *err)
 {
@@ -1812,7 +1813,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
     } else if (opt & OPT_F) {
 	/* factorized */
 	if (gretl_vector_get_length(F) != Y->rows) {
-	    *err = E_DATA;
+	    *err = E_INVARG;
 	}
     }
 
@@ -1829,7 +1830,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	T = Y->rows;
 	k = X->cols;
 	g = Y->cols;
-	if (X->rows != T) {
+	if (X->rows != T && X->cols > 0) {
 	    *err = E_NONCONF;
 	}
     }
@@ -1838,7 +1839,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	return NULL;
     }
 
-    if (X->cols == 0) {
+    if (X->cols == 0 && !(opt & OPT_F)) {
 	/* handle the null model case */
 	return null_OLS(Y, U, V, err);
     }
@@ -1878,7 +1879,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 		/* use multiple precision */
 		*err = gretl_matrix_mp_ols(Y, X, B, V, U, ps2);
 	    } else if (opt & OPT_F) {
-		*err = gretl_matrix_factorized_ols(Y, X, F, B, V, U, ps2);
+		*err = gretl_matrix_factorized_ols(Y, X, F, B, V, U, A);
 	    } else {
 		*err = gretl_matrix_ols(Y, X, B, V, U, ps2);
 	    }

@@ -744,7 +744,7 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
 				 gretl_vector *b,
 				 gretl_matrix *vcv,
 				 gretl_vector *uhat,
-				 double *s2);
+				 gretl_vector *a);
 
 int gretl_matrix_multi_ols (const gretl_matrix *Y,
 			    const gretl_matrix *X,

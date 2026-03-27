@@ -5611,6 +5611,89 @@
       </description>
     </function>
 
+    <function name="fols" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Y</fnarg>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="matrix">F</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;A</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  A specialized function (<quote>factorized OLS</quote>)
+	  offering optimal treatment of least squares regression where
+	  one of the regressors is a factor variable with a large
+	  number of distinct values. This case may be handled by
+	  including among the regressors a set of dummy variables
+	  coding for the factor values, but it can be a great deal
+	  more efficient to carry out OLS on data that have the per
+	  factor-value means removed, which is what this function
+	  does.
+	</para>
+	<para>
+	  The arguments are as follows.
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <argname>Y</argname>: the dependent variable, a
+	      <math>T</math>-vector.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <argname>X</argname>: a <by r="T" c="k"/> matrix holding
+	      the regressors other than the factor variable.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <argname>F</argname>: the many-valued factor, a
+	      <math>T</math>-vector.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      &amp;<argname>U</argname>: a pointer-to-matrix to
+	      receive the vector of residuals, or <lit>null</lit> if
+	      these are not required.  If this argument is given, the
+	      matrix wil be resized as needed, and the same goes for
+	      the other optional arguments.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      &amp;<argname>V</argname>: a pointer-to-matrix to
+	      receive the covariance matrix of the parameter
+	      estimates, or <lit>null</lit> if these are not required.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      &amp;<argname>A</argname>: a pointer-to-matrix to
+	      receive the <quote>fixed effects</quote> or per
+	      factor-value intercepts, or <lit>null</lit> if these are
+	      not required.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  By default, estimates are obtained via Cholesky
+	  decomposition, with a fallback to QR decomposition if the
+	  columns of <argname>X</argname> are highly collinear.  The
+	  use of SVD can be forced via the command <lit>set svd
+	  on</lit>.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="mols"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="fracdiff" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>

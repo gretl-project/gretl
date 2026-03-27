@@ -13163,8 +13163,8 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
  * or NULL if this is not needed.
  * @uhat: vector to hold the regression residuals, or NULL if
  * these are not needed.
- * @s2: pointer to receive residual variance, or NULL.  Note:
- * if @s2 is NULL, the "vcv" estimate will be plain (X'X)^{-1}.
+ * @a: vector to hold the "fixed effects" (per factor-value constants),
+ * or NULL if these are not needed.
  *
  * Works like gretl_matrix_ols() except that prior to the OLS
  * computation both @y and @X are demeaned, using group means
@@ -13182,13 +13182,13 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
 				 gretl_vector *b,
 				 gretl_matrix *vcv,
 				 gretl_vector *uhat,
-				 double *s2)
+				 gretl_vector *a)
 {
     gretl_vector *fvals = NULL;
     gretl_vector *fy = NULL;
     gretl_matrix *fX = NULL;
     double *means = NULL;
-    int *ffreq = NULL;
+    double s2, *ps2;
     double x;
     int *ns = NULL;
     int T = X->rows;
@@ -13253,23 +13253,33 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
         }
     }
 
-    err = gretl_matrix_ols(fy, fX, b, vcv, uhat, s2);
+    ps2 = vcv != NULL ? &s2 : NULL;
+    err = gretl_matrix_ols(fy, fX, b, vcv, uhat, ps2);
 
-    if (!err) {
+    if (!err && a != NULL) {
 	/* compute "fixed-effects" */
+	int *ffreq = NULL;
 	double e;
-	gretl_matrix *a = gretl_zero_matrix_new(nfvals, 1);
-	ffreq = malloc(nfvals * sizeof *ffreq);
+
+	err = gretl_matrix_realloc(a, nfvals, 1);
+	if (!err) {
+	    ffreq = malloc(nfvals * sizeof *ffreq);
+	    if (ffreq == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	if (err) {
+	    free(ffreq);
+	    goto bailout;
+	}
 
 	for (j=0; j<nfvals; j++) {
 	    ffreq[j] = 0;
 	}
-
         for (t=0; t<T; t++) {
             fvi = fac->val[t] - 1;
 	    ffreq[fvi] += 1;
 	    e = y->val[t];
-
 	    for (j=0; j<k; j++) {
 		x = gretl_matrix_get(X, t, j);
 		e -= x * b->val[j];
@@ -13280,21 +13290,14 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
 	for (j=0; j<nfvals; j++) {
 	    a->val[j] /= ffreq[j];
 	}
-#if 0
-	gretl_matrix_print(a, "a");
-#endif
+	free(ffreq);
     }
 
-    if (!err && (vcv != NULL || s2 != NULL)) {
+    if (!err && vcv != NULL) {
 	/* correct the degrees of freedom */
 	double adj = (T - k) / (double) (T - k - nfvals);
 
-	if (vcv != NULL) {
-	    gretl_matrix_multiply_by_scalar(vcv, adj);
-	}
-	if (s2 != NULL) {
-	    *s2 *= adj;
-	}
+	gretl_matrix_multiply_by_scalar(vcv, adj);
     }
 
  bailout:
@@ -13304,7 +13307,6 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
     gretl_matrix_free(fvals);
     free(means);
     free(ns);
-    free(ffreq);
 
     return err;
 }
