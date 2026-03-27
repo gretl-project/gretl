@@ -898,7 +898,8 @@ static int XTX_XTy (const int *list, int t1, int t2,
     return err;
 }
 
-static int native_cholesky_regress (MODEL *pmod, const DATASET *dset,
+static int native_cholesky_regress (MODEL *pmod,
+				    const DATASET *dset,
 				    gretlopt opt)
 {
     double rho, ysum = 0.0, ypy = 0.0;
