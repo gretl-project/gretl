@@ -468,9 +468,9 @@ static int bp_container_fill (bp_container *bp, MODEL *olsmod,
     return err;
 }
 
-/* returns a list containing all the distinct elements in the
+/* Returns a list containing all the distinct elements in the
    input @list, skipping the list separator and any duplicated
-   members
+   members.
 */
 
 static int *prelim_list (const int *list)
@@ -503,8 +503,8 @@ static int *prelim_list (const int *list)
     return ret;
 }
 
-/* run an initial OLS to determine the sample that is wanted for
-   the two probit models to be estimated subsequently
+/* Run an initial OLS to determine the sample that is wanted for
+   the two probit models to be estimated subsequently.
 */
 
 static MODEL bp_preliminary_ols (const int *list, DATASET *dset)
@@ -1344,6 +1344,12 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
 	j++;
     }
 
+    /* It's not entirely clear what we ought to do here, but for now
+       we'll use the list of regressors for the first equation, which in
+       some cases will also carry over to the second.
+    */
+    pmod->xlist = gretl_list_copy(bp->X1list);
+
     pmod->rho = tanh(bp->arho);
     gretl_model_set_param_name(pmod, bp->npar - 1, "rho");
     pmod->coeff[j] = pmod->rho;
@@ -1386,9 +1392,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp,
     return err;
 }
 
-/*
-   The driver function for the plugin.
-*/
+/* the driver function for the plugin */
 
 MODEL biprobit_estimate (const int *list, DATASET *dset,
 			 gretlopt opt, PRN *prn)
@@ -1399,7 +1403,7 @@ MODEL biprobit_estimate (const int *list, DATASET *dset,
     int err = 0;
 
     if (list[0] < 3 || (gretl_list_has_separator(list) && list[0] < 5)) {
-	/* we need at least two dep. vars plus one regressor */
+	/* we need at least two dependent variables plus one regressor */
 	err = E_ARGS;
     } else {
 	bp = bp_container_new(list);

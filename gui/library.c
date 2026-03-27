@@ -7216,7 +7216,6 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     int interactive = 0;
     DATASET *dset;
     int origv = dataset->v;
-    int *xlist = NULL;
     int list[4];
     int err = 0;
 
@@ -7225,8 +7224,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
         return;
     }
 
-    xlist = gretl_model_get_x_list(pmod);
-    if (xlist == NULL) {
+    if (pmod->xlist == NULL) {
         return;
     }
 
@@ -7234,14 +7232,12 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     list[3] = gretl_model_get_depvar(pmod);
 
     if (pmod->ifc) {
-        list[1] = xlist[3];
-        list[2] = xlist[2];
+        list[1] = pmod->xlist[3];
+        list[2] = pmod->xlist[2];
     } else {
-        list[1] = xlist[2];
-        list[2] = xlist[1];
+        list[1] = pmod->xlist[2];
+        list[2] = pmod->xlist[1];
     }
-
-    free(xlist);
 
 #ifdef GNUPLOT3D
     /* We're supposed to have a fully interactive gnuplot terminal */

@@ -1418,6 +1418,20 @@ static void dpd_add_param_names (MODEL *pmod, dpmod *dpd,
     }
 }
 
+static void xlist_normalize (int *list)
+{
+    int cpos = in_gretl_list(list, 0);
+
+    if (cpos > 1) {
+	int i;
+
+	for (i=cpos; i>1; i--) {
+	    list[i] = list[i-1];
+	}
+	list[1] = 0;
+    }
+}
+
 static int dpd_finalize_model (MODEL *pmod,
 			       dpmod *dpd,
 			       int *list,
@@ -1441,6 +1455,10 @@ static int dpd_finalize_model (MODEL *pmod,
     pmod->dfd = dpd->nobs - dpd->k;
 
     pmod->list = list; /* donated, don't free */
+    pmod->xlist = gretl_list_sublist(pmod->list, 4, -1);
+    if (pmod->xlist != NULL) {
+	xlist_normalize(pmod->xlist);
+    }
 
     gretl_model_set_int(pmod, "yno", dpd->yno);
     gretl_model_set_int(pmod, "n_included_units", dpd->effN);
@@ -3455,7 +3473,7 @@ static void print_instrument_specs (dpmod *dpd, const char *ispec,
 	pputs(prn, _("GMM-style instruments, levels equation:\n"));
 	for (i=0; i<dpd->nzb2; i++) {
 	    pprintf(prn, _("  %s: %s %d %s %s\n"), dset->varname[dpd->d2[i].v],
-		    _("lags"), dpd->d2[i].minlag, _("to"), 
+		    _("lags"), dpd->d2[i].minlag, _("to"),
 		    maxlag_string(lmax, &dpd->d2[i]));
 	}
     }

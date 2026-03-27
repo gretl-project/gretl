@@ -2302,8 +2302,9 @@ static int save_restricted_model (ExecState *state,
     return err;
 }
 
-/* generate full restricted estimates: this function is used
-   only for single-equation models, estimated via OLS */
+/* generate full restricted estimates: this function is used only for
+   single-equation models, estimated via OLS
+*/
 
 static int do_restricted_estimates (ExecState *state,
 				    gretl_restriction *rset,
@@ -2314,7 +2315,6 @@ static int do_restricted_estimates (ExecState *state,
     gretl_matrix_block *B;
     gretl_matrix *X, *y, *b, *S;
     gretl_matrix *u = NULL;
-    int *xlist = NULL;
     double s2 = 0.0;
     int T = pmod->nobs;
     int k = pmod->ncoeff;
@@ -2339,9 +2339,8 @@ static int do_restricted_estimates (ExecState *state,
     }
 
     yno = gretl_model_get_depvar(pmod);
-    xlist = gretl_model_get_x_list(pmod);
-    if (xlist == NULL) {
-	err = E_ALLOC;
+    if (pmod->xlist == NULL) {
+	err = E_DATA;
 	goto bailout;
     }
 
@@ -2361,7 +2360,7 @@ static int do_restricted_estimates (ExecState *state,
 	}
 	gretl_vector_set(y, s, dset->Z[yno][t]);
 	for (i=0; i<k; i++) {
-	    gretl_matrix_set(X, s, i, dset->Z[xlist[i+1]][t]);
+	    gretl_matrix_set(X, s, i, dset->Z[pmod->xlist[i+1]][t]);
 	}
 	s++;
     }
@@ -2388,7 +2387,6 @@ static int do_restricted_estimates (ExecState *state,
 
     gretl_matrix_block_destroy(B);
     gretl_matrix_free(u);
-    free(xlist);
 
     return err;
 }

@@ -709,8 +709,8 @@ int *backward_stepwise (MODEL *pmod,
     gretl_matrix *Q;
     gretl_matrix *R = NULL;
     gretl_matrix *y = NULL;
-    char *mask = NULL;
     int *xlist = NULL;
+    char *mask = NULL;
     bwd_wspace mm = {0};
     double cur, prev, ssr;
     int ifc = pmod->ifc;

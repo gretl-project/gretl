@@ -359,9 +359,9 @@ int gretl_model_get_depvar (const MODEL *pmod);
 const char *gretl_model_get_depvar_name (const MODEL *pmod,
 					 const DATASET *dset);
 
-int *gretl_model_get_x_list (const MODEL *pmod);
-
 int *gretl_model_get_y_list (const MODEL *pmod);
+
+int *gretl_model_get_x_list (const MODEL *pmod);
 
 int *gretl_model_get_secondary_list (const MODEL *pmod);
 

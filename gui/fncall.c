@@ -1508,7 +1508,6 @@ static GtkWidget *xlist_int_selector (call_info *cinfo, int i)
 {
     MODEL *pmod;
     GtkWidget *combo;
-    int *xlist;
 
     if (cinfo->vwin == NULL || cinfo->vwin->data == NULL) {
 	return NULL;
@@ -1521,21 +1520,18 @@ static GtkWidget *xlist_int_selector (call_info *cinfo, int i)
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(update_xlist_arg), cinfo);
 
-    xlist = gretl_model_get_x_list(pmod);
-
-    if (xlist != NULL) {
+    if (pmod->xlist != NULL) {
 	const char *s;
 	int i, vi;
 
-	for (i=1; i<=xlist[0]; i++) {
-	    vi = xlist[i];
+	for (i=1; i<=pmod->xlist[0]; i++) {
+	    vi = pmod->xlist[i];
 	    if (vi > 0) {
-		s = dataset->varname[xlist[i]];
+		s = dataset->varname[pmod->xlist[i]];
 		combo_box_append_text(combo, s);
 	    }
 	}
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
-	free(xlist);
     }
 
     return combo;

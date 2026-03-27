@@ -1640,7 +1640,6 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     MODEL *pmod = vwin->data;
     char tmp[VNAMELEN2], aname[VNAMELEN];
     gchar *alabel;
-    int *xlist;
     int v1, v2;
     int i, j;
 
@@ -1653,8 +1652,6 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	entry.callback = G_CALLBACK(resid_plot);
 	vwin_menu_add_item(vwin, mpath[0], &entry);
     }
-
-    xlist = gretl_model_get_x_list(pmod);
 
     for (i=0; i<2; i++) {
 	/* plot against time/obs number */
@@ -1690,10 +1687,10 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    }
 	}
 
-	if (xlist != NULL) {
+	if (pmod->xlist != NULL) {
 	    /* put the independent vars on the menu list */
-	    for (j=1; j<=xlist[0]; j++) {
-		v1 = xlist[j];
+	    for (j=1; j<=pmod->xlist[0]; j++) {
+		v1 = pmod->xlist[j];
 		if (v1 == 0) {
 		    continue;
 		}
@@ -1754,16 +1751,16 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
 
     /* 3-D fitted versus actual plot? */
-    if (xlist != NULL) {
+    if (pmod->xlist != NULL) {
 	int parnames = pmod->dataset != NULL;
 
 	v1 = v2 = -1;
-	if (pmod->ifc && xlist[0] == 3) {
-	    v1 = parnames ? 1 : xlist[2];
-	    v2 = parnames ? 2 : xlist[3];
-	} else if (!pmod->ifc && xlist[0] == 2) {
-	    v1 = parnames ? 0 : xlist[1];
-	    v2 = parnames ? 1 : xlist[2];
+	if (pmod->ifc && pmod->xlist[0] == 3) {
+	    v1 = parnames ? 1 : pmod->xlist[2];
+	    v2 = parnames ? 2 : pmod->xlist[3];
+	} else if (!pmod->ifc && pmod->xlist[0] == 2) {
+	    v1 = parnames ? 0 : pmod->xlist[1];
+	    v2 = parnames ? 1 : pmod->xlist[2];
 	}
 	if (v1 >= 0 && v2 >= 0) {
 	    char tmp2[VNAMELEN2];
@@ -1790,8 +1787,6 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    g_free(alabel);
 	}
     }
-
-    free(xlist);
 }
 
 static void plot_dummy_call (GtkRadioAction *action,

@@ -1258,7 +1258,6 @@ int midas_forecast_setup (const MODEL *pmod,
 {
     gretl_array *mA;
     midas_term *mterms = NULL;
-    int *xlist = NULL;
     int *hflist = NULL;
     int nmidas = 0;
     int nx = 0;
@@ -1270,11 +1269,10 @@ int midas_forecast_setup (const MODEL *pmod,
     }
 
     if (!err && gretl_model_get_int(pmod, "no_lfx") == 0) {
-	xlist = gretl_model_get_list(pmod, "lfxlist");
-	if (xlist == NULL) {
+	if (pmod->xlist == NULL) {
 	    err = E_DATA;
 	} else {
-	    nx = xlist[0];
+	    nx = pmod->xlist[0];
 	}
     }
 
@@ -1324,7 +1322,7 @@ int midas_forecast_setup (const MODEL *pmod,
 	gretl_push_c_numeric_locale();
 
 	for (i=0; i<nx; i++) {
-	    xi = xlist[i+1];
+	    xi = pmod->xlist[i+1];
 	    if (xi == 0) {
 		sprintf(tmp, "%+.15g", b[j++]);
 	    } else {
@@ -2346,9 +2344,8 @@ char *get_midas_term_line (const MODEL *pmod, int i)
     return ret;
 }
 
-/* Get the MIDAS model ready for shipping out. What
-   exactly we do here depends in part on whether
-   estimation was done by NLS or OLS.
+/* Get the MIDAS model ready for shipping out. What exactly we do here
+   depends in part on whether estimation was done by NLS or OLS.
 */
 
 static int finalize_midas_model (MODEL *pmod,
@@ -2395,7 +2392,10 @@ static int finalize_midas_model (MODEL *pmod,
     if (mi->xlist == NULL) {
 	gretl_model_set_int(pmod, "no_lfx", 1);
     } else {
-	gretl_model_set_list_as_data(pmod, "lfxlist", mi->xlist);
+	if (pmod->xlist != NULL) {
+	    free(pmod->xlist);
+	}
+	pmod->xlist = mi->xlist;
 	mi->xlist = NULL; /* donated to pmod */
     }
 

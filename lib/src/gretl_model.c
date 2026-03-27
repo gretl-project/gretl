@@ -2406,32 +2406,6 @@ const char *gretl_model_get_depvar_name (const MODEL *pmod,
     return dset->varname[dv];
 }
 
-static int ordered_model (const MODEL *pmod)
-{
-    if (pmod->ci == PROBIT || pmod->ci == LOGIT) {
-	if (gretl_model_get_int(pmod, "ordered")) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-static int longlist_model (const MODEL *pmod)
-{
-    if (pmod->ci == LOGIT ||
-	pmod->ci == NEGBIN ||
-	pmod->ci == DURATION ||
-	pmod->ci == PANEL) {
-	return 1;
-    } else if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
-	/* random-effects probit */
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
 /**
  * gretl_model_get_x_list:
  * @pmod: pointer to gretl model.
@@ -2442,127 +2416,11 @@ static int longlist_model (const MODEL *pmod)
 
 int *gretl_model_get_x_list (const MODEL *pmod)
 {
-    int *list = NULL;
-    int i, nx;
-
-    if (pmod == NULL || pmod->errcode || pmod->list == NULL) {
+    if (pmod->xlist != NULL) {
+	return gretl_list_copy(pmod->xlist);
+    } else {
 	return NULL;
     }
-
-    if (pmod->ci == ARMA) {
-	int start = arma_depvar_pos(pmod);
-
-	nx = pmod->list[0] - start + pmod->ifc;
-	if (nx > 0) {
-	    list = gretl_list_new(nx);
-	    if (list != NULL) {
-		if (pmod->ifc) {
-		    list[1] = 0;
-		    for (i=2; i<=list[0]; i++) {
-			list[i] = pmod->list[i + start - 1];
-		    }
-		} else {
-		    for (i=1; i<=list[0]; i++) {
-			list[i] = pmod->list[i + start];
-		    }
-		}
-	    }
-	}
-    } else if (pmod->ci == GARCH) {
-	nx = pmod->list[0] - 4;
-	if (nx > 0) {
-	    list = gretl_list_new(nx);
-	    if (list != NULL) {
-		for (i=1; i<=list[0]; i++) {
-		    list[i] = pmod->list[i + 4];
-		}
-	    }
-	}
-    } else if (pmod->ci == DPANEL) {
-	int ifc = gretl_model_get_int(pmod, "ifc");
-	int vi, sep = 0;
-
-	nx = 0;
-	for (i=2; i<=pmod->list[0]; i++) {
-	    if (pmod->list[i] == LISTSEP) {
-		sep++;
-		if (sep == 1) {
-		    i += 2;
-		} else if (sep == 2) {
-		    break;
-		}
-	    }
-	    if (sep == 1 && i <= pmod->list[0]) {
-		vi = pmod->list[i];
-		if (vi > 0 || ifc) {
-		    /* don't include const if it was dropped */
-		    list = gretl_list_append_term(&list, vi);
-		    if (list == NULL) {
-			return NULL;
-		    }
-		}
-	    }
-	}
-    } else if (pmod->ci == BIPROBIT) {
-	/* not sure what we ought to do here, but for now we'll
-	   return the list of regressors for the first equation
-	*/
-	nx = 0;
-	for (i=3; i<=pmod->list[0]; i++) {
-	    if (pmod->list[i] == LISTSEP) {
-		nx = i - 3;
-		break;
-	    }
-	}
-	if (nx > 0) {
-	    list = gretl_list_new(nx);
-	    if (list != NULL) {
-		for (i=1; i<=nx; i++) {
-		    list[i] = pmod->list[i+2];
-		}
-	    }
-	}
-    } else if (pmod->ci == MIDASREG) {
-	int *lfx = gretl_model_get_list(pmod, "lfxlist");
-
-	if (lfx != NULL) {
-	    list = gretl_list_copy(lfx);
-	}
-    } else if (ordered_model(pmod)) {
-	nx = pmod->list[0] - 1;
-	list = gretl_list_new(nx);
-	if (list != NULL) {
-	    for (i=1; i<=list[0]; i++) {
-		list[i] = pmod->list[i + 1];
-	    }
-	}
-    } else if (!NONLIST_MODEL(pmod->ci)) {
-	if (pmod->ci == HECKIT) {
-	    nx = gretl_model_get_int(pmod, "base-coeffs");
-	} else if (longlist_model(pmod)) {
-	    /* models in which the array of coefficients
-	       is (or may be) longer than the list of
-	       regressors
-	    */
-	    nx = pmod->list[0] - 1;
-	} else {
-	    nx = pmod->ncoeff;
-	}
-	if (nx > 0) {
-	    if (nx > pmod->list[0] - 1) {
-		/* don't read off the end of pmod->list! */
-		nx = pmod->list[0] - 1;
-	    }
-	    list = gretl_list_new(nx);
-	    if (list != NULL) {
-		for (i=1; i<=list[0]; i++) {
-		    list[i] = pmod->list[i + 1];
-		}
-	    }
-	}
-    }
-
-    return list;
 }
 
 /**
@@ -7145,7 +7003,6 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     }
 
     gretl_pop_c_numeric_locale();
-
     free(xlist);
 
     return ret;

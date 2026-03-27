@@ -1108,19 +1108,16 @@ real_get_obj_list (void *p, GretlObjType type, int idx, int *err)
 
     if (idx == M_XLIST) {
 	if (type == GRETL_OBJ_EQN) {
-	    /* the list is already a copy */
-	    ret = gretl_model_get_x_list(pmod);
+	    list = pmod->xlist;
+	} else if (type == GRETL_OBJ_VAR) {
+	    list = var->xlist;
 	} else {
-	    if (type == GRETL_OBJ_VAR) {
-		list = var->xlist;
-	    } else {
-		list = sys->xlist;
-	    }
-	    if (list == NULL) {
-		*err = E_BADSTAT;
-	    } else {
-		ret = gretl_list_copy(list);
-	    }
+	    list = sys->xlist;
+	}
+	if (list == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    ret = gretl_list_copy(list);
 	}
     } else if (idx == M_YLIST) {
 	if (type == GRETL_OBJ_EQN) {

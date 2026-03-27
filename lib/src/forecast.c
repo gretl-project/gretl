@@ -419,25 +419,6 @@ FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset,
     return fr;
 }
 
-/* local shortcut to get a model's list of regressors */
-
-static const int *model_xlist (MODEL *pmod)
-{
-    if (pmod->xlist == NULL) {
-	/* try for an existing 'data item' */
-	pmod->xlist = gretl_model_get_list(pmod, "xlist");
-	if (pmod->xlist != NULL) {
-	    /* remove as data item */
-	    gretl_model_detach_data_item(pmod, "xlist");
-	} else {
-	    /* try x_list constructor function */
-	    pmod->xlist = gretl_model_get_x_list(pmod);
-	}
-    }
-
-    return pmod->xlist;
-}
-
 static inline int xy_equal(double x, double y)
 {
     return x == y || (na(x) && na(y));
@@ -480,22 +461,20 @@ static int detect_lag (int vy, int vx, int t1, int t2,
 
 static int *process_lagged_depvar (MODEL *pmod, const DATASET *dset)
 {
-    const int *xlist = NULL;
     int *dvlags = NULL;
     int nl = 0;
 
-    xlist = model_xlist(pmod);
-    if (xlist != NULL) {
-        dvlags = malloc(xlist[0] * sizeof *dvlags);
+    if (pmod->xlist != NULL) {
+        dvlags = malloc(pmod->xlist[0] * sizeof *dvlags);
     }
 
     if (dvlags != NULL) {
         int yv = gretl_model_get_depvar(pmod);
 	int i, vi, lag;
 
-	for (i=1; i<=xlist[0]; i++) {
+	for (i=1; i<=pmod->xlist[0]; i++) {
             lag = 0;
-            vi = xlist[i];
+            vi = pmod->xlist[i];
             if (series_get_transform(dset, vi) == LAGS) {
                 if (series_get_parent_id(dset, vi) == yv) {
                     lag = series_get_lag(dset, vi);
@@ -1549,14 +1528,15 @@ static double *garch_psi (const double *phi, int p, int nf)
    of the dependent variable.
 */
 
-static double *garch_ldv_phi (const MODEL *pmod, const int *xlist,
-			      const int *dvlags, int *ppmax)
+static double *garch_ldv_phi (const MODEL *pmod,
+			      const int *dvlags,
+			      int *ppmax)
 {
     double *phi = NULL;
     int i, pmax = 0;
 
-    if (dvlags != NULL && xlist != NULL) {
-	for (i=0; i<xlist[0]; i++) {
+    if (dvlags != NULL && pmod->xlist != NULL) {
+	for (i=0; i<pmod->xlist[0]; i++) {
 	    if (dvlags[i] > pmax) {
 		pmax = dvlags[i];
 	    }
@@ -1567,7 +1547,7 @@ static double *garch_ldv_phi (const MODEL *pmod, const int *xlist,
 	    for (i=0; i<pmax; i++) {
 		phi[i] = 0.0;
 	    }
-	    for (i=0; i<xlist[0]; i++) {
+	    for (i=0; i<pmod->xlist[0]; i++) {
 		if (dvlags[i] > 0) {
 		    phi[dvlags[i] - 1] = pmod->coeff[i];
 		}
@@ -1619,18 +1599,16 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 {
     double xval;
     int xvars, yno;
-    const int *xlist = NULL;
     double *h = NULL;
     double *mh = NULL;
     double *phi = NULL;
     double *psi = NULL;
     int i, v, t;
 
-    xlist = model_xlist(pmod);
     yno = gretl_model_get_depvar(pmod);
 
-    if (xlist != NULL) {
-	xvars = xlist[0];
+    if (pmod->xlist != NULL) {
+	xvars = pmod->xlist[0];
     } else {
 	xvars = 0;
     }
@@ -1645,7 +1623,7 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 	int pmax = 0;
 
 	if (ns > 0) {
-	    phi = garch_ldv_phi(pmod, xlist, fc->dvlags, &pmax);
+	    phi = garch_ldv_phi(pmod, fc->dvlags, &pmax);
 	    psi = garch_psi(phi, pmax, ns);
 	    free(phi);
 	}
@@ -1665,7 +1643,7 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 	}
 
 	for (i=0; i<xvars; i++) {
-	    v = xlist[i+1];
+	    v = pmod->xlist[i+1];
 	    if ((lag = depvar_lag(fc, i))) {
 		xval = fcast_get_ldv(fc, yno, t, lag, dset);
 	    } else {
@@ -1787,8 +1765,9 @@ static double arima_difference_obs (const double *x, int t,
    to be differenced in this context.
 */
 
-static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
-				 const double *beta, const int *xlist,
+static double *create_Xb_series (Forecast *fc,
+				 const MODEL *pmod,
+				 const double *beta,
 				 const double **Z)
 {
     double *Xb;
@@ -1824,8 +1803,8 @@ static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
 	Xb[t] = 0.0;
 	miss = 0;
 	j = 0;
-	for (i=1; i<=xlist[0] && !miss; i++) {
-	    vi = xlist[i];
+	for (i=1; i<=pmod->xlist[0] && !miss; i++) {
+	    vi = pmod->xlist[i];
 	    if (vi == 0) {
 		Xb[t] += pmod->coeff[0];
 	    } else {
@@ -1851,11 +1830,11 @@ static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
     return Xb;
 }
 
-static int want_x_beta_prep (const MODEL *pmod, const int *xlist)
+static int want_x_beta_prep (const MODEL *pmod)
 {
     int ret = 0;
 
-    if (xlist != NULL) {
+    if (pmod->xlist != NULL) {
 	int aflags = gretl_model_get_int(pmod, "arma_flags");
 
 	if (aflags & (ARMA_EXACT | ARMA_X12A)) {
@@ -1884,7 +1863,6 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     double xval, yval, vl;
     double mu = NADBL;
     int xvars, yno;
-    const int *xlist = NULL;
     int p, q, px = 0, npsi = 0;
     int fcstart = fc->t1;
     int ar_smax, ma_smax;
@@ -1913,13 +1891,12 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     p = arma_model_max_AR_lag(pmod);
     q = arma_model_max_MA_lag(pmod);
 
-    xlist = model_xlist(pmod);
     yno = gretl_model_get_depvar(pmod);
 
     DPRINTF(("forecasting variable %d (%s), obs %d to %d, with p=%d, q=%d\n", yno,
 	     dset->varname[yno], fc->t1, fc->t2, p, q));
 
-    xvars = (xlist != NULL)? xlist[0] : 0;
+    xvars = (pmod->xlist != NULL)? pmod->xlist[0] : 0;
 
     err = arma_model_AR_MA_coeffs(pmod, &phi, &theta, OPT_I);
     if (err) {
@@ -1930,15 +1907,15 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 #if AR_DEBUG
     fprintf(stderr, "beta = %p\n", (void *) beta);
-    printlist(xlist, "xlist");
+    printlist(pmod->xlist, "pmod->xlist");
 #endif
 
-    if (want_x_beta_prep(pmod, xlist)) {
+    if (want_x_beta_prep(pmod)) {
 	if (gretl_is_arima_model(pmod)) {
 	    regarma = 1;
 	    err = regarma_model_AR_coeffs(pmod, &phi0, &px);
 	}
-	if (xlist[0] == 1 && xlist[1] == 0) {
+	if (pmod->xlist[0] == 1 && pmod->xlist[1] == 0) {
 	    /* just a const, no ARMAX */
 	    if (phi0 != NULL) {
 		mu = 1.0;
@@ -1951,7 +1928,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    }
 	} else {
 	    /* we have ARMAX terms */
-	    Xb = create_Xb_series(fc, pmod, beta, xlist,
+	    Xb = create_Xb_series(fc, pmod, beta,
 				  (const double **) dset->Z);
 	    if (Xb == NULL) {
 		err = E_ALLOC;
@@ -2012,10 +1989,10 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    int j = 0;
 
 	    for (i=1; i<=xvars; i++) {
-		if (xlist[i] == 0) {
+		if (pmod->xlist[i] == 0) {
 		    yh += pmod->coeff[0];
 		} else {
-		    xval = dset->Z[xlist[i]][t];
+		    xval = dset->Z[pmod->xlist[i]][t];
 		    if (na(xval)) {
 			miss = 1;
 		    } else {
@@ -3034,8 +3011,6 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 
 static int matrix_forecast_supported (MODEL *pmod)
 {
-    const int *xlist;
-
     if (pmod->errcode) {
         return 0;
     } else if (pmod->ncoeff < 1) {
@@ -3047,11 +3022,11 @@ static int matrix_forecast_supported (MODEL *pmod)
                pmod->ci != PROBIT) {
         /* FIXME relax this! */
         return 0;
-    } else if ((xlist = model_xlist(pmod)) == NULL) {
+    } else if (pmod->xlist == NULL) {
         return 0;
     }
 
-    if (pmod->ncoeff != xlist[0]) {
+    if (pmod->ncoeff != pmod->xlist[0]) {
         return 0;
     } else {
         fprintf(stderr, "HERE ncoeff = nx = %d, OK?\n", pmod->ncoeff);
@@ -4081,8 +4056,9 @@ int do_forecast (const char *str, DATASET *dset,
 /* try to determine in advance how far we can go with a forecast,
    either dynamic or static (@ftype) */
 
-static int fcast_get_t2max (const int *list, const int *dvlags,
-			    const MODEL *pmod, const DATASET *dset,
+static int fcast_get_t2max (const int *dvlags,
+			    const MODEL *pmod,
+			    const DATASET *dset,
 			    int ftype)
 {
     const double *ay = NULL;
@@ -4094,7 +4070,7 @@ static int fcast_get_t2max (const int *list, const int *dvlags,
 	ay = dset->Z[yno];
     }
 
-    l0 = list == NULL ? 0 : list[0];
+    l0 = pmod->xlist == NULL ? 0 : pmod->xlist[0];
 
     for (t=pmod->t2; t<dset->n; t++) {
 	int p, vj, all_ok = 1;
@@ -4105,7 +4081,7 @@ static int fcast_get_t2max (const int *list, const int *dvlags,
 	}
 
 	for (i=1; i<=l0; i++) {
-	    vi = list[i];
+	    vi = pmod->xlist[i];
 	    if (vi == 0) {
 		continue;
 	    } else if (dvlags != NULL && dvlags[i-1] != 0) {
@@ -4236,12 +4212,11 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 static int addobs_can_help (MODEL *pmod, const int *dvlags,
 			    const DATASET *dset)
 {
-    const int *xlist = model_xlist(pmod);
     int i, xi, ret = 1;
 
-    if (xlist != NULL) {
-	for (i=0; i<xlist[0]; i++) {
-	    xi = xlist[i + 1];
+    if (pmod->xlist != NULL) {
+	for (i=0; i<pmod->xlist[0]; i++) {
+	    xi = pmod->xlist[i + 1];
 	    if (xi != 0 && (dvlags == NULL || dvlags[i] == 0)) {
 		if (is_trend_variable(dset->Z[xi], dset->n)) {
 		    continue;
@@ -4279,7 +4254,6 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
 				 FcastFlags *flags, int *dt2max,
 				 int *st2max)
 {
-    const int *xlist;
     int *dvlags = NULL;
     int dvcheck = 0;
     int dv;
@@ -4325,9 +4299,8 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
 	*flags |= FC_ADDOBS_OK;
     }
 
-    xlist = model_xlist(pmod);
-    *dt2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_DYNAMIC);
-    *st2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_STATIC);
+    *dt2max = fcast_get_t2max(dvlags, pmod, dset, FC_DYNAMIC);
+    *st2max = fcast_get_t2max(dvlags, pmod, dset, FC_STATIC);
 
     if (dvlags != NULL) {
 	free(dvlags);

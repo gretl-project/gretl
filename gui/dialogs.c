@@ -1000,18 +1000,16 @@ static void make_replics_list (GtkWidget *w)
 static GtkWidget *bs_coeff_popdown (MODEL *pmod, int *pp)
 {
     GtkWidget *w;
-    int *xlist = NULL;
     int i, vi;
 
-    xlist = gretl_model_get_x_list(pmod);
-    if (xlist == NULL) {
+    if (pmod->xlist == NULL) {
         return NULL;
     }
 
     w = gtk_combo_box_text_new();
 
-    for (i=1; i<=xlist[0]; i++) {
-        vi = xlist[i];
+    for (i=1; i<=pmod->xlist[0]; i++) {
+        vi = pmod->xlist[i];
         combo_box_append_text(w, dataset->varname[vi]);
     }
 
@@ -1022,8 +1020,6 @@ static GtkWidget *bs_coeff_popdown (MODEL *pmod, int *pp)
         *pp = 0;
         gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
     }
-
-    free(xlist);
 
     return w;
 }

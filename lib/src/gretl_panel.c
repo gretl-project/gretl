@@ -5133,6 +5133,22 @@ MODEL real_panel_model (const int *list, DATASET *dset,
         dataset_drop_last_variables(dset, dset->v - orig_v);
     }
 
+    if (!err) {
+	/* equip the panel model with an xlist member */
+	int *dropped = gretl_model_get_list(&mod, "droplist");
+	int *xlist = gretl_list_sublist(list, 2, -1);
+	int lerr = 0;
+
+	if (dropped != NULL) {
+	    int *tmp = gretl_list_drop(xlist, dropped, &lerr);
+
+	    mod.xlist = tmp;
+	    free(xlist);
+	} else {
+	    mod.xlist = xlist;
+	}
+    }
+
 #if PDEBUG
     fprintf(stderr, "real_panel_model return: mod.errcode = %d\n",
 	    mod.errcode);
