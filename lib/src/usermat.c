@@ -1844,9 +1844,9 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	return null_OLS(Y, U, V, err);
     }
 
-    if (g > 1 && (opt & OPT_M)) {
-	/* multiple precision: we accept only one y var */
-	*err = E_DATA;
+    if (g > 1 && (opt & (OPT_M | OPT_F))) {
+	/* multiple precision and factorized: we accept only one y var */
+	*err = E_INVARG;
 	return NULL;
     }
 
