@@ -13074,7 +13074,7 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
 
     if (gretl_is_null_matrix(Y) ||
         gretl_is_null_matrix(X)) {
-        return E_DATA;
+        return E_INVARG;
     }
 
     g = Y->cols;
@@ -13283,11 +13283,16 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 	double *ps2 = V != NULL ? &s2 : NULL;
 
 	err = gretl_matrix_ols(fY, fX, B, V, U, ps2);
+    } else if (V == NULL) {
+	err = gretl_matrix_multi_ols(fY, fX, B, U, NULL);
     } else {
 	gretl_matrix *Vtmp = NULL;
-	gretl_matrix **Vp = V != NULL ? &Vtmp : NULL;
 
-	err = gretl_matrix_multi_ols(fY, fX, B, U, Vp);
+	err = gretl_matrix_multi_ols(fY, fX, B, U, &Vtmp);
+	if (!err && Vtmp != NULL) {
+	    gretl_matrix_replace_content(V, Vtmp);
+	    gretl_matrix_free(Vtmp);
+	}
     }
 
     if (!err && A != NULL) {
@@ -13330,7 +13335,7 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 	free(ffreq);
     }
 
-    if (!err && V != NULL) {
+    if (!err && g == 1 && V != NULL) {
 	/* correct the degrees of freedom */
 	double adj = (T - k) / (double) (T - k - nfvals);
 

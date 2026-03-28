@@ -1871,6 +1871,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 
     if (!*err) {
 	if (opt & OPT_F) {
+	    /* factorized: Y can be single or multiple */
 	    *err = gretl_matrix_factorized_ols(Y, X, F, B, V, U, A);
 	} else if (g == 1) {
 	    /* single regressand */
@@ -1881,6 +1882,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 		/* use multiple precision */
 		*err = gretl_matrix_mp_ols(Y, X, B, V, U, ps2);
 	    } else {
+		/* regular C arithmetic */
 		*err = gretl_matrix_ols(Y, X, B, V, U, ps2);
 	    }
 	} else {
