@@ -5726,6 +5726,88 @@
       </description>
     </function>
 
+    <function name="fols" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Y</fnarg>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="matrix">F</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;A</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Una funzione specializzata (<quote>OLS fattorizzata</quote>)
+	  che offre un trattamento ottimale della regressione coi
+	  minimi quadrati quando uno dei regressori è una fattore
+	  discreto con un elevato numero di valori distinti. Questo
+	  caso può essere gestito includendo tra i regressori un
+	  insieme di variabili dummy che codificano i valori del
+	  fattore, ma può essere molto più efficiente eseguire l'OLS
+	  su dati da cui sono state rimosse le medie per ciascun
+	  valore del fattore, il che è ciò che questa funzione fa.
+	</para>
+	<para>
+	  Gli argomenti sono i seguenti:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <argname>Y</argname>: la variabile dipendente, un
+	      vettore con <math>T</math>.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <argname>X</argname>: una matrice <by r="T" c="k"/>
+	      contenente i regressori diversi dal fattore.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <argname>F</argname>: il fattore discreto, un
+	      vettore <math>T</math>.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      &amp;<argname>U</argname>: puntatore a matrice per
+	      ricevere il vettore dei residui, o <lit>null</lit> se
+	      non sono richiesti. Se questo argomento viene fornito,
+	      la matrice verrà ridimensionata secondo necessità, e lo
+	      stesso vale per gli altri argomenti opzionali.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      &amp;<argname>V</argname>: puntatore a matrice per
+	      ricevere la matrice di covarianza delle stime dei
+	      parametri, o <lit>null</lit> se non è richiesta.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      &amp;<argname>A</argname>: puntatore a una matrice per
+	      ricevere gli effetti fissi o le intercette per ciascun
+	      valore del fattore, oppure <lit>null</lit> se non sono necessari.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  Per default, le stime vengono ottenute tramite
+	  decomposizione di Cholesky, facendo ricorso alla
+	  decomposizione QR se le colonne di X sono altamente
+	  collineari. L'uso della SVD può essere forzato tramite il
+	  comando set svd on.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="mols"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="fracdiff" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
