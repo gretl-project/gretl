@@ -59,55 +59,57 @@ struct COMPARE {
     const int *testvars; /* list of variables added or omitted */
 };
 
-/* Given a list of variables, check them against the independent
-   variables included in a model, and construct a mask with 1s in
-   positions where there is a match, 0s otherwise.  If the test list
-   is NULL, match all variables except the constant.
+/* Given a list of series, check them against the independent variables
+   included in @pmod and construct a mask with 1s in positions where
+   there is a match, 0s otherwise.  If @list is NULL, match all
+   regressors other than the constant.
 */
 
 static char *
 mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 {
     char *mask;
-    int off1 = 2, off2 = 0;
-    int cmax = pmod->ncoeff;
     int nmask = 0;
-    int i, j;
+    int i, j, vj;
+    int nx;
 
+    if (pmod->xlist == NULL) {
+	/* we can't do this */
+	gretl_errmsg_set(_("The model for testing lacks an xlist"));
+	*err = E_DATA;
+	return NULL;
+    }
+
+    nx = pmod->xlist[0];
     mask = calloc(pmod->ncoeff, 1);
     if (mask == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    if (pmod->ci == DPANEL) {
-	/* find correct offset into independent vars in list */
-	for (i=2; i<=pmod->list[0]; i++) {
-	    if (pmod->list[i] == LISTSEP) {
-		off1 = i + 2;
-	    }
-	}
-	off2 = pmod->list[1];
-    } else if (pmod->ci == NEGBIN) {
-	cmax--;
-    }
-
-    for (i=0; i<cmax; i++) {
-	if (list != NULL) {
-	    for (j=1; j<=list[0]; j++) {
-		if (pmod->list[i + off1] == list[j]) {
+    if (list != NULL) {
+	/* matching members of @list */
+	for (j=1; j<=list[0]; j++) {
+	    vj = list[j];
+	    for (i=1; i<=nx; i++) {
+		if (pmod->xlist[i] == vj) {
 #if WDEBUG
 		    fprintf(stderr, "matched var %d at pmod->list[%d]: "
-			    "set mask[%d] = 1\n", list[j], i + off1, i + off2);
+			    "set mask[%d] = 1\n", vj, i, i-1);
 		    printlist(list, "test list");
-		    printlist(pmod->list, "pmod->list");
+		    printlist(pmod->xlist, "pmod->xlist");
 #endif
-		    mask[i + off2] = 1;
+		    mask[i-1] = 1;
 		    nmask++;
 		}
 	    }
-	} else if (pmod->list[i + off1] != 0) {
-	    mask[i + off2] = 1;
+	}
+    } else {
+	/* implicitly matching all but const */
+	for (i=1; i<=nx; i++) {
+	    if (pmod->xlist[i] != 0) {
+		mask[i-1] = 1;
+	    }
 	}
     }
 
@@ -118,7 +120,7 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
     }
 
 #if WDEBUG
-    for (i=0; i<pmod->ncoeff; i++) {
+    for (i=0; i<nx; i++) {
 	fprintf(stderr, "mask[%d] = %d\n", i, mask[i]);
     }
 #endif

@@ -173,7 +173,7 @@ static int count_selection (const char *s, int n)
 /**
  * gretl_vcv_matrix_from_model:
  * @pmod: pointer to model
- * @select: char array indicating which rows and colums to select
+ * @select: char array indicating which rows and columns to select
  * (or NULL for the full matrix).
  * @err: location to receive error code.
  *
@@ -194,7 +194,7 @@ gretl_vcv_matrix_from_model (MODEL *pmod, const char *select, int *err)
     int ii, jj;
     int k = pmod->ncoeff;
 
-    /* first ensure the model _has_ a vcv */
+    /* first ensure the model actually has a vcv */
     *err = makevcv(pmod, pmod->sigma);
     if (*err) {
 	fprintf(stderr, "gretl_vcv_matrix_from_model: no $vcv!\n");

@@ -240,7 +240,7 @@ static int op_compute_score (op_container *OC, int yt,
         mills0 = (yt == 0)? 0.0 : lp_pdf(ystar0, OC->ci) / dP;
         mills1 = (yt == M)? 0.0 : lp_pdf(ystar1, OC->ci) / dP;
     } else {
-        /* L'Hopital-based approximation */
+        /* L'Hôpital-based approximation */
         mills0 = (yt == 0)? 0.0 : -ystar0;
         mills1 = (yt == M)? 0.0 : -ystar1;
     }
@@ -944,7 +944,11 @@ static int fill_op_model (MODEL *pmod, const int *list,
     }
 
     free(pmod->xlist);
-    pmod->xlist = gretl_list_sublist(list, 2, -1);
+    if (list[2] == 0) {
+	pmod->xlist = gretl_list_sublist(list, 3, -1);
+    } else {
+	pmod->xlist = gretl_list_sublist(list, 2, -1);
+    }
 
     pmod->ncoeff = npar;
     for (i=0; i<npar; i++) {
