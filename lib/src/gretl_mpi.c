@@ -740,9 +740,11 @@ int gretl_array_mpi_reduce (gretl_array *sa,
 
         if (id != root) {
             /* send our elements to root */
-            for (j=0; j<nm; j++) {
-                data = gretl_array_get_data(sa, j);
-                err = gretl_mpi_send(data, etype, root);
+            for (j=0; j<nm && !err; j++) {
+                data = gretl_array_get_element(sa, j, NULL, &err);
+		if (!err) {
+		    err = gretl_mpi_send(data, etype, root);
+		}
             }
         } else {
             /* root: gather elements from other processes
@@ -1257,7 +1259,10 @@ static int gretl_array_bcast (gretl_array **pa, int id, int root)
         void *ptr, *data = NULL;
 
         if (id == root) {
-            data = gretl_array_get_data(a, i);
+            data = gretl_array_get_element(a, i, NULL, &err);
+	    if (err) {
+		break;
+	    }
         }
         ptr = &data;
         if (type == GRETL_TYPE_MATRICES) {
@@ -1503,8 +1508,11 @@ static int gretl_array_send (gretl_array *a, int dest)
                    mpi_comm_world);
 
     for (i=0; i<nelem && !err; i++) {
-        void *data = gretl_array_get_data(a, i);
+        void *data = gretl_array_get_element(a, i, NULL, &err);
 
+	if (err) {
+	    break;
+	}
         if (type == GRETL_TYPE_MATRICES) {
             err = gretl_matrix_mpi_send(data, dest);
         } else if (type == GRETL_TYPE_STRINGS) {

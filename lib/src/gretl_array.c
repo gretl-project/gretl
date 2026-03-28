@@ -587,7 +587,7 @@ void *gretl_array_get_element (gretl_array *A, int i,
 	}
     } else if (A->type == GRETL_TYPE_LISTS) {
 	if (A->data[i] == NULL) {
-	    A->data[i] = gretl_list_new(0);
+	    A->data[i] = gretl_null_list();
 	}
     }
 
