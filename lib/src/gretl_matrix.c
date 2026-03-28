@@ -13187,13 +13187,13 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
     gretl_vector *fvals = NULL;
     gretl_vector *fy = NULL;
     gretl_matrix *fX = NULL;
-    double *means = NULL;
+    double *xmean = NULL;
     double s2, *ps2;
-    double x;
-    int *ns = NULL;
+    double xtj, ymean;
+    int *nx = NULL;
     int T = X->rows;
     int k = X->cols;
-    int nfvals, fvi;
+    int ny, nfvals, fvi;
     int i, j, t;
     int err = 0;
 
@@ -13201,53 +13201,60 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
 	return E_INVARG;
     }
 
+    /* storage for de-meaned y and X */
     fy = gretl_matrix_copy(y);
     fX = gretl_matrix_copy(X);
-    means = malloc((k+1) * sizeof *means);
-    ns = malloc((k+1) * sizeof *ns);
 
-    if (fy == NULL || fX == NULL || means == NULL || ns == NULL) {
+    /* storage for computation */
+    xmean = malloc(k * sizeof *xmean);
+    nx = malloc(k * sizeof *nx);
+
+    if (fy == NULL || fX == NULL || xmean == NULL || nx == NULL) {
         err = E_ALLOC;
-        goto bailout;
+    } else {
+	fvals = gretl_matrix_values(fac->val, T, OPT_S, &err);
+	if (!err) {
+	    nfvals = gretl_vector_get_length(fvals);
+	}
     }
 
-    fvals = gretl_matrix_values(fac->val, T, OPT_S, &err);
+    /* storage for fixed effects, if wanted */
+    if (!err && a != NULL) {
+	err = gretl_matrix_realloc(a, nfvals, 1);
+    }
+
     if (err) {
-        goto bailout;
+	goto bailout;
     }
-
-    nfvals = gretl_vector_get_length(fvals);
 
     for (i=0; i<nfvals; i++) {
         fvi = fvals->val[i];
-        for (j=0; j<=k; j++) {
-            means[j] = 0.0;
-            ns[j] = 0;
+	ymean = 0.0;
+	ny = 0;
+        for (j=0; j<k; j++) {
+            xmean[j] = 0.0;
+            nx[j] = 0;
         }
         for (t=0; t<T; t++) {
             if (fac->val[t] == fvi) {
-                for (j=0; j<=k; j++) {
-                    if (j == 0) {
-                        means[j] += y->val[t];
-                    } else {
-                        means[j] += gretl_matrix_get(X, t, j-1);
-                    }
-                    ns[j] += 1;
+		ymean += y->val[t];
+		ny++;
+                for (j=0; j<k; j++) {
+		    xmean[j] += gretl_matrix_get(X, t, j);
+		    nx[j] += 1;
                 }
             }
         }
-        for (j=0; j<=k; j++) {
-            means[j] /= ns[j];
+	ymean /= ny;
+        for (j=0; j<k; j++) {
+            xmean[j] /= nx[j];
         }
         for (t=0; t<T; t++) {
             if (fac->val[t] == fvi) {
-                for (j=0; j<=k; j++) {
-                    if (j == 0) {
-                        fy->val[t] -= means[j];
-                    } else {
-                        x = gretl_matrix_get(X, t, j-1);
-                        gretl_matrix_set(fX, t, j-1, x - means[j]);
-                    }
+		fy->val[t] -= ymean;
+                for (j=0; j<k; j++) {
+		    xtj = gretl_matrix_get(X, t, j);
+		    gretl_matrix_set(fX, t, j, xtj - xmean[j]);
                 }
             }
         }
@@ -13259,7 +13266,7 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
     if (!err && a != NULL) {
 	/* compute "fixed-effects" */
 	int *ffreq = NULL;
-	double e;
+	double ait;
 
 	err = gretl_matrix_realloc(a, nfvals, 1);
 	if (!err) {
@@ -13269,26 +13276,27 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
 	    }
 	}
 	if (err) {
-	    free(ffreq);
 	    goto bailout;
 	}
 
-	for (j=0; j<nfvals; j++) {
-	    ffreq[j] = 0;
+	for (i=0; i<nfvals; i++) {
+	    a->val[i] = 0;
+	    ffreq[i] = 0;
+	    fvi = fvals->val[i];
+	    for (t=0; t<T; t++) {
+		if (fac->val[t] == fvi) {
+		    ffreq[i] += 1;
+		    ait = y->val[t];
+		    for (j=0; j<k; j++) {
+			xtj = gretl_matrix_get(X, t, j);
+			ait -= xtj * b->val[j];
+		    }
+		    a->val[i] += ait;
+		}
+	    }
 	}
-        for (t=0; t<T; t++) {
-            fvi = fac->val[t] - 1;
-	    ffreq[fvi] += 1;
-	    e = y->val[t];
-	    for (j=0; j<k; j++) {
-		x = gretl_matrix_get(X, t, j);
-		e -= x * b->val[j];
-            }
-	    a->val[fvi] += e;
-	}
-
-	for (j=0; j<nfvals; j++) {
-	    a->val[j] /= ffreq[j];
+	for (i=0; i<nfvals; i++) {
+	    a->val[i] /= ffreq[i];
 	}
 	free(ffreq);
     }
@@ -13305,8 +13313,8 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
     gretl_matrix_free(fy);
     gretl_matrix_free(fX);
     gretl_matrix_free(fvals);
-    free(means);
-    free(ns);
+    free(xmean);
+    free(nx);
 
     return err;
 }
