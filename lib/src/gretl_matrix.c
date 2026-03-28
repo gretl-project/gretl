@@ -13265,17 +13265,12 @@ int gretl_matrix_factorized_ols (const gretl_vector *y,
 
     if (!err && a != NULL) {
 	/* compute "fixed-effects" */
-	int *ffreq = NULL;
+	int *ffreq;
 	double ait;
 
-	err = gretl_matrix_realloc(a, nfvals, 1);
-	if (!err) {
-	    ffreq = malloc(nfvals * sizeof *ffreq);
-	    if (ffreq == NULL) {
-		err = E_ALLOC;
-	    }
-	}
-	if (err) {
+	ffreq = malloc(nfvals * sizeof *ffreq);
+	if (ffreq == NULL) {
+	    err = E_ALLOC;
 	    goto bailout;
 	}
 
