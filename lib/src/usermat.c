@@ -1844,8 +1844,8 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	return null_OLS(Y, U, V, err);
     }
 
-    if (g > 1 && (opt & (OPT_M | OPT_F))) {
-	/* multiple precision and factorized: we accept only one y var */
+    if (g > 1 && (opt & OPT_M)) {
+	/* multiple precision: we accept only one y var */
 	*err = E_INVARG;
 	return NULL;
     }
@@ -1870,7 +1870,9 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
     }
 
     if (!*err) {
-	if (g == 1) {
+	if (opt & OPT_F) {
+	    *err = gretl_matrix_factorized_ols(Y, X, F, B, V, U, A);
+	} else if (g == 1) {
 	    /* single regressand */
 	    double s2 = 0;
 	    double *ps2 = (V != NULL)? &s2 : NULL;
@@ -1878,8 +1880,6 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	    if (opt & OPT_M) {
 		/* use multiple precision */
 		*err = gretl_matrix_mp_ols(Y, X, B, V, U, ps2);
-	    } else if (opt & OPT_F) {
-		*err = gretl_matrix_factorized_ols(Y, X, F, B, V, U, A);
 	    } else {
 		*err = gretl_matrix_ols(Y, X, B, V, U, ps2);
 	    }

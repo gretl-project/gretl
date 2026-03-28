@@ -738,13 +738,13 @@ int gretl_matrix_ols (const gretl_vector *y,
 		      gretl_vector *uhat,
 		      double *s2);
 
-int gretl_matrix_factorized_ols (const gretl_vector *y,
+int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 				 const gretl_matrix *X,
 				 const gretl_vector *fac,
-				 gretl_vector *b,
-				 gretl_matrix *vcv,
-				 gretl_vector *uhat,
-				 gretl_vector *a);
+				 gretl_matrix *B,
+				 gretl_matrix *V,
+				 gretl_matrix *U,
+				 gretl_matrix *A);
 
 int gretl_matrix_multi_ols (const gretl_matrix *Y,
 			    const gretl_matrix *X,
