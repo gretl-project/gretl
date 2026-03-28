@@ -5737,15 +5737,15 @@
       </fnargs>
       <description>
 	<para>
-	  Una funzione specializzata (<quote>OLS fattorizzata</quote>)
+	  Una funzione specializzata (<quote>OLS fattorizzato</quote>)
 	  che offre un trattamento ottimale della regressione coi
 	  minimi quadrati quando uno dei regressori è una fattore
-	  discreto con un elevato numero di valori distinti. Questo
-	  caso può essere gestito includendo tra i regressori un
-	  insieme di variabili dummy che codificano i valori del
-	  fattore, ma può essere molto più efficiente eseguire l'OLS
-	  su dati da cui sono state rimosse le medie per ciascun
-	  valore del fattore, il che è ciò che questa funzione fa.
+	  discreto con molti valori distinti. Questo caso può essere
+	  gestito includendo tra i regressori un insieme di variabili
+	  dummy che codificano i valori del fattore, ma può essere
+	  molto più efficiente eseguire l'OLS su dati da cui sono
+	  state rimosse le medie per ciascun valore del fattore, il
+	  che è ciò che questa funzione fa.
 	</para>
 	<para>
 	  Gli argomenti sono i seguenti:
@@ -5754,7 +5754,7 @@
 	  <li>
 	    <para>
 	      <argname>Y</argname>: la variabile dipendente, un
-	      vettore con <math>T</math>.
+	      vettore con <math>T</math> elementi.
 	    </para>
 	  </li>
 	  <li>
@@ -5766,7 +5766,7 @@
 	  <li>
 	    <para>
 	      <argname>F</argname>: il fattore discreto, un
-	      vettore <math>T</math>.
+	      vettore con <math>T</math> elementi.
 	    </para>
 	  </li>
 	  <li>
