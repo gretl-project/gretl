@@ -5667,7 +5667,7 @@
 	    <para>
 	      &amp;<argname>V</argname>: a pointer-to-matrix to
 	      receive the covariance matrix of the parameter
-	      estimates, or <lit>null</lit> if these are not required.
+	      estimates, or <lit>null</lit> if this is not required.
 	    </para>
 	  </li>
 	  <li>
