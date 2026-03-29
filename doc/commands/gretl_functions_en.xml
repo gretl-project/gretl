@@ -5615,7 +5615,7 @@
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">F</fnarg>
+	<fnarg type="matrix">f</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;A</fnarg>
@@ -5638,8 +5638,8 @@
 	<ilist>
 	  <li>
 	    <para>
-	      <argname>Y</argname>: the dependent variable, a
-	      <math>T</math>-vector.
+	      <argname>Y</argname>: a <by r="T" c="g"/> matrix
+	      holding the dependent variable(s).
 	    </para>
 	  </li>
 	  <li>
@@ -5650,17 +5650,17 @@
 	  </li>
 	  <li>
 	    <para>
-	      <argname>F</argname>: the many-valued factor, a
+	      <argname>f</argname>: the many-valued factor, a
 	      <math>T</math>-vector.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
 	      &amp;<argname>U</argname>: a pointer-to-matrix to
-	      receive the vector of residuals, or <lit>null</lit> if
-	      these are not required.  If this argument is given, the
-	      matrix wil be resized as needed, and the same goes for
-	      the other optional arguments.
+	      receive the <by r="T" c="g"/> matrix of residuals, or
+	      <lit>null</lit> if these are not required.  If this
+	      argument is given, the matrix wil be resized as needed,
+	      and the same goes for the other optional arguments.
 	    </para>
 	  </li>
 	  <li>
@@ -5668,14 +5668,16 @@
 	      &amp;<argname>V</argname>: a pointer-to-matrix to
 	      receive the covariance matrix of the parameter
 	      estimates, or <lit>null</lit> if this is not required.
+	      FIXME describe the content.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
 	      &amp;<argname>A</argname>: a pointer-to-matrix to
-	      receive the <quote>fixed effects</quote> or per
-	      factor-value intercepts, or <lit>null</lit> if these are
-	      not required.
+	      receive the <by r="n" c="g"/> matrix of <quote>fixed
+	      effects</quote> or per factor-value intercepts, where
+	      <math>n</math> is the number of distinct factor values,
+	      or <lit>null</lit> if these are not required.
 	    </para>
 	  </li>
 	</ilist>
