@@ -5753,8 +5753,8 @@
 	<ilist>
 	  <li>
 	    <para>
-	      <argname>Y</argname>: la variabile dipendente, un
-	      vettore con <math>T</math> elementi.
+	      <argname>Y</argname>: una matrice <by r="T" c="k"/>
+	      contenente le variabili dipendenti.
 	    </para>
 	  </li>
 	  <li>
@@ -5782,14 +5782,17 @@
 	    <para>
 	      &amp;<argname>V</argname>: puntatore a matrice per
 	      ricevere la matrice di covarianza delle stime dei
-	      parametri, o <lit>null</lit> se non è richiesta.
+	      parametri, o <lit>null</lit> se non è richiesta. FIXME:
+	      ancora da fare.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      &amp;<argname>A</argname>: puntatore a una matrice per
-	      ricevere gli effetti fissi o le intercette per ciascun
-	      valore del fattore, oppure <lit>null</lit> se non sono necessari.
+	      &amp;<argname>A</argname>: puntatore a una matrice <by
+	      r="n" c="g"/> di <quote>effetti fissi</quote>
+	      (intercette per valore del fattore), dove <math>n</math>
+	      è il numero di valori distinti del fattore;  oppure
+	      <lit>null</lit>, se questo elemento non è necessario.
 	    </para>
 	  </li>
 	</ilist>
@@ -5798,7 +5801,7 @@
 	  decomposizione di Cholesky, facendo ricorso alla
 	  decomposizione QR se le colonne di X sono altamente
 	  collineari. L'uso della SVD può essere forzato tramite il
-	  comando set svd on.
+	  comando <lit>set svd on</lit>.
 	</para>
 	<para>
 	  <seelist>
