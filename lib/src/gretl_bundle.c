@@ -792,14 +792,14 @@ gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
     void *ptr;
     int myerr = 0;
 
-    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, &myerr);
 
-    if (ptr != NULL && type != GRETL_TYPE_MATRIX) {
-        myerr = E_TYPES;
-    }
-
-    if (ptr != NULL && !myerr) {
-        m = (gretl_matrix *) ptr;
+    if (ptr == NULL) {
+	myerr = E_INVARG;
+    } else if (type != GRETL_TYPE_MATRIX) {
+	myerr = E_TYPES;
+    } else {
+	m = (gretl_matrix *) ptr;
     }
 
     if (err != NULL) {
@@ -828,13 +828,14 @@ gretl_array *gretl_bundle_get_array (gretl_bundle *bundle,
     void *ptr;
     int myerr = 0;
 
-    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (ptr != NULL && type != GRETL_TYPE_ARRAY) {
-        myerr = E_TYPES;
-    }
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, &myerr);
 
-    if (ptr != NULL && !myerr) {
-        a = (gretl_array *) ptr;
+    if (ptr == NULL) {
+	myerr = E_INVARG;
+    } else if (type != GRETL_TYPE_ARRAY) {
+        myerr = E_TYPES;
+    } else {
+	a = (gretl_array *) ptr;
     }
 
     if (err != NULL) {
@@ -858,25 +859,26 @@ gretl_bundle *gretl_bundle_get_bundle (gretl_bundle *bundle,
                                        const char *key,
                                        int *err)
 {
-    gretl_bundle *ret = NULL;
+    gretl_bundle *b = NULL;
     GretlType type;
     void *ptr;
     int myerr = 0;
 
-    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (ptr != NULL && type != GRETL_TYPE_BUNDLE) {
-        myerr = E_TYPES;
-    }
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, &myerr);
 
-    if (ptr != NULL && !myerr) {
-        ret = (gretl_bundle *) ptr;
+    if (ptr == NULL) {
+	myerr = E_INVARG;
+    } else if (type != GRETL_TYPE_BUNDLE) {
+        myerr = E_TYPES;
+    } else {
+	b = (gretl_bundle *) ptr;
     }
 
     if (err != NULL) {
         *err = myerr;
     }
 
-    return ret;
+    return b;
 }
 
 /**
@@ -899,12 +901,13 @@ double *gretl_bundle_get_series (gretl_bundle *bundle,
     void *ptr;
     int myerr = 0;
 
-    ptr = gretl_bundle_get_data(bundle, key, &type, n, err);
-    if (ptr != NULL && type != GRETL_TYPE_SERIES) {
-        myerr = E_TYPES;
-    }
+    ptr = gretl_bundle_get_data(bundle, key, &type, n, &myerr);
 
-    if (ptr != NULL && !myerr) {
+    if (ptr == NULL) {
+	myerr = E_INVARG;
+    } else if (type != GRETL_TYPE_SERIES) {
+        myerr = E_TYPES;
+    } else {
         x = (double *) ptr;
     }
 
@@ -934,13 +937,14 @@ int *gretl_bundle_get_list (gretl_bundle *bundle,
     void *ptr;
     int myerr = 0;
 
-    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (ptr != NULL && type != GRETL_TYPE_LIST) {
-        myerr = E_TYPES;
-    }
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, &myerr);
 
-    if (ptr != NULL && !myerr) {
-        list = (int *) ptr;
+    if (ptr == NULL) {
+	myerr = E_INVARG;
+    } else if (type != GRETL_TYPE_LIST) {
+        myerr = E_TYPES;
+    } else {
+	list = (int *) ptr;
     }
 
     if (err != NULL) {
@@ -969,10 +973,10 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
     void *ptr;
     int myerr = 0;
 
-    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, &myerr);
 
     if (ptr == NULL) {
-        myerr = E_DATA;
+        myerr = E_INVARG;
     } else if (type != GRETL_TYPE_DOUBLE &&
                type != GRETL_TYPE_INT &&
                type != GRETL_TYPE_UINT32 &&
@@ -981,7 +985,7 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
         myerr = E_TYPES;
     }
 
-    if (ptr != NULL && !myerr) {
+    if (myerr == 0) {
         if (type == GRETL_TYPE_DOUBLE) {
             x = *(double *) ptr;
         } else if (type == GRETL_TYPE_INT) {
@@ -1034,9 +1038,11 @@ int gretl_bundle_get_int (gretl_bundle *bundle,
     void *ptr;
     int myerr = 0;
 
-    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, &myerr);
 
-    if (ptr != NULL) {
+    if (ptr == NULL) {
+	myerr = E_INVARG;
+    } else {
         if (type == GRETL_TYPE_INT) {
             int *pi = (int *) ptr;
 
@@ -1185,9 +1191,11 @@ uint32_t gretl_bundle_get_uint32 (gretl_bundle *bundle,
     void *ptr;
     int myerr = 0;
 
-    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, &myerr);
 
-    if (ptr != NULL) {
+    if (ptr == NULL) {
+	myerr = E_INVARG;
+    } else {
         if (type == GRETL_TYPE_UINT32) {
             uint32_t *pu = (uint32_t *) ptr;
 
@@ -1241,9 +1249,11 @@ uint64_t gretl_bundle_get_uint64 (gretl_bundle *bundle,
     void *ptr;
     int myerr = 0;
 
-    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, &myerr);
 
-    if (ptr != NULL) {
+    if (ptr == NULL) {
+	myerr = E_INVARG;
+    } else {
         if (type == GRETL_TYPE_UINT64) {
             uint64_t *pu = (uint64_t *) ptr;
 
@@ -1296,25 +1306,26 @@ const char *gretl_bundle_get_string (gretl_bundle *bundle,
                                      const char *key,
                                      int *err)
 {
-    const char *ret = NULL;
+    const char *s = NULL;
     GretlType type;
     void *ptr;
     int myerr = 0;
 
-    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (ptr != NULL && type != GRETL_TYPE_STRING) {
-        myerr = E_TYPES;
-    }
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, &myerr);
 
-    if (ptr != NULL && !myerr) {
-        ret = (const char *) ptr;
+    if (ptr == NULL) {
+	myerr = E_INVARG;
+    } else if (type != GRETL_TYPE_STRING) {
+        myerr = E_TYPES;
+    } else {
+        s = (const char *) ptr;
     }
 
     if (err != NULL) {
         *err = myerr;
     }
 
-    return ret;
+    return s;
 }
 
 /**
@@ -1331,18 +1342,19 @@ const char **gretl_bundle_get_strings (gretl_bundle *bundle,
                                        const char *key,
                                        int *ns)
 {
-    const char **ret = NULL;
+    const char **S = NULL;
     GretlType type = 0;
     void *ptr;
 
     ptr = gretl_bundle_get_data(bundle, key, &type, NULL, NULL);
+
     if (ptr != NULL && type == GRETL_TYPE_ARRAY) {
         gretl_array *a = ptr;
 
-        ret = (const char **) gretl_array_get_strings(a, ns);
+        S = (const char **) gretl_array_get_strings(a, ns);
     }
 
-    return ret;
+    return S;
 }
 
 /**
