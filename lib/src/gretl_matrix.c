@@ -96,6 +96,8 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 					 int preserve,
 					 double *ldet);
 
+static int compare_values (const void *a, const void *b);
+
 static inline void *mval_malloc (size_t sz)
 {
     /* forestall "invalid reads" by OpenBLAS */
@@ -13152,6 +13154,98 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
     return err;
 }
 
+static int *get_factor_sorted_data (const gretl_matrix *Y,
+				    const gretl_matrix *X,
+				    const gretl_vector *f,
+				    gretl_matrix *fY,
+				    gretl_matrix *fX,
+				    gretl_matrix *sf,
+				    int *err)
+{
+    int *ret = NULL;
+    struct rsort {
+        double x;
+        int row;
+    } *rs;
+    double d;
+    int T = Y->rows;
+    int g = Y->cols;
+    int k = X->cols;
+    int i, t;
+
+    rs = malloc(T * sizeof *rs);
+    if (rs == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
+
+    for (t=0; t<T; t++) {
+	rs[t].x = f->val[t];
+	rs[t].row = t;
+    }
+
+    qsort(rs, T, sizeof *rs, compare_values);
+
+    ret = malloc(T * sizeof *ret);
+
+    /* transcribe in sort order: put t in the inner loop
+       to mitigate cache misses
+    */
+    for (i=0; i<g; i++) {
+	for (t=0; t<T; t++) {
+	    d = gretl_matrix_get(Y, rs[t].row, i);
+	    gretl_matrix_set(fY, t, i, d);
+	}
+    }
+    for (i=0; i<k; i++) {
+	for (t=0; t<T; t++) {
+	    d = gretl_matrix_get(X, rs[t].row, i);
+	    gretl_matrix_set(fX, t, i, d);
+	}
+    }
+    for (t=0; t<T; t++) {
+	sf->val[t] = rs[t].x;
+	ret[t] = rs[t].row;
+    }
+
+    free(rs);
+
+    return ret;
+}
+
+static int vector_is_sorted (const gretl_vector *f, int T)
+{
+    int t;
+
+    for (t=1; t<T; t++) {
+	if (f->val[t] < f->val[t-1]) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+static int reorder_rows (gretl_matrix *m, int *r)
+{
+    gretl_matrix *tmp = gretl_matrix_copy(m);
+    double mti;
+    int T = m->rows;
+    int k = m->cols;
+    int i, t;
+
+    for (t=0; t<T; t++) {
+	for (i=0; i<k; i++) {
+	    mti = gretl_matrix_get(tmp, t, i);
+	    gretl_matrix_set(m, r[t], i, mti);
+	}
+    }
+
+    gretl_matrix_free(tmp);
+
+    return 0;
+}
+
 /**
  * gretl_matrix_factorized_ols:
  * @Y: T x g matrix of dependent variable vector.
@@ -13184,52 +13278,57 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 				 gretl_vector *U,
 				 gretl_vector *A)
 {
-    gretl_vector *fvals = NULL;
     gretl_vector *fY = NULL;
     gretl_matrix *fX = NULL;
-    double *ymean = NULL;
-    double *xmean = NULL;
+    gretl_matrix *sf = NULL;
+    int *order = NULL;
+    double *mean = NULL;
+    double *ymean;
+    double *xmean;
     double s2;
-    double ytj, xtj;
-    int *ny = NULL;
-    int *nx = NULL;
+    double yti, xti;
     int T = X->rows;
     int k = X->cols;
     int g = Y->cols;
-    int nfvals, fvi;
-    int i, j, c, t;
+    int nm = g + k;
+    int nfvals = 0;
+    int do_sort = 0;
+    int i, n, t, t0, s;
     int err = 0;
 
     if (Y->rows != T || fac->rows != T) {
 	return E_INVARG;
     }
 
-    /* storage for de-meaned Y and X */
-    fY = gretl_matrix_copy(Y);
-    fX = gretl_matrix_copy(X);
-
-    /* storage for computation */
-    ymean = malloc(g * sizeof *ymean);
-    ny = malloc(g * sizeof *ny);
-    xmean = malloc(k * sizeof *xmean);
-    nx = malloc(k * sizeof *nx);
-
-    if (fY == NULL || fX == NULL ||
-	ymean == NULL || ny == NULL ||
-	xmean == NULL || nx == NULL) {
-        err = E_ALLOC;
+    if (vector_is_sorted(fac, T)) {
+	/* storage for de-meaned Y and X */
+	fY = gretl_matrix_copy(Y);
+	fX = gretl_matrix_copy(X);
+	sf = (gretl_matrix *) fac;
     } else {
-	fvals = gretl_matrix_values(fac->val, T, OPT_S, &err);
-	if (!err) {
-	    nfvals = gretl_vector_get_length(fvals);
-	}
+	/* storage for fac-sorted and de-meaned Y and X, plus sorted fac */
+	fY = gretl_matrix_alloc(T, g);
+	fX = gretl_matrix_alloc(T, k);
+	sf = gretl_matrix_alloc(T, 1);
+	do_sort = 1;
     }
 
-    /* storage for fixed effects, if wanted */
-    if (!err && A != NULL) {
-	err = gretl_matrix_realloc(A, nfvals, g);
-	if (!err) {
-	    gretl_matrix_zero(A);
+    if (fY == NULL || fX == NULL || sf == NULL) {
+	err = E_ALLOC;
+    } else if (do_sort) {
+	order = get_factor_sorted_data(Y, X, fac, fY, fX, sf, &err);
+    }
+
+    if (!err) {
+	ymean = mean = malloc(nm * sizeof *mean);
+	if (ymean == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    ymean = mean;
+	    xmean = ymean + g;
+	    for (i=0; i<nm; i++) {
+		mean[i] = 0.0;
+	    }
 	}
     }
 
@@ -13237,45 +13336,36 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 	goto bailout;
     }
 
-    for (i=0; i<nfvals; i++) {
-        fvi = fvals->val[i];
-	for (j=0; j<g; j++) {
-	    ymean[j] = 0.0;
-	    ny[j] = 0;
+    nfvals = t0 = 0;
+    for (t=0; t<T; t++) {
+	for (i=0; i<g; i++) {
+	    yti = gretl_matrix_get(fY, t, i);
+	    ymean[i] += yti;
 	}
-	for (j=0; j<k; j++) {
-	    xmean[j] = 0.0;
-	    nx[j] = 0;
+	for (i=0; i<k; i++) {
+	    xti = gretl_matrix_get(fX, t, i);
+	    xmean[i] += xti;
 	}
-	for (t=0; t<T; t++) {
-	    if (fac->val[t] == fvi) {
-		for (j=0; j<g; j++) {
-		    ymean[j] += gretl_matrix_get(Y, t, j);
-		    ny[j] += 1;
+	if ((t < T-1 && sf->val[t+1] != sf->val[t]) || t == T-1) {
+	    /* finish the current factor value */
+	    nfvals++;
+	    n = t - t0 + 1;
+	    for (i=0; i<g; i++) {
+		ymean[i] /= n;
+		for (s=t0; s<=t; s++) {
+		    yti = gretl_matrix_get(fY, s, i);
+		    gretl_matrix_set(fY, s, i, yti - ymean[i]);
 		}
-		for (j=0; j<k; j++) {
-		    xmean[j] += gretl_matrix_get(X, t, j);
-		    nx[j] += 1;
+		ymean[i] = 0.0;
+	    } for (i=0; i<k; i++) {
+		xmean[i] /= n;
+		for (s=t0; s<=t; s++) {
+		    xti = gretl_matrix_get(fX, s, i);
+		    gretl_matrix_set(fX, s, i, xti - xmean[i]);
 		}
+		xmean[i] = 0.0;
 	    }
-	}
-	for (j=0; j<g; j++) {
-	    ymean[j] /= ny[j];
-	}
-	for (j=0; j<k; j++) {
-	    xmean[j] /= nx[j];
-	}
-	for (t=0; t<T; t++) {
-	    if (fac->val[t] == fvi) {
-		for (j=0; j<g; j++) {
-		    ytj = gretl_matrix_get(Y, t, j);
-		    gretl_matrix_set(fY, t, j, ytj - ymean[j]);
-		}
-		for (j=0; j<k; j++) {
-		    xtj = gretl_matrix_get(X, t, j);
-		    gretl_matrix_set(fX, t, j, xtj - xmean[j]);
-		}
-	    }
+	    t0 = t + 1;
 	}
     }
 
@@ -13295,62 +13385,57 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 	}
     }
 
-    if (!err && A != NULL) {
-	/* compute "fixed-effects" */
-	int *ffreq;
-	double ait, aij;
-	double bji;
-
-	ffreq = malloc(nfvals * sizeof *ffreq);
-	if (ffreq == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}
-
-	for (i=0; i<nfvals; i++) {
-	    ffreq[i] = 0;
-	    fvi = fvals->val[i];
-	    for (t=0; t<T; t++) {
-		if (fac->val[t] == fvi) {
-		    ffreq[i] += 1;
-		    for (c=0; c<g; c++) {
-			ait = gretl_matrix_get(Y, t, c);
-			for (j=0; j<k; j++) {
-			    xtj = gretl_matrix_get(X, t, j);
-			    bji = gretl_matrix_get(B, j, c);
-			    ait -= xtj * bji;
-			}
-			aij = gretl_matrix_get(A, i, c);
-			gretl_matrix_set(A, i, c, ait + aij);
-		    }
-		}
-	    }
-	}
-	for (i=0; i<nfvals; i++) {
-	    for (j=0; j<g; j++) {
-		aij = gretl_matrix_get(A, i, j);
-		gretl_matrix_set(A, i, j, aij / ffreq[i]);
-	    }
-	}
-	free(ffreq);
+    if (U != NULL && order != NULL) {
+	reorder_rows(U, order);
     }
 
-    if (!err && g == 1 && V != NULL) {
-	/* correct the degrees of freedom */
-	double adj = (T - k) / (double) (T - k - nfvals);
+    if (!err && A != NULL) {
+	/* compute "fixed-effects" */
+	double aij, aijt, bhj, xth;
+	int j, h;
 
-	gretl_matrix_multiply_by_scalar(V, adj);
+	err = gretl_matrix_realloc(A, nfvals, g);
+	if (err) {
+	    goto bailout;
+	}
+	gretl_matrix_zero(A);
+
+	i = t0 = 0;
+	for (t=0; t<T; t++) {
+	    s = do_sort ? order[t] : t;
+	    for (j=0; j<g; j++) {
+		aijt = gretl_matrix_get(Y, s, j);
+		for (h=0; h<k; h++) {
+		    xth = gretl_matrix_get(X, s, h);
+		    bhj = gretl_matrix_get(B, h, j);
+		    aijt -= xth * bhj;
+		}
+		/* cumulate aij */
+		aij = gretl_matrix_get(A, i, j);
+		gretl_matrix_set(A, i, j, aij + aijt);
+	    }
+	    if ((t < T-1 && sf->val[t+1] != sf->val[t]) || t == T-1) {
+		/* finish the current factor value */
+		n = t - t0 + 1;
+		for (j=0; j<g; j++) {
+		    aij = gretl_matrix_get(A, i, j);
+		    gretl_matrix_set(A, i, j, aij / n);
+		}
+		t0 = t + 1;
+		i++;
+	    }
+	}
     }
 
  bailout:
 
     gretl_matrix_free(fY);
     gretl_matrix_free(fX);
-    gretl_matrix_free(fvals);
-    free(ymean);
-    free(ny);
-    free(xmean);
-    free(nx);
+    free(mean);
+    free(order);
+    if (sf != fac) {
+	gretl_matrix_free(sf);
+    }
 
     return err;
 }
