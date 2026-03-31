@@ -13320,8 +13320,8 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
     }
 
     if (!err) {
-	ymean = mean = malloc(nm * sizeof *mean);
-	if (ymean == NULL) {
+	mean = malloc(nm * sizeof *mean);
+	if (mean == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    ymean = mean;
@@ -13391,7 +13391,7 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 
     if (!err && A != NULL) {
 	/* compute "fixed-effects" */
-	double aij, aijt, bhj, xth;
+	double aij, aijt, xth;
 	int j, h;
 
 	err = gretl_matrix_realloc(A, nfvals, g);
@@ -13407,8 +13407,7 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 		aijt = gretl_matrix_get(Y, s, j);
 		for (h=0; h<k; h++) {
 		    xth = gretl_matrix_get(X, s, h);
-		    bhj = gretl_matrix_get(B, h, j);
-		    aijt -= xth * bhj;
+		    aijt -= xth * gretl_matrix_get(B, h, j);
 		}
 		/* cumulate aij */
 		aij = gretl_matrix_get(A, i, j);
@@ -13440,8 +13439,8 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
     return err;
 }
 
-/* construct W = X'X augmented by R and R': we need this if we're
-   calculating the covariance matrix for restricted least squares
+/* Construct W = X'X augmented by R and R': we need this if we're
+   calculating the covariance matrix for restricted least squares.
 */
 
 static gretl_matrix *build_augmented_XTX (const gretl_matrix *X,
