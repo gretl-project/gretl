@@ -3040,7 +3040,7 @@ gretl_matrix *gretl_matrix_which (const gretl_matrix *cond, int *err)
 	}
     } else {
 	k = 0;
-	for (i=0; i<m; i++) {
+	for (i=0; i<MAX(r, c); i++) {
 	    if (cond->val[i] != 0) {
 		ret->val[k++] = i+1;
 	    }
