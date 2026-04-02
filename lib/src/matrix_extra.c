@@ -3035,7 +3035,7 @@ gretl_matrix *gretl_matrix_which (const gretl_matrix *cond, int *err)
 			gretl_matrix_set(ret, k, 1, j+1);
 		    }
 		    k++;
-		    if (k==m) {
+		    if (k == m) {
 			goto done;
 		    }
 		}
@@ -3046,7 +3046,7 @@ gretl_matrix *gretl_matrix_which (const gretl_matrix *cond, int *err)
 	for (i=0; i<MAX(r, c); i++) {
 	    if (cond->val[i] != 0) {
 		ret->val[k++] = i+1;
-		if (k==m) {
+		if (k == m) {
 		    goto done;
 		}
 	    }
