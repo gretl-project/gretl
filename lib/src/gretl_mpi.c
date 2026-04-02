@@ -322,15 +322,11 @@ static int fill_matrix_info (int *minfo, const gretl_matrix *m)
 {
     int err = 0;
 
-    if (gretl_is_null_matrix(m)) {
-        err = E_DATA;
-    } else {
-        minfo[0] = m->rows;
-        minfo[1] = m->cols;
-        minfo[2] = m->is_complex;
-        minfo[3] = gretl_matrix_get_t1(m);
-        minfo[4] = gretl_matrix_get_t2(m);
-    }
+    minfo[0] = m->rows;
+    minfo[1] = m->cols;
+    minfo[2] = m->is_complex;
+    minfo[3] = gretl_matrix_get_t1(m);
+    minfo[4] = gretl_matrix_get_t2(m);
 
     return err;
 }
@@ -1361,8 +1357,8 @@ int gretl_mpi_bcast (void *p, GretlType type, int root)
     }
 }
 
-/* this "send" function is public, for convenience of callers
-   such as the svm plugin
+/* This "send" function is public, for convenience of callers
+   such as the svm plugin.
 */
 
 int gretl_matrix_mpi_send (const gretl_matrix *m, int dest)
@@ -1755,7 +1751,6 @@ static gretl_array *gretl_array_receive (int source, int *err)
     /* get the array size and type */
     *err = mpi_recv(st, 2, mpi_int, source, TAG_ARRAY_INFO,
                     mpi_comm_world, MPI_STATUS_IGNORE);
-
     if (!*err) {
         nelem = st[0];
         type = st[1];
