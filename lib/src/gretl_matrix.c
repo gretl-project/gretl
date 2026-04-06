@@ -13154,6 +13154,50 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
     return err;
 }
 
+/* Set ALT_INDEX to 1 to use the method suggested by Jack */
+#define ALT_INDEX 0
+
+#if ALT_INDEX
+
+static int *get_factor_sorted_data (const gretl_vector *f,
+				    gretl_matrix *sf,
+				    int *err)
+{
+    int *ret = NULL;
+    struct rsort {
+        double x;
+        int row;
+    } *rs;
+    int T = f->rows;
+    int t;
+
+    rs = malloc(T * sizeof *rs);
+    if (rs == NULL) {
+        *err = E_ALLOC;
+        return NULL;
+    }
+
+    for (t=0; t<T; t++) {
+	rs[t].x = f->val[t];
+	rs[t].row = t;
+    }
+
+    qsort(rs, T, sizeof *rs, compare_values);
+
+    ret = malloc(T * sizeof *ret);
+
+    for (t=0; t<T; t++) {
+	sf->val[t] = rs[t].x;
+	ret[t] = rs[t].row;
+    }
+
+    free(rs);
+
+    return ret;
+}
+
+#else
+
 static int *get_factor_sorted_data (const gretl_matrix *Y,
 				    const gretl_matrix *X,
 				    const gretl_vector *f,
@@ -13188,8 +13232,8 @@ static int *get_factor_sorted_data (const gretl_matrix *Y,
 
     ret = malloc(T * sizeof *ret);
 
-    /* transcribe in sort order: put t in the inner loop
-       to mitigate cache misses
+    /* transcribe Y and X in sort order: put t in the inner loop to
+       mitigate cache misses
     */
     for (i=0; i<g; i++) {
 	for (t=0; t<T; t++) {
@@ -13212,6 +13256,8 @@ static int *get_factor_sorted_data (const gretl_matrix *Y,
 
     return ret;
 }
+
+#endif /* ALT_INDEX or not */
 
 static int vector_is_sorted (const gretl_vector *f, int T)
 {
@@ -13295,6 +13341,9 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
     int do_sort = 0;
     int i, n, t, t0, s;
     int err = 0;
+#if ALT_INDEX
+    int ot;
+#endif
 
     if (Y->rows != T || fac->rows != T) {
 	return E_INVARG;
@@ -13306,9 +13355,14 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 	fX = gretl_matrix_copy(X);
 	sf = (gretl_matrix *) fac;
     } else {
+#if ALT_INDEX
+	fY = gretl_matrix_copy(Y);
+	fX = gretl_matrix_copy(X);
+#else
 	/* storage for fac-sorted and de-meaned Y and X, plus sorted fac */
 	fY = gretl_matrix_alloc(T, g);
 	fX = gretl_matrix_alloc(T, k);
+#endif
 	sf = gretl_matrix_alloc(T, 1);
 	do_sort = 1;
     }
@@ -13316,7 +13370,11 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
     if (fY == NULL || fX == NULL || sf == NULL) {
 	err = E_ALLOC;
     } else if (do_sort) {
+#if ALT_INDEX
+	order = get_factor_sorted_data(fac, sf, &err);
+#else
 	order = get_factor_sorted_data(Y, X, fac, fY, fX, sf, &err);
+#endif
     }
 
     if (!err) {
@@ -13338,6 +13396,17 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 
     nfvals = t0 = 0;
     for (t=0; t<T; t++) {
+#if ALT_INDEX
+	ot = order[t];
+	for (i=0; i<g; i++) {
+	    yti = gretl_matrix_get(fY, ot, i);
+	    ymean[i] += yti;
+	}
+	for (i=0; i<k; i++) {
+	    xti = gretl_matrix_get(fX, ot, i);
+	    xmean[i] += xti;
+	}
+#else
 	for (i=0; i<g; i++) {
 	    yti = gretl_matrix_get(fY, t, i);
 	    ymean[i] += yti;
@@ -13346,23 +13415,40 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 	    xti = gretl_matrix_get(fX, t, i);
 	    xmean[i] += xti;
 	}
+#endif
 	if ((t < T-1 && sf->val[t+1] != sf->val[t]) || t == T-1) {
 	    /* finish the current factor value */
 	    nfvals++;
 	    n = t - t0 + 1;
 	    for (i=0; i<g; i++) {
 		ymean[i] /= n;
+#if ALT_INDEX
+		for (s=t0; s<=t; s++) {
+		    ot = order[s];
+		    yti = gretl_matrix_get(fY, ot, i);
+		    gretl_matrix_set(fY, ot, i, yti - ymean[i]);
+		}
+#else
 		for (s=t0; s<=t; s++) {
 		    yti = gretl_matrix_get(fY, s, i);
 		    gretl_matrix_set(fY, s, i, yti - ymean[i]);
 		}
+#endif
 		ymean[i] = 0.0;
 	    } for (i=0; i<k; i++) {
 		xmean[i] /= n;
+#if ALT_INDEX
+		for (s=t0; s<=t; s++) {
+		    ot = order[s];
+		    xti = gretl_matrix_get(fX, ot, i);
+		    gretl_matrix_set(fX, ot, i, xti - xmean[i]);
+		}
+#else
 		for (s=t0; s<=t; s++) {
 		    xti = gretl_matrix_get(fX, s, i);
 		    gretl_matrix_set(fX, s, i, xti - xmean[i]);
 		}
+#endif
 		xmean[i] = 0.0;
 	    }
 	    t0 = t + 1;
