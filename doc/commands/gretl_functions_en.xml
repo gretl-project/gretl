@@ -5689,6 +5689,38 @@
 	  on</lit>.
 	</para>
 	<para>
+	  Here are a few tips on when you can expect <lit>fols</lit>
+	  to offer a substantial time-saving relative to <fncref
+	  targ="mols"/>.
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      The number of factor values should probably be greater
+	      than 30.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      The number of regular regressors should be relatively
+	      modest (say, not exceeding 16).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      The number of observations, while obviously it must
+	      exceed the number of factor values, should not be huge.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      The performance of <lit>fols</lit> will be very much
+	      faster if the data are sorted by the values of the
+	      factor.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
 	  <seelist>
             <fncref targ="mols"/>
 	  </seelist>
@@ -9285,6 +9317,7 @@
 	  <seelist>
             <fncref targ="mpols"/>
             <fncref targ="mrls"/>
+	    <fncref targ="fols"/>
 	  </seelist>
 	</para>
       </description>
