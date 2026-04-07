@@ -1680,7 +1680,7 @@ static int write_csv_data (const DATASET *dset, FILE *fp, int lang)
     list = get_send_data_list(FOREIGN, dset, &err);
 
     if (!err) {
-        gchar *sdata;
+        gchar *sdata = NULL;
 
         *save_na = '\0';
         strncat(save_na, get_csv_na_write_string(), 7);
@@ -1699,7 +1699,7 @@ static int write_csv_data (const DATASET *dset, FILE *fp, int lang)
     }
 
     if (err) {
-        gretl_errmsg_sprintf("write_csv_stata: failed with err = %d\n", err);
+        gretl_errmsg_sprintf("write_csv_data: failed with err = %d\n", err);
     } else {
 	if (lang == LANG_STATA) {
 	    fputs("* load data from gretl\n", fp);
@@ -1714,10 +1714,8 @@ static int write_csv_data (const DATASET *dset, FILE *fp, int lang)
 	    } else {
 		fputs(");\n", fp);
 	    }
-
 	    if (dataset_is_time_series(dset)) {
 		/* try to set pandas dataframe index to a datetime index */
-
 		fputs("gretldata.index = pd.to_datetime(gretldata.index", fp);
 		/* format string is not necessarily needed */
 		if (dset->pd == 1) {
