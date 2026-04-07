@@ -1,6 +1,7 @@
 version 2026b, in progress
 - new function which() to determine which elements of a
   given matrix satisfy a specified condition
+- new function fols() for factorized least squares
 - probability distribution functions; add support for the
   truncated normal distribution
 - "join" command: fix possible crash on joining data from
@@ -35,6 +36,8 @@ version 2026b, in progress
 - GUI: "ui-maker" for functions packages: support setting
   a run-time default for a boolean argument
 - GUI: fix breakage in Command Log on Windows and macOS
+- GUI: fix breakage in string argument selector for
+  function packages on 32-bit Windows (GTK2)
 - launching of gnuplot via gretl: respect the GNUTERM
   environment variable on Linux, if present
 
