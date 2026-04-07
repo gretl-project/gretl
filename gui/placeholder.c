@@ -83,14 +83,13 @@ gchar *entry_box_get_real_text (GtkWidget *w)
     if (widget_get_int(w, PLACEHOLDER)) {
         ; /* no real text available */
     }
-#else
+#endif
     if (s != NULL) {
 	while (isspace(*s)) s++;
 	if (*s != '\0') {
 	    ret = g_strstrip(g_strdup(s));
 	}
     }
-#endif
 
     return ret;
 }
