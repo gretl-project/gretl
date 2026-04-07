@@ -1680,22 +1680,22 @@ static int write_csv_data (const DATASET *dset, FILE *fp, int lang)
     list = get_send_data_list(FOREIGN, dset, &err);
 
     if (!err) {
-        gchar *sdata = NULL;
+        gchar *fname = NULL;
 
         *save_na = '\0';
         strncat(save_na, get_csv_na_write_string(), 7);
 
 	if (lang == LANG_STATA) {
 	    set_csv_na_write_string(".");
-	    sdata = gretl_make_dotpath("stata.csv");
+	    fname = gretl_make_dotpath("stata.csv");
 	} else if (lang == LANG_PYTHON) {
 	    set_csv_na_write_string("NA");
-	    sdata = gretl_make_dotpath("pandas.csv");
+	    fname = gretl_make_dotpath("pandas.csv");
 	}
 
-        err = write_data(sdata, list, dset, OPT_C, NULL);
+        err = write_data(fname, list, dset, OPT_C, NULL);
         set_csv_na_write_string(save_na);
-        g_free(sdata);
+        g_free(fname);
     }
 
     if (err) {
@@ -1708,8 +1708,8 @@ static int write_csv_data (const DATASET *dset, FILE *fp, int lang)
 	    fputs("# load data from gretl\n", fp);
 	    fputs("import pandas as pd\n", fp);
 	    fprintf(fp, "gretldata = pd.read_csv(\"%spandas.csv\"", get_export_dotdir());
+	    /* do we have an "obs" column? */
 	    if (dataset_is_time_series(dset) || dset->S != NULL) {
-		/* do we have an "obs" column? */
 		fputs(", index_col=\"obs\");\n", fp);
 	    } else {
 		fputs(");\n", fp);
