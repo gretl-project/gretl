@@ -13340,11 +13340,22 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
     for (t=0; t<T; t++) {
 	for (i=0; i<g; i++) {
 	    yti = gretl_matrix_get(fY, t, i);
+	    if (na(yti)) {
+		err = E_MISSDATA;
+		break;
+	    }
 	    ymean[i] += yti;
 	}
 	for (i=0; i<k; i++) {
 	    xti = gretl_matrix_get(fX, t, i);
+	    if (na(xti)) {
+		err = E_MISSDATA;
+		break;
+	    }
 	    xmean[i] += xti;
+	}
+	if (err) {
+	    break;
 	}
 	if ((t < T-1 && sf->val[t+1] != sf->val[t]) || t == T-1) {
 	    /* finish the current factor value */
@@ -13367,6 +13378,10 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 	    }
 	    t0 = t + 1;
 	}
+    }
+
+    if (err) {
+	goto bailout;
     }
 
     if (g == 1) {
