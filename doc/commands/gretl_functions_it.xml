@@ -5804,6 +5804,38 @@
 	  comando <lit>set svd on</lit>.
 	</para>
 	<para>
+	  Quelli che seguono sono alcuni suggerimenti sui casi in cui
+	  la funzione <lit>fols</lit> offre un sensibile aumento di
+	  efficienza rispetto alla funzione generica <fncref targ="mols"/>.
+	</para>
+	<ilist>
+	  <li>
+	  <para>
+	    Il numero di valori del fattore non deve essere troppo
+	    piccolo (all'incirca da 30 in su).
+	  </para>
+	  </li>
+	  <li>
+	    <para>
+	      Il numero di regressori <lit>X</lit> deve essere
+	      relativamente modesto (ad esempio, non superiore a 16).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Il numero di osservazioni, pur dovendo ovviamente
+	      superare il numero di valori fattoriali, non dovrebbe
+	      essere molto elevato (migliaia).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Le prestazioni di <lit>fols</lit> saranno molto migliori
+	      se i dati sono ordinati in base ai valori del fattore.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
 	  <seelist>
 	    <fncref targ="mols"/>
 	  </seelist>
