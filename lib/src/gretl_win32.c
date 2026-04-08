@@ -720,12 +720,20 @@ char *mydocs_path (void)
 
 char *program_files_path (void)
 {
+#if defined(_WIN64)
     return win_special_path(CSIDL_PROGRAM_FILES);
-}
+#else
+    BOOL wow64 = FALSE;
 
-char *program_files_x86_path (void)
-{
-    return win_special_path(CSIDL_PROGRAM_FILESX86);
+    IsWow64Process(GetCurrentProcess(), &wow64);
+    if (wow64) {
+	/* 32-bit gretl on 64-bit Windows */
+	return win_special_path(CSIDL_PROGRAM_FILESX86);
+    } else {
+	/* 32-bit gretl on 32-bit Windows */
+	return win_special_path(CSIDL_PROGRAM_FILES);
+    }
+#endif
 }
 
 static gchar *compose_command_line (const char *arg)

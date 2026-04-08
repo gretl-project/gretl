@@ -2718,7 +2718,6 @@ static void load_default_workdir (char *targ)
 static void load_default_path (char *targ)
 {
     char *progfiles = NULL;
-    char *pfx86 = NULL;
 
 #ifndef PKGBUILD
     if (targ == paths.gnuplot) {
@@ -2728,14 +2727,13 @@ static void load_default_path (char *targ)
 #endif
 
     progfiles = program_files_path();
-    pfx86 = program_files_x86_path();
 
     if (targ == paths.workdir) {
         load_default_workdir(targ);
     } else if (targ == paths.x12a) {
         sprintf(targ, "%s\\x13as\\x13as.exe", progfiles);
     } else if (targ == paths.tramo) {
-        sprintf(targ, "%s\\tramo\\tramo.exe", pfx86); /* ? */
+        sprintf(targ, "%s\\tramo\\tramo.exe", progfiles);
     } else if (targ == paths.rbinpath) {
         win32_R_path(targ, REXE);
     } else if (targ == paths.rlibpath) {
@@ -2767,7 +2765,6 @@ static void load_default_path (char *targ)
     }
 
     free(progfiles);
-    free(pfx86);
 }
 
 # if CFG_DEBUG

@@ -84,8 +84,6 @@ char *mydocs_path (void);
 
 char *program_files_path (void);
 
-char *program_files_x86_path (void);
-
 int win32_write_access (const char *path);
 
 int win32_remove (const char *path);
