@@ -13154,6 +13154,8 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
     return err;
 }
 
+/* helper function for gretl_matrix_factorized_ols() */
+
 static int *get_factor_sorted_data (const gretl_matrix *Y,
 				    const gretl_matrix *X,
 				    const gretl_vector *f,
@@ -13285,7 +13287,7 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
     double *mean = NULL;
     double *ymean;
     double *xmean;
-    double s2;
+    double f, s2;
     double yti, xti;
     int T = X->rows;
     int k = X->cols;
@@ -13298,6 +13300,14 @@ int gretl_matrix_factorized_ols (const gretl_matrix *Y,
 
     if (Y->rows != T || fac->rows != T) {
 	return E_INVARG;
+    }
+
+    for (t=0; t<T; t++) {
+	f = fac->val[t];
+	if (na(f) || f != floor(f)) {
+	    gretl_errmsg_set(_("The factor variable must be integer-valued"));
+	    return E_INVARG;
+	}
     }
 
     if (vector_is_sorted(fac, T)) {
