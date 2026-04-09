@@ -5689,34 +5689,42 @@
 	  on</lit>.
 	</para>
 	<para>
-	  Here are a few tips on when you can expect <lit>fols</lit>
-	  to offer a substantial time-saving relative to <fncref
-	  targ="mols"/>.
+	  Here are a few tips on how you can expect <lit>fols</lit>
+	  to perform relative to the closest alternative, namely
+	  <fncref targ="mols"/> including dummy variables coding for
+	  each of the factor values.
 	</para>
 	<ilist>
 	  <li>
 	    <para>
-	      The number of factor values should probably be greater
-	      than 30.
+	      Most importantly, <lit>fols</lit> is likely to be a good
+	      deal faster if the data are sorted by the values of the
+	      factor variable.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      The number of regular regressors should be relatively
-	      modest (say, not exceeding 16).
+	      Other things equal, the speed advantage of
+	      <lit>fols</lit> is positively related to the number of
+	      factor values.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      The number of observations, while obviously it must
-	      exceed the number of factor values, should not be huge.
+	      Other things equal, the speed advantage of
+	      <lit>fols</lit> is negatively related to the number of
+	      observations, and to the sum of the number of dependent
+	      variables and ordinary regressors.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      The performance of <lit>fols</lit> will be very much
-	      faster if the data are sorted by the values of the
-	      factor.
+	      As a rough rule of thumb, if the number of factor values
+	      is not greater than 32, the number of ordinary
+	      regressors is 16 or greater, the number of observations
+	      is very large, and the data are not sorted by the factor
+	      values, then <lit>fols</lit> may be slower than the
+	      <lit>mols</lit> alternative.
 	    </para>
 	  </li>
 	</ilist>
