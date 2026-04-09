@@ -2452,7 +2452,7 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
     }
 
     if (grid_mode && s != NULL) {
-        if (gretl_function_depth() > 0 && !strcmp(s, "display")) {
+        if (!strcmp(s, "display")) {
             /* let this pass: hansl functions that do plots
                generally seem to default to "display"
             */
@@ -2537,29 +2537,27 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
 
     /* check for --output=whatever or --outbuf=whatever */
     outspec = plot_output_option(ptype, &ci, err);
-    if (*err) {
-        return NULL;
-    }
 
-    if (gretl_gridplot_collecting()) {
-        interactive = 0;
-    } else if (got_display_option(outspec)) {
-        /* --output=display specified */
-        interactive = 1;
-    } else if (outspec != NULL) {
-        /* --output=filename or --buffer=starvar specified */
-        interactive = 0;
-    } else if (flags & GPT_ICON) {
-        interactive = 1;
-    } else {
-        /* default */
-        interactive = !gretl_in_batch_mode();
-    }
-
-    if (interactive) {
-        fp = gp_set_up_interactive(fname, ptype, flags, err);
-    } else {
-        fp = gp_set_up_batch(fname, ptype, flags, outspec, err);
+    if (!*err) {
+	if (gretl_gridplot_collecting()) {
+	    interactive = 0;
+	} else if (got_display_option(outspec)) {
+	    /* --output=display specified */
+	    interactive = 1;
+	} else if (outspec != NULL) {
+	    /* --output=filename or --buffer=starvar specified */
+	    interactive = 0;
+	} else if (flags & GPT_ICON) {
+	    interactive = 1;
+	} else {
+	    /* default */
+	    interactive = !gretl_in_batch_mode();
+	}
+	if (interactive) {
+	    fp = gp_set_up_interactive(fname, ptype, flags, err);
+	} else {
+	    fp = gp_set_up_batch(fname, ptype, flags, outspec, err);
+	}
     }
 
 #if GP_DEBUG
@@ -2567,6 +2565,7 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
             outspec == NULL ? "null" : outspec, interactive);
     fprintf(stderr, " gretl_plotfile = '%s'\n", gretl_plotfile());
     fprintf(stderr, " this_term_type = %d\n", this_term_type);
+    fprintf(stderr, " err = %d\n", *err);
 #endif
 
     return fp;
@@ -5880,9 +5879,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 
     if (K == 0) {
         return E_DATA;
-    }
-
-    if (K == 1) {
+    } else if (K == 1) {
         gretl_errmsg_sprintf(_("'%s' is a constant"), freq->varname);
         return E_DATA;
     }
@@ -5905,10 +5902,6 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     if (err) {
         return err;
     }
-
-#if GP_DEBUG
-    fprintf(stderr, "*** plot_freq called\n");
-#endif
 
     if (freq->strvals) {
         endpt = NULL;
