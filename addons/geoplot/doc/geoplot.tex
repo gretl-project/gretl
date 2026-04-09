@@ -222,10 +222,11 @@ Nomenclature of Territorial Units for Statistics).}
 Gretl supports what are probably the two most common formats:
 \begin{itemize}
 \item GeoJSON files: these are plain JSON files with an internal
-  structure specified by RFC 7946. Such a file takes the form of an
-  array of regions (or ``features''), with each element containing the
-  metadata under the key \texttt{properties} and the polygons under
-  the key \texttt{geometry}.
+  structure specified by RFC 7946.\footnote{See
+    \url{https://datatracker.ietf.org/doc/html/rfc7946}.} Such a file takes
+  the form of an array of regions (or ``features''), with each element
+  containing the metadata under the key \texttt{properties} and the
+  polygons under the key \texttt{geometry}.
 \item ESRI shapefiles: these come as collections of several files,
   usually zipped together. The essential components are an
   \textsf{xBase} file, with \texttt{dbf} extension, holding the
@@ -1159,7 +1160,10 @@ acceptable and it has the advantage of simplicity. All we do is take
 the height of the plot as specified by the user (or a default of 600
 pixels) and figure out what the width should be to make a degree of
 longitude the same size as a degree of latitude at the mid-point
-latitude. However, we offer four alternatives, as follows:
+latitude. However, we offer four alternatives, as
+follows:\footnote{``EPSG'' stands for the European Petroleum Survey
+  Group, which hosts the industry-standard geodetic database; see
+  \url{https://epsg.org/}.}
 \begin{center}
   \begin{tabular}{cll}
     EPSG id & description & option string \\[4pt]
