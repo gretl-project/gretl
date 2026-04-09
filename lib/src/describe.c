@@ -2275,8 +2275,8 @@ static void record_freq_matrix (FreqDist *fd)
     }
 }
 
-/* Wrapper function: get the distribution, print it if
-   wanted, graph it if wanted, then free stuff.
+/* Wrapper function: get the distribution, print it if wanted, graph
+   it if wanted, then free stuff.
 */
 
 int freqdist (int varno, const DATASET *dset,
@@ -2331,7 +2331,13 @@ int freqdist (int varno, const DATASET *dset,
 	    int gerr = plot_freq(freq, dist, opt);
 
 	    if (gerr) {
-		pputs(prn, _("gnuplot command failed\n"));
+		const char *msg = gretl_errmsg_get();
+
+		if (msg != NULL) {
+		    pprintf(prn, "%s\n", msg);
+		} else {
+		    pputs(prn, _("gnuplot command failed\n"));
+		}
 		do_graph = 0;
 	    }
 	}
