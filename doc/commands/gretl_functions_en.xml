@@ -5650,8 +5650,8 @@
 	  </li>
 	  <li>
 	    <para>
-	      <argname>f</argname>: the many-valued factor, a
-	      <math>T</math>-vector.
+	      <argname>f</argname>: the many-valued factor, an
+	      integer-valued <math>T</math>-vector.
 	    </para>
 	  </li>
 	  <li>
