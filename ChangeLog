@@ -24,6 +24,7 @@ version 2026b, in progress
   vector
 - script editor: handle "doc strings" in hansl functions
   via "question mark-click"
+- geoplot addon: document the cbrange option
 - User's Guide: improve documentation of string literals
 - GUI: /View/Correlations now shows nonparametric option
 - GUI: Augment tooltips for model selection dialog buttons

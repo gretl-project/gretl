@@ -609,6 +609,17 @@ order. Below the listing we give some further explanation of the usage
 of \texttt{plotfile}, \texttt{show} and \texttt{inlined}.
 
 \begin{description}
+\item[\texttt{cbrange}:] a 2-vector, representing a \textsf{gnuplot}
+  variable of the same name. This option is useful if you're creating
+  two or more plots with comparable quantitative payloads and you wish
+  to impose a common mapping from payload values to colors. To achieve
+  this you should determine the minima and maxima of the payload
+  across the plots and set the \texttt{cbrange} limits to accommodate
+  all the data. The first (minimum) value should be no greater than
+  the least payload value and the second (maximum) no less than the
+  greatest payload value. Default: in general the payload to colors
+  mapping differs across distinct plots, based on the per-plot data
+  ranges.
 \item[\texttt{border}:] boolean, show a rectangular border around the
   map. Default: true.
 \item[\texttt{height}:] scalar, giving the height of the plot in
