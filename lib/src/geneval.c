@@ -5397,11 +5397,86 @@ static int set_sel_vector (matrix_subspec *spec, int r,
     return err;
 }
 
+/* Basic support for referrring to a matrix row or column by
+   name rather than by number.
+*/
+
+static int matrix_index_from_string (const char *s,
+				     const gretl_matrix *m,
+				     char pos, parser *p)
+{
+    const char **S = NULL;
+    int i, n;
+    int ret = 0;
+
+    if (pos == 'L' && m->rows > 1) {
+	S = gretl_matrix_get_rownames(m);
+	n = m->rows;
+    } else if (pos == 'R' && m->cols > 1) {
+	S = gretl_matrix_get_colnames(m);
+	n = m->cols;
+    } else if (m->rows > 1) {
+	/* row vector case */
+	S = gretl_matrix_get_rownames(m);
+	n = m->rows;
+    } else if (m->cols > 1) {
+	/* column vector case */
+	S = gretl_matrix_get_colnames(m);
+	n = m->cols;
+    }
+
+    if (S != NULL) {
+	for (i=0; i<n; i++) {
+	    if (!strcmp(s, S[i])) {
+		ret = i + 1;
+		break;
+	    }
+	}
+    }
+
+    if (ret == 0) {
+	if (pos == 'L') {
+	    gretl_errmsg_sprintf(_("'%s': invalid row index"), s);
+	} else if (pos == 'R') {
+	    gretl_errmsg_sprintf(_("'%s': invalid column index"), s);
+	} else {
+	    gretl_errmsg_sprintf(_("'%s': invalid index"), s);
+	}
+	p->err = E_INVARG;
+    }
+
+    return ret;
+}
+
+static int get_matrix_index (NODE *n, matrix_subspec *spec,
+			     const gretl_matrix *m,
+			     char pos, parser *p)
+{
+    int idx = 0;
+
+    if (n->t == STR) {
+	if (m == NULL) {
+	    /* "can't happen" */
+	    p->err = E_INVARG;
+	} else {
+	    idx = matrix_index_from_string(n->v.str, m, pos, p);
+	}
+    } else {
+	idx = node_get_int(n, p);
+	if (!p->err && idx == 0) {
+	    p->err = E_INVARG;
+	}
+    }
+
+    return idx;
+}
+
 /* Compose a sub-matrix specification, from scalars and/or
    index matrices.
 */
 
-static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
+static void build_mspec (NODE *targ, NODE *l, NODE *r,
+			 const gretl_matrix *m, parser *p)
 {
     matrix_subspec *spec = targ->v.mspec;
     int lscalar = 0;
@@ -5417,35 +5492,21 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
     }
 
 #if EDEBUG > 1
-    fprintf(stderr, "build_mspec: l->t=%d (%s)\n", l->t, getsymb(l->t));
+    fprintf(stderr, "build_mspec: l->t = %s", getsymb(l->t));
     if (r == NULL) {
-        fprintf(stderr, " r = NULL\n");
+        fprintf(stderr, ", r = NULL\n");
     } else {
-        fprintf(stderr, " r->t=%d (%s)\n", r->t, getsymb(r->t));
+        fprintf(stderr, ", r->t = %s\n", getsymb(r->t));
     }
 #endif
 
-    /* special case: bundle membership */
-    if (l->t == STR) {
-        if (r == NULL) {
-            spec->ltype = SEL_STR;
-            spec->rtype = SEL_NULL;
-            spec->lsel.str = l->v.str;
-        } else {
-            p->err = e_types(r);
-        }
-        goto finished;
-    }
-
-    lscalar = scalar_node(l);
-    rscalar = (r != NULL && scalar_node(r));
+    lscalar = scalar_node(l) || l->t == STR;
+    rscalar = (r != NULL && (scalar_node(r) || r->t == STR));
 
     if (lscalar) {
-        i = node_get_int(l, p);
-        if (!p->err && i == 0) {
-            gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
-            p->err = E_INVARG;
-        }
+	char pos = r == NULL ? 'S' : 'L';
+
+	i = get_matrix_index(l, spec, m, pos, p);
         if (!p->err && r == NULL && i > 0) {
             /* identify and flag the single index case */
             spec->ltype = SEL_SINGLE;
@@ -5454,12 +5515,13 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
             goto finished;
         }
     }
+
     if (!p->err && rscalar) {
-        j = node_get_int(r, p);
-        if (!p->err && j == 0) {
-            gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
-            p->err = E_INVARG;
-        }
+	j = get_matrix_index(r, spec, m, 'R', p);
+    }
+
+    if (p->err) {
+	goto finished;
     }
 
     if (l->t == DUM) {
@@ -5543,9 +5605,18 @@ static NODE *mspec_node (NODE *l, NODE *r, parser *p)
     if (l->t == UNDEF || (r != NULL && r->t == UNDEF)) {
         p->err = E_DATA;
     } else {
+	const gretl_matrix *m = NULL;
+
+	if (l->parent != NULL && l->parent->parent != NULL) {
+	    const NODE *obj = l->parent->parent->L;
+
+	    if (obj != NULL && obj->t == MAT && obj->v.m != NULL) {
+		m = obj->v.m;
+	    }
+	}
         ret = aux_mspec_node(p);
         if (ret != NULL && starting(p)) {
-            build_mspec(ret, l, r, p);
+            build_mspec(ret, l, r, m, p);
         }
     }
 
