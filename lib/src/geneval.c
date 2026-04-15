@@ -5397,7 +5397,7 @@ static int set_sel_vector (matrix_subspec *spec, int r,
     return err;
 }
 
-/* Basic support for referrring to a matrix row or column by
+/* Basic support for referring to a matrix row or column by
    name rather than by number.
 */
 
@@ -5405,31 +5405,46 @@ static int matrix_index_from_string (const char *s,
 				     const gretl_matrix *m,
 				     char pos, parser *p)
 {
-    const char **S = NULL;
     int i, n;
     int ret = 0;
 
-    if (pos == 'L' && m->rows > 1) {
-	S = gretl_matrix_get_rownames(m);
-	n = m->rows;
-    } else if (pos == 'R' && m->cols > 1) {
-	S = gretl_matrix_get_colnames(m);
-	n = m->cols;
-    } else if (m->rows > 1) {
-	/* row vector case */
-	S = gretl_matrix_get_rownames(m);
-	n = m->rows;
-    } else if (m->cols > 1) {
-	/* column vector case */
-	S = gretl_matrix_get_colnames(m);
-	n = m->cols;
-    }
+    if (pos == 'L' || pos == 'R') {
+	const char **S = NULL;
 
-    if (S != NULL) {
-	for (i=0; i<n; i++) {
-	    if (!strcmp(s, S[i])) {
-		ret = i + 1;
-		break;
+	if (pos == 'L') {
+	    S = gretl_matrix_get_rownames(m);
+	    n = m->rows;
+	} else {
+	    S = gretl_matrix_get_colnames(m);
+	    n = m->cols;
+	}
+	if (S != NULL) {
+	    for (i=0; i<n; i++) {
+		if (!strcmp(s, S[i])) {
+		    ret = i + 1;
+		    break;
+		}
+	    }
+	}
+    } else {
+	/* the single-index case */
+	const char **SR = gretl_matrix_get_rownames(m);
+	const char **SC = gretl_matrix_get_colnames(m);
+
+	if (SR != NULL) {
+	    for (i=0; i<m->rows; i++) {
+		if (!strcmp(s, SR[i])) {
+		    ret = i + 1;
+		    break;
+		}
+	    }
+	}
+	if (ret == 0 && SC != NULL) {
+	    for (i=0; i<m->cols; i++) {
+		if (!strcmp(s, SC[i])) {
+		    ret = i + 1;
+		    break;
+		}
 	    }
 	}
     }
@@ -5610,8 +5625,14 @@ static NODE *mspec_node (NODE *l, NODE *r, parser *p)
 	if (l->parent != NULL && l->parent->parent != NULL) {
 	    const NODE *obj = l->parent->parent->L;
 
-	    if (obj != NULL && obj->t == MAT && obj->v.m != NULL) {
-		m = obj->v.m;
+	    if (obj != NULL) {
+		if (obj->t == MAT) {
+		    m = obj->v.m;
+		} else if (obj->t == BMEMB || obj->t == OSL) {
+		    if (obj->aux != NULL && obj->aux->t == MAT) {
+			m = obj->aux->v.m;
+		    }
+		}
 	    }
 	}
         ret = aux_mspec_node(p);
