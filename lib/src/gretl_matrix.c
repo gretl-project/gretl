@@ -1343,6 +1343,7 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
     }
 
     gretl_matrix_copy_info(c, m, mod);
+
     return c;
 }
 
@@ -12155,10 +12156,11 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
     return 0;
 }
 
-/* the most common use-case here will be updating the t1 and t2
-   members of targ's info based on src's info: this naturally
-   arises when a new m x n matrix is generated and its content is
-   assigned to an existing m x n matrix
+/* The most common use-case here will be updating the t1 and t2 members
+   of targ's info based on src's info: this naturally arises when a new
+   m x n matrix is generated and its content is assigned to an existing
+   m x n matrix. We'll also handle the passing on of rownames and/or
+   colnames to the copy, taking transposition into account.
 */
 
 static int gretl_matrix_copy_info (gretl_matrix *targ,
@@ -12180,47 +12182,47 @@ static int gretl_matrix_copy_info (gretl_matrix *targ,
 
     if (targ->info == NULL) {
         targ->info = malloc(sizeof *targ->info);
+	if (targ->info == NULL) {
+	    return E_ALLOC;
+	}
     } else {
         strings_array_free(targ->info->colnames, targ->cols);
         strings_array_free(targ->info->rownames, targ->rows);
     }
 
-    if (targ->info == NULL) {
-        err = E_ALLOC;
+    targ->info->colnames = NULL;
+    targ->info->rownames = NULL;
+
+    if (mod == GRETL_MOD_TRANSPOSE) {
+	if (src->info->colnames != NULL) {
+	    targ->info->rownames = strings_array_dup(src->info->colnames,
+						     src->cols);
+	    if (targ->info->rownames == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	if (!err && src->info->rownames != NULL) {
+	    targ->info->colnames = strings_array_dup(src->info->rownames,
+						     src->rows);
+	    if (targ->info->colnames == NULL) {
+		err = E_ALLOC;
+	    }
+	}
     } else {
-        targ->info->colnames = NULL;
-        targ->info->rownames = NULL;
-	if ( mod == GRETL_MOD_TRANSPOSE ) {
-	    if (src->info->colnames != NULL) {
-		targ->info->rownames = strings_array_dup(src->info->colnames,
-							 src->cols);
-		if (targ->info->rownames == NULL) {
-		    err = E_ALLOC;
-		}
+	targ->info->t1 = src->info->t1;
+	targ->info->t2 = src->info->t2;
+	if (src->info->colnames != NULL) {
+	    targ->info->colnames = strings_array_dup(src->info->colnames,
+						     src->cols);
+	    if (targ->info->colnames == NULL) {
+		err = E_ALLOC;
 	    }
-	    if (!err && src->info->rownames != NULL) {
-		targ->info->colnames = strings_array_dup(src->info->rownames,
-							 src->rows);
-		if (targ->info->colnames == NULL) {
-		    err = E_ALLOC;
-		}
-	    }
-	} else {
-	    targ->info->t1 = src->info->t1;
-	    targ->info->t2 = src->info->t2;
-	    if (src->info->colnames != NULL) {
-		targ->info->colnames = strings_array_dup(src->info->colnames,
-							 src->cols);
-		if (targ->info->colnames == NULL) {
-		    err = E_ALLOC;
-		}
-	    }
-	    if (!err && src->info->rownames != NULL) {
-		targ->info->rownames = strings_array_dup(src->info->rownames,
-							 src->rows);
-		if (targ->info->rownames == NULL) {
-		    err = E_ALLOC;
-		}
+	}
+	if (!err && src->info->rownames != NULL) {
+	    targ->info->rownames = strings_array_dup(src->info->rownames,
+						     src->rows);
+	    if (targ->info->rownames == NULL) {
+		err = E_ALLOC;
 	    }
 	}
     }
