@@ -157,7 +157,8 @@ int get_simd_mn_min (void)
 
 static int add_scalar_to_matrix (gretl_matrix *targ, double x);
 static int gretl_matrix_copy_info (gretl_matrix *targ,
-                                   const gretl_matrix *src);
+                                   const gretl_matrix *src,
+				   int mod);
 
 /* matrix metadata struct, not allocated by default */
 
@@ -1339,9 +1340,9 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
         } else {
             memcpy(c->val, m->val, n * sizeof *m->val);
         }
-        gretl_matrix_copy_info(c, m);
     }
 
+    gretl_matrix_copy_info(c, m, mod);
     return c;
 }
 
@@ -2972,7 +2973,7 @@ int gretl_matrix_copy_data (gretl_matrix *targ,
     err = gretl_matrix_copy_values(targ, src);
 
     if (!err) {
-        err = gretl_matrix_copy_info(targ, src);
+        err = gretl_matrix_copy_info(targ, src, GRETL_MOD_NONE);
     }
 
     return err;
@@ -12161,7 +12162,8 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
 */
 
 static int gretl_matrix_copy_info (gretl_matrix *targ,
-                                   const gretl_matrix *src)
+                                   const gretl_matrix *src,
+				   int mod)
 {
     int err = 0;
 
@@ -12186,24 +12188,41 @@ static int gretl_matrix_copy_info (gretl_matrix *targ,
     if (targ->info == NULL) {
         err = E_ALLOC;
     } else {
-        targ->info->t1 = src->info->t1;
-        targ->info->t2 = src->info->t2;
         targ->info->colnames = NULL;
         targ->info->rownames = NULL;
-        if (src->info->colnames != NULL) {
-            targ->info->colnames = strings_array_dup(src->info->colnames,
-                                                     src->cols);
-            if (targ->info->colnames == NULL) {
-                err = E_ALLOC;
-            }
-        }
-        if (!err && src->info->rownames != NULL) {
-            targ->info->rownames = strings_array_dup(src->info->rownames,
-                                                     src->rows);
-            if (targ->info->rownames == NULL) {
-                err = E_ALLOC;
-            }
-        }
+	if ( mod == GRETL_MOD_TRANSPOSE ) {
+	    if (src->info->colnames != NULL) {
+		targ->info->rownames = strings_array_dup(src->info->colnames,
+							 src->cols);
+		if (targ->info->rownames == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
+	    if (!err && src->info->rownames != NULL) {
+		targ->info->colnames = strings_array_dup(src->info->rownames,
+							 src->rows);
+		if (targ->info->colnames == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
+	} else {
+	    targ->info->t1 = src->info->t1;
+	    targ->info->t2 = src->info->t2;
+	    if (src->info->colnames != NULL) {
+		targ->info->colnames = strings_array_dup(src->info->colnames,
+							 src->cols);
+		if (targ->info->colnames == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
+	    if (!err && src->info->rownames != NULL) {
+		targ->info->rownames = strings_array_dup(src->info->rownames,
+							 src->rows);
+		if (targ->info->rownames == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
+	}
     }
 
     return err;
