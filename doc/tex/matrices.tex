@@ -315,6 +315,20 @@ lower triangular matrix \texttt{L}) is
 L[upper] = (L')[upper]  # note: not L[upper] = L[lower]
 \end{code}
 
+As of gretl 2026b there's a further means of selecting rows or
+columns---at present only \textit{individual} rows or columns, not
+ranges or multiple selections. Namely, if the matrix has row or column
+names attached you can use these names, either as string literals or
+via string variables. A simple example of extracting a named column
+follows.
+\begin{code}
+matrix M = mnormal[6,3]
+cnameset(M, "z y z")
+eval M[,"y"] # all rows of column y
+string s = "z"
+eval M[,s]   # all rows of column z
+\end{code}
+
 \section{Deleting rows or columns}
 \label{sec:neg-indices}
 
