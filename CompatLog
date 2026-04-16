@@ -4,6 +4,10 @@ The option to suppress the printout from the "corrgm" and
 "xcorrgm" commands has been renamed from --silent to --quiet,
 but --silent will still work until further notice.
 
+The installer for 32-bit gretl for Windows will from now on
+work only on 32-bit Windows; use the 64-bit version of gretl
+for 64-bit Windows.
+
 2026-01-30 version 2026a
 
 Random number generation: switch from SFMT to xoshiro256+, so
