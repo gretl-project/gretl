@@ -5611,7 +5611,20 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r,
     targ->v.mspec = spec;
 }
 
-/* node holding evaluated result of matrix specification */
+/* Node holding evaluated result of matrix specification.  The nodes
+   @l and @r are the left-hand and right-hand parts of the slice
+   specification, which "typically" refer to the row and column
+   dimensions of a matrix, respectively. We have to allow for the
+   possibility that @r is NULL (as in a slice of a vector), in which
+   case @l could refer either to rows or columns.
+
+   To support use of column or row names as indices we want to pass
+   the relevant matrix when calling build_mspec(), which requires
+   finding the matrix: it will surely be in the parentage of @l, but
+   exactly where depends on whether the "genr" expression referenced
+   the matrix directly, or as a member of a bundle or element of an
+   array of matrices.
+*/
 
 static NODE *mspec_node (NODE *l, NODE *r, parser *p)
 {
