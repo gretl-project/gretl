@@ -5613,20 +5613,20 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r,
 
 /* Node holding evaluated result of matrix specification.  The nodes
    @l and @r are the left-hand and right-hand parts of the slice
-   specification, which "typically" refer to the row and column
-   dimensions of a matrix, respectively. We have to allow for the
+   specification @s, and they "typically" refer to the row and column
+   dimensions of a matrix, respectively. But we have to allow for the
    possibility that @r is NULL (as in a slice of a vector), in which
    case @l could refer either to rows or columns.
 
    To support use of column or row names as indices we want to pass
    the relevant matrix when calling build_mspec(), which requires
-   finding the matrix: it will surely be in the parentage of @l, but
-   exactly where depends on whether the "genr" expression referenced
-   the matrix directly, or as a member of a bundle or element of an
-   array of matrices.
+   finding the matrix: it will surely be in the parentage of @s, but
+   exactly where depends on whether the "genr" expression references
+   the matrix directly, or indirectly as a member of a bundle (BMEMB)
+   or element of an array of matrices (OSL).
 */
 
-static NODE *mspec_node (NODE *l, NODE *r, parser *p)
+static NODE *mspec_node (NODE *s, NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
@@ -5635,8 +5635,8 @@ static NODE *mspec_node (NODE *l, NODE *r, parser *p)
     } else {
 	const gretl_matrix *m = NULL;
 
-	if (l->parent != NULL && l->parent->parent != NULL) {
-	    const NODE *obj = l->parent->parent->L;
+	if (s->parent != NULL) {
+	    const NODE *obj = s->parent->L;
 
 	    if (obj != NULL) {
 		if (obj->t == MAT) {
@@ -18866,7 +18866,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case SLRAW:
         /* unevaluated object slice spec */
-        ret = mspec_node(l, r, p);
+        ret = mspec_node(t, l, r, p);
         break;
     case LISTVAR:
         ret = list_member_by_name(l, r, p);
