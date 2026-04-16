@@ -12,6 +12,8 @@ version 2026b, in progress
   the augmented or reduced $model bundle a list giving the
   order in which regressors were added ("add_order") or
   omitted ("omit_order")
+- "var" command with --lagselect option: show the LR test
+  P-value for the null of lag order 0
 - "vecm" command: in the vecm_info bundle in the $system
   accessor we now provide new matrices: "long_run"
   (Johansen's C), "cov_long_run" (the covariance of vec(C))
@@ -21,7 +23,8 @@ version 2026b, in progress
   executing a Python script, via Pandas
 - "panplot" command: correct suport for the --font option
 - matrix "slicing": correct handling of an empty selection
-  vector
+  vector, and sypport use of row and column names when
+  indexing into matrices
 - script editor: handle "doc strings" in hansl functions
   via "question mark-click"
 - geoplot addon: document the cbrange option

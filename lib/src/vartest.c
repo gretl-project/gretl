@@ -693,12 +693,8 @@ static void gretl_VAR_print_lagsel (gretl_matrix *seltab,
 	pprintf(prn, "%4d", minlag + i);
 	x = gretl_matrix_get(seltab, i, 1);
 	pprintf(prn, "%14.5f", x);
-	if (i > 0) {
-	    x = gretl_matrix_get(seltab, i, 2);
-	    pprintf(prn, "%9.5f", x);
-	} else {
-	    pputs(prn, "         ");
-	}
+	x = gretl_matrix_get(seltab, i, 2);
+	pprintf(prn, "%9.5f", x);
 	for (j=0; j<N_IVALS; j++) {
 	    x = gretl_matrix_get(seltab, i, 3+j);
 	    pprintf(prn, "%12.6f", x);
@@ -724,6 +720,44 @@ static int lagsel_get_min_lag (int p, int *err)
     return m;
 }
 
+static int lagsel_run_VAR (GRETL_VAR *var,
+			   const DATASET *dset,
+			   gretl_matrix *E,
+			   int cols0, int j,
+			   int use_QR,
+			   double *ll)
+{
+    int jxcols = cols0 + j * var->neqns;
+    int n = var->neqns;
+    int err = 0;
+
+    if (jxcols == 0) {
+	gretl_matrix_copy_values(E, var->Y);
+    } else {
+	VAR_fill_X(var, j, dset);
+	gretl_matrix_reuse(var->X, var->T, jxcols);
+	gretl_matrix_reuse(var->B, jxcols, n);
+	if (use_QR) {
+	    err = gretl_matrix_QR_ols(var->Y, var->X, var->B,
+				      E, NULL, NULL);
+	} else {
+	    err = gretl_matrix_multi_ols(var->Y, var->X, var->B,
+					 E, NULL);
+	}
+    }
+
+    if (!err) {
+	double ldet = gretl_VAR_ldet(var, E, &err);
+	double T2 = var->T / 2.0;
+
+	if (!err) {
+	    *ll = -(n * T2) * (LN_2_PI + 1) - T2 * ldet;
+	}
+    }
+
+    return err;
+}
+
 /* apparatus for selecting the optimal lag length for a VAR */
 
 int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
@@ -740,7 +774,8 @@ int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
     double best[N_IVALS] = {var->AIC, var->BIC, var->HQC};
     int best_row[N_IVALS] = {r, r, r};
     double crit[N_IVALS];
-    double LRtest, ldet = NADBL;
+    double LRtest;
+    double ll, ll0 = NADBL;
     int cols0, minlag = 1;
     int nrows, ncols;
     int use_QR = 0;
@@ -777,34 +812,15 @@ int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
 	use_QR = 1;
     }
 
+    /* prep for the first likelihood-ratio test: 0-order VAR */
+    err = lagsel_run_VAR(var, dset, E, cols0, 0, use_QR, &ll0);
+
     for (j=minlag; j<p && !err; j++) {
-	int jxcols = cols0 + j * n;
-
-	if (jxcols == 0) {
-	    gretl_matrix_copy_values(E, var->Y);
-	} else {
-	    VAR_fill_X(var, j, dset);
-	    gretl_matrix_reuse(var->X, T, jxcols);
-	    gretl_matrix_reuse(var->B, jxcols, n);
-	    if (use_QR) {
-		err = gretl_matrix_QR_ols(var->Y, var->X, var->B,
-					  E, NULL, NULL);
-	    } else {
-		err = gretl_matrix_multi_ols(var->Y, var->X, var->B,
-					     E, NULL);
-	    }
-	}
-
+	err = lagsel_run_VAR(var, dset, E, cols0, j, use_QR, &ll);
 	if (!err) {
-	    ldet = gretl_VAR_ldet(var, E, &err);
-	}
-
-	if (!err) {
-	    double ll;
 	    int q = var->ncoeff - (n * (p - j));
 	    int c, k = n * q;
 
-	    ll = -(n * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * ldet;
 	    crit[0] = (-2.0 * ll + 2.0 * k) / T;               /* AIC */
 	    crit[1] = (-2.0 * ll + k * log(T)) / T;            /* BIC */
 	    crit[2] = (-2.0 * ll + 2.0 * k * log(log(T))) / T; /* HQC */
@@ -812,11 +828,11 @@ int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
 	    gretl_matrix_set(selmat, m, 0, (double) j);
 	    gretl_matrix_set(selmat, m, 1, ll);
 	    if (j == minlag) {
-		gretl_matrix_set(selmat, m, 2, NADBL);
+		LRtest = 2.0 * (ll - ll0);
 	    } else {
 		LRtest = 2.0 * (ll - gretl_matrix_get(selmat, m-1, 1));
-		gretl_matrix_set(selmat, m, 2, chisq_cdf_comp(n * n, LRtest));
 	    }
+	    gretl_matrix_set(selmat, m, 2, chisq_cdf_comp(n * n, LRtest));
 	    for (c=0; c<N_IVALS; c++) {
 		gretl_matrix_set(selmat, m, 3+c, crit[c]);
 		if (crit[c] < best[c]) {
