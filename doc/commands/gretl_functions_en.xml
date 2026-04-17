@@ -5656,7 +5656,7 @@
 	  </li>
 	  <li>
 	    <para>
-	      &amp;<argname>U</argname>: a pointer-to-matrix to
+	      <argname>&amp;U</argname>: a pointer-to-matrix to
 	      receive the <by r="T" c="g"/> matrix of residuals, or
 	      <lit>null</lit> if these are not required.  If this
 	      argument is given, the matrix wil be resized as needed,
@@ -5665,7 +5665,7 @@
 	  </li>
 	  <li>
 	    <para>
-	      &amp;<argname>V</argname>: a pointer-to-matrix to
+	      <argname>&amp;V</argname>: a pointer-to-matrix to
 	      receive the covariance matrix of the parameter
 	      estimates, or <lit>null</lit> if this is not required.
 	      FIXME describe the content.
@@ -5673,7 +5673,7 @@
 	  </li>
 	  <li>
 	    <para>
-	      &amp;<argname>A</argname>: a pointer-to-matrix to
+	      <argname>&amp;A</argname>: a pointer-to-matrix to
 	      receive the <by r="n" c="g"/> matrix of <quote>fixed
 	      effects</quote> or per factor-value intercepts, where
 	      <math>n</math> is the number of distinct factor values,
