@@ -98,7 +98,9 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	    if (type == GRETL_TYPE_INT || type == GRETL_TYPE_BOOL) {
 		*xp = *(int *) val;
 	    } else if (type == GRETL_TYPE_UINT32) {
-		*xp = *(unsigned *) val;
+		*xp = *(uint32_t *) val;
+	    } else if (type == GRETL_TYPE_UINT64) {
+		*xp = *(uint64_t *) val;
 	    } else {
 		*xp = *(double *) val;
 	    }
