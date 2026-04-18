@@ -89,4 +89,6 @@ int curl_send_mail (const char *from_addr,
 		    const char *password,
 		    const char *filename);
 
+int curl_fill_bundle (gretl_bundle *b, int *curl_err);
+
 #endif /* GRETL_WWW_H */

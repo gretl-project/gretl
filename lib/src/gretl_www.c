@@ -1605,3 +1605,86 @@ int try_http (const char *s, char *fname, int *http)
 
     return err;
 }
+
+static const char *optional_bundle_get (gretl_bundle *b,
+                                        const char *key,
+                                        double *px,
+                                        int *err)
+{
+    const char *s = NULL;
+
+    if (!*err) {
+        /* proceed only if we haven't already hit an error */
+        if (px != NULL) {
+            *px = gretl_bundle_get_scalar(b, key, err);
+        } else {
+            s = gretl_bundle_get_string(b, key, err);
+        }
+        if (*err == E_DATA) {
+            /* non-existence of item (E_DATA) is OK, but
+               wrong type (E_TYPES) is not
+            */
+            gretl_error_clear();
+            *err = 0;
+        }
+    }
+
+    return s;
+}
+
+/**
+ * curl_fill_bundle:
+ * @b: the bundle to be filled.
+ * @curl_err: location for writing the error code from
+ * libcurl (which may be 0, indicating success).
+ *
+ * On entry, @b must contain a URL under the key "URL". It
+ * may also contain elements named header, postdata (strings)
+ * and/or include, nobody (scalar values). This function
+ * calls libcurl and, if successful, adds to @b elements named
+ * output and/or errmsg (strings) and (on error only) http_code
+ * (an integer).
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int curl_fill_bundle (gretl_bundle *b, int *curl_err)
+{
+    const char *url = NULL;
+    const char *header = NULL;
+    const char *postdata = NULL;
+    char *output = NULL;
+    char *errmsg = NULL;
+    double xinclude = 0;
+    double xnobody = 0;
+    int http_code = 0;
+    int err = 0;
+
+    url = gretl_bundle_get_string(b, "URL", &err);
+    header = optional_bundle_get(b, "header", NULL, &err);
+    postdata = optional_bundle_get(b, "postdata", NULL, &err);
+    optional_bundle_get(b, "include", &xinclude, &err);
+    optional_bundle_get(b, "nobody", &xnobody, &err);
+
+    if (err) {
+	int include = !isnan(xinclude) && (xinclude != 0.0);
+	int nobody = !isnan(xnobody) && (xnobody != 0.0);
+
+	*curl_err = gretl_curl(url, header, postdata, include,
+			       nobody, &output, &errmsg,
+			       &http_code);
+    }
+
+    if (output != NULL) {
+	err = gretl_bundle_set_string(b, "output", output);
+	free(output);
+    } else if (errmsg != NULL) {
+	err = gretl_bundle_set_string(b, "errmsg", errmsg);
+	free(errmsg);
+    }
+    if (err) {
+	err = gretl_bundle_set_int(b, "http_code", http_code);
+    }
+
+    return err;
+}
