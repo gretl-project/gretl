@@ -153,13 +153,17 @@ int type_can_be_bundled (GretlType type)
             type == GRETL_TYPE_SERIES ||
             type == GRETL_TYPE_BUNDLE ||
             type == GRETL_TYPE_ARRAY ||
-            type == GRETL_TYPE_LIST);
+            type == GRETL_TYPE_LIST ||
+	    type == GRETL_TYPE_VSERIES);
 }
 
 #define bundled_scalar(t) (t == GRETL_TYPE_DOUBLE ||    \
                            t == GRETL_TYPE_INT ||       \
                            t == GRETL_TYPE_UINT32 ||    \
                            t == GRETL_TYPE_UINT64)
+
+#define string_is_vseries(s) (s != NULL && strlen(s) > 15 && \
+			      strncmp(s, "virtual_series:", 15) == 0)
 
 static int bundled_item_copy_in_data (bundled_item *item,
                                       void *ptr, int size)
@@ -200,6 +204,7 @@ static int bundled_item_copy_in_data (bundled_item *item,
         }
         break;
     case GRETL_TYPE_STRING:
+    case GRETL_TYPE_VSERIES:
         item->data = gretl_strdup((char *) ptr);
         break;
     case GRETL_TYPE_MATRIX:
@@ -245,6 +250,10 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
         return NULL;
     }
 
+    if (type == GRETL_TYPE_STRING && string_is_vseries(ptr)) {
+	type = GRETL_TYPE_VSERIES;
+    }
+
     item->type = type;
     item->size = 0;
     item->key = NULL;
@@ -283,9 +292,9 @@ static void bundled_item_free_data (GretlType type, void *data)
     }
 }
 
-/* Note: we come here only if the replacement type is the
-   same as the original type, apart from the case of
-   inter-conversion of the various scalar types.
+/* Note: we come here only if the replacement type is the same as the
+   original type, apart from the case of inter-conversion of the various
+   scalar types.
 */
 
 static int bundled_item_replace_data (bundled_item *item,
@@ -1558,8 +1567,13 @@ int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
 int gretl_bundle_set_string (gretl_bundle *bundle, const char *key,
                              const char *str)
 {
-    return gretl_bundle_set_data(bundle, key, (void *) str,
-                                 GRETL_TYPE_STRING, 0);
+    GretlType t = GRETL_TYPE_STRING;
+
+    if (string_is_vseries(str)) {
+	t = GRETL_TYPE_VSERIES;
+    }
+
+    return gretl_bundle_set_data(bundle, key, (void *) str, t, 0);
 }
 
 /**
@@ -2408,7 +2422,8 @@ static void real_print_bundled_item (bundled_item *item,
         uint64_t u = *(uint64_t *) item->data;
 
         pprintf(prn, "%s = %" G_GUINT64_FORMAT, kstr, u);
-    } else if (t == GRETL_TYPE_STRING) {
+    } else if (t == GRETL_TYPE_STRING ||
+	       t == GRETL_TYPE_VSERIES) {
         char *s = (char *) item->data;
         int n = strlen(s);
 
@@ -2656,7 +2671,8 @@ static void write_item_constructor (gpointer value, gpointer p)
         uint64_t u = *(uint64_t *) item->data;
 
         g_string_append_printf(gs, "%s=%" G_GUINT64_FORMAT, kstr, u);
-    } else if (t == GRETL_TYPE_STRING) {
+    } else if (t == GRETL_TYPE_STRING ||
+	       t == GRETL_TYPE_VSERIES) {
         char *s = (char *) item->data;
 
 	g_string_append_printf(gs, "%s=\"%s\",", kstr, s);
@@ -2814,6 +2830,7 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
     if (item->size > 0) {
         pprintf(prn, " size=\"%d\">\n", item->size);
     } else if (item->type == GRETL_TYPE_STRING ||
+	       item->type == GRETL_TYPE_VSERIES ||
                gretl_is_scalar_type(item->type)) {
         pputc(prn, '>');
     } else {
@@ -2850,7 +2867,8 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
                 pprintf(prn, "%.16g ", vals[j]);
             }
         }
-    } else if (item->type == GRETL_TYPE_STRING) {
+    } else if (item->type == GRETL_TYPE_STRING ||
+	       item->type == GRETL_TYPE_VSERIES) {
         gretl_xml_put_string((char *) item->data, prn);
     } else if (item->type == GRETL_TYPE_MATRIX) {
         gretl_matrix *m = (gretl_matrix *) item->data;
@@ -2948,7 +2966,8 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
                     } else {
                         err = gretl_bundle_set_data(b, key, &u, type, size);
                     }
-                } else if (type == GRETL_TYPE_STRING) {
+                } else if (type == GRETL_TYPE_STRING ||
+			   type == GRETL_TYPE_VSERIES) {
                     char *s;
 
                     if (!gretl_xml_node_get_trimmed_string(cur, doc, &s)) {
@@ -3779,7 +3798,8 @@ int gretl_bundles_are_equal (gretl_bundle *b1,
 		if (eq != 1) {
 		    ret = 0;
 		}
-	    } else if (t1 == GRETL_TYPE_STRING) {
+	    } else if (t1 == GRETL_TYPE_STRING ||
+		       t1 == GRETL_TYPE_VSERIES) {
 		if (strcmp(v1, v2)) {
 		    ret = 0;
 		}

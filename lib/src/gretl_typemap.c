@@ -202,6 +202,7 @@ const char *gretl_type_get_name (GretlType type)
 
     case GRETL_TYPE_VOID:       return "void";
     case GRETL_TYPE_NUMERIC:    return "numeric";
+    case GRETL_TYPE_VSERIES:    return "series";
     case GRETL_TYPE_NONE:       return "null";
     case GRETL_TYPE_ANY:        return "any";
     default:
@@ -370,7 +371,8 @@ int gretl_type_get_order (GretlType type)
 {
     if (gretl_scalar_type(type)) {
         return 1;
-    } else if (type == GRETL_TYPE_SERIES) {
+    } else if (type == GRETL_TYPE_SERIES ||
+	       type == GRETL_TYPE_VSERIES) {
         return 2;
     } else if (type == GRETL_TYPE_MATRIX) {
         return 3;
