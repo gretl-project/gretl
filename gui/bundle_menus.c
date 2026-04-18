@@ -242,8 +242,11 @@ static gchar *bundle_content_label (bundled_item *bi,
 	    label = g_strdup_printf("%s (scalar: %d)", keystr,
 				    *(int *) bi->data);
 	} else if (bi->type == GRETL_TYPE_UINT32) {
-	    label = g_strdup_printf("%s (scalar: %d)", keystr,
-				    *(unsigned int *) bi->data);
+	    label = g_strdup_printf("%s (scalar: %u)", keystr,
+				    *(uint32_t *) bi->data);
+	} else if (bi->type == GRETL_TYPE_UINT64) {
+	    label = g_strdup_printf("%s (scalar: %" PRIu64 ")", keystr,
+				    *(uint64_t *) bi->data);
 	}
     } else if (note != NULL) {
 	label = g_strdup_printf("%s (%s: %s)", keystr, typestr, note);
