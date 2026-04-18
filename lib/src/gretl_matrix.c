@@ -12351,6 +12351,38 @@ int gretl_matrix_is_dated (const gretl_matrix *m)
     }
 }
 
+/**
+ * gretl_matrix_copy_dates:
+ * @target: target matrix.
+ * @src: source_matrix.
+ *
+ * Copies the "date" elements t1 and t2 from @src to @targ,
+ * provided that @src has dates set and the two matrices have
+ * the same number of rows.
+
+ * Returns: 0 on successful completion or an error code
+ * on failure.
+ */
+
+int gretl_matrix_copy_dates (gretl_matrix *targ,
+			     const gretl_matrix *src)
+{
+    int err;
+
+    if (targ->rows != src->rows) {
+	err = E_NONCONF;
+    } else if (!gretl_matrix_is_dated(src)) {
+	err = E_DATA;
+    } else {
+	err = gretl_matrix_set_t1(targ, src->info->t1);
+    }
+    if (!err) {
+	gretl_matrix_set_t2(targ, src->info->t2);
+    }
+
+    return err;
+}
+
 static int
 get_SVD_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
                  const double *s, gretl_matrix *V, double *s2)

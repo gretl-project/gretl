@@ -839,6 +839,9 @@ int gretl_matrix_get_t2 (const gretl_matrix *m);
 
 int gretl_matrix_is_dated (const gretl_matrix *m);
 
+int gretl_matrix_copy_dates (gretl_matrix *targ,
+			     const gretl_matrix *src);
+
 int gretl_is_identity_matrix (const gretl_matrix *m);
 
 int gretl_is_zero_matrix (const gretl_matrix *m);

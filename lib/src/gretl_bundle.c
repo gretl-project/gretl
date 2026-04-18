@@ -535,13 +535,23 @@ static void *real_bundle_get_data (gretl_bundle *bundle,
         if (p != NULL) {
             bundled_item *item = p;
 
-            ret = item->data;
-            if (type != NULL) {
-                *type = item->type;
-            }
-            if (size != NULL) {
-                *size = item->size;
-            }
+	    if (item->type == GRETL_TYPE_VSERIES) {
+		if (string_is_vseries(item->data)) {
+		    ret = (char *) item->data + 15;
+		} else {
+		    myerr = E_INVARG;
+		}
+	    } else {
+		ret = item->data;
+	    }
+	    if (myerr == 0) {
+		if (type != NULL) {
+		    *type = item->type;
+		}
+		if (size != NULL) {
+		    *size = item->size;
+		}
+	    }
         } else {
             if (err != NULL) {
                 gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));

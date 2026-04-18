@@ -1114,14 +1114,15 @@ struct typeconv {
 };
 
 struct typeconv conversions[] = {
-    { GRETL_TYPE_NONE,   EMPTY },
-    { GRETL_TYPE_DOUBLE, NUM },
-    { GRETL_TYPE_SERIES, SERIES },
-    { GRETL_TYPE_MATRIX, MAT },
-    { GRETL_TYPE_LIST,   LIST },
-    { GRETL_TYPE_STRING, STR },
-    { GRETL_TYPE_BUNDLE, BUNDLE },
-    { GRETL_TYPE_ARRAY,  ARRAY }
+    { GRETL_TYPE_NONE,    EMPTY },
+    { GRETL_TYPE_DOUBLE,  NUM },
+    { GRETL_TYPE_SERIES,  SERIES },
+    { GRETL_TYPE_MATRIX,  MAT },
+    { GRETL_TYPE_LIST,    LIST },
+    { GRETL_TYPE_STRING,  STR },
+    { GRETL_TYPE_BUNDLE,  BUNDLE },
+    { GRETL_TYPE_ARRAY,   ARRAY },
+    { GRETL_TYPE_VSERIES, MAT }
 };
 
 static int gen_type_from_gretl_type (GretlType t)
@@ -11747,6 +11748,48 @@ static NODE *bundled_series_node (parser *p, const double *x,
     return ret;
 }
 
+static gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
+						const char *s,
+						parser *p)
+{
+    gretl_matrix *ret = NULL;
+    const char *q = strchr(s, '[');
+
+    if (q != NULL) {
+	gretl_matrix *m = NULL;
+	char *mkey;
+	int n = q - s;
+	int col = 0;
+
+	mkey = gretl_strndup(s, n);
+	if (sscanf(s + n, "[,%d]", &col) == 1) {
+	    m = gretl_bundle_get_matrix(b, mkey, &p->err);
+	}
+	if (m != NULL && col > 0 && col <= m->cols && !m->is_complex) {
+	    const double *x = m->val + (col - 1) * m->rows;
+
+	    ret = gretl_matrix_alloc(m->rows, 1);
+	    if (ret == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		memcpy(ret->val, x, m->rows * sizeof *x);
+		gretl_matrix_copy_dates(ret, m);
+	    }
+	} else {
+	    p->err = E_INVARG;
+	}
+	free(mkey);
+    } else {
+	p->err = E_INVARG;
+    }
+
+    if (p->err == E_INVARG) {
+	gretl_errmsg_sprintf("'%s': invalid virtual series specifier", s);
+    }
+
+    return ret;
+}
+
 /* Getting an object from within a bundle: on the left is the bundle
    reference, on the right should be a string: the key to look up to get
    content.
@@ -11788,6 +11831,8 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
         ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
     } else if (type == GRETL_TYPE_STRING) {
         ret->v.str = (char *) val;
+    } else if (type == GRETL_TYPE_VSERIES) {
+	ret->v.m = bundle_get_virtual_series(l->v.b, (const char *) val, p);
     } else if (type == GRETL_TYPE_MATRIX) {
         ret->v.m = (gretl_matrix *) val;
     } else if (type == GRETL_TYPE_BUNDLE) {
