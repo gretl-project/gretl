@@ -71,6 +71,21 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	int t2 = gretl_matrix_get_t2(m);
 
 	save_bundled_series(m->val, t1, t2, key, note, vwin);
+    } else if (type == GRETL_TYPE_VSERIES) {
+	gretl_matrix *m;
+
+	m = bundle_get_virtual_series(bundle, (const char *) val, &err);
+	if (!err) {
+	    int t1 = gretl_matrix_get_t1(m);
+	    int t2 = gretl_matrix_get_t2(m);
+
+	    if (t1 > 0 && t2 > 0) {
+		save_bundled_series(m->val, t1, t2, key, note, vwin);
+	    } else {
+		save_bundled_series(m->val, 0, m->rows - 1, key, note, vwin);
+	    }
+	    gretl_matrix_free(m);
+	}
     } else {
 	char vname[VNAMELEN];
 	gchar *blurb;
@@ -233,6 +248,13 @@ static gchar *bundle_content_label (bundled_item *bi,
 	} else {
 	    label = g_strdup_printf("%s (%s, length %d)", keystr,
 				    typestr, n);
+	}
+    } else if (bi->type == GRETL_TYPE_VSERIES) {
+	if (note != NULL) {
+	    label = g_strdup_printf("%s (%s: %s)", keystr,
+				    typestr, note);
+	} else {
+	    label = g_strdup_printf("%s (%s)", keystr, typestr);
 	}
     } else if (scalar) {
 	if (bi->type == GRETL_TYPE_DOUBLE) {
@@ -453,7 +475,7 @@ GtkWidget *make_bundle_content_menu (windata_t *vwin)
 	int n_items = g_list_length(blist);
 	int n_types = 0;
 
-	if (n_items > 12) {
+	if (n_items > 10) {
 	    int i, tcounts[8] = {0};
 
 	    g_list_foreach(blist, blist_get_type_counts, (gpointer) tcounts);
@@ -463,7 +485,6 @@ GtkWidget *make_bundle_content_menu (windata_t *vwin)
 		}
 	    }
 	}
-
 	if (menu == NULL) {
 	    menu = gtk_menu_new();
 	    g_object_set_data(G_OBJECT(menu), "vwin", vwin);

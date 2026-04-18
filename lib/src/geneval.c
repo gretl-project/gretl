@@ -1122,7 +1122,8 @@ struct typeconv conversions[] = {
     { GRETL_TYPE_STRING,  STR },
     { GRETL_TYPE_BUNDLE,  BUNDLE },
     { GRETL_TYPE_ARRAY,   ARRAY },
-    { GRETL_TYPE_VSERIES, MAT }
+    { GRETL_TYPE_VSERIES, MAT },
+    { GRETL_TYPE_VSERIES, VSERIES },
 };
 
 static int gen_type_from_gretl_type (GretlType t)
@@ -11748,48 +11749,6 @@ static NODE *bundled_series_node (parser *p, const double *x,
     return ret;
 }
 
-static gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
-						const char *s,
-						parser *p)
-{
-    gretl_matrix *ret = NULL;
-    const char *q = strchr(s, '[');
-
-    if (q != NULL) {
-	gretl_matrix *m = NULL;
-	char *mkey;
-	int n = q - s;
-	int col = 0;
-
-	mkey = gretl_strndup(s, n);
-	if (sscanf(s + n, "[,%d]", &col) == 1) {
-	    m = gretl_bundle_get_matrix(b, mkey, &p->err);
-	}
-	if (m != NULL && col > 0 && col <= m->cols && !m->is_complex) {
-	    const double *x = m->val + (col - 1) * m->rows;
-
-	    ret = gretl_matrix_alloc(m->rows, 1);
-	    if (ret == NULL) {
-		p->err = E_ALLOC;
-	    } else {
-		memcpy(ret->val, x, m->rows * sizeof *x);
-		gretl_matrix_copy_dates(ret, m);
-	    }
-	} else {
-	    p->err = E_INVARG;
-	}
-	free(mkey);
-    } else {
-	p->err = E_INVARG;
-    }
-
-    if (p->err == E_INVARG) {
-	gretl_errmsg_sprintf("'%s': invalid virtual series specifier", s);
-    }
-
-    return ret;
-}
-
 /* Getting an object from within a bundle: on the left is the bundle
    reference, on the right should be a string: the key to look up to get
    content.
@@ -11799,18 +11758,21 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 {
     char *key = r->v.str;
     GretlType type;
+    int querying;
     int size = 0;
     int is_tmp = 0;
     int gen_t;
     void *val = NULL;
     NODE *ret = NULL;
 
+    querying = (p->flags & P_OBJQRY)? 1 : 0;
+
 #if EDEBUG
     fprintf(stderr, "get_bundle_member: %s[\"%s\"], query=%d\n",
-            l->vname, key, (p->flags & P_OBJQRY)? 1 : 0);
+            l->vname, key, querying);
 #endif
 
-    if ((p->flags & P_OBJQRY) && !gretl_bundle_has_key(l->v.b, key)) {
+    if (querying && !gretl_bundle_has_key(l->v.b, key)) {
         ret = get_aux_node(p, EMPTY, 0, 0);
         ret->flags |= MUT_NODE;
         return ret;
@@ -11822,7 +11784,13 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
         return ret;
     }
 
-    gen_t = gen_type_from_gretl_type(type);
+    if (type == GRETL_TYPE_VSERIES && querying) {
+	ret = aux_empty_node(p);
+	ret->t = VSERIES;
+	return ret;
+    } else {
+	gen_t = gen_type_from_gretl_type(type);
+    }
     if (type != GRETL_TYPE_SERIES) {
         ret = get_aux_node(p, gen_t, 0, 0);
     }
@@ -11832,7 +11800,8 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_STRING) {
         ret->v.str = (char *) val;
     } else if (type == GRETL_TYPE_VSERIES) {
-	ret->v.m = bundle_get_virtual_series(l->v.b, (const char *) val, p);
+	ret->v.m =
+	    bundle_get_virtual_series(l->v.b, (const char *) val, &p->err);
     } else if (type == GRETL_TYPE_MATRIX) {
         ret->v.m = (gretl_matrix *) val;
     } else if (type == GRETL_TYPE_BUNDLE) {
@@ -18262,12 +18231,12 @@ static NODE *eval (NODE *t, parser *p)
         if (type_func_in_parentage(t)) {
             p->flags |= P_OBJQRY;
             l = eval(t->L, p);
-            p->flags ^= P_OBJQRY;
             if (p->err) {
                 l = revive_undef_node(l, p);
                 t->L->aux = l;
             }
         } else {
+	    p->flags &= ~P_OBJQRY;
             l = eval(t->L, p);
         }
         if (l == NULL && !p->err) {

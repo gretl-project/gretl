@@ -1334,10 +1334,15 @@ const char *gretl_bundle_get_string (gretl_bundle *bundle,
 
     if (ptr == NULL) {
 	myerr = E_INVARG;
-    } else if (type != GRETL_TYPE_STRING) {
+    } else if (type != GRETL_TYPE_STRING &&
+	       type != GRETL_TYPE_VSERIES) {
         myerr = E_TYPES;
     } else {
         s = (const char *) ptr;
+
+	if (type == GRETL_TYPE_VSERIES) {
+	    s += 15;
+	}
     }
 
     if (err != NULL) {
@@ -2432,8 +2437,7 @@ static void real_print_bundled_item (bundled_item *item,
         uint64_t u = *(uint64_t *) item->data;
 
         pprintf(prn, "%s = %" G_GUINT64_FORMAT, kstr, u);
-    } else if (t == GRETL_TYPE_STRING ||
-	       t == GRETL_TYPE_VSERIES) {
+    } else if (t == GRETL_TYPE_STRING) {
         char *s = (char *) item->data;
         int n = strlen(s);
 
@@ -2447,6 +2451,14 @@ static void real_print_bundled_item (bundled_item *item,
             pprintf(prn, "%s (%s, %d bytes)", kstr,
                     gretl_type_get_name(t), n);
         }
+    } else if (t == GRETL_TYPE_VSERIES) {
+	char *s = (char *) item->data;
+
+	if (strlen(s) > 15) {
+	    pprintf(prn, "%s (virtual series: %s)", kstr, s + 15);
+	} else {
+	    pprintf(prn, "%s (virtual series)", kstr);
+	}
     } else if (t == GRETL_TYPE_BUNDLE) {
         pprintf(prn, "%s (%s)", kstr, gretl_type_get_name(t));
     } else if (t == GRETL_TYPE_MATRIX) {
@@ -3402,6 +3414,48 @@ char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
     }
 
     return S;
+}
+
+gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
+					 const char *s,
+					 int *err)
+{
+    gretl_matrix *ret = NULL;
+    const char *q = strchr(s, '[');
+
+    if (q != NULL) {
+	gretl_matrix *m = NULL;
+	char *mkey;
+	int n = q - s;
+	int col = 0;
+
+	mkey = gretl_strndup(s, n);
+	if (sscanf(s + n, "[,%d]", &col) == 1) {
+	    m = gretl_bundle_get_matrix(b, mkey, err);
+	}
+	if (m != NULL && col > 0 && col <= m->cols && !m->is_complex) {
+	    const double *x = m->val + (col - 1) * m->rows;
+
+	    ret = gretl_matrix_alloc(m->rows, 1);
+	    if (ret == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		memcpy(ret->val, x, m->rows * sizeof *x);
+		gretl_matrix_copy_dates(ret, m);
+	    }
+	} else {
+	    *err = E_INVARG;
+	}
+	free(mkey);
+    } else {
+	*err = E_INVARG;
+    }
+
+    if (*err == E_INVARG) {
+	gretl_errmsg_sprintf("'%s': invalid virtual series specifier", s);
+    }
+
+    return ret;
 }
 
 gretl_bundle *get_sysinfo_bundle (int *err)
