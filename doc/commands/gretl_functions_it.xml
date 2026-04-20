@@ -5742,10 +5742,10 @@
 	  minimi quadrati quando uno dei regressori è una fattore
 	  discreto con molti valori distinti. Questo caso può essere
 	  gestito includendo tra i regressori un insieme di variabili
-	  dummy che codificano i valori del fattore, ma può essere
-	  molto più efficiente eseguire l'OLS su dati da cui sono
-	  state rimosse le medie per ciascun valore del fattore, il
-	  che è ciò che questa funzione fa.
+	  dummy che codificano i valori del fattore, ma in certi casi
+	  è più efficiente eseguire l'OLS su dati da cui sono state
+	  rimosse le medie per ciascun valore del fattore, il che è
+	  ciò che questa funzione fa.
 	</para>
 	<para>
 	  Gli argomenti sono i seguenti:
@@ -5765,13 +5765,13 @@
 	  </li>
 	  <li>
 	    <para>
-	      <argname>F</argname>: il fattore discreto, un
+	      <argname>f</argname>: il fattore discreto, un
 	      vettore con <math>T</math> elementi.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      &amp;<argname>U</argname>: puntatore a matrice per
+	      <argname>&amp;U</argname>: puntatore a matrice per
 	      ricevere il vettore dei residui, o <lit>null</lit> se
 	      non sono richiesti. Se questo argomento viene fornito,
 	      la matrice verrà ridimensionata secondo necessità, e lo
@@ -5780,7 +5780,7 @@
 	  </li>
 	  <li>
 	    <para>
-	      &amp;<argname>V</argname>: puntatore a matrice per
+	      <argname>&amp;V</argname>: puntatore a matrice per
 	      ricevere la matrice di covarianza delle stime dei
 	      parametri, o <lit>null</lit> se non è richiesta. FIXME:
 	      ancora da fare.
@@ -5788,7 +5788,7 @@
 	  </li>
 	  <li>
 	    <para>
-	      &amp;<argname>A</argname>: puntatore a una matrice <by
+	      <argname>&amp;A</argname>: puntatore a una matrice <by
 	      r="n" c="g"/> di <quote>effetti fissi</quote>
 	      (intercette per valore del fattore), dove <math>n</math>
 	      è il numero di valori distinti del fattore;  oppure
@@ -5810,28 +5810,34 @@
 	</para>
 	<ilist>
 	  <li>
+	    <para>
+	      <i>In primis</i>, le prestazioni di <lit>fols</lit>
+	      saranno molto migliori se i dati sono ordinati in base
+	      ai valori del fattore.
+	    </para>
+	  </li>
+	  <li>
 	  <para>
-	    Il numero di valori del fattore non deve essere troppo
-	    piccolo (all'incirca da 30 in su).
+	    A parità di altre condizioni, l'efficienza relativa di
+	    <lit>fols</lit> cresce col numero di valori del fattore.
 	  </para>
 	  </li>
 	  <li>
 	    <para>
-	      Il numero di regressori <lit>X</lit> deve essere
-	      relativamente modesto (ad esempio, non superiore a 16).
+	      A parità di altre condizioni, l'efficienza relativa di
+	      <lit>fols</lit> cala col numero di osservazioni, e con
+	      il numero di colonne di <argname>Y</argname> e
+	      <argname>X</argname>.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Il numero di osservazioni, pur dovendo ovviamente
-	      superare il numero di valori fattoriali, non dovrebbe
-	      essere molto elevato (migliaia).
-	    </para>
-	  </li>
-	  <li>
-	    <para>
-	      Le prestazioni di <lit>fols</lit> saranno molto migliori
-	      se i dati sono ordinati in base ai valori del fattore.
+	    Come regola <quote>a occhio</quote>, se il numero di
+	    valori del fattore non eccede 32, il numero di regressori
+	    <argname>X</argname> è pari o superiore a 16, il numero di
+	    osservazioni è molto elevato e i dati non sono ordinati in
+	    base ai valori fattoriali, allora <lit>fols</lit> potrebbe
+	    essere meno efficiente dell'alternativa <lit>mols</lit>.
 	    </para>
 	  </li>
 	</ilist>
