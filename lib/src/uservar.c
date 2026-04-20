@@ -313,11 +313,9 @@ static int real_user_var_add (const char *name,
         return err ? err : E_DATA;
     }
 
-    /* We use OPT_P for a private variable, OPT_A
-       when adding as a function argument, OPT_S
-       when adding as a "shell" variable, OPT_C
-       when we're auto-casting a 1 x 1 matrix result
-       to a scalar.
+    /* We use OPT_P for a private variable, OPT_A when adding as a
+       function argument, OPT_S when adding as a "shell" variable,
+       OPT_C when auto-casting a 1 x 1 matrix result to a scalar.
     */
 
 #if UVDEBUG
@@ -330,8 +328,9 @@ static int real_user_var_add (const char *name,
         if (!err) {
             if (opt & OPT_P) {
                 u->flags = UV_PRIVATE;
-            } else if (opt & OPT_S) {
-                u->flags = UV_SHELL;
+            }
+	    if (opt & OPT_S) {
+                u->flags |= UV_SHELL;
             }
             if (opt & OPT_A) {
                 u->flags &= ~UV_MAIN;
@@ -402,6 +401,12 @@ int private_matrix_add (gretl_matrix *M, const char *name)
 {
     return real_user_var_add(name, GRETL_TYPE_MATRIX,
 			     M, OPT_P, NULL);
+}
+
+int private_matrix_add_as_shell (gretl_matrix *M, const char *name)
+{
+    return real_user_var_add(name, GRETL_TYPE_MATRIX,
+			     M, OPT_P | OPT_S, NULL);
 }
 
 int private_scalar_add (double val, const char *name)

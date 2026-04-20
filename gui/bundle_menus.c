@@ -461,7 +461,7 @@ GtkWidget *make_bundle_content_menu (windata_t *vwin)
 	int n_items = g_list_length(blist);
 	int n_types = 0;
 
-	if (n_items > 12) {
+	if (n_items > 10) {
 	    int i, tcounts[8] = {0};
 
 	    g_list_foreach(blist, blist_get_type_counts, (gpointer) tcounts);

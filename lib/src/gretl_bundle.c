@@ -283,9 +283,9 @@ static void bundled_item_free_data (GretlType type, void *data)
     }
 }
 
-/* Note: we come here only if the replacement type is the
-   same as the original type, apart from the case of
-   inter-conversion of the various scalar types.
+/* Note: we come here only if the replacement type is the same as the
+   original type, apart from the case of inter-conversion of the various
+   scalar types.
 */
 
 static int bundled_item_replace_data (bundled_item *item,
