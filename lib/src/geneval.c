@@ -11756,18 +11756,21 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 {
     char *key = r->v.str;
     GretlType type;
+    int querying;
     int size = 0;
     int is_tmp = 0;
     int gen_t;
     void *val = NULL;
     NODE *ret = NULL;
 
+    querying = (p->flags & P_OBJQRY)? 1 : 0;
+
 #if EDEBUG
     fprintf(stderr, "get_bundle_member: %s[\"%s\"], query=%d\n",
-            l->vname, key, (p->flags & P_OBJQRY)? 1 : 0);
+            l->vname, key, querying);
 #endif
 
-    if ((p->flags & P_OBJQRY) && !gretl_bundle_has_key(l->v.b, key)) {
+    if (querying && !gretl_bundle_has_key(l->v.b, key)) {
         ret = get_aux_node(p, EMPTY, 0, 0);
         ret->flags |= MUT_NODE;
         return ret;
@@ -11864,32 +11867,6 @@ static NODE *get_bundle_array (NODE *n, int f, parser *p)
     return ret;
 }
 
-static const char *optional_bundle_get (gretl_bundle *b,
-                                        const char *key,
-                                        double *px,
-                                        int *err)
-{
-    const char *s = NULL;
-
-    if (!*err) {
-        /* proceed only if we haven't already hit an error */
-        if (px != NULL) {
-            *px = gretl_bundle_get_scalar(b, key, err);
-        } else {
-            s = gretl_bundle_get_string(b, key, err);
-        }
-        if (*err == E_DATA) {
-            /* non-existence of item (E_DATA) is OK, but
-               wrong type (E_TYPES) is not
-            */
-            gretl_error_clear();
-            *err = 0;
-        }
-    }
-
-    return s;
-}
-
 static NODE *curl_bundle_node (NODE *n, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -11900,7 +11877,7 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
 #else
     if (ret != NULL) {
         gretl_bundle *b = NULL;
-        int curl_err = 0;
+	int curl_err = 0;
 
         if (n->t != U_ADDR) {
             p->err = e_types(n);
@@ -11915,44 +11892,9 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
                 }
             }
         }
-
         if (!p->err) {
-            const char *url = NULL;
-            const char *header = NULL;
-            const char *postdata = NULL;
-            char *output = NULL;
-            char *errmsg = NULL;
-            double xinclude = 0;
-	    double xnobody = 0;
-	    int http_code = 0;
-
-            url = gretl_bundle_get_string(b, "URL", &p->err);
-            header = optional_bundle_get(b, "header", NULL, &p->err);
-            postdata = optional_bundle_get(b, "postdata", NULL, &p->err);
-            optional_bundle_get(b, "include", &xinclude, &p->err);
-            optional_bundle_get(b, "nobody", &xnobody, &p->err);
-
-            if (!p->err) {
-                int include = !isnan(xinclude) && (xinclude != 0.0);
-                int nobody = !isnan(xnobody) && (xnobody != 0.0);
-
-                curl_err = gretl_curl(url, header, postdata, include,
-                                      nobody, &output, &errmsg,
-                                      &http_code);
-            }
-
-            if (output != NULL) {
-                p->err = gretl_bundle_set_string(b, "output", output);
-                free(output);
-            } else if (errmsg != NULL) {
-                p->err = gretl_bundle_set_string(b, "errmsg", errmsg);
-                free(errmsg);
-            }
-            if (!p->err) {
-                p->err = gretl_bundle_set_int(b, "http_code", http_code);
-            }
+	    p->err = curl_fill_bundle(b, &curl_err);
         }
-
         if (!p->err) {
             ret->v.xval = curl_err;
         }
@@ -18278,12 +18220,12 @@ static NODE *eval (NODE *t, parser *p)
         if (type_func_in_parentage(t)) {
             p->flags |= P_OBJQRY;
             l = eval(t->L, p);
-            p->flags ^= P_OBJQRY;
             if (p->err) {
                 l = revive_undef_node(l, p);
                 t->L->aux = l;
             }
         } else {
+	    p->flags &= ~P_OBJQRY;
             l = eval(t->L, p);
         }
         if (l == NULL && !p->err) {
