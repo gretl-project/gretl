@@ -3416,24 +3416,37 @@ char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
     return S;
 }
 
+/* apparatus for supporting "virtual series" in bundles */
+
+#define T_UNSET (-1)
+#define T_INVALID (-2)
+
+struct vsinfo {
+    int t1;
+    int t2;
+    const char *expr;
+};
+
 static void check_bundled_mat (gpointer listitem,
 			       gpointer p)
 {
     bundled_item *bi = listitem;
-    int *tlims = (int *) p;
+    struct vsinfo *vi = (struct vsinfo *) p;
 
-    if (bi->type == GRETL_TYPE_MATRIX) {
+    if (bi->type == GRETL_TYPE_MATRIX &&
+	strstr(vi->expr, bi->key) != NULL) {
+	/* probably found a matrix referenced in expr */
 	gretl_matrix *m = bi->data;
 
 	if (gretl_matrix_is_dated(m)) {
 	    int t1 = gretl_matrix_get_t1(m);
 	    int t2 = gretl_matrix_get_t2(m);
 
-	    if (t1 != tlims[0]) {
-		tlims[0] = tlims[0] == -1 ? t1 : -2;
+	    if (t1 != vi->t1) {
+		vi->t1 = vi->t1 == T_UNSET ? t1 : T_INVALID;
 	    }
-	    if (t2 != tlims[1]) {
-		tlims[1] = tlims[1] == -1 ? t2 : -2;
+	    if (t2 != vi->t2) {
+		vi->t2 = vi->t2 == T_UNSET ? t2 : T_INVALID;
 	    }
 	    private_matrix_add_as_shell(m, bi->key);
 	}
@@ -3441,12 +3454,12 @@ static void check_bundled_mat (gpointer listitem,
 }
 
 static int set_bundle_matrix_namespace (gretl_bundle *b,
-					int *tlims)
+					struct vsinfo *vi)
 {
     GList *list;
 
     list = g_hash_table_get_values(b->ht);
-    g_list_foreach(list, check_bundled_mat, tlims);
+    g_list_foreach(list, check_bundled_mat, vi);
     g_list_free(list);
 
     return 0;
@@ -3457,26 +3470,26 @@ gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
 					 int *err)
 {
     gretl_matrix *ret = NULL;
-    int tlims[2] = {-1, -1};
+    struct vsinfo vi = {T_UNSET, T_UNSET, s};
 
-    set_bundle_matrix_namespace(b, tlims);
+    set_bundle_matrix_namespace(b, &vi);
 
-    if (tlims[0] < 0 || tlims[1] < 0) {
+    if (vi.t1 == T_INVALID || vi.t2 == T_INVALID) {
 	*err = E_INVARG;
     } else {
 	ret = generate_matrix(s, NULL, err);
     }
 
     if (*err == 0) {
-	int r = tlims[1] - tlims[0] + 1;
+	int r = vi.t2 - vi.t1 + 1;
 
 	if (ret->rows != r) {
 	    *err = E_INVARG;
 	    gretl_matrix_free(ret);
 	    ret = NULL;
 	} else {
-	    gretl_matrix_set_t1(ret, tlims[0]);
-	    gretl_matrix_set_t2(ret, tlims[1]);
+	    gretl_matrix_set_t1(ret, vi.t1);
+	    gretl_matrix_set_t2(ret, vi.t2);
 	}
     }
 
