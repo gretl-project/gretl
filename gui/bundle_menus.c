@@ -198,7 +198,10 @@ static gchar *alt_bundle_content_label (bundled_item *bi,
 	} else if (bi->type == GRETL_TYPE_INT || bi->type == GRETL_TYPE_BOOL) {
 	    label = g_strdup_printf("%s (%d)", keystr, *(int *) bi->data);
 	} else if (bi->type == GRETL_TYPE_UINT32) {
-	    label = g_strdup_printf("%s (%d)", keystr, *(guint32 *) bi->data);
+	    label = g_strdup_printf("%s (%u)", keystr, *(uint32_t *) bi->data);
+	} else if (bi->type == GRETL_TYPE_UINT64) {
+	    label = g_strdup_printf("%s (%" PRIu64 ")", keystr,
+				    *(uint64_t *) bi->data);
 	}
     } else if (note != NULL) {
 	label = g_strdup_printf("%s (%s)", keystr, note);
