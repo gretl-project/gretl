@@ -3430,10 +3430,10 @@ static void check_bundled_mat (gpointer listitem,
 	    int t2 = gretl_matrix_get_t2(m);
 
 	    if (t1 != tlims[0]) {
-		tlims[0] = tlims[0] == 0 ? t1 : -1;
+		tlims[0] = tlims[0] == -1 ? t1 : -2;
 	    }
 	    if (t2 != tlims[1]) {
-		tlims[1] = tlims[1] == 0 ? t2 : -1;
+		tlims[1] = tlims[1] == -1 ? t2 : -2;
 	    }
 	    private_matrix_add_as_shell(m, bi->key);
 	}
@@ -3457,7 +3457,7 @@ gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
 					 int *err)
 {
     gretl_matrix *ret = NULL;
-    int tlims[2] = {0, 0};
+    int tlims[2] = {-1, -1};
 
     set_bundle_matrix_namespace(b, tlims);
 
@@ -3465,12 +3465,19 @@ gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
 	*err = E_INVARG;
     } else {
 	ret = generate_matrix(s, NULL, err);
-	gretl_matrix_print(ret, "ret");
     }
 
     if (*err == 0) {
-	gretl_matrix_set_t1(ret, tlims[0]);
-	gretl_matrix_set_t2(ret, tlims[1]);
+	int r = tlims[1] - tlims[0] + 1;
+
+	if (ret->rows != r) {
+	    *err = E_INVARG;
+	    gretl_matrix_free(ret);
+	    ret = NULL;
+	} else {
+	    gretl_matrix_set_t1(ret, tlims[0]);
+	    gretl_matrix_set_t2(ret, tlims[1]);
+	}
     }
 
     destroy_private_matrices();
