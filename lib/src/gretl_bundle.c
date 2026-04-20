@@ -3375,92 +3375,103 @@ char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
     return S;
 }
 
-gretl_bundle *get_sysinfo_bundle (int *err)
+static int make_sysinfo_bundle (void)
 {
-    gretl_matrix *memvals = NULL;
+    gretl_bundle *b, *fb;
+    char *s1, *s2, *s3 = NULL;
+    int ival = 0;
 
-    if (sysinfo_bundle == NULL) {
-        gretl_bundle *b = gretl_bundle_new();
-
-        if (b == NULL) {
-            *err = E_ALLOC;
-        } else {
-            gretl_bundle *fb;
-            char *s1, *s2, *s3 = NULL;
-            int ival = 0;
-
-#if HAVE_MPI
-            ival = check_for_mpiexec();
-#endif
-            gretl_bundle_set_scalar(b, "mpi", (double) ival);
-            ival = gretl_max_mpi_processes();
-            gretl_bundle_set_scalar(b, "mpimax", (double) ival);
-            ival = gretl_n_processors();
-            gretl_bundle_set_scalar(b, "nproc", (double) ival);
-            ival = gretl_n_physical_cores();
-            gretl_bundle_set_scalar(b, "ncores", (double) ival);
-#if defined(G_OS_WIN32)
-            ival = win32_get_stack_size();
-#else
-            ival = get_stack_size();
-#endif
-            gretl_bundle_set_scalar(b, "stack_size", (double) ival);
-            ival = gretl_in_gui_mode();
-            gretl_bundle_set_scalar(b, "gui_mode", (double) ival);
-            ival = 0;
-#ifdef _OPENMP
-            ival = 1;
-#endif
-            gretl_bundle_set_scalar(b, "omp", (double) ival);
-            ival = sizeof(void*) == 8 ? 64 : 32;
-            gretl_bundle_set_scalar(b, "wordlen", (double) ival);
-#if defined(G_OS_WIN32)
-            gretl_bundle_set_string(b, "os", "windows");
-#elif defined(__APPLE__)
-            gretl_bundle_set_string(b, "os", "macos");
-#elif defined(linux)
-            gretl_bundle_set_string(b, "os", "linux");
-#else
-            gretl_bundle_set_string(b, "os", "other");
-#endif
-            gretl_bundle_set_string(b, "hostname", g_get_host_name());
-            gretl_bundle_set_string(b, "blas", blas_variant_string());
-	    gretl_bundle_set_string(b, "gnuplot", gnuplot_version_string());
-            if (get_blas_details(&s1, &s2, &s3)) {
-                gretl_bundle_set_string(b, "blascore", s1);
-                gretl_bundle_set_string(b, "blas_parallel", s2);
-                if (s3 != NULL) {
-                    gretl_bundle_set_string(b, "blas_version", s3);
-                }
-            }
-#if defined(COMPILER_IDENT)
-            gretl_bundle_set_string(b, "compiler", COMPILER_IDENT);
-#endif
-	    /* allocated string */
-	    gretl_bundle_donate_data(b, "cpuid", get_cpu_details(),
-				     GRETL_TYPE_STRING, 0);
-            ival = avx_support();
-            gretl_bundle_set_scalar(b, "avx", (double) ival);
-	    /* information pertaining to 'foreign' programs */
-            fb = foreign_info();
-            if (fb != NULL) {
-                gretl_bundle_donate_data(b, "foreign", fb,
-                                         GRETL_TYPE_BUNDLE, 0);
-            }
-        }
-        sysinfo_bundle = b;
+    b = sysinfo_bundle = gretl_bundle_new();
+    if (b == NULL) {
+	return E_ALLOC;
     }
 
-    memvals = gretl_matrix_alloc(1, 2);
-    if (memvals != NULL) {
-        char **S = malloc(2 * sizeof *S);
+#if HAVE_MPI
+    ival = check_for_mpiexec();
+#endif
+    gretl_bundle_set_scalar(b, "mpi", (double) ival);
+    ival = gretl_max_mpi_processes();
+    gretl_bundle_set_scalar(b, "mpimax", (double) ival);
+    ival = gretl_n_processors();
+    gretl_bundle_set_scalar(b, "nproc", (double) ival);
+    ival = gretl_n_physical_cores();
+    gretl_bundle_set_scalar(b, "ncores", (double) ival);
+#if defined(G_OS_WIN32)
+    ival = win32_get_stack_size();
+#else
+    ival = get_stack_size();
+#endif
+    gretl_bundle_set_scalar(b, "stack_size", (double) ival);
+    ival = gretl_in_gui_mode();
+    gretl_bundle_set_scalar(b, "gui_mode", (double) ival);
+    ival = 0;
+#ifdef _OPENMP
+    ival = 1;
+#endif
+    gretl_bundle_set_scalar(b, "omp", (double) ival);
+    ival = sizeof(void*) == 8 ? 64 : 32;
+    gretl_bundle_set_scalar(b, "wordlen", (double) ival);
+#if defined(G_OS_WIN32)
+    gretl_bundle_set_string(b, "os", "windows");
+#elif defined(__APPLE__)
+    gretl_bundle_set_string(b, "os", "macos");
+#elif defined(linux)
+    gretl_bundle_set_string(b, "os", "linux");
+#else
+    gretl_bundle_set_string(b, "os", "other");
+#endif
+    gretl_bundle_set_string(b, "hostname", g_get_host_name());
+    gretl_bundle_set_string(b, "blas", blas_variant_string());
+    gretl_bundle_set_string(b, "gnuplot", gnuplot_version_string());
+    if (get_blas_details(&s1, &s2, &s3)) {
+	gretl_bundle_set_string(b, "blascore", s1);
+	gretl_bundle_set_string(b, "blas_parallel", s2);
+	if (s3 != NULL) {
+	    gretl_bundle_set_string(b, "blas_version", s3);
+	}
+    }
+#if defined(COMPILER_IDENT)
+    gretl_bundle_set_string(b, "compiler", COMPILER_IDENT);
+#endif
+    /* allocated string */
+    gretl_bundle_donate_data(b, "cpuid", get_cpu_details(),
+			     GRETL_TYPE_STRING, 0);
+    ival = avx_support();
+    gretl_bundle_set_scalar(b, "avx", (double) ival);
+    /* information pertaining to 'foreign' programs */
+    fb = foreign_info();
+    if (fb != NULL) {
+	gretl_bundle_donate_data(b, "foreign", fb,
+				 GRETL_TYPE_BUNDLE, 0);
+    }
 
-        memory_stats(memvals->val);
-        S[0] = gretl_strdup("MBtotal");
-        S[1] = gretl_strdup("MBfree");
-        gretl_matrix_set_colnames(memvals, S);
-        gretl_bundle_donate_data(sysinfo_bundle, "mem", memvals,
-                                 GRETL_TYPE_MATRIX, 0);
+    return 0;
+}
+
+gretl_bundle *get_sysinfo_bundle (int *err)
+{
+    if (sysinfo_bundle == NULL) {
+	*err = make_sysinfo_bundle();
+    }
+
+    if (sysinfo_bundle != NULL) {
+	/* Memory usage should be the only element that
+	   might need updating, and we won't stop the
+	   show if this fails.
+	*/
+	gretl_matrix *memvals = gretl_matrix_alloc(1, 2);
+
+	if (memvals != NULL) {
+	    char **S = malloc(2 * sizeof *S);
+
+	    memory_stats(memvals->val);
+	    S[0] = gretl_strdup("MBtotal");
+	    S[1] = gretl_strdup("MBfree");
+	    gretl_matrix_set_colnames(memvals, S);
+	    gretl_bundle_donate_data(sysinfo_bundle,
+				     "mem", memvals,
+				     GRETL_TYPE_MATRIX, 0);
+	}
     }
 
     return sysinfo_bundle;
