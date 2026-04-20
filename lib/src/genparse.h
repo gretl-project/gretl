@@ -787,7 +787,7 @@ int x_sectional_weighted_stat (double *x, const int *list,
 			       const DATASET *dset,
 			       int f, int partial_ok);
 
-/* in geneval.c, wanted in geneval.c */
+/* in geneval.c, called in genfuncs.c */
 double dvar_get_scalar (int i, const DATASET *dset);
 int *node_get_list (NODE *n, parser *p);
 
