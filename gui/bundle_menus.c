@@ -113,7 +113,9 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	    if (type == GRETL_TYPE_INT || type == GRETL_TYPE_BOOL) {
 		*xp = *(int *) val;
 	    } else if (type == GRETL_TYPE_UINT32) {
-		*xp = *(unsigned *) val;
+		*xp = *(uint32_t *) val;
+	    } else if (type == GRETL_TYPE_UINT64) {
+		*xp = *(uint64_t *) val;
 	    } else {
 		*xp = *(double *) val;
 	    }
@@ -211,7 +213,10 @@ static gchar *alt_bundle_content_label (bundled_item *bi,
 	} else if (bi->type == GRETL_TYPE_INT || bi->type == GRETL_TYPE_BOOL) {
 	    label = g_strdup_printf("%s (%d)", keystr, *(int *) bi->data);
 	} else if (bi->type == GRETL_TYPE_UINT32) {
-	    label = g_strdup_printf("%s (%d)", keystr, *(guint32 *) bi->data);
+	    label = g_strdup_printf("%s (%u)", keystr, *(uint32_t *) bi->data);
+	} else if (bi->type == GRETL_TYPE_UINT64) {
+	    label = g_strdup_printf("%s (%" PRIu64 ")", keystr,
+				    *(uint64_t *) bi->data);
 	}
     } else if (note != NULL) {
 	label = g_strdup_printf("%s (%s)", keystr, note);
@@ -264,8 +269,11 @@ static gchar *bundle_content_label (bundled_item *bi,
 	    label = g_strdup_printf("%s (scalar: %d)", keystr,
 				    *(int *) bi->data);
 	} else if (bi->type == GRETL_TYPE_UINT32) {
-	    label = g_strdup_printf("%s (scalar: %d)", keystr,
-				    *(unsigned int *) bi->data);
+	    label = g_strdup_printf("%s (scalar: %u)", keystr,
+				    *(uint32_t *) bi->data);
+	} else if (bi->type == GRETL_TYPE_UINT64) {
+	    label = g_strdup_printf("%s (scalar: %" PRIu64 ")", keystr,
+				    *(uint64_t *) bi->data);
 	}
     } else if (note != NULL) {
 	label = g_strdup_printf("%s (%s: %s)", keystr, typestr, note);
