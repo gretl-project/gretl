@@ -5659,7 +5659,7 @@
 	      <argname>&amp;U</argname>: a pointer-to-matrix to
 	      receive the <by r="T" c="g"/> matrix of residuals, or
 	      <lit>null</lit> if these are not required.  If this
-	      argument is given, the matrix wil be resized as needed,
+	      argument is given, the matrix will be resized as needed,
 	      and the same goes for the other optional arguments.
 	    </para>
 	  </li>
@@ -13505,6 +13505,11 @@
 	  case of series or list input but not for matrix input. To
 	  have missing values ignored in the matrix case, supply
 	  a non-zero value for <argname>skip_na</argname>.
+	</para>
+	<para>
+	  When a list argument is given, the series in the returned list
+	  are named by prepending <lit>s_</lit> to the names of the
+	  original series.
 	</para>
       </description>
     </function>
