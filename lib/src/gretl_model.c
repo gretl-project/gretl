@@ -5383,7 +5383,7 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     pputs(prn, ">\n");
 
     if (pmod->smpl.rseed > 0) {
-	pprintf(prn, "<sample t1=\"%d\" t2=\"%d\" rseed=\"%" PRIu64 "\"/>\n",
+	pprintf(prn, "<sample t1=\"%d\" t2=\"%d\" rseed=\"%" G_GUINT64_FORMAT "\"/>\n",
 		pmod->smpl.t1, pmod->smpl.t2, pmod->smpl.rseed);
     } else {
 	pprintf(prn, "<sample t1=\"%d\" t2=\"%d\"/>\n",

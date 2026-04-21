@@ -215,7 +215,7 @@ static gchar *alt_bundle_content_label (bundled_item *bi,
 	} else if (bi->type == GRETL_TYPE_UINT32) {
 	    label = g_strdup_printf("%s (%u)", keystr, *(uint32_t *) bi->data);
 	} else if (bi->type == GRETL_TYPE_UINT64) {
-	    label = g_strdup_printf("%s (%" PRIu64 ")", keystr,
+	    label = g_strdup_printf("%s (%" G_GUINT64_FORMAT ")", keystr,
 				    *(uint64_t *) bi->data);
 	}
     } else if (note != NULL) {
@@ -272,7 +272,7 @@ static gchar *bundle_content_label (bundled_item *bi,
 	    label = g_strdup_printf("%s (scalar: %u)", keystr,
 				    *(uint32_t *) bi->data);
 	} else if (bi->type == GRETL_TYPE_UINT64) {
-	    label = g_strdup_printf("%s (scalar: %" PRIu64 ")", keystr,
+	    label = g_strdup_printf("%s (scalar: %" G_GUINT64_FORMAT ")", keystr,
 				    *(uint64_t *) bi->data);
 	}
     } else if (note != NULL) {
