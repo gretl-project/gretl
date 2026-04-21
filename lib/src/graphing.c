@@ -2457,6 +2457,11 @@ static const char *plot_output_option (PlotType p, int *pci, int *err)
                generally seem to default to "display"
             */
             s = NULL;
+	} else if (!strcmp(s, "none")) {
+	    /* we should exclude this plot from the
+	       gridplot-collecting routine
+	    */
+	    return s;
         } else if (p == PLOT_GEOMAP) {
             s = NULL;
         } else {
