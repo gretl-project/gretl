@@ -3424,45 +3424,90 @@ char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
 struct vsinfo {
     int t1;
     int t2;
-    const char *expr;
+    int nids;
+    char **ids;
 };
 
-static void check_bundled_mat (gpointer listitem,
-			       gpointer p)
+/* Check a bundled object for inclusion in the private namespace for
+   generating a virtual series. We're looking for objects whose names
+   appear in the array vi->ids of length vi->nids; these objects will be
+   either matrices or scalars.
+*/
+
+static void check_bundled_object (gpointer listitem,
+				  gpointer p)
 {
     bundled_item *bi = listitem;
     struct vsinfo *vi = (struct vsinfo *) p;
 
-    if (bi->type == GRETL_TYPE_MATRIX &&
-	strstr(vi->expr, bi->key) != NULL) {
-	/* probably found a matrix referenced in expr */
-	gretl_matrix *m = bi->data;
+    if (strings_array_position(vi->ids, vi->nids, bi->key) >= 0) {
+	if (bi->type == GRETL_TYPE_MATRIX) {
+	    /* found a matrix named in vi->ids */
+	    gretl_matrix *m = bi->data;
 
-	if (gretl_matrix_is_dated(m)) {
-	    int t1 = gretl_matrix_get_t1(m);
-	    int t2 = gretl_matrix_get_t2(m);
+	    if (gretl_matrix_is_dated(m)) {
+		int t1 = gretl_matrix_get_t1(m);
+		int t2 = gretl_matrix_get_t2(m);
 
-	    if (t1 != vi->t1) {
-		vi->t1 = vi->t1 == T_UNSET ? t1 : T_INVALID;
+		if (t1 != vi->t1) {
+		    vi->t1 = vi->t1 == T_UNSET ? t1 : T_INVALID;
+		}
+		if (t2 != vi->t2) {
+		    vi->t2 = vi->t2 == T_UNSET ? t2 : T_INVALID;
+		}
+		private_matrix_add_as_shell(m, bi->key);
 	    }
-	    if (t2 != vi->t2) {
-		vi->t2 = vi->t2 == T_UNSET ? t2 : T_INVALID;
-	    }
-	    private_matrix_add_as_shell(m, bi->key);
+	} else if (bi->type == GRETL_TYPE_DOUBLE) {
+	    /* found a scalar named in vi->ids */
+	    double val = *(double *) bi->data;
+
+	    private_scalar_add(val, bi->key);
 	}
     }
 }
 
-static int set_bundle_matrix_namespace (gretl_bundle *b,
-					struct vsinfo *vi)
+static int set_bundle_namespace (gretl_bundle *b,
+				 struct vsinfo *vi)
 {
     GList *list;
 
     list = g_hash_table_get_values(b->ht);
-    g_list_foreach(list, check_bundled_mat, vi);
+    g_list_foreach(list, check_bundled_object, vi);
     g_list_free(list);
 
     return 0;
+}
+
+/* Crawl the expression @s looking for sub-strings that are the
+   identifiers of gretl objects. Return an array of such identifiers.
+*/
+
+static char **ids_in_expr (const char *s, int *ns)
+{
+    char **S = NULL;
+    char *id;
+    int n;
+
+    while (*s) {
+	n = gretl_namechar_spn(s);
+	if (n > 0) {
+	    id = gretl_strndup(s, n);
+	    /* If @id is not already in @S and looks like a variable id,
+	       append it to @S via "donation". Otherwise free it.
+	    */
+	    if (strings_array_position(S, *ns, id) < 0 &&
+		!(genr_function_word(id) || is_user_function(id))) {
+		strings_array_donate(&S, ns, id);
+	    } else {
+		free(id);
+	    }
+	    s += n;
+	} else {
+	    s++;
+	}
+    }
+
+    return S;
 }
 
 gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
@@ -3470,9 +3515,15 @@ gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
 					 int *err)
 {
     gretl_matrix *ret = NULL;
-    struct vsinfo vi = {T_UNSET, T_UNSET, s};
+    struct vsinfo vi = {T_UNSET, T_UNSET, 0, NULL};
 
-    set_bundle_matrix_namespace(b, &vi);
+    vi.ids = ids_in_expr(s, &vi.nids);
+    if (vi.nids == 0) {
+	*err = E_INVARG;
+	goto bailout;
+    }
+
+    set_bundle_namespace(b, &vi);
 
     if (vi.t1 == T_INVALID || vi.t2 == T_INVALID) {
 	*err = E_INVARG;
@@ -3483,7 +3534,7 @@ gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
     if (*err == 0) {
 	int r = vi.t2 - vi.t1 + 1;
 
-	if (ret->rows != r) {
+	if (ret->rows != r || ret->cols != 1) {
 	    *err = E_INVARG;
 	    gretl_matrix_free(ret);
 	    ret = NULL;
@@ -3493,7 +3544,10 @@ gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
 	}
     }
 
-    destroy_private_matrices();
+    destroy_private_uvars();
+    strings_array_free(vi.ids, vi.nids);
+
+ bailout:
 
     if (*err == E_INVARG) {
 	gretl_errmsg_sprintf("'%s': invalid virtual series specifier", s);
@@ -3501,6 +3555,8 @@ gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
 
     return ret;
 }
+
+/* end of apparatus for supporting virtual series in bundles */
 
 static int make_sysinfo_bundle (void)
 {

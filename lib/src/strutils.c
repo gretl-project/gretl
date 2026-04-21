@@ -1976,7 +1976,7 @@ int strings_array_prepend_uniq (char ***pS, int *n, const char *p)
  *
  * Allocates storage for an extra member of @S and adds
  * string @p in the last position. Unlike strings_array_add(),
- * the array takes ownnership of @p rather than copying it.
+ * the array takes ownership of @p rather than copying it.
  * On success, the content of @n is incremented by 1.
  *
  * Returns: 0 on success, %E_ALLOC on failure.
@@ -2362,9 +2362,11 @@ int strings_array_cmp (char **strs1, char **strs2, int n)
 
 int strings_array_position (char **strs, int n, const char *s)
 {
-    int i, ret = -1;
+    int ret = -1;
 
     if (s != NULL) {
+	int i;
+
 	for (i=0; i<n && ret<0; i++) {
 	    if (strs[i] != NULL && !strcmp(strs[i], s)) {
 		ret = i;
