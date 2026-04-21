@@ -2609,7 +2609,7 @@ static int real_write_gdt (const char *fname,
 
     if (dset->rseed > 0) {
 	/* record resampling info */
-	pprintf(prn, " rseed=\"%" PRIu64 "\"", dset->rseed);
+	pprintf(prn, " rseed=\"%" G_GUINT64_FORMAT "\"", dset->rseed);
     }
     if (dset->mapfile != NULL) {
 	/* record map link */
