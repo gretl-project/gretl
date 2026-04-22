@@ -5465,7 +5465,7 @@ static int matrix_index_from_string (const char *s,
     return ret;
 }
 
-static int get_matrix_index (NODE *n, matrix_subspec *spec,
+static int get_scalar_index (NODE *n, matrix_subspec *spec,
 			     const gretl_matrix *m,
 			     char pos, parser *p)
 {
@@ -5493,9 +5493,11 @@ static int get_matrix_index (NODE *n, matrix_subspec *spec,
 */
 
 static void build_mspec (NODE *targ, NODE *l, NODE *r,
-			 const gretl_matrix *m, parser *p)
+			 const NODE *obj, parser *p)
 {
     matrix_subspec *spec = targ->v.mspec;
+    gretl_matrix *m = NULL;
+    gretl_bundle *b = NULL;
     int lscalar = 0;
     int rscalar = 0;
     int i = 0, j = 0;
@@ -5511,11 +5513,36 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r,
 #if EDEBUG > 1
     fprintf(stderr, "build_mspec: l->t = %s", getsymb(l->t));
     if (r == NULL) {
-        fprintf(stderr, ", r = NULL\n");
+        fprintf(stderr, ", r = NULL");
     } else {
-        fprintf(stderr, ", r->t = %s\n", getsymb(r->t));
+        fprintf(stderr, ", r->t = %s", getsymb(r->t));
+    }
+    if (obj == NULL) {
+        fprintf(stderr, ", obj = NULL\n");
+    } else {
+        fprintf(stderr, ", obj->t = %s\n", getsymb(obj->t));
     }
 #endif
+
+    if (obj != NULL) {
+	if (obj->t == MAT) {
+	    m = obj->v.m;
+	} else if (obj->t == BUNDLE) {
+	    b = obj->v.b;
+	}
+    }
+
+    /* special case: bundle membership */
+    if (b != NULL && l->t == STR) {
+        if (r == NULL) {
+            spec->ltype = SEL_STR;
+            spec->rtype = SEL_NULL;
+            spec->lsel.str = l->v.str;
+        } else {
+            p->err = e_types(r);
+        }
+        goto finished;
+    }
 
     lscalar = scalar_node(l) || l->t == STR;
     rscalar = (r != NULL && (scalar_node(r) || r->t == STR));
@@ -5523,7 +5550,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r,
     if (lscalar) {
 	char pos = r == NULL ? 'S' : 'L';
 
-	i = get_matrix_index(l, spec, m, pos, p);
+	i = get_scalar_index(l, spec, m, pos, p);
         if (!p->err && r == NULL && i > 0) {
             /* identify and flag the single index case */
             spec->ltype = SEL_SINGLE;
@@ -5534,7 +5561,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r,
     }
 
     if (!p->err && rscalar) {
-	j = get_matrix_index(r, spec, m, 'R', p);
+	j = get_scalar_index(r, spec, m, 'R', p);
     }
 
     if (p->err) {
@@ -5613,46 +5640,44 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r,
     targ->v.mspec = spec;
 }
 
-/* Node holding evaluated result of matrix specification.  The nodes
+/* Node holding evaluated result of sub-object specification.  The nodes
    @l and @r are the left-hand and right-hand parts of the slice
    specification @s, and they "typically" refer to the row and column
    dimensions of a matrix, respectively. But we have to allow for the
    possibility that @r is NULL (as in a slice of a vector), in which
-   case @l could refer either to rows or columns.
+   case @l could refer either to rows or columns. We also allow that
+   the object to be sliced may be a bundle or array, in which case the
+   slice must always be one-dimensional (@l only).
 
-   To support use of column or row names as indices we want to pass
-   the relevant matrix when calling build_mspec(), which requires
-   finding the matrix: it will surely be in the parentage of @s, but
-   exactly where depends on whether the "genr" expression references
-   the matrix directly, or indirectly as a member of a bundle (BMEMB)
-   or element of an array of matrices (OSL).
+   To support use of column or row names as matrix indices we want to
+   give the builder function build_mspec() access to the matrix in
+   question, which requires finding it. It will surely be in the
+   parentage of @s, but exactly where depends on whether the "genr"
+   expression references the matrix directly, or indirectly as a member
+   of a bundle (BMEMB) or element of an array of matrices (OSL).
 */
 
-static NODE *mspec_node (NODE *s, NODE *l, NODE *r, parser *p)
+static NODE *object_slice_node (NODE *s, NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
     if (l->t == UNDEF || (r != NULL && r->t == UNDEF)) {
         p->err = E_DATA;
     } else {
-	const gretl_matrix *m = NULL;
+	const NODE *obj = s->parent->L;
 
-	if (s->parent != NULL) {
-	    const NODE *obj = s->parent->L;
-
-	    if (obj != NULL) {
-		if (obj->t == MAT) {
-		    m = obj->v.m;
-		} else if (obj->t == BMEMB || obj->t == OSL) {
-		    if (obj->aux != NULL && obj->aux->t == MAT) {
-			m = obj->aux->v.m;
-		    }
+	if (obj != NULL) {
+	    if (obj->t == MAT || obj->t == BUNDLE || obj->t == ARRAY) {
+		; /* OK */
+	    } else if (obj->t == BMEMB || obj->t == OSL) {
+		if (obj->aux != NULL) {
+		    obj = obj->aux;
 		}
 	    }
 	}
         ret = aux_mspec_node(p);
         if (ret != NULL && starting(p)) {
-            build_mspec(ret, l, r, m, p);
+            build_mspec(ret, l, r, obj, p);
         }
     }
 
@@ -18820,7 +18845,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case SLRAW:
         /* unevaluated object slice spec */
-        ret = mspec_node(t, l, r, p);
+        ret = object_slice_node(t, l, r, p);
         break;
     case LISTVAR:
         ret = list_member_by_name(l, r, p);
