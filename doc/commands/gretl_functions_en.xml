@@ -5665,10 +5665,12 @@
 	  </li>
 	  <li>
 	    <para>
-	      <argname>&amp;V</argname>: a pointer-to-matrix to
-	      receive the covariance matrix of the parameter
-	      estimates, or <lit>null</lit> if this is not required.
-	      FIXME describe the content.
+	      <argname>&amp;V</argname>: a pointer-to-matrix to receive
+	      a <by r="k" c="k"/> matrix which contains (a) the
+	      covariance matrix of the parameter estimates, if
+	      <argname>Y</argname> has just one column, or (b)
+	      <math>X'X</math><sup>-1</sup> if <argname>Y</argname> has
+	      multiple columns.
 	    </para>
 	  </li>
 	  <li>
