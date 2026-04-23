@@ -14109,6 +14109,35 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 p->err = gretl_matrix_standardize(A, param, skip_na);
             }
         }
+    } else if (f == F_TSOLVEPD) {
+        if (l->t != MAT) {
+            /* matrix a, required */
+            node_type_error(f, 1, MAT, l, p);
+        } else if (m->t != MAT) {
+            /* matrix x, required */
+            node_type_error(f, 2, MAT, m, p);
+        } else {
+	    gretl_matrix *a = mat_node_get_real_matrix(l, p);
+	    gretl_matrix *x = mat_node_get_real_matrix(m, p);
+	    user_var *uv = NULL;
+
+	    if (!null_node(r)){
+		uv = ptr_node_get_uvar(r, NUM, p);
+	    }
+
+	    if (!p->err) {
+		ret = aux_matrix_node(p);
+	    }
+
+	    if (!p->err) {
+		double d;
+		double *pdet = (uv != NULL)? &d : NULL;
+		A = gretl_toeplitz_solve(a, a, x, 1, pdet, &p->err);
+		if (!p->err && uv != NULL) {
+		    user_var_set_scalar_value(uv, d);
+		}
+	    }
+	}
     }
 
     if (post_process) {
@@ -15664,7 +15693,7 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
         if (!p->err) {
             double d, *pdet = (uv != NULL)? &d : NULL;
 
-            ret->v.m = gretl_toeplitz_solve(m1, m2, m3, pdet, &p->err);
+            ret->v.m = gretl_toeplitz_solve(m1, m2, m3, 0, pdet, &p->err);
             if (!p->err && uv != NULL) {
                 user_var_set_scalar_value(uv, d);
             }
@@ -19482,6 +19511,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_SPHCORR:
     case F_SDC:
     case F_CDEMEAN:
+    case F_TSOLVEPD:
     case HF_REGLS:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
@@ -19972,7 +20002,7 @@ static NODE *eval (NODE *t, parser *p)
         break;
     case F_BINPERMS:
         if (scalar_node(l) && scalar_node(r)) {
-            ret = binperm_node(l, r, p);
+           ret = binperm_node(l, r, p);
         } else {
             p->err = E_TYPES;
         }

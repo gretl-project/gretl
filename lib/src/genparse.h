@@ -479,6 +479,7 @@ enum {
     F_INSTRINGS,
     F_THRESHOLD,
     F_JSONGETB,
+    F_TSOLVEPD,
     HF_REGLS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_URCPVAL,

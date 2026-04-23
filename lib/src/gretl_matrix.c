@@ -5261,19 +5261,20 @@ int gretl_cholesky_invert (gretl_matrix *a)
      c1     double precision(m - 1), workspace
      c2     double precision(m - 1), workspace
       m     integer, order of the matrix A
+     pd     integer, flag is positive definiteness is assumed
 
      (c1 and c2 are internalized below)
 
    on exit:
       x     double precision(m), the solution vector
-      dt    pointer to double, determinant
+      dt    pointer to double, determinant if pd == 0, log determinant otherwise
 */
 
-#define TOEPLITZ_SMALL 1.0e-20
+#define TOEPLITZ_SMALL 1.0e-30
 
 static int tsld1 (const double *a1, const double *a2,
                   const double *b, double *x, double *dt,
-                  int m)
+                  int m, int pd)
 {
     double r1, r2, r3, r5, r6;
     int n, i, n1;
@@ -5288,7 +5289,7 @@ static int tsld1 (const double *a1, const double *a2,
 
     r1 = a1[0];
     if (dt != NULL) {
-        *dt = r1;
+        *dt = pd ? log(r1) : r1;
     }
 
     x[0] = b[0] / r1;
@@ -5338,7 +5339,11 @@ static int tsld1 (const double *a1, const double *a2,
             return E_SINGULAR;
         } else {
             if (dt != NULL) {
-                *dt *= r1;
+		if (pd) {
+		    *dt += log(r1);
+		} else {
+		    *dt *= r1;
+		}
             }
         }
 
@@ -5380,7 +5385,8 @@ static int tsld1 (const double *a1, const double *a2,
  * @c: Toeplitz column.
  * @r: Toeplitz row.
  * @b: right-hand side vector.
- * @det: determinant (on exit)
+ * @pd: flag for positive definitness assumed
+ * @det: determinant if pd==0, log determinant otherwise (on exit)
  * @err: error code.
  *
  * Solves Tx = b for the unknown vector x, where T is a Toeplitz
@@ -5397,6 +5403,7 @@ static int tsld1 (const double *a1, const double *a2,
 gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
                                     const gretl_vector *r,
                                     const gretl_vector *b,
+				    int pd,
                                     double *det,
                                     int *err)
 {
@@ -5434,7 +5441,7 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
         *err = E_ALLOC;
     } else {
         /* invoke gretlized netlib routine */
-        *err = tsld1(r->val, c->val + 1, b->val, y->val, det, m);
+        *err = tsld1(r->val, c->val + 1, b->val, y->val, det, m, pd);
         if (*err) {
             gretl_matrix_free(y);
             y = NULL;
