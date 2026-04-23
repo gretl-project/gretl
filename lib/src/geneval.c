@@ -14121,18 +14121,14 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    gretl_matrix *x = mat_node_get_real_matrix(m, p);
 	    user_var *uv = NULL;
 
-	    if (!null_node(r)){
+	    if (!p->err && !null_node(r)) {
 		uv = ptr_node_get_uvar(r, NUM, p);
 	    }
-
-	    if (!p->err) {
-		ret = aux_matrix_node(p);
-	    }
-
 	    if (!p->err) {
 		double d;
 		double *pdet = (uv != NULL)? &d : NULL;
-		A = gretl_toeplitz_solve(a, a, x, 1, pdet, &p->err);
+
+		A = gretl_toeplitz_solve(a, NULL, x, 1, pdet, &p->err);
 		if (!p->err && uv != NULL) {
 		    user_var_set_scalar_value(uv, d);
 		}
