@@ -2833,6 +2833,12 @@
 	  </li>
 	  <li>
             <para>
+              Normal truncada (tn): puntos izquierdo y derecho de truncamiento
+	      (NA para menos/más infinito, respectivamente)
+            </para>
+	  </li>
+	  <li>
+            <para>
               Logística (lgt o s): sin más argumentos
             </para>
 	  </li>
@@ -2915,6 +2921,8 @@
 	  -- &amp; -- &amp; --\\
 	  Normal bivariante &amp; \texttt{D} &amp;
 	  $\rho$ &amp; -- &amp; --\\
+	  Normal truncada &amp; \texttt{tn} &amp;
+	  $l$ &amp; $h$ &amp; --\\
 	  Logística &amp; \texttt{lgt} &amp;
 	  -- &amp; -- &amp; --\\
 	  $t$ de Student (central) &amp; \texttt{t} &amp;
@@ -5599,6 +5607,133 @@
 	  <fncref targ="int"/> y <lit>floor</lit> tienen efectos distintos
 	  con argumentos negativos:<lit>int(-3.5)</lit> genera &minus;3,
 	  mientras que <lit>floor(-3.5)</lit> genera &minus;4.
+	</para>
+      </description>
+    </function>
+
+    <function name="fols" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Y</fnarg>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="matrix">F</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;A</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Función especializada (<quote>MCO factorizados</quote>) que
+	  ofrece un tratamiento óptimo de la regresión de mínimos cuadrados
+	  cuando uno de los regresores es una variable de factor con gran número
+	  de valores diferentes. Este caso se puede manejar incluyendo,
+	  entre los regresores, un conjunto de variables ficticias que
+	  codifiquen los valores de los factores; pero puede ser una operación
+	  más eficiente realizar la estimación MCO sobre los datos a los que
+	  se les restaron las medias de los valores por factor, que es lo que
+	  hace esta función.
+	</para>
+	<para>
+	  Los argumentos son los siguientes..
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <argname>Y</argname>: una matriz <by r="T" c="g"/> que contiene
+	      la(s) variable(s) dependiente(s).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <argname>X</argname>: una matriz <by r="T" c="k"/> que contiene
+	      los otros regresores que no son la variable de factor.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <argname>f</argname>: el factor con muchos valores,
+	      un vector <math>T</math> con valores enteros.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <argname>&amp;U</argname>: un puntero-a-matriz para recibir
+	      la matriz <by r="T" c="g"/> de los errores, o <lit>null</lit> si
+	      estos no se solicitan. Cuando se indica este argumento, la matriz
+	      se va a redimensionar como sea necesario, y lo mismo sucederá
+	      con los otros argumentos opcionales.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <argname>&amp;V</argname>: un puntero-a-matriz para recibir
+	      una matriz <by r="k" c="k"/> que contiene (a) la matriz de
+	      varianzas-covarianzas de los estimadores de los parámetros,
+	      cuando <argname>Y</argname> tiene únicamente una columna,
+	      o (b) <math>X'X</math><sup>-1</sup> cuando <argname>Y</argname>
+	      tiene varias columnas.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <argname>&amp;A</argname>: un puntero-a-matriz para recibir
+	      la matrix <by r="n" c="g"/> con los <quote>efectos fijos</quote>
+	      o con las constantes de los valores por factor, donde <math>n</math>
+	      es el número de valores diferentes de los factores, o <lit>null</lit>
+	      cuando estos no se soliciten.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  Por defecto, las estimaciones se obtienen por medio de la descomposición
+	  de Cholesky, con un último recurso a la descomposición QR si las
+	  columnas de <argname>X</argname> tienen alto grado de multicolinealidad.
+	  Puedes forzar el uso de la descomposición SVD mediante la instrucción
+	  <lit>set svd on</lit>.
+	</para>
+	<para>
+	  A continuación hay algunas pistas sobre como puedes esperar que se
+	  comporte la función <lit>fols</lit> en relación a su alternativa más
+	  próxima, concretamente a la función <fncref targ="mols"/>, incluida la
+	  codificación de variables ficticias para cada valor del factor.
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Lo más importante, <lit>fols</lit> probablemente sea un buen
+	      negocio más rápido cuando los datos están ordenados según
+	      los valores de la variable de factor.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Al margen de otras cosas, la ventaja de velocidad de
+	      <lit>fols</lit> está relacionada positivamente con el número de
+	      valores del factor.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Al margen de otras cosas, la ventaja de velocidad de
+	      <lit>fols</lit> está relacionada negativamente con el número de
+	      observaciones, y con la suma del número de variables dependientes
+	      y de regresores habituales.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Como regla general aproximada, si el número de valores del factor
+	      no es mayor que 32, el número de regresores habituales es de 16
+	      o mayor, el número de observaciones es muy grande, y los datos
+	      no están ordenados según los valores del factor, entonces
+	      la función <lit>fols</lit> puede ser más lenta que la alternativa
+	      <lit>mols</lit>.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  <seelist>
+            <fncref targ="mols"/>
+	  </seelist>
 	</para>
       </description>
     </function>
@@ -9192,6 +9327,7 @@
 	  <seelist>
             <fncref targ="mpols"/>
             <fncref targ="mrls"/>
+	          <fncref targ="fols"/>
 	  </seelist>
 	</para>
       </description>
@@ -11855,6 +11991,12 @@
 	  </li>
 	  <li>
             <para>
+              Normal truncada (tn): puntos izquierdo y derecho de truncamiento
+	      (NA para menos/más infinito, respectivamente)
+            </para>
+	  </li>
+	  <li>
+            <para>
               t de Student (t): grados de libertad
             </para>
 	  </li>
@@ -11929,6 +12071,7 @@
 	  Uniforme (continua) &amp; \texttt{u} o \texttt{U} &amp; mínimo &amp; máximo &amp; --\\
 	  Uniforme (discreta) &amp; \texttt{i} &amp; mínimo &amp; máximo &amp; --\\
 	  Normal &amp; \texttt{z}, \texttt{n} o \texttt{N} &amp; media &amp; desviación típica &amp; --\\
+	  Normal truncada  &amp; \texttt{tn} &amp; menor &amp; mayor &amp; --\\
 	  $t$ de Student &amp; \texttt{t} &amp; grados de libertad &amp; -- &amp; --\\
 	  Chi-cuadrado &amp; \texttt{c}, \texttt{x} o \texttt{X} &amp; grados de libertad &amp; -- &amp; --\\
 	  $F$ de Snedecor &amp; \texttt{f} o \texttt{F} &amp; gl (num.) &amp; gl (den.) &amp; --\\
@@ -12711,6 +12854,7 @@
 	<para>
 	  <seelist>
             <fncref targ="selifr"/>
+            <fncref targ="which"/>
 	  </seelist>
 	</para>
       </description>
@@ -12732,6 +12876,7 @@
 	  <seelist>
             <fncref targ="selifc"/>
             <fncref targ="trimr"/>
+            <fncref targ="which"/>
 	  </seelist>
 	</para>
       </description>
@@ -13362,6 +13507,11 @@
 	  de tipo serie o lista, pero no en el caso de una entrada de tipo matriz.
 	  Para que se ignoren los valores ausentes en el caso matricial, indica
 	  un valor no nulo para <argname>obviar_na</argname>.
+	</para>
+	<para>
+	  Cuando se indica una lista como argumento, las series de la lista que se
+	  devuelve se nombran precediendo con <lit>s_</lit> los nomes de las
+	  series originales.
 	</para>
       </description>
     </function>
@@ -14933,6 +15083,55 @@ d =  8,0000000
 	  Ten en cuenta que si únicamente añades 1 a <lit>wd</lit>, obtienes
 	  una numeración que es válida pero no estándar; concretamente
 	  de Domingo = 1 a Sábado = 7.
+	</para>
+      </description>
+    </function>
+
+    <function name="which" section="matrix" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función responde a la pregunta: ¿Qué elementos de una matriz dada
+	  satisfacen una determinada condición? Literalmente, la comprobación
+	  de cada elemento es la de que este sea cero o no; pero puedes
+	  comprobar cualquier condición que desees, construyendo un argumento
+	  adecuado.
+	</para>
+	<para>
+	  Por ejemplo, supón que tienes una matriz <lit>M</lit> que contiene
+	  variables Normales estándar y quieres saber qué elementos de la misma
+	  son atípicos &mdash;definidos, por ejemplo, como aquellos con un valor
+	  absoluto mayor que 3. Entonces puedes hacer lo siguiente, donde el
+	  operador de comparación con un <quote>punto</quote> traslada la
+	  condición de interés a unos y ceros:
+	</para>
+	<code>
+	  matrix W = which(abs(M) .> 3)
+	  print W
+	</code>
+	<para>
+	  Sea <math>m</math> la notación para el número de coincidencias
+	  con la condición especificada. Si el argumento es un vector (columna
+	  o fila), el valor que se devuelve es un vector columna de longitud
+	  <math>m</math> que contiene los índices de las coincidencias. Si el
+	  argumento tiene tanto un número de filas como de columnas mayor
+	  que uno, el resultado es una matriz de orden <by r="m" c="2"/> que
+	  contiene los índices de fila en la primera columna y los índices de
+	  columna en la segunda. Entonces, continuando con el ejemplo de arriba,
+	  la siguiente matriz que se devolviese indicaría que los únicos atípicos
+	  eran <lit>M[2,2]</lit> y <lit>M[5,3]</lit>.
+	</para>
+	<code>
+	  2 2
+	  5 3
+	</code>
+	<para>
+	  <seelist>
+            <fncref targ="selifc"/>
+            <fncref targ="trimr"/>
+	  </seelist>
 	</para>
       </description>
     </function>

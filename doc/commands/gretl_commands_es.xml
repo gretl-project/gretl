@@ -114,7 +114,7 @@
       </ilist>
       <para context="cli">
 	Cuando se completa con éxito la variante <opt>auto</opt> de la
-	instrución <lit>add</lit>, el 'bundle' proporcionado por
+	instrucción <lit>add</lit>, el 'bundle' proporcionado por
 	el accesor <fncref targ="$model"/> (que señala al modelo aumentado)
 	contiene una lista denominada <lit>add_order</lit>. Esta lista contiene
 	los números ID de las series añadidas en el orden en que fueron
@@ -2293,7 +2293,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>No presenta nada</effect>
+	  <effect>Suprime la presentación de resultados</effect>
 	</option>
 	<option>
 	  <flag>--acf-only</flag>
@@ -6016,7 +6016,7 @@
 	Cuando se proporciona el nombre ficticio <quote><lit>display</lit></quote>
 	para el archivo, el gráfico se muestra en la pantalla en modo interactivo.
 	Cuando se proporciona un nombre de ficheiro con cualquier otra extensión
-	distinta a las antes mencionadas, se escribe un archivo de instruciones de gnuplot.
+	distinta a las antes mencionadas, se escribe un archivo de instrucciones de gnuplot.
       </para>
       <para>
 	Un medio alternativo para dirigir la salida de resultados es con la opción
@@ -11100,7 +11100,7 @@
       </para>
       <para context="cli">
 	Cuando se completa con éxito la variante <opt>auto</opt> de la
-	instrución <lit>omit</lit>, el 'bundle' proporcionado por
+	instrucción <lit>omit</lit>, el 'bundle' proporcionado por
 	el accesor <fncref targ="$model"/> (que señala al modelo reducido)
 	contiene una lista denominada <lit>add_order</lit>. Esta lista contiene
 	los números ID de las series omitidas en el orden en que fueron
@@ -11800,7 +11800,7 @@
 	(<cite key="beck-katz95">Beck y Katz, 1995</cite>) y las desviaciones
 	típicas <quote>Consistentes de Correlación Espacial</quote>
 	(<cite key="driscoll_kraay98">Driscoll y Kraay, 1998</cite>). Estas se
-	pueden seleccionar mediante la instrución <lit>set panel_robust</lit> con
+	pueden seleccionar mediante la instrucción <lit>set panel_robust</lit> con
 	los argumentos <lit>pcse</lit> y <lit>scc</lit>, respectivamente. Otras
 	alternativas a estas tres opciones están disponibles mediante la opción
 	<opt>cluster</opt>; por favor, consulta <guideref targ="chap:robust_vcv"/>
@@ -12020,6 +12020,11 @@
 	  <flag>--boxplot</flag>
 	  <effect>Gráfico único de caja, todos los grupos</effect>
         </option>
+        <option>
+	  <flag>--font</flag>
+	  <optparm>fontspec</optparm>
+	  <effect>Mira abajo</effect>
+        </option>
 	<option>
 	  <flag>--output</flag>
 	  <optparm>nombrearchivo</optparm>
@@ -12059,8 +12064,9 @@
       </code>
       <para>
 	Puedes usar la opción <opt>output=</opt><repl>nombrearchivo</repl>
-	para controlar la forma y el destino del resultado; consulta la instrucción
-	<cmdref targ="gnuplot"/> para obtener más detalles.
+	para controlar la forma y el destino del resultado. Para más detalles
+	sobre esta opción y también sobre la opción <opt>font</opt>, consulta
+	la instrucción <cmdref targ="gnuplot"/> .
       </para>
 
     </description>
@@ -15270,8 +15276,8 @@
 	  <lit>panel_robust</lit>: <lit>arellano</lit> (por defecto),
 	  <lit>pcse</lit> o <lit>scc</lit>. Esto selecciona el estimador de la
 	  matriz de covarianzas robustas para ser utilizado con los modelos
-	  con datos de panel. Consulta a instrución <cmdref targ="panel"/> e
-	  o <guideref targ="chap:robust_vcv"/> para obter máis detalles.
+	  con datos de panel. Consulta la instrucción <cmdref targ="panel"/> y
+	  <guideref targ="chap:robust_vcv"/> para obtener más detalles.
 	  </para>
 	</li>
 	<li>
@@ -15681,7 +15687,7 @@
 	como se indica a continuación.
       </para>
       <para>
-	Primer caso: Un único argumento es el nombre de una serie con valores
+	Primer caso: El único argumento es el nombre de una serie con valores
 	en cadenas de texto. Si el número de valores diferentes es igual al
 	número de grupos del panel, esa serie se utiliza para definir los nombres
 	de los grupos. Si resulta necesario, el contenido numérico de la serie se va a
@@ -15691,23 +15697,21 @@
 	se muestra un fallo.
       </para>
       <para>
-	Segundo caso: El primer argumento es el nombre de una serie, y el segundo
-	es una cadena de texto literal o una variable de cadena que contiene
-	un nombre para cada grupo. Las series se van a generar si no existen ya.
-	Cuando el segundo argumento es una cadena de texto literal o una
-	variable de cadena, los nombres de los grupos deben estar separados por
-	espacios; pero se un nombre incluye espacios, debe delimitarse con
-	comillas precedidas (cada una) de barra inversa. Alternativamente,
-	el segundo argumento puede ser un array de cadenas de texto.
+	Segundo caso: El primer argumento es el nombre de una serie, y el
+	segundo es un 'array' de cadenas de texto, una para cada grupo.
+	Las series se van a generar si no existen ya, y el 'array' proporciona
+	los valores de cadena necesarios. Alternativamente, el segundo argumento
+	puede ser una única cadena de texto, en cuyo caso debe contener los
+	nombres de los grupos separados por espacios.
       </para>
       <para>
 	Por ejemplo, el siguiente código genera una serie que se va llamar
-	<lit>Estado</lit> en la que los nombres de la cadena <lit>cstrs</lit> se repiten
-	cada uno <math>T</math> veces, y siendo <math>T</math> la longitud de las
-	series de tiempo del panel.
+	<lit>Estado</lit> en la que las cadenas de texto en <lit>cstrs</lit> se
+	repiten cada una <math>T</math> veces, y siendo <math>T</math> la
+	longitud de las series de tiempo del panel.
       </para>
       <code>
-	string cstrs = sprintf("Francia Alemania Italia \"Reino Unido\"")
+	strings cstrs = defarray("DE", "ES", "FR", "IT", "UK")
 	setobs Estado cstrs --panel-groups
       </code>
     </description>
@@ -15932,7 +15936,7 @@
 
     <description>
       <para>
-	Esta instrución solo puede utilizarse cuando está preparado un conjunto
+	Esta instrucción solo puede utilizarse cuando está preparado un conjunto
 	de datos. Cuando no indicas ningún argumento, presenta el rango muestral
 	vigente; de outro modo, establece el rango muestral. Puedes definir el
 	rango de varias formas. En la primera alternativa (y en los dos primeros
