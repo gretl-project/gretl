@@ -14601,9 +14601,9 @@
 	  Risolve un sistema di Toeplitz di equazioni lineari, cioè
 	  <math>Tx = b</math> dove <math>T</math> è una matrice
 	  quadrata il cui elemento <math>T</math><sub>i,j</sub> è
-	  uguale a <math>c</math><sub>i-j</sub> per <equation
+	  uguale a <math>c</math><sub>i-j+1</sub> per <equation
 	  status="inline" ascii="i&gt;=j" tex="$i\ge j$"/> e a
-	  <math>r</math><sub>j-i</sub> per <equation status="inline"
+	  <math>r</math><sub>j-i+1</sub> per <equation status="inline"
 	  ascii="i&lt;=j" tex="$i\le j$"/>. Si noti che i primi
 	  elementi di <math>c</math> e <math>r</math> devono essere
 	  uguali; in caso contrario la funzione restituisce un
@@ -14619,6 +14619,12 @@
 	  <math>T</math> non è effettivamente singolare; questo
 	  problema tuttavia non si presenta quando <math>T</math> è
 	  definita positiva.
+	</para>
+	<para>
+	  Se si sa in anticipo che la matrice <math>T</math> è
+	  simmetrica e definita positiva (come ad esempio nel caso di
+	  una matrice di covarianza), la funzione <fncref
+	  targ="toepsolpd"/> fornisce un'alternativa più efficiente.
 	</para>
 	<para>
 	  Se l'argomento opzionale <argname>det</argname> è presente
@@ -14787,6 +14793,38 @@ d =  8.0000000
       </description>
     </function>
 
+    <function name="toepsolpd" section="linalg" output="cvec">
+      <fnargs>
+	<fnarg type="vector">a</fnarg>
+	<fnarg type="vector">b</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;logdet</fnarg>
+      </fnargs>
+      <description>
+	<para>
+  	  Questa funzione è una versione specializzata della funzione
+  	  <fncref targ="toepsolv"/> per la risoluzione di un sistema
+  	  simmetrico di equazioni lineari di Toeplitz, ovvero <math>Tx
+  	  = b</math> dove <math>T</math><sub>i,j</sub> è uguale a
+  	  <math>a</math><sub>|i-j+1|</sub>. Si assume inoltre che la
+  	  matrice <math>T</math> sia definita positiva.
+	</para>
+	<para>
+	  Se viene fornito l'argomento opzionale
+	  <argname>logdet</argname> (in forma di puntatore),
+	  all'uscita esso conterrà il logaritmo del determinante di
+	  <math>T</math>. Si noti che questo è diverso da ciò che fa
+	  <fncref targ="toepsolv"/>, poiché restituisce il
+	  determinante (che potrebbe legittimamente essere negativo
+	  nel caso generale).
+	</para>
+      </description>
+      <para>
+	<seelist>
+          <fncref targ="toepsolv"/>
+	</seelist>
+      </para>
+    </function>
+    
     <function name="typename" section="data-utils" output="string">
       <fnargs>
 	<fnarg type="string">espr</fnarg>

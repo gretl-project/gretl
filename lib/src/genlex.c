@@ -465,7 +465,7 @@ struct str_table funcs[] = {
     { F_LINCOMB,  "lincomb" },
     { F_IMHOF,    "imhof" },
     { F_TOEPSOLV, "toepsolv" },
-    { F_TSOLVEPD, "tsolvepd" },
+    { F_TSOLVEPD, "toepsolpd" },
     { F_RGBMIX,   "rgbmix" },
     { F_DSUM,     "diagcat" },
     { F_CORRGM,   "corrgm" },
