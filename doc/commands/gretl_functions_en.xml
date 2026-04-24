@@ -14392,7 +14392,7 @@
 	  eval det(A)                  # print the determinant
 	  a = A[1,]
 	  d = 0
-	  eval toepsolv(a, a, x, &amp;d)   # use the dedicated function
+	  eval toepsolv(a, a, x, &amp;d) # use the dedicated function
 	  print d
 	</code>
 	<para>
@@ -14567,17 +14567,16 @@ d =  8.0000000
 	<para>
 	  If the optional argument <argname>logdet</argname> is supplied
 	  (in pointer form), it will contain on exit the log determinant
-	  of <math>T</math>. Note that this is different from what
-	  <fncref targ="toepsolv"/> does, since it returns the
-	  determinant (that could legitimately be negative in the
-	  general case).
+	  of <math>T</math>. Note that this is different from <fncref
+	  targ="toepsolv"/>, which returns the determinant (that could
+	  legitimately be negative in the general case).
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="toepsolv"/>
+	  </seelist>
 	</para>
       </description>
-      <para>
-	<seelist>
-          <fncref targ="toepsolv"/>
-	</seelist>
-      </para>
     </function>
     
     <function name="typename" section="data-utils" output="string">
