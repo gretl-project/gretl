@@ -14376,7 +14376,7 @@
 	<para>
 	  If the matrix <math>T</math> is known to be symmetric and
 	  positive definite (like for example in the case of a
-	  covariance matrix), the <fncref targ="toepsolpd"/> function
+	  covariance matrix), the <fncref targ="tsolvepd"/> function
 	  provides a more efficient alternative.
 	</para>
 	<para>
@@ -14425,7 +14425,7 @@ d =  8.0000000
 	</code>
 	<para>
 	  <seelist>
-            <fncref targ="toepsolpd"/>
+            <fncref targ="tsolvepd"/>
 	  </seelist>
 	</para>
       </description>
@@ -14549,7 +14549,7 @@ d =  8.0000000
       </description>
     </function>
 
-    <function name="toepsolpd" section="linalg" output="cvec">
+    <function name="tsolvepd" section="linalg" output="cvec">
       <fnargs>
 	<fnarg type="vector">a</fnarg>
 	<fnarg type="vector">b</fnarg>

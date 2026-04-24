@@ -2,7 +2,7 @@ version 2026b, in progress
 - new function which() to determine which elements of a
   given matrix satisfy a specified condition
 - new function fols() for factorized least squares
-- new function toepsolpd() for solving Toeplitz linear
+- new function tsolvepd() for solving Toeplitz linear
   systems when the Toeplitz matrix is known to be symmetric
   and positive definite
 - probability distribution functions; add support for the

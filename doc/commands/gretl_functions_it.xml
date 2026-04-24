@@ -14624,7 +14624,7 @@
 	  Se si sa in anticipo che la matrice <math>T</math> è
 	  simmetrica e definita positiva (come ad esempio nel caso di
 	  una matrice di covarianza), la funzione <fncref
-	  targ="toepsolpd"/> fornisce un'alternativa più efficiente.
+	  targ="tsolvepd"/> fornisce un'alternativa più efficiente.
 	</para>
 	<para>
 	  Se l'argomento opzionale <argname>det</argname> è presente
@@ -14670,6 +14670,11 @@ x (3 x 1)
 
 d =  8.0000000
 	</code>
+	<para>
+	  <seelist>
+            <fncref targ="tsolvepd"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -14793,7 +14798,7 @@ d =  8.0000000
       </description>
     </function>
 
-    <function name="toepsolpd" section="linalg" output="cvec">
+    <function name="tsolvepd" section="linalg" output="cvec">
       <fnargs>
 	<fnarg type="vector">a</fnarg>
 	<fnarg type="vector">b</fnarg>
@@ -14813,7 +14818,7 @@ d =  8.0000000
 	  <argname>logdet</argname> (in forma di puntatore),
 	  all'uscita esso conterrà il logaritmo del determinante di
 	  <math>T</math>. Si noti che questo è diverso da ciò che fa
-	  <fncref targ="toepsolv"/>, poiché restituisce il
+	  <fncref targ="toepsolv"/>, che restituisce il
 	  determinante (che potrebbe legittimamente essere negativo
 	  nel caso generale).
 	</para>
