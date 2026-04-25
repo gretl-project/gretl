@@ -47,6 +47,9 @@ version 2026b, in progress
   function packages on 32-bit Windows (GTK2)
 - launching of gnuplot via gretl: respect the GNUTERM
   environment variable on Linux, if present
+- Windows ARM64 build: include MPI and make available an
+  ARM64 build of X-13ARIMA-SEATS (x13as)
+- Mac builds: update GTK3 to version 3.24.52
 
 2026-01-30 version 2026a
 - mat2list(): fix potential crashing bug; enhance by using
