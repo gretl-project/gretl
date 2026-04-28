@@ -5667,7 +5667,7 @@ static NODE *object_slice_node (NODE *s, NODE *l, NODE *r, parser *p)
 	if (obj != NULL) {
 	    if (obj->t == MAT || obj->t == BUNDLE || obj->t == ARRAY) {
 		; /* OK */
-	    } else if (obj->t == BMEMB || obj->t == OSL) {
+	    } else if (obj->t == BMEMB || obj->t == OSL || obj->t == UFUN) {
 		if (obj->aux != NULL) {
 		    obj = obj->aux;
 		}
