@@ -204,6 +204,9 @@ eval b.futureX
 print "---- combine -----"
 open wtp.gdt --quiet
 
+# mark the argument series as discrete
+discrete income age
+
 series ia = combine(income, age)
 smpl 1 20
 print income age ia --byobs
