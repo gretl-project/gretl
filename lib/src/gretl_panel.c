@@ -2782,37 +2782,31 @@ static int fix_panelmod_list (MODEL *targ, panelmod_t *pan)
     return 0;
 }
 
-/* Compute F-test or chi-square test for the regular
-   regressors, skipping @nskip trailing coefficients
-   (which can be used to skip time dummies)
+/* Compute F or chi-square test for the regular regressors, skipping
+   @nskip trailing coefficients (e.g. time dummies).
 */
 
 static double panel_overall_test (MODEL *pmod, panelmod_t *pan,
                                   int nskip, gretlopt opt)
 {
     double test = NADBL;
-    int *omitlist = NULL;
+    char *mask = NULL;
+    int i, nm;
+    int err = 0;
 
-    if (pmod->ncoeff == 1) {
+    nm = pmod->ncoeff - pmod->ifc - nskip;
+
+    if (nm <= 1) {
         return test;
     }
 
-    if (nskip > 0) {
-        int i, k = pmod->list[0] - nskip - 2;
-
-        omitlist = gretl_list_new(k);
-        for (i=1; i<=k; i++) {
-            omitlist[i] = pmod->list[i+2];
-        }
+    mask = calloc(pmod->ncoeff, 1);
+    for (i=0; i<nm; i++) {
+	mask[i+pmod->ifc] = 1;
     }
 
-    if (opt & OPT_X) {
-        test = wald_omit_chisq(omitlist, pmod);
-    } else {
-        test = wald_omit_F(omitlist, pmod);
-    }
-
-    free(omitlist);
+    test = wald_omit_test(NULL, mask, pmod, opt, &err);
+    free(mask);
 
     return test;
 }
@@ -2845,21 +2839,17 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
         wrsq = NADBL;
     }
 
-    /* Should we differentiate "regular" regressors from
-       time dummies, if included? For now, yes.
-    */
-
     if (pan->ntdum > 0) {
         wdfn = fmod->ncoeff - 1 - pan->ntdum;
         if (wdfn > 0) {
             wfstt = panel_overall_test(fmod, pan, pan->ntdum,
-                                       OPT_NONE);
+                                       OPT_F);
         }
     } else {
         wdfn = fmod->ncoeff - 1;
         if (wdfn > 0) {
             if (pan->opt & OPT_R) {
-                wfstt = panel_overall_test(fmod, pan, 0, OPT_NONE);
+                wfstt = panel_overall_test(fmod, pan, 0, OPT_F);
             } else {
                 wfstt = (wrsq / (1.0 - wrsq)) * ((double) fmod->dfd / wdfn);
             }
@@ -3660,24 +3650,12 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
     return gretl_model_set_list_as_data(pmod, "droplist", dlist);
 }
 
-static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
+/* joint chi-square test on regular regressors */
+
+static void add_gls_joint_test (MODEL *pmod, panelmod_t *pan)
 {
     double chisq = NADBL;
-    int nc, df = 0;
-
-    fix_panelmod_list(pmod, pan);
-
-    pmod->ybar = pan->pooled->ybar;
-    pmod->sdy = pan->pooled->sdy;
-    pmod->tss = pan->pooled->tss;
-
-    pmod->rsq = NADBL;
-    pmod->adjrsq = NADBL;
-    pmod->fstt = NADBL;
-    pmod->rho = pan->rho;
-    pmod->dw = pan->dw;
-
-    /* add joint chi-square test on regressors */
+    int df = 0;
 
     if (pan->ntdum > 0) {
         df = pmod->ncoeff - 1 - pan->ntdum;
@@ -3692,15 +3670,6 @@ static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
         }
     }
 
-    /* deferred rewriting of ess and sigma, etc. */
-    pmod->ess = gretl_model_get_double(pmod, "fixed_SSR");
-    pmod->sigma = sqrt(pmod->ess / (pmod->nobs - (pmod->ncoeff - 1)));
-    gretl_model_destroy_data_item(pmod, "fixed_SSR");
-    nc = pmod->ncoeff;
-    pmod->ncoeff = pmod->dfn + 1;
-    ls_criteria(pmod);
-    pmod->ncoeff = nc;
-
     if (!na(chisq) && chisq >= 0.0) {
         ModelTest *test = model_test_new(GRETL_TEST_RE_WALD);
 
@@ -3712,6 +3681,34 @@ static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
             maybe_add_test_to_model(pmod, test);
         }
     }
+}
+
+static void add_gls_stats (MODEL *pmod, panelmod_t *pan)
+{
+    int nc;
+
+    fix_panelmod_list(pmod, pan);
+
+    pmod->ybar = pan->pooled->ybar;
+    pmod->sdy = pan->pooled->sdy;
+    pmod->tss = pan->pooled->tss;
+
+    pmod->rsq = NADBL;
+    pmod->adjrsq = NADBL;
+    pmod->fstt = NADBL;
+    pmod->rho = pan->rho;
+    pmod->dw = pan->dw;
+
+    /* deferred rewriting of ess and sigma, etc. */
+    pmod->ess = gretl_model_get_double(pmod, "fixed_SSR");
+    pmod->sigma = sqrt(pmod->ess / (pmod->nobs - (pmod->ncoeff - 1)));
+    gretl_model_destroy_data_item(pmod, "fixed_SSR");
+    nc = pmod->ncoeff;
+    pmod->ncoeff = pmod->dfn + 1;
+    ls_criteria(pmod);
+    pmod->ncoeff = nc;
+
+    add_gls_joint_test(pmod, pan);
 }
 
 static void add_panel_obs_info (MODEL *pmod, panelmod_t *pan)
@@ -3779,7 +3776,7 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
         if (pan->re_uhat != NULL) {
             replace_re_residuals(pmod, pan);
         }
-        fix_gls_stats(pmod, pan);
+        add_gls_stats(pmod, pan);
         panel_model_add_ahat(pmod, dset, pan);
         if (pan->opt & OPT_E) {
             /* record use of Nerlove transformation */
@@ -4873,7 +4870,7 @@ static int save_pooled_model (MODEL *pmod, panelmod_t *pan,
         err = panel_robust_vcv(pmod, pan, dset, dset);
 	if (!err) {
 	    pmod->opt |= OPT_R;
-	    pmod->fstt = panel_overall_test(pmod, pan, 0, OPT_NONE);
+	    pmod->fstt = panel_overall_test(pmod, pan, 0, OPT_F);
 	    pmod->dfd = pan->effn - 1;
 	}
     }
@@ -5136,7 +5133,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     if (!err) {
 	/* equip the panel model with an xlist member */
 	int *dropped = gretl_model_get_list(&mod, "droplist");
-	int *xlist = gretl_list_sublist(list, 2, -1);
+	int *xlist = gretl_list_sublist(mod.list, 2, -1);
 	int lerr = 0;
 
 	free(mod.xlist);

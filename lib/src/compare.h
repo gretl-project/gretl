@@ -91,6 +91,10 @@ typedef enum {
     AUX_BIPROB,
 } ModelAuxCode;
 
+double wald_omit_test (const int *list, char *mask,
+		       MODEL *pmod, gretlopt opt,
+		       int *err);
+
 double wald_omit_F (const int *list, MODEL *pmod);
 
 double wald_omit_chisq (const int *list, MODEL *pmod);
