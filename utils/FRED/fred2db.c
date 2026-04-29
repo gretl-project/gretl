@@ -480,6 +480,7 @@ static int parse_fred_xml (FREDbuf *fb, FILE *fidx, FILE *fbin)
 		} else {
 		    fprintf(stderr, "parse_fred_xml: expected 'seriess', got '%s'\n",
 			    (char *) node->name);
+		    fprintf(stderr, "fb->buf '%s'\n", fb->buf);
 		    err = E_LIMIT;
 		}
 	    }
@@ -489,6 +490,7 @@ static int parse_fred_xml (FREDbuf *fb, FILE *fidx, FILE *fbin)
 	    } else {
 		fprintf(stderr, "parse_fred_xml: expected 'observations', got '%s'\n",
 			(char *) node->name);
+		fprintf(stderr, "fb->buf '%s'\n", fb->buf);
 		err = E_LIMIT;
 	    }
 	}
@@ -564,7 +566,7 @@ static FREDbuf *fredget (FREDtask task, const char *sername,
 
 #if 0
 	/* Switch on full protocol/debug output */
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, TRUE);
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 #endif
 	res = curl_easy_perform(curl);
 	if (res != CURLE_OK) {
@@ -668,7 +670,7 @@ int main (int argc, char **argv)
 	}
 	FREDbuf_free(fb);
 	if (i > 0 && i % 12 == 0) {
-	    fprintf(stderr, "brief pause...\n");
+	    fprintf(stderr, "pause...\n");
 	    sleep(6);
 	}
     }
