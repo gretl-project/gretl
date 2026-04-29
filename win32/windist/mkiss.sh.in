@@ -13,10 +13,10 @@ elif [ "a${ARCH}" = "aucrt" ] ; then
 elif [ "a${ARCH}" = "amsvcrt" ] ; then
   ISSTOP="${topsrc}/win32/windist/isstop.msvcrt"
 elif [ "a${ARCH}" = "acompat" ] ; then
-  # compatibility with earlier Inno version
+  # allow installation of 32-bit gretl on x64
   ISSTOP="${topsrc}/win32/windist/isstop.compat"
 else
-  echo "Please specify i686, x86_64, ucrt or msvcrt"
+  echo "Please specify i686, x86_64, compat, ucrt or msvcrt"
   exit 1
 fi
 
