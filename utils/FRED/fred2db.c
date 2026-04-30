@@ -221,11 +221,11 @@ static int pre_start_obs (FREDbuf *fb, const char *date, int *err)
     return ret;
 }
 
-/* Get the "count" property of an "observations" record, then
-   get the child "observation" records and extract their
-   dates and values. Validate the count of observations
-   actually obtained against what the parent said. If
-   all is OK, write the data values as floats to @fbin.
+/* Get the "count" property of an "observations" record, then get the
+   child "observation" records and extract their dates and
+   values. Validate the count of observations actually obtained
+   against what the parent said. If all is OK, write the data values
+   as floats to @fbin.
 */
 
 static int get_observations_info (xmlNodePtr n, FREDbuf *fb,
@@ -568,6 +568,9 @@ static FREDbuf *fredget (FREDtask task, const char *sername,
 	/* Switch on full protocol/debug output */
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 #endif
+
+	/* 2026-04-30: insert a little pause here? */
+	sleep(1);
 	res = curl_easy_perform(curl);
 	if (res != CURLE_OK) {
 	    if (res == CURLE_WRITE_ERROR) {
