@@ -1,4 +1,4 @@
-version 2026b, in progress
+2026-04-30 version 2026b
 
 The option to suppress the printout from the "corrgm" and
 "xcorrgm" commands has been renamed from --silent to --quiet,
