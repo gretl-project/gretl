@@ -164,6 +164,8 @@ int private_matrix_add (gretl_matrix *M, const char *name);
 
 int private_matrix_add_as_shell (gretl_matrix *M, const char *name);
 
+int private_bundle_add_as_shell (gretl_bundle *b, const char *name);
+
 double get_scalar_value_by_name (const char *name, int *err);
 
 int gretl_is_scalar (const char *name);

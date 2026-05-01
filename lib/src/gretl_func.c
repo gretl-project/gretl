@@ -1699,6 +1699,17 @@ static fnpkg *find_caller_package (const char *name)
 
 #endif
 
+static fnpkg *bundle_pkg;
+
+void set_bundle_pkg (const char *pkgname)
+{
+    if (pkgname == NULL) {
+	bundle_pkg = NULL;
+    } else {
+	bundle_pkg = get_function_package_by_name(pkgname);
+    }
+}
+
 /**
  * get_user_function_by_name:
  * @name: name to test.
@@ -1712,12 +1723,18 @@ static fnpkg *find_caller_package (const char *name)
 
 ufunc *get_user_function_by_name (const char *name)
 {
-    fnpkg *pkg = current_pkg;
+    fnpkg *pkg = NULL;
     ufunc *fun = NULL;
     int i;
 
     if (n_ufuns == 0) {
         return NULL;
+    }
+
+    if (bundle_pkg != NULL) {
+	pkg = bundle_pkg;
+    } else {
+	pkg = current_pkg;
     }
 
     if (pkg == NULL) {

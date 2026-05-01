@@ -409,6 +409,12 @@ int private_matrix_add_as_shell (gretl_matrix *M, const char *name)
 			     M, OPT_P | OPT_S, NULL);
 }
 
+int private_bundle_add_as_shell (gretl_bundle *b, const char *name)
+{
+    return real_user_var_add(name, GRETL_TYPE_BUNDLE,
+			     b, OPT_P | OPT_S, NULL);
+}
+
 int private_scalar_add (double val, const char *name)
 {
     double *px = malloc(sizeof *px);

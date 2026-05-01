@@ -11826,7 +11826,8 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
         ret->v.str = (char *) val;
     } else if (type == GRETL_TYPE_VSERIES) {
 	ret->v.m =
-	    bundle_get_virtual_series(l->v.b, (const char *) val, &p->err);
+	    bundle_get_virtual_series(l->v.b, (const char *) val,
+				      p->dset, &p->err);
 	is_tmp = 1;
     } else if (type == GRETL_TYPE_MATRIX) {
         ret->v.m = (gretl_matrix *) val;

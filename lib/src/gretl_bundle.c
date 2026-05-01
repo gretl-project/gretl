@@ -3462,6 +3462,11 @@ static void check_bundled_object (gpointer listitem,
 	    double val = *(double *) bi->data;
 
 	    private_scalar_add(val, bi->key);
+	} else if (bi->type == GRETL_TYPE_BUNDLE) {
+	    /* found a sub-bundle in vi->ids */
+	    gretl_bundle *b = bi->data;
+
+	    private_bundle_add_as_shell(b, bi->key);
 	}
     }
 }
@@ -3490,7 +3495,7 @@ static char **ids_in_expr (const char *s, int *ns)
 
     while (*s) {
 	n = gretl_namechar_spn(s);
-	if (n > 0) {
+	if (n > 0 && s[n] != '(') {
 	    id = gretl_strndup(s, n);
 	    /* If @id is not already in @S and looks like a variable id,
 	       append it to @S via "donation". Otherwise free it.
@@ -3512,6 +3517,7 @@ static char **ids_in_expr (const char *s, int *ns)
 
 gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
 					 const char *s,
+					 DATASET *dset,
 					 int *err)
 {
     gretl_matrix *ret = NULL;
@@ -3528,7 +3534,11 @@ gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
     if (vi.t1 == T_INVALID || vi.t2 == T_INVALID) {
 	*err = E_INVARG;
     } else {
-	ret = generate_matrix(s, NULL, err);
+	const char *creator = gretl_bundle_get_creator(b);
+
+	set_bundle_pkg(creator);
+	ret = generate_matrix(s, dset, err);
+	set_bundle_pkg(NULL);
     }
 
     if (*err == 0) {

@@ -74,7 +74,8 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     } else if (type == GRETL_TYPE_VSERIES) {
 	gretl_matrix *m;
 
-	m = bundle_get_virtual_series(bundle, (const char *) val, &err);
+	m = bundle_get_virtual_series(bundle, (const char *) val,
+				      dataset, &err);
 	if (!err) {
 	    int t1 = gretl_matrix_get_t1(m);
 	    int t2 = gretl_matrix_get_t2(m);
