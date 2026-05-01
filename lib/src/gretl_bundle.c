@@ -3495,7 +3495,9 @@ static char **ids_in_expr (const char *s, int *ns)
 
     while (*s) {
 	n = gretl_namechar_spn(s);
-	if (n > 0 && s[n] != '(') {
+	if (n > 0 && s[n] == '(') {
+	    s += n + 1;
+	} else if (n > 0) {
 	    id = gretl_strndup(s, n);
 	    /* If @id is not already in @S and looks like a variable id,
 	       append it to @S via "donation". Otherwise free it.
@@ -3541,14 +3543,10 @@ gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
 	set_bundle_pkg(NULL);
     }
 
-    if (*err == 0) {
+    if (*err == 0 && ret->cols == 1 && vi.t1 >= 0 && vi.t2 >= vi.t1) {
 	int r = vi.t2 - vi.t1 + 1;
 
-	if (ret->rows != r || ret->cols != 1) {
-	    *err = E_INVARG;
-	    gretl_matrix_free(ret);
-	    ret = NULL;
-	} else {
+	if (ret->rows == r) {
 	    gretl_matrix_set_t1(ret, vi.t1);
 	    gretl_matrix_set_t2(ret, vi.t2);
 	}
