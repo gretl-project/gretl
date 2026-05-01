@@ -14,7 +14,10 @@ Local:
 * Do "make addons.tar.gz" in the addons directory
 * Create a new versioned gretl directory in the sourceforge files area
 * Make and upload the MS Windows installers (32- and 64-bit intel, arm64)
+  - bash pkg <version> for x86, x64
+  - do arm64 on arm64
 * Make and upload the macOS installers (intel and arm64)
+  - bash pkg [version]
 
 Remote:
 * On sourceforge, make a new versioned subdirectory for gretl,
