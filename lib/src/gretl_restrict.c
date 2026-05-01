@@ -2185,10 +2185,9 @@ static void rmod_check_ifc (MODEL *rmod, const gretl_matrix *y)
     rmod->ifc = reldiff < 9.0e-16;
 }
 
-/* respond to the --full option in case of a restriction on
-   a model estimated via OLS: arrange to replace the "last model"
-   with the restricted OLS estimates (and to print the model
-   if wanted)
+/* Respond to the --full option in case of a restriction on a model
+   estimated via OLS: arrange to replace the "last model" with the
+   restricted OLS estimates (and to print the model if wanted).
 */
 
 static int save_restricted_model (ExecState *state,
@@ -2243,6 +2242,8 @@ static int save_restricted_model (ExecState *state,
 	rmod->list = gretl_list_copy(pmod->list);
 	if (rmod->list == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    rmod->xlist = gretl_list_sublist(rmod->list, 2, -1);
 	}
     }
 
@@ -2303,7 +2304,7 @@ static int save_restricted_model (ExecState *state,
 }
 
 /* generate full restricted estimates: this function is used only for
-   single-equation models, estimated via OLS
+   single-equation models estimated via OLS
 */
 
 static int do_restricted_estimates (ExecState *state,
@@ -2855,9 +2856,9 @@ static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
 }
 
 /* Respond to "end restrict": in the case of a single equation, go
-   ahead and do the test; for a VECM, hand off to the driver in
-   var.c; for non-VAR systems, form the restriction matrices R
-   and q and attach these to the equation system.
+   ahead and do the test; for a VECM, hand off to the driver in var.c;
+   for non-VAR systems, form the restriction matrices R and q and
+   attach these to the equation system.
 */
 
 int

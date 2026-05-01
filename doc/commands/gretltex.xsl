@@ -221,10 +221,19 @@
     <xsl:text>\texttt{</xsl:text>
     <xsl:value-of select="@flag"/>
     <xsl:text>}</xsl:text>
-  </xsl:if> 
-  <xsl:text>\textsl{\detokenize{</xsl:text>
-  <xsl:value-of select="."/>
-  <xsl:text>}} </xsl:text>
+  </xsl:if>
+  <xsl:choose>
+    <xsl:when test="contains(.,'_') or contains(.,'&amp;')">
+      <xsl:text>\textsl{\detokenize{</xsl:text>
+      <xsl:value-of select="."/>
+      <xsl:text>}} </xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>\textsl{</xsl:text>
+      <xsl:value-of select="."/>
+      <xsl:text>} </xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:if test="(@separated and not(preceding-sibling::argument or preceding-sibling::argblock))">
     <xsl:text>\texttt{;} </xsl:text>
   </xsl:if>
@@ -434,9 +443,18 @@
       <xsl:text>. . .</xsl:text>
     </xsl:when>
     <xsl:otherwise>
-      <xsl:text>\textsl{\detokenize{</xsl:text>
-      <xsl:apply-templates/>
-      <xsl:text>}}</xsl:text>
+      <xsl:choose>
+	<xsl:when test="contains(.,'_') or contains(.,'&amp;')">
+	  <xsl:text>\textsl{\detokenize{</xsl:text>
+	  <xsl:apply-templates/>
+	  <xsl:text>}}</xsl:text>
+	</xsl:when>
+	<xsl:otherwise>
+	  <xsl:text>\textsl{</xsl:text>
+	  <xsl:apply-templates/>
+	  <xsl:text>}</xsl:text>
+	</xsl:otherwise>
+      </xsl:choose>
     </xsl:otherwise>
   </xsl:choose>
   <xsl:text> (</xsl:text>

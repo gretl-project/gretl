@@ -171,11 +171,10 @@ static void try_auto_icon_sizing (int *bigger)
     if (monitor != NULL) {
 	int mmw = gdk_monitor_get_width_mm(monitor);
 	int pxw = gdk_screen_get_width(screen);
-	double mm16 = 16 * mmw / (double) pxw;
+	double mm16p = 16 * mmw / (double) pxw;
 
-	if (mm16 < 2.8) {
+	if (mm16p < 2.8) {
 	    /* size of 16 pixels in millimeters */
-	    fprintf(stderr, " auto-setting larger icons\n");
 	    *bigger = 1;
 	}
     }
@@ -215,6 +214,7 @@ void gretl_stock_icons_init (void)
 	if (get_icon_sizing() == ICON_SIZE_AUTO) {
 	    try_auto_icon_sizing(&bigger);
 	}
+	fprintf(stderr, " icons: bigger = %d\n", bigger);
 #endif
 
 	if (bigger) {

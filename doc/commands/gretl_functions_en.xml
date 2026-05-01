@@ -5665,10 +5665,12 @@
 	  </li>
 	  <li>
 	    <para>
-	      <argname>&amp;V</argname>: a pointer-to-matrix to
-	      receive the covariance matrix of the parameter
-	      estimates, or <lit>null</lit> if this is not required.
-	      FIXME describe the content.
+	      <argname>&amp;V</argname>: a pointer-to-matrix to receive
+	      a <by r="k" c="k"/> matrix which contains (a) the
+	      covariance matrix of the parameter estimates, if
+	      <argname>Y</argname> has just one column, or (b)
+	      <math>X'X</math><sup>-1</sup> if <argname>Y</argname> has
+	      multiple columns.
 	    </para>
 	  </li>
 	  <li>
@@ -14350,10 +14352,10 @@
 	  Solves a Toeplitz system of linear equations, that is
 	  <math>Tx = b</math> where <math>T</math> is a square matrix
 	  whose element <math>T</math><sub>i,j</sub> equals
-	  <math>c</math><sub>i-j</sub> for
+	  <math>c</math><sub>i-j+1</sub> for
 	  <equation status="inline"
 	  ascii="i&gt;=j" tex="$i\ge j$"/>
-	  and <math>r</math><sub>j-i</sub> for
+	  and <math>r</math><sub>j-i+1</sub> for
 	  <equation status="inline" ascii="i&lt;=j"
 	  tex="$i\le j$"/>.
 	  Note that the first elements of <math>c</math> and
@@ -14372,6 +14374,12 @@
 	  positive definite.
 	</para>
 	<para>
+	  If the matrix <math>T</math> is known to be symmetric and
+	  positive definite (like for example in the case of a
+	  covariance matrix), the <fncref targ="tsolvepd"/> function
+	  provides a more efficient alternative.
+	</para>
+	<para>
 	  If the optional argument <argname>det</argname> is supplied
 	  (in pointer form), it will contain on exit the determinant
 	  of <math>T</math>. For example, the code:
@@ -14384,7 +14392,7 @@
 	  eval det(A)                  # print the determinant
 	  a = A[1,]
 	  d = 0
-	  eval toepsolv(a, a, x, &amp;d)   # use the dedicated function
+	  eval toepsolv(a, a, x, &amp;d) # use the dedicated function
 	  print d
 	</code>
 	<para>
@@ -14415,6 +14423,11 @@ x (3 x 1)
 
 d =  8.0000000
 	</code>
+	<para>
+	  <seelist>
+            <fncref targ="tsolvepd"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -14536,6 +14549,36 @@ d =  8.0000000
       </description>
     </function>
 
+    <function name="tsolvepd" section="linalg" output="cvec">
+      <fnargs>
+	<fnarg type="vector">a</fnarg>
+	<fnarg type="vector">b</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;logdet</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This function is a specialized version of the <fncref
+	  targ="toepsolv"/> function for solving a symmetric Toeplitz
+	  system of linear equations, that is <math>Tx = b</math>
+	  where <math>T</math><sub>i,j</sub> equals
+	  <math>a</math><sub>|i-j+1|</sub>. The <math>T</math> matrix is also
+	  assumed to be positive definite.
+	</para>
+	<para>
+	  If the optional argument <argname>logdet</argname> is supplied
+	  (in pointer form), it will contain on exit the log determinant
+	  of <math>T</math>. Note that this is different from <fncref
+	  targ="toepsolv"/>, which returns the determinant (that could
+	  legitimately be negative in the general case).
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="toepsolv"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="typename" section="data-utils" output="string">
       <fnargs>
 	<fnarg type="string">expr</fnarg>

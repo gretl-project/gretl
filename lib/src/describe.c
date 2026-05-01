@@ -379,11 +379,10 @@ static double find_hoare_inexact (double *a, double p,
     return low + frac * (high - low);
 }
 
-/* See https://en.wikipedia.org/wiki/Quantile, also
-   Hyndman and Fan, "Sample Quantiles in Statistical
-   Packages" (The American Statistician, 1996).
-   Return the "index" of the @p-quantile for a sample
-   of size @n (which may not be an integer).
+/* See https://en.wikipedia.org/wiki/Quantile, also Hyndman and Fan,
+   "Sample Quantiles in Statistical Packages" (The American
+   Statistician, 1996).  Return the "index" of the @p-quantile for a
+   sample of size @n (which may not be an integer).
 */
 
 static double quantile_index (int n, double p)

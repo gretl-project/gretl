@@ -1,16 +1,18 @@
-set verbose off
 include dbnomics.gfn
 
 prov = "AMECO"
 bundle b = dbnomics_tree_for_provider(prov, 1)
 print b
-bundle c = dbnomics_tree_get_child(b, 1)
+print b.codes
+bundle c = dbnomics_tree_get_child(b, "1")
 print c
+print c.codes
 if c.type == "cat_list"
-   bundle d = dbnomics_tree_get_child(c, 1)
+   bundle d = dbnomics_tree_get_child(c, "1.01")
    print d
 endif
-if d.type == "cat_list" || d.type == "db_list"
-   bundle e = dbnomics_tree_get_child(d, 1)
+if d.type == "cat_list" || d.type == "dset_list"
+   print d.codes
+   bundle e = dbnomics_tree_get_child(d, "NPTD")
    print e
 endif

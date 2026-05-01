@@ -363,6 +363,9 @@ static int read_outer_auto_keys (joiner *jr, int j, int i)
     } else if (jr->auto_keys->native) {
         /* using native time-series info on right */
         ntolabel_8601(sconv, i, jr->r_dset);
+	if (strchr(sconv, '/')) {
+	    gretl_charsub(sconv, '/', '-');
+	}
         s = sconv;
         s_src = 1;
     } else {

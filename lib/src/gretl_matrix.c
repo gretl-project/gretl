@@ -5261,24 +5261,26 @@ int gretl_cholesky_invert (gretl_matrix *a)
      c1     double precision(m - 1), workspace
      c2     double precision(m - 1), workspace
       m     integer, order of the matrix A
+     pd     integer, flag if positive definiteness is assumed
 
      (c1 and c2 are internalized below)
 
    on exit:
       x     double precision(m), the solution vector
-      dt    pointer to double, determinant
+      dt    pointer to double, determinant if pd == 0, log determinant otherwise
 */
 
-#define TOEPLITZ_SMALL 1.0e-20
+#define TOEPLITZ_SMALL 1.0e-30
 
 static int tsld1 (const double *a1, const double *a2,
                   const double *b, double *x, double *dt,
-                  int m)
+                  int m, int pd)
 {
     double r1, r2, r3, r5, r6;
     int n, i, n1;
     double *c1 = NULL;
     double *c2 = NULL;
+    int err = 0;
 
     if (fabs(a1[0]) < TOEPLITZ_SMALL) {
         return E_SINGULAR;
@@ -5288,7 +5290,7 @@ static int tsld1 (const double *a1, const double *a2,
 
     r1 = a1[0];
     if (dt != NULL) {
-        *dt = r1;
+        *dt = pd ? log(r1) : r1;
     }
 
     x[0] = b[0] / r1;
@@ -5330,16 +5332,14 @@ static int tsld1 (const double *a1, const double *a2,
         r1 += r5 * r3;
 
         if (fabs(r1) < TOEPLITZ_SMALL) {
-            free(c1);
-            free(c2);
-            if (dt != NULL) {
-                *dt = NADBL;
-            }
-            return E_SINGULAR;
-        } else {
-            if (dt != NULL) {
-                *dt *= r1;
-            }
+	    err = E_SINGULAR;
+	    goto bailout;
+        } else if (dt != NULL) {
+	    if (pd) {
+		*dt += log(r1);
+	    } else {
+		*dt *= r1;
+	    }
         }
 
         if (n > 1) {
@@ -5369,19 +5369,26 @@ static int tsld1 (const double *a1, const double *a2,
         x[n] = r6;
     }
 
+ bailout:
+
+    if (err && dt != NULL) {
+	*dt = NADBL;
+    }
+
     free(c1);
     free(c2);
 
-    return 0;
+    return err;
 }
 
 /**
  * gretl_toeplitz_solve:
  * @c: Toeplitz column.
- * @r: Toeplitz row.
+ * @r: Toeplitz row (NULL implies that r = c).
  * @b: right-hand side vector.
- * @det: determinant (on exit)
- * @err: error code.
+ * @pd: flag for positive definitness assumed
+ * @det: on exit, determinant if pd==0, log determinant otherwise.
+ * @err: location to receive error code.
  *
  * Solves Tx = b for the unknown vector x, where T is a Toeplitz
  * matrix, that is (zero-based)
@@ -5397,6 +5404,7 @@ static int tsld1 (const double *a1, const double *a2,
 gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
                                     const gretl_vector *r,
                                     const gretl_vector *b,
+				    int pd,
                                     double *det,
                                     int *err)
 {
@@ -5407,8 +5415,8 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
         *det = NADBL;
     }
 
-    if (gretl_is_complex(c) || gretl_is_complex(r) ||
-        gretl_is_complex(b)) {
+    if (gretl_is_complex(c) || gretl_is_complex(b) ||
+	(r != NULL && gretl_is_complex(r))) {
         fprintf(stderr, "E_CMPLX in gretl_toeplitz_solve\n");
         *err = E_CMPLX;
         return NULL;
@@ -5416,14 +5424,13 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 
     /* a few sanity checks */
 
-    if (m == 0 ||
-        m != gretl_vector_get_length(r) ||
-        m != gretl_vector_get_length(b)) {
+    if (m == 0 || m != gretl_vector_get_length(b) ||
+        (r != NULL && m != gretl_vector_get_length(r))) {
         *err = E_NONCONF;
         return NULL;
     }
 
-    if (r->val[0] != c->val[0]) {
+    if (r != NULL && r->val[0] != c->val[0]) {
         *err = E_DATA;
         return NULL;
     }
@@ -5434,7 +5441,10 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
         *err = E_ALLOC;
     } else {
         /* invoke gretlized netlib routine */
-        *err = tsld1(r->val, c->val + 1, b->val, y->val, det, m);
+	const double *a1 = r != NULL ? r->val : c->val;
+	const double *a2 = c->val + 1;
+
+        *err = tsld1(a1, a2, b->val, y->val, det, m, pd);
         if (*err) {
             gretl_matrix_free(y);
             y = NULL;

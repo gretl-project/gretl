@@ -221,11 +221,11 @@ static int pre_start_obs (FREDbuf *fb, const char *date, int *err)
     return ret;
 }
 
-/* Get the "count" property of an "observations" record, then
-   get the child "observation" records and extract their
-   dates and values. Validate the count of observations
-   actually obtained against what the parent said. If
-   all is OK, write the data values as floats to @fbin.
+/* Get the "count" property of an "observations" record, then get the
+   child "observation" records and extract their dates and
+   values. Validate the count of observations actually obtained
+   against what the parent said. If all is OK, write the data values
+   as floats to @fbin.
 */
 
 static int get_observations_info (xmlNodePtr n, FREDbuf *fb,
@@ -480,6 +480,7 @@ static int parse_fred_xml (FREDbuf *fb, FILE *fidx, FILE *fbin)
 		} else {
 		    fprintf(stderr, "parse_fred_xml: expected 'seriess', got '%s'\n",
 			    (char *) node->name);
+		    fprintf(stderr, "fb->buf '%s'\n", fb->buf);
 		    err = E_LIMIT;
 		}
 	    }
@@ -489,6 +490,7 @@ static int parse_fred_xml (FREDbuf *fb, FILE *fidx, FILE *fbin)
 	    } else {
 		fprintf(stderr, "parse_fred_xml: expected 'observations', got '%s'\n",
 			(char *) node->name);
+		fprintf(stderr, "fb->buf '%s'\n", fb->buf);
 		err = E_LIMIT;
 	    }
 	}
@@ -564,8 +566,11 @@ static FREDbuf *fredget (FREDtask task, const char *sername,
 
 #if 0
 	/* Switch on full protocol/debug output */
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, TRUE);
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 #endif
+
+	/* 2026-04-30: insert a little pause here? */
+	sleep(1);
 	res = curl_easy_perform(curl);
 	if (res != CURLE_OK) {
 	    if (res == CURLE_WRITE_ERROR) {
@@ -668,7 +673,7 @@ int main (int argc, char **argv)
 	}
 	FREDbuf_free(fb);
 	if (i > 0 && i % 12 == 0) {
-	    fprintf(stderr, "brief pause...\n");
+	    fprintf(stderr, "pause...\n");
 	    sleep(6);
 	}
     }

@@ -2293,7 +2293,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>Non presenta nada</effect>
+	  <effect>Suprime a presentación de resultados</effect>
 	</option>
 	<option>
 	  <flag>--acf-only</flag>
@@ -12020,6 +12020,11 @@
 	  <flag>--boxplot</flag>
 	  <effect>Gráfica única de caixa, todos os grupos</effect>
         </option>
+        <option>
+	  <flag>--font</flag>
+	  <optparm>fontspec</optparm>
+	  <effect>Mira abaixo</effect>
+        </option>
 	<option>
 	  <flag>--output</flag>
 	  <optparm>nomeficheiro</optparm>
@@ -12059,8 +12064,9 @@
       </code>
       <para>
 	Podes usar a opción <opt>output=</opt><repl>nomeficheiro</repl>
-	para controlar a forma e o destino do resultado; consulta a instrución
-	<cmdref targ="gnuplot"/> para obter máis detalles.
+	para controlar a forma e o destino do resultado. Para máis detalles
+	sobre esta opción e tamén sobre a opción <opt>font</opt>, consulta
+	a instrución <cmdref targ="gnuplot"/> .
       </para>
 
     </description>
@@ -15270,8 +15276,8 @@
 	  <lit>panel_robust</lit>: <lit>arellano</lit> (por defecto),
 	  <lit>pcse</lit> ou <lit>scc</lit>. Isto selecciona o estimador da
 	  matriz de covarianzas robustas para utilizar cos modelos con
-	  datos de panel. Consulta la instrucción <cmdref targ="panel"/> y
-	  <guideref targ="chap:robust_vcv"/> para obtener más detalles.
+	  datos de panel. Consulta a instrución <cmdref targ="panel"/> e o
+	  <guideref targ="chap:robust_vcv"/> para obter máis detalles.
 	  </para>
 	</li>
 	<li>
@@ -15681,7 +15687,7 @@
 	como se indica deseguido.
       </para>
       <para>
-	Primeiro caso: Un único argumento é o nome dunha serie con valores
+	Primeiro caso: O único argumento é o nome dunha serie con valores
 	en cadeas de texto. Se o número de valores diferentes é igual ao
 	número de grupos do panel, esa serie utilízase para definir os nomes
 	dos grupos. Se resulta necesario, o contido numérico da serie vaise
@@ -15691,23 +15697,21 @@
 	amósase un fallo.
       </para>
       <para>
-	Segundo caso: O primeiro argumento é o nome dunha serie, e o segundo
-	é unha cadea de texto literal ou unha variable de cadea que contén
-	un nome para cada grupo. As series vanse xerar se non existen xa.
-	Cando o segundo argumento é unha cadea de texto literal ou unha
-	variable de cadea, os nomes dos grupos deben de estar separados por
-	espazos; pero se un nome inclúe espazos, debe de contornarse con
-	comiñas precedidas (cada unha) de barra inversa. Alternativamente,
-	o segundo argumento pode ser un arranxo de cadeas de texto.
+	Segundo caso: O primeiro argumento é o nome dunha serie, e o
+	segundo é un arranxo de cadeas de texto, unha para cada grupo.
+	As series vanse xerar se non existen xa, e o arranxo proporciona
+	os valores de cadea necesarios. Alternativamente, o segundo argumento
+	pode ser unha única cadea de texto, en cuxo caso debe conter os
+	nomes dos grupos separados por espazos.
       </para>
       <para>
 	Por exemplo, o seguinte código xera unha serie que se vai chamar
-	<lit>Estado</lit> na que os nomes da cadea <lit>cstrs</lit> repítense
-	cada un <math>T</math> veces, e sendo <math>T</math> a longura das
-	series de tempo do panel.
+	<lit>Estado</lit> na que as cadeas de texto en <lit>cstrs</lit> repítense
+	cada unha <math>T</math> veces, e sendo <math>T</math> a longura
+	das series de tempo do panel.
       </para>
       <code>
-	string cstrs = sprintf("Francia Alemaña Italia \"Reino Unido\"")
+	strings cstrs = defarray("DE", "ES", "FR", "IT", "UK")
 	setobs Estado cstrs --panel-groups
       </code>
     </description>

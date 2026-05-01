@@ -59,7 +59,7 @@ struct COMPARE {
     const int *testvars; /* list of variables added or omitted */
 };
 
-/* Given a list of series, check them against the independent variables
+/* Given a @list of series, check them against the independent variables
    included in @pmod and construct a mask with 1s in positions where
    there is a match, 0s otherwise.  If @list is NULL, match all
    regressors other than the constant.
@@ -87,6 +87,12 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 	return NULL;
     }
 
+#if WDEBUG
+    fprintf(stderr, "mask_from_test_list\n");
+    printlist(list, "test list");
+    printlist(pmod->xlist, "pmod->xlist");
+#endif
+
     if (list != NULL) {
 	/* matching members of @list */
 	for (j=1; j<=list[0]; j++) {
@@ -94,10 +100,8 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 	    for (i=1; i<=nx; i++) {
 		if (pmod->xlist[i] == vj) {
 #if WDEBUG
-		    fprintf(stderr, "matched var %d at pmod->list[%d]: "
+		    fprintf(stderr, " matched var %d at pmod->xlist[%d]: "
 			    "set mask[%d] = 1\n", vj, i, i-1);
-		    printlist(list, "test list");
-		    printlist(pmod->xlist, "pmod->xlist");
 #endif
 		    mask[i-1] = 1;
 		    nmask++;
@@ -128,35 +132,43 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
     return mask;
 }
 
-/* Wald (chi-square and/or F) test for a set of zero restrictions on
-   the parameters of a given model, based on the covariance matrix of
-   the unrestricted model. Suitable for use where the original model
-   is estimated by FGLS or IV.  Note that if list is NULL, we do an
-   automatic test, for the significance of all vars but the constant.
+/* Wald (chi-square and/or F) test for a set of zero restrictions on the
+   parameters of a given model, based on the covariance matrix of the
+   unrestricted model. Suitable for use where the original model is
+   estimated by FGLS or IV.  The zero restrictions can be specified by
+   either (a) a @list of series to test, or (b) a @mask with 1s in the
+   test positions, 0s otherwise. If neither @list not @mask is non-NULL
+   the test is for omission of all regressors except the constant.
+
+   The value returned on success is by default a chi-square statistic,
+   but if @opt contains OPT_F it's the F form.
 */
 
-static int
-wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
+double wald_omit_test (const int *list, char *mask,
+		       MODEL *pmod, gretlopt opt,
+		       int *err)
 {
-    char *mask = NULL;
     gretl_matrix *C = NULL;
     gretl_vector *b = NULL;
-    double wX = NADBL;
-    double wF = NADBL;
-    int err = 0;
+    int free_mask = 0;
+    int df = 0;
+    double X2 = NADBL;
 
-    mask = mask_from_test_list(list, pmod, &err);
-    if (err) {
-	free(mask);
-	return err;
+    if (mask == NULL) {
+	mask = mask_from_test_list(list, pmod, err);
+	if (*err) {
+	    free(mask);
+	    return NADBL;
+	}
+	free_mask = 1;
     }
 
-    if (!err) {
-	C = gretl_vcv_matrix_from_model(pmod, mask, &err);
+    if (!*err) {
+	C = gretl_vcv_matrix_from_model(pmod, mask, err);
     }
 
-    if (!err) {
-	b = gretl_coeff_vector_from_model(pmod, mask, &err);
+    if (!*err) {
+	b = gretl_coeff_vector_from_model(pmod, mask, err);
     }
 
 #if WDEBUG
@@ -164,52 +176,34 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
     gretl_matrix_print(b, "coeff");
 #endif
 
-    if (!err) {
-	/* use "left division" to explicit inversion of @C */
+    if (!*err) {
+	/* use "left division" to avoid explicit inversion of @C */
 	gretl_matrix *tmp, *mx;
 
 	mx = gretl_matrix_alloc(1, 1);
-	tmp = gretl_matrix_divide(C, b, GRETL_MOD_NONE, &err);
+	tmp = gretl_matrix_divide(C, b, GRETL_MOD_NONE, err);
 	if (tmp != NULL) {
 	    gretl_matrix_multiply_mod(b, GRETL_MOD_TRANSPOSE,
 				      tmp, GRETL_MOD_NONE,
 				      mx, GRETL_MOD_NONE);
-	    wX = mx->val[0];
+	    X2 = mx->val[0];
 	    gretl_matrix_free(tmp);
 	    gretl_matrix_free(mx);
 	}
+	df = gretl_vector_get_length(b);
     }
 
 #if WDEBUG
-    fprintf(stderr, "wX (quadratic form) = %g\n", wX);
+    fprintf(stderr, "Wald chi-square (quadratic form) = %g\n", X2);
 #endif
 
-    if (!err) {
-	if (wX < 0) {
-	    wF = wX = NADBL;
-	} else {
-	    wF = wX / gretl_vector_get_length(b);
-	}
+    if (free_mask) {
+	free(mask);
     }
-
-    if (!err) {
-	if (chisq != NULL) {
-	    *chisq = wX;
-	}
-	if (F != NULL) {
-	    *F = wF;
-	}
-    }
-
-#if WDEBUG
-    fprintf(stderr, "Wald test: F = %g, Chi^2 = %g\n", wF, wX);
-#endif
-
-    free(mask);
     gretl_matrix_free(C);
     gretl_matrix_free(b);
 
-    return err;
+    return (opt & OPT_F)? X2 / df : X2;
 }
 
 /**
@@ -227,10 +221,9 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 
 double wald_omit_F (const int *list, MODEL *pmod)
 {
-    double F = NADBL;
+    int err = 0;
 
-    wald_test(list, pmod, NULL, &F);
-    return F;
+    return wald_omit_test(list, NULL, pmod, OPT_F, &err);
 }
 
 /**
@@ -248,10 +241,9 @@ double wald_omit_F (const int *list, MODEL *pmod)
 
 double wald_omit_chisq (const int *list, MODEL *pmod)
 {
-    double X = NADBL;
+    int err = 0;
 
-    wald_test(list, pmod, &X, NULL);
-    return X;
+    return wald_omit_test(list, NULL, pmod, OPT_X, &err);
 }
 
 static int add_diffvars_to_test (ModelTest *test, const int *list,
@@ -558,15 +550,17 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
     } else if (opt & OPT_X) {
 	/* chi-square form of Wald test is requested */
 	cmp.stat = GRETL_STAT_WALD_CHISQ;
-	err = wald_test(testvars, umod, &cmp.test, &cmp.F);
+	cmp.X2 = wald_omit_test(testvars, NULL, umod, OPT_X, &err);
 	if (!err) {
+	    cmp.test = cmp.X2;
 	    cmp.pval = chisq_cdf_comp(cmp.dfn, cmp.test);
 	}
     } else {
 	/* F-form of Wald test */
 	cmp.stat = GRETL_STAT_F;
-	err = wald_test(testvars, umod, &cmp.X2, &cmp.test);
+	cmp.F = wald_omit_test(testvars, NULL, umod, OPT_F, &err);
 	if (!err) {
+	    cmp.test = cmp.F;
 	    cmp.pval = snedecor_cdf_comp(cmp.dfn, cmp.dfd, cmp.test);
 	}
     }
@@ -1415,9 +1409,9 @@ int add_test (MODEL *pmod, const int *addvars,
     return add_test_full(pmod, NULL, addvars, dset, opt, prn);
 }
 
-static int wald_omit_test (const int *list, MODEL *pmod,
-			   const DATASET *dset, gretlopt opt,
-			   PRN *prn)
+static int do_wald_omit (const int *list, MODEL *pmod,
+			 const DATASET *dset, gretlopt opt,
+			 PRN *prn)
 {
     int *test = NULL;
     int err = 0;
@@ -1975,7 +1969,7 @@ int omit_test (MODEL *pmod, const int *omitvars,
     int err = omit_test_precheck(pmod, omitvars, opt);
 
     if (!err) {
-	err = wald_omit_test(omitvars, pmod, dset, opt, prn);
+	err = do_wald_omit(omitvars, pmod, dset, opt, prn);
     }
 
     return err;
