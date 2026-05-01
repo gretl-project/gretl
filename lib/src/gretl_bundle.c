@@ -3544,9 +3544,7 @@ gretl_matrix *bundle_get_virtual_series (gretl_bundle *b,
     }
 
     if (*err == 0 && ret->cols == 1 && vi.t1 >= 0 && vi.t2 >= vi.t1) {
-	int r = vi.t2 - vi.t1 + 1;
-
-	if (ret->rows == r) {
+	if (ret->rows == vi.t2 - vi.t1 + 1) {
 	    gretl_matrix_set_t1(ret, vi.t1);
 	    gretl_matrix_set_t2(ret, vi.t2);
 	}
