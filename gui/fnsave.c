@@ -4988,7 +4988,9 @@ int save_function_package_spec (const char *fname, gpointer p)
     function_info *finfo = p;
     PRN *prn;
     char vstr[10];
-    int nnp = 0, nmo = 0;
+    int nnp = 0;
+    int nmo = 0;
+    int nma = 0;
     int i, len;
     int err = 0;
 
@@ -5072,6 +5074,9 @@ int save_function_package_spec (const char *fname, gpointer p)
 	if (user_func_is_menu_only(fun)) {
 	    nmo++;
 	}
+	if (user_func_must_assign(fun)) {
+	    nma++;
+	}
     }
     pputc(prn, '\n');
 
@@ -5097,6 +5102,20 @@ int save_function_package_spec (const char *fname, gpointer p)
 	    ufunc *fun = get_function_from_package(s, finfo->pkg);
 
 	    if (user_func_is_menu_only(fun)) {
+		pprintf(prn, "%s ", s);
+	    }
+	}
+	pputc(prn, '\n');
+    }
+
+    if (nma > 0) {
+	/* must-assign interface names */
+	pputs(prn, "must-assign = ");
+	for (i=0; i<finfo->n_pub; i++) {
+	    const char *s = finfo->pubnames[i];
+	    ufunc *fun = get_function_from_package(s, finfo->pkg);
+
+	    if (user_func_must_assign(fun)) {
 		pprintf(prn, "%s ", s);
 	    }
 	}
