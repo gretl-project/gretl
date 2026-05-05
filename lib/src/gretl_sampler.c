@@ -222,7 +222,7 @@ static void gibbs_attach_param_stats (gretl_bundle *GB,
 
     b = gretl_bundle_get_bundle(GB, pname, NULL);
     if (b != NULL) {
-        gretl_bundle_donate_data(b, "stats", m, GRETL_TYPE_MATRIX, 0);
+        gretl_bundle_donate_data(b, "stats", m, GRETL_TYPE_MATRIX);
     }
 }
 
@@ -591,7 +591,7 @@ static gretl_bundle *make_gibbs_bundle (gretl_matrix *H,
         return NULL;
     }
 
-    gretl_bundle_donate_data(b, "H", H, GRETL_TYPE_MATRIX, 0);
+    gretl_bundle_donate_data(b, "H", H, GRETL_TYPE_MATRIX);
     /* general metadata */
     gretl_bundle_set_int(b, "burnin", gibbs_burnin);
     gretl_bundle_set_int(b, "iterations", gibbs_N);
@@ -601,12 +601,12 @@ static gretl_bundle *make_gibbs_bundle (gretl_matrix *H,
         /* per-variable metadata */
         bi = gretl_bundle_new();
         gretl_bundle_donate_data(bi, "type", gibbs_type_name(gvi[i].gt),
-                                 GRETL_TYPE_STRING, 0);
+                                 GRETL_TYPE_STRING);
         gretl_bundle_set_int(bi, "startcol", gvi[i].startcol + 1);
         gretl_bundle_set_int(bi, "ncols", gvi[i].ncols);
         gretl_bundle_set_int(bi, "discrete", gvi[i].discrete);
         gretl_bundle_donate_data(b, gvi[i].name, bi,
-                                 GRETL_TYPE_BUNDLE, 0);
+                                 GRETL_TYPE_BUNDLE);
     }
 
     return b;

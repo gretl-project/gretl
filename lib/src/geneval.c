@@ -1121,9 +1121,7 @@ struct typeconv conversions[] = {
     { GRETL_TYPE_LIST,    LIST },
     { GRETL_TYPE_STRING,  STR },
     { GRETL_TYPE_BUNDLE,  BUNDLE },
-    { GRETL_TYPE_ARRAY,   ARRAY },
-    { GRETL_TYPE_VSERIES, MAT },
-    { GRETL_TYPE_VSERIES, VSERIES },
+    { GRETL_TYPE_ARRAY,   ARRAY }
 };
 
 static int gen_type_from_gretl_type (GretlType t)
@@ -6164,13 +6162,13 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
             GretlType type = GRETL_TYPE_NONE;
             void *val = NULL;
             int tmp = 0;
-            int size = 0;
+            int virtual = 0;
 
             if (key == NULL) {
                 p->err = E_TYPES;
             } else {
                 val = gretl_bundle_get_element(l->v.b, key, &type,
-                                               &size, &tmp, &p->err);
+                                               &virtual, &tmp, &p->err);
             }
             if (!p->err) {
                 int t = gen_type_from_gretl_type(type);
@@ -8215,7 +8213,7 @@ static GretlType remedy_old_exists (const char *s)
         gretl_bundle *b = get_bundle_by_name(S[0]);
 
         if (b != NULL) {
-            gretl_bundle_get_data(b, S[1], &ret, NULL, NULL);
+            gretl_bundle_get_data(b, S[1], &ret, NULL);
         }
     }
 
@@ -11785,6 +11783,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     GretlType type;
     int querying;
     int size = 0;
+    int virtual = 0;
     int is_tmp = 0;
     int gen_t;
     void *val = NULL;
@@ -11803,15 +11802,15 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
         return ret;
     }
 
-    val = gretl_bundle_get_element(l->v.b, key, &type, &size,
-                                   &is_tmp, &p->err);
+    val = gretl_bundle_get_element(l->v.b, key, &type, &virtual,
+				   &is_tmp, &p->err);
     if (p->err) {
         return ret;
     }
 
-    if (type == GRETL_TYPE_VSERIES && querying) {
+    if (virtual && querying) {
 	ret = aux_empty_node(p);
-	ret->t = VSERIES;
+	ret->t = gen_type_from_gretl_type(type);
 	return ret;
     } else {
 	gen_t = gen_type_from_gretl_type(type);
@@ -11820,15 +11819,15 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
         ret = get_aux_node(p, gen_t, 0, 0);
     }
 
-    if (gretl_is_scalar_type(type)) {
+    if (virtual) {
+	ret->v.m =
+	    bundle_get_virtual_object(l->v.b, type, (const char *) val,
+				      p->dset, &p->err);
+	is_tmp = 1;
+    } else if (gretl_is_scalar_type(type)) {
         ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
     } else if (type == GRETL_TYPE_STRING) {
         ret->v.str = (char *) val;
-    } else if (type == GRETL_TYPE_VSERIES) {
-	ret->v.m =
-	    bundle_get_virtual_series(l->v.b, (const char *) val,
-				      p->dset, &p->err);
-	is_tmp = 1;
     } else if (type == GRETL_TYPE_MATRIX) {
         ret->v.m = (gretl_matrix *) val;
     } else if (type == GRETL_TYPE_BUNDLE) {
@@ -12384,7 +12383,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
         GretlType ltype = 0;
         void *lp;
 
-        lp = gretl_bundle_get_target(bundle, key, &ltype, &size, &err);
+        lp = gretl_bundle_get_target(bundle, key, &ltype, &err);
         if (!err) {
             targ = gretl_type_from_gen_type(p->targ);
             err = lhs_type_check(targ, ltype, BUNDLE);
@@ -12440,7 +12439,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
         /* at this point @targ is indeterminate, but maybe there's
            an existing member to fix its value?
         */
-        void *lp = gretl_bundle_get_target(bundle, key, &targ, NULL, NULL);
+        void *lp = gretl_bundle_get_target(bundle, key, &targ, NULL);
 
         if (targ == GRETL_TYPE_ARRAY) {
             targ = gretl_array_get_type(lp);
@@ -12499,6 +12498,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
             }
             break;
         case SERIES:
+	    /* FIXME */
             ptr = rhs->v.xvec;
             type = GRETL_TYPE_SERIES;
             size = p->dset->n;
@@ -12568,13 +12568,13 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
         }
         if (donate) {
             /* it's OK to hand over the data pointer */
-            err = gretl_bundle_donate_data(bundle, key, ptr, type, size);
+            err = gretl_bundle_donate_data(bundle, key, ptr, type);
             if (ptr == rhs->v.ptr) {
                 rhs->v.ptr = NULL; /* avoid freeing! */
             }
         } else {
             /* the data must be copied into the bundle */
-            err = gretl_bundle_set_data(bundle, key, ptr, type, size);
+            err = gretl_bundle_set_data(bundle, key, ptr, type);
         }
         if (!err && type == GRETL_TYPE_MATRIX) {
             /* for use by genr_get_output_matrix() */
@@ -14762,14 +14762,6 @@ static void node_nullify_ptr (NODE *n)
     else if (n->t == SERIES) n->v.xvec = NULL;
 }
 
-/* 2024-11-05: in defbundle() and _() we've been turning a
-   1 x 1 matrix argument into a scalar bundle member. It
-   seems this is actually not a good idea so now we don't
-   do it -- but to re-establish that behavior, define
-   BUNDLED_MATRIX_SPECIAL to non-zero.
-*/
-#define BUNDLED_MATRIX_SPECIAL 0
-
 /* supports retrieval of data for candidate array elements
    or bundle members
 */
@@ -14791,12 +14783,6 @@ static void *node_get_ptr (NODE *n, int f, parser *p, int *donate)
         } else if (t == NUM) {
             ptr = &n->v.xval;
         }
-#if BUNDLED_MATRIX_SPECIAL
-        else if (scalar_matrix_node(n)) {
-            ptr = n->v.m->val;
-            t = NUM;
-        }
-#endif
     }
 
     if (ptr == NULL) {
@@ -15901,22 +15887,18 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
             } else {
                 /* we need some valid content */
                 gtype = gretl_type_from_gen_type(e->t);
-                if (type_can_be_bundled(gtype)) {
-                    int size = 0;
-
-                    if (e->t == SERIES) {
-                        size = p->dset->n;
-                    }
-#if BUNDLED_MATRIX_SPECIAL
-                    else if (scalar_matrix_node(e)) {
-                        gtype = GRETL_TYPE_DOUBLE;
-                    }
-#endif
+		if (gtype == GRETL_TYPE_SERIES) {
+		    if (donate) {
+			gretl_bundle_donate_series(b, key, e->v.xvec, p->dset->n);
+		    } else {
+			gretl_bundle_set_series(b, key, e->v.xvec, p->dset->n);
+		    }
+		} else if (type_can_be_bundled(gtype)) {
                     ptr = node_get_ptr(e, t->t, p, &donate);
                     if (donate) {
-                        gretl_bundle_donate_data(b, key, ptr, gtype, size);
+                        gretl_bundle_donate_data(b, key, ptr, gtype);
                     } else {
-                        gretl_bundle_set_data(b, key, ptr, gtype, size);
+                        gretl_bundle_set_data(b, key, ptr, gtype);
                     }
                 } else {
                     p->err = e_types(e);

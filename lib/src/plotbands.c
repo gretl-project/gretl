@@ -245,7 +245,7 @@ static const gretl_matrix *retrieve_bandmat (gretl_bundle *b,
     GretlType t;
     void *ptr;
 
-    ptr = gretl_bundle_get_data(b, "bandmat", &t, NULL, err);
+    ptr = gretl_bundle_get_data(b, "bandmat", &t, err);
 
     if (!*err) {
         if (t == GRETL_TYPE_MATRIX) {
@@ -264,7 +264,6 @@ struct band_data {
     GretlType t;
     char *s;
     double c;
-    int sz;
 };
 
 static int band_type_error (struct band_data *bdata,
@@ -339,8 +338,7 @@ static band_info *band_info_from_bundle (int matrix_mode,
 
 	/* first pass */
 	for (i=imin; i<imax && !*err; i++) {
-	    data = gretl_bundle_get_data(b, keys[i], &(bdata[i].t),
-					 &(bdata[i].sz), NULL);
+	    data = gretl_bundle_get_data(b, keys[i], &(bdata[i].t), NULL);
 	    if (data != NULL) {
 		if (bdata[i].t == GRETL_TYPE_STRING) {
 		    bdata[i].s = (char *) data;

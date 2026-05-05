@@ -153,7 +153,6 @@ typedef enum {
     GRETL_TYPE_ARRAYS_REF,
     GRETL_TYPE_VOID,
     GRETL_TYPE_NUMERIC,
-    GRETL_TYPE_VSERIES,
     GRETL_TYPE_ANY
 } GretlType;
 

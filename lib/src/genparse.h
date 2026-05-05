@@ -124,7 +124,6 @@ enum {
 	      IVEC,       /* array of ints, not a varlist */
   /* 90 */    OSL,        /* "slice" of object (matrix, array, string) */
               USERIES,    /* named series (defined only for error reporting) */
-	      VSERIES,    /* virtual series (for type reporting only) */
 	      SUB_ADDR,   /* "address" of (e.g.) array element */
               INC,        /* increment */
               DEC,        /* decrement */

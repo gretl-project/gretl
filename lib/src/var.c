@@ -5238,7 +5238,7 @@ static gretl_bundle *johansen_bundlize (const GRETL_VAR *var,
     }
     if (j->G != NULL) {
 	gretl_bundle_donate_data(b, "G_array", j->G,
-				 GRETL_TYPE_ARRAY, 0);
+				 GRETL_TYPE_ARRAY);
 	j->G = NULL; /* don't double-free */
     }
 
@@ -5614,7 +5614,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     /* deterministic terms: pack in matrix */
     d = make_detflags_matrix(var);
     gretl_bundle_donate_data(b, "detflags", d,
-                             GRETL_TYPE_MATRIX, 0);
+                             GRETL_TYPE_MATRIX);
 
     /* lists: lags, ylist, xlist, rlist */
     if (var->lags != NULL) {
@@ -5622,7 +5622,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 
         if (!err) {
             gretl_bundle_donate_data(b, "lags", v,
-                                     GRETL_TYPE_MATRIX, 0);
+                                     GRETL_TYPE_MATRIX);
             gretl_bundle_set_note(b, "lags", "gappy lags vector");
         }
     }
@@ -5648,7 +5648,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 					     GRETL_MOD_NONE);
 
 	    if (A != NULL) {
-		gretl_bundle_donate_data(b, "A", A, GRETL_TYPE_MATRIX, 0);
+		gretl_bundle_donate_data(b, "A", A, GRETL_TYPE_MATRIX);
 	    }
 	}
     }
@@ -5703,7 +5703,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 
         if (jb != NULL) {
             err = gretl_bundle_donate_data(b, "vecm_info", jb,
-                                           GRETL_TYPE_BUNDLE, 0);
+                                           GRETL_TYPE_BUNDLE);
         }
     }
 

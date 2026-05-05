@@ -5127,20 +5127,18 @@ int bundlize_model_data_items (const MODEL *pmod, gretl_bundle *b)
 		m = my_matrix_from_list(item);
 		if (m != NULL) {
 		    err = gretl_bundle_donate_data(b, bkey, m,
-						   GRETL_TYPE_MATRIX,
-						   0);
+						   GRETL_TYPE_MATRIX);
 		}
 	    } else {
 		err = gretl_bundle_set_list(b, bkey, item->ptr);
 	    }
 	} else if (item->type == GRETL_TYPE_ARRAY) {
-	    gretl_bundle_set_data(b, bkey, item->ptr, item->type, 0);
+	    gretl_bundle_set_data(b, bkey, item->ptr, item->type);
 	} else if (item->type == GRETL_TYPE_CMPLX_ARRAY) {
 	    m = matrix_from_cmplx(item);
 	    if (m != NULL) {
 		err = gretl_bundle_donate_data(b, bkey, m,
-					       GRETL_TYPE_MATRIX,
-					       0);
+					       GRETL_TYPE_MATRIX);
 	    }
 	}
     }
@@ -5157,7 +5155,7 @@ int bundlize_model_data_items (const MODEL *pmod, gretl_bundle *b)
 		bt = bundlize_test(test);
 		if (bt != NULL) {
 		    err = gretl_bundle_donate_data(b, tkey, bt,
-						   GRETL_TYPE_BUNDLE, 0);
+						   GRETL_TYPE_BUNDLE);
 		}
 	    }
 	}

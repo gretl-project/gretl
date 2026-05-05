@@ -384,7 +384,7 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 		/* types of svm and kernel: int or string */
 		GretlType type = 0;
 		void *ptr = gretl_bundle_get_data(b, pinfo[i].key,
-						  &type, NULL, &err);
+						  &type, &err);
 		if (type == GRETL_TYPE_INT) {
 		    *(int *) elem[i] = *(int *) ptr;
 		} else if (type == GRETL_TYPE_DOUBLE) {
@@ -491,7 +491,7 @@ static int bundle_as_matrix (gretl_bundle *b, const char *key,
 	return E_ALLOC;
     } else {
 	memcpy(m->val, xvals, n * sizeof *xvals);
-	gretl_bundle_donate_data(b, key, m, GRETL_TYPE_MATRIX, 0);
+	gretl_bundle_donate_data(b, key, m, GRETL_TYPE_MATRIX);
 	return 0;
     }
 }
@@ -505,7 +505,7 @@ static int bundle_as_list (gretl_bundle *b, const char *key,
 	return E_ALLOC;
     } else {
 	memcpy(list + 1, ivals, n * sizeof *ivals);
-	gretl_bundle_donate_data(b, key, list, GRETL_TYPE_LIST, 0);
+	gretl_bundle_donate_data(b, key, list, GRETL_TYPE_LIST);
 	return 0;
     }
 }
@@ -570,8 +570,7 @@ static int svm_model_save_to_bundle (const sv_model *model,
 		gretl_matrix_set(m, i, j, model->sv_coef[j][i]);
 	    }
 	}
-	gretl_bundle_donate_data(b, "sv_coef", m,
-				 GRETL_TYPE_MATRIX, 0);
+	gretl_bundle_donate_data(b, "sv_coef", m, GRETL_TYPE_MATRIX);
     }
 
     {
@@ -616,9 +615,9 @@ static int svm_model_save_to_bundle (const sv_model *model,
 	} else {
 	    gretl_bundle_set_int(b, "n_elements", n_elements);
 	    gretl_bundle_donate_data(b, "SV_indices", aidx,
-				     GRETL_TYPE_ARRAY, 0);
+				     GRETL_TYPE_ARRAY);
 	    gretl_bundle_donate_data(b, "SV_vecs", avec,
-				     GRETL_TYPE_ARRAY, 0);
+				     GRETL_TYPE_ARRAY);
 	}
     }
 
@@ -651,7 +650,7 @@ static void save_results_to_bundle (const sv_parm *parm,
 	    gretl_matrix_set_colnames(w->xdata, S);
 	}
 	gretl_bundle_donate_data(b, "xvalid_results", w->xdata,
-				 GRETL_TYPE_MATRIX, 0);
+				 GRETL_TYPE_MATRIX);
 	w->xdata = NULL;
     }
 }
@@ -668,12 +667,12 @@ static void save_probs_to_bundle (sv_wrapper *w,
 {
     if (w->Ptrain != NULL) {
 	gretl_bundle_donate_data(b, "Ptrain", w->Ptrain,
-				 GRETL_TYPE_MATRIX, 0);
+				 GRETL_TYPE_MATRIX);
 	w->Ptrain = NULL;
     }
     if (w->Ptest != NULL) {
 	gretl_bundle_donate_data(b, "Ptest", w->Ptest,
-				 GRETL_TYPE_MATRIX, 0);
+				 GRETL_TYPE_MATRIX);
 	w->Ptest = NULL;
     }
     if (!na(w->svr_sigma)) {
@@ -2562,7 +2561,7 @@ static int get_optional_int (gretl_bundle *b, const char *key,
     GretlType type = 0;
     void *ptr;
 
-    ptr = gretl_bundle_get_data(b, key, &type, NULL, NULL);
+    ptr = gretl_bundle_get_data(b, key, &type, NULL);
 
     if (ptr != NULL) {
 	if (type == GRETL_TYPE_INT) {

@@ -3148,7 +3148,6 @@ static SEXP make_R_matrix (const gretl_matrix *m, int *err)
 static SEXP make_R_bundle (gretl_bundle *b, int *err)
 {
     GretlType type;
-    int size;
     void *ptr;
     char **keys;
     SEXP res;
@@ -3170,7 +3169,7 @@ static SEXP make_R_bundle (gretl_bundle *b, int *err)
     res = R_mkNamed(VECSXP, (const char **) keys);
 
     for (i=0; i<n && !*err; i++) {
-        ptr = gretl_bundle_get_data(b, keys[i], &type, &size, err);
+        ptr = gretl_bundle_get_data(b, keys[i], &type, err);
         if (*err) {
             break;
         }
@@ -3489,7 +3488,7 @@ static gretl_bundle *bundle_from_R (SEXP s, int *err)
             ptr = object_from_R(si, key, type, err);
         }
         if (!*err) {
-            *err = gretl_bundle_set_data(b, key, ptr, type, 0);
+            *err = gretl_bundle_set_data(b, key, ptr, type);
         }
     }
 

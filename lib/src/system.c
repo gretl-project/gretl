@@ -3526,7 +3526,7 @@ int equation_system_bundlize (equation_system *sys,
 
         if (dt != NULL) {
             gretl_bundle_donate_data(b, "diag_test", dt,
-                                     GRETL_TYPE_BUNDLE, 0);
+                                     GRETL_TYPE_BUNDLE);
         }
     }
 

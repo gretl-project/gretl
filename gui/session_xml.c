@@ -440,7 +440,7 @@ static gretl_bundle *session_model_to_bundle (const char *fname,
 	    mb = bundle_from_system(ptr, otype, dset, err);
 	}
 	/* add the model's name to its bundle */
-	gretl_bundle_set_data(mb, "name", (char *) name, GRETL_TYPE_STRING, 0);
+	gretl_bundle_set_data(mb, "name", (char *) name, GRETL_TYPE_STRING);
     }
 
     if (ptr != NULL) {
@@ -558,7 +558,7 @@ static gretl_bundle *session_xml_to_bundle (const char *fname,
 		    if (!*err) {
 			obj_errs += session_models_to_bundles(cur, doc, am, dset, sdir);
 			*err = gretl_bundle_donate_data(sb, "models", am,
-							GRETL_TYPE_ARRAY, 0);
+							GRETL_TYPE_ARRAY);
 		    }
 		}
 		break;

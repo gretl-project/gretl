@@ -4546,7 +4546,6 @@ int do_nonparam_model (selector *sr)
                                 yname, xname, d, q, robust);
             record_command_verbatim();
         }
-
     } else if (!err && ci == NADARWAT) {
         int LOO = (opt & OPT_O)? 1 : 0;
         double trim = libset_get_double(NADARWAT_TRIM);

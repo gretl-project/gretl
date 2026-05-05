@@ -875,39 +875,6 @@ static int gretl_matrix_bcast (gretl_matrix **pm, int id, int root)
     return err;
 }
 
-static int gretl_series_bcast (double **px, int len,
-                               int id, int root)
-{
-    double *x = NULL;
-    int err = 0;
-
-    if (id == root) {
-        x = *px;
-        if (x == NULL) {
-            return E_DATA;
-        }
-    } else {
-        /* everyone else needs to allocate space */
-        x = malloc(len * sizeof *x);
-        if (x == NULL) {
-            return E_ALLOC;
-        }
-    }
-
-    if (!err) {
-        /* broadcast the series */
-        err = mpi_bcast(x, len, mpi_double, root, mpi_comm_world);
-    }
-
-    if (err) {
-        gretl_mpi_error(&err);
-    } else if (id != root) {
-        *px = x;
-    }
-
-    return err;
-}
-
 static int gretl_list_bcast (int **plist, int id, int root)
 {
     int *list = NULL;
@@ -1075,7 +1042,9 @@ static int compose_msgbuf (char *buf, GretlType type,
     }
 
     sprintf(buf, "%d %s %d", type, key, n);
-    *size = n;
+    if (size != NULL) {
+	*size = n;
+    }
 
     return 0;
 }
@@ -1105,7 +1074,6 @@ static int gretl_bundle_bcast (gretl_bundle **pb,
     gretl_array *a = NULL;
     gretl_bundle *bsub = NULL;
     gretl_array *keys = NULL;
-    double *x = NULL;
     GretlType type;
     char key[32];
     void *data;
@@ -1140,27 +1108,25 @@ static int gretl_bundle_bcast (gretl_bundle **pb,
     for (i=0; i<nk && !err; i++) {
         /* loop across bundle keys */
         memset(msgbuf, 0, msglen);
-        size = 0;
+	size = 0;
         data = NULL;
         m = NULL;
         a = NULL;
         bsub = NULL;
-        x = NULL;
 
         if (id == root) {
             const char *rkey = gretl_array_get_data(keys, i);
 
-            data = gretl_bundle_get_data(b, rkey, &type, &size, &err);
+            data = gretl_bundle_get_data(b, rkey, &type, &err);
             if (!err) {
                 compose_msgbuf(msgbuf, type, rkey, &size, data);
-                if (type == GRETL_TYPE_MATRIX) {
+                if (type == GRETL_TYPE_MATRIX ||
+		    type == GRETL_TYPE_SERIES) {
                     m = (gretl_matrix *) data;
                 } else if (type == GRETL_TYPE_ARRAY) {
                     a = (gretl_array *) data;
                 } else if (type == GRETL_TYPE_BUNDLE) {
                     bsub = (gretl_bundle *) data;
-                } else if (type == GRETL_TYPE_SERIES) {
-                    x = (double *) data;
                 }
             }
         }
@@ -1174,25 +1140,21 @@ static int gretl_bundle_bcast (gretl_bundle **pb,
         if (err) {
             break;
         }
-        if (type == GRETL_TYPE_MATRIX) {
+        if (type == GRETL_TYPE_MATRIX ||
+	    type == GRETL_TYPE_SERIES) {
             err = gretl_matrix_bcast(&m, id, root);
             if (!err && id != root) {
-                err = gretl_bundle_donate_data(b, key, m, type, 0);
+                err = gretl_bundle_donate_data(b, key, m, type);
             }
         } else if (type == GRETL_TYPE_ARRAY) {
             err = gretl_array_bcast(&a, id, root);
             if (!err && id != root) {
-                err = gretl_bundle_donate_data(b, key, a, type, 0);
+                err = gretl_bundle_donate_data(b, key, a, type);
             }
         } else if (type == GRETL_TYPE_BUNDLE) {
             err = gretl_bundle_bcast(&bsub, id, root);
             if (!err && id != root) {
-                err = gretl_bundle_donate_data(b, key, bsub, type, 0);
-            }
-        } else if (type == GRETL_TYPE_SERIES) {
-            err = gretl_series_bcast(&x, size, id, root);
-            if (!err && id != root) {
-                err = gretl_bundle_donate_data(b, key, x, type, size);
+                err = gretl_bundle_donate_data(b, key, bsub, type);
             }
         } else {
             /* scalar, string or list */
@@ -1205,10 +1167,10 @@ static int gretl_bundle_bcast (gretl_bundle **pb,
             err = mpi_bcast(data, size, mpi_byte, root, mpi_comm_world);
             if (!err && id != root && data != NULL) {
                 if (gretl_is_scalar_type(type)) {
-                    err = gretl_bundle_set_data(b, key, data, type, 0);
+                    err = gretl_bundle_set_data(b, key, data, type);
                     free(data);
                 } else {
-                    err = gretl_bundle_donate_data(b, key, data, type, 0);
+                    err = gretl_bundle_donate_data(b, key, data, type);
                 }
             }
         }
@@ -1871,25 +1833,6 @@ static void *mpi_receive_element (int source, GretlType etype,
 /* "new"-style send/receive for bundles: we do everything
    in memory */
 
-static int gretl_series_send (double *x, int n, int dest)
-{
-    int err;
-
-    err = mpi_send(&n, 1, mpi_int, dest, TAG_SERIES_LEN,
-                   mpi_comm_world);
-
-    if (!err) {
-        err = mpi_send(x, n, mpi_double, dest, TAG_SERIES_VAL,
-                       mpi_comm_world);
-    }
-
-    if (err) {
-        gretl_mpi_error(&err);
-    }
-
-    return err;
-}
-
 static double *gretl_series_receive (int source, int *err)
 {
     double *x = NULL;
@@ -1924,7 +1867,6 @@ static int gretl_bundle_send (gretl_bundle *b, int dest)
     void *data;
     char msgbuf[64];
     int msglen = sizeof msgbuf;
-    int size;
     int i, nk;
     int err = 0;
 
@@ -1948,25 +1890,27 @@ static int gretl_bundle_send (gretl_bundle *b, int dest)
     for (i=0; i<nk && !err; i++) {
         /* loop across bundle keys */
         const char *key = gretl_array_get_data(keys, i);
+	int virtual = 0;
 
-        data = gretl_bundle_get_data(b, key, &type, &size, &err);
+        data = gretl_bundle_get_data_full(b, key, &type, &virtual, &err);
         if (!err) {
             /* send info on the bundle member */
-            compose_msgbuf(msgbuf, type, key, &size, data);
+            compose_msgbuf(msgbuf, type, key, NULL, data);
             err = mpi_send(msgbuf, msglen, mpi_byte, dest,
                            TAG_BMEMB_INFO, mpi_comm_world);
         }
         if (err) {
             break;
         }
-        if (type == GRETL_TYPE_MATRIX) {
+	if (virtual) {
+	    err = gretl_string_send(data, dest);
+	} else if (type == GRETL_TYPE_MATRIX ||
+		   type == GRETL_TYPE_SERIES) {
             err = gretl_matrix_mpi_send(data, dest);
         } else if (type == GRETL_TYPE_ARRAY) {
             err = gretl_array_send(data, dest);
         } else if (type == GRETL_TYPE_BUNDLE) {
             err = gretl_bundle_send(data, dest);
-        } else if (type == GRETL_TYPE_SERIES) {
-            err = gretl_series_send(data, size, dest);
         } else if (type == GRETL_TYPE_STRING) {
             err = gretl_string_send(data, dest);
         } else if (type == GRETL_TYPE_LIST) {
@@ -2051,7 +1995,7 @@ gretl_bundle *gretl_bundle_receive (int source, int *err)
             data = gretl_string_receive(source, err);
         }
         if (!*err) {
-            *err = gretl_bundle_donate_data(b, key, data, type, size);
+            *err = gretl_bundle_donate_data(b, key, data, type);
         }
     }
 

@@ -4661,7 +4661,7 @@ static int bundle_add_matrix (gretl_bundle *b,
                               const char *key,
                               gretl_matrix *m)
 {
-    return gretl_bundle_donate_data(b, key, m, GRETL_TYPE_MATRIX, 0);
+    return gretl_bundle_donate_data(b, key, m, GRETL_TYPE_MATRIX);
 }
 
 /* simple implementation assuming no error check required */

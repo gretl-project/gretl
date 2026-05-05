@@ -1151,7 +1151,7 @@ static int grab_x13_output_series (double *y, const double *x,
             gretl_matrix_set_colnames(Y, S);
             /* put results matrix into the caller's bundle */
             gretl_bundle_donate_data(b, "results", Y,
-                                     GRETL_TYPE_MATRIX, 0);
+                                     GRETL_TYPE_MATRIX);
         }
         /* and transcribe "sa" to return series @y */
         for (t=dset->t1; t<=dset->t2; t++) {

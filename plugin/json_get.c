@@ -570,7 +570,7 @@ static int jb_add_bundle (jbundle *jb, const char *name,
 	    err = E_DATA;
 	} else {
 	    err = gretl_bundle_donate_data(jb->bcurr, name, b,
-					   GRETL_TYPE_BUNDLE, 0);
+					   GRETL_TYPE_BUNDLE);
 	}
     }
 
@@ -635,7 +635,7 @@ static int jb_add_matrix (JsonReader *reader,
 
     if (type == GRETL_TYPE_SERIES) {
 	if (a != NULL) {
-	    /* can't add series to gretl array */
+	    /* your can't add a series to a gretl array */
 	    return E_TYPES;
 	} else {
 	    imin = 0;
@@ -712,7 +712,7 @@ static int jb_add_matrix (JsonReader *reader,
 		    err = gretl_array_set_matrix(a, ai, ptr, 0);
 		} else {
 		    err = gretl_bundle_donate_data(jb->bcurr, key, ptr,
-						   type, sz[0]);
+						   type);
 		}
 	    } else if (m != NULL) {
 		gretl_matrix_free(m);
@@ -721,6 +721,7 @@ static int jb_add_matrix (JsonReader *reader,
 	    }
 	}
     }
+
     json_reader_end_member(reader);
 
     return err;
@@ -764,7 +765,7 @@ static int jb_add_list (JsonReader *reader,
 		err = gretl_array_set_list(a, ai, list, 0);
 	    } else {
 		err = gretl_bundle_donate_data(jb->bcurr, key, list,
-					       GRETL_TYPE_LIST, 0);
+					       GRETL_TYPE_LIST);
 	    }
 	}
     }
@@ -807,7 +808,7 @@ static int add_array_as_matrix (JsonReader *reader,
 	    err = gretl_array_set_matrix(a, ai, m, 0);
 	} else {
 	    err = gretl_bundle_donate_data(jb->bcurr, key, m,
-					   GRETL_TYPE_MATRIX, 0);
+					   GRETL_TYPE_MATRIX);
 	}
     } else {
 	gretl_matrix_free(m);
@@ -1129,7 +1130,7 @@ static int jb_do_array (JsonReader *reader, jbundle *jb,
     } else if (a != NULL) {
 	/* sticking array into bundle */
 	err = gretl_bundle_donate_data(jb->bcurr, name, a,
-				       GRETL_TYPE_ARRAY, 0);
+				       GRETL_TYPE_ARRAY);
     }
 
     return err;
@@ -1351,7 +1352,7 @@ static int filter_bundle_tree (gretl_bundle *b, gretl_array *A)
     }
 
     for (i=0; i<n && !err; i++) {
-	child = gretl_bundle_get_data(b, keys[i], &type, NULL, NULL);
+	child = gretl_bundle_get_data(b, keys[i], &type, NULL);
 	if (type == GRETL_TYPE_BUNDLE) {
 	    filter_bundle_tree((gretl_bundle *) child, A);
 	} else if (type == GRETL_TYPE_ARRAY) {
@@ -1418,7 +1419,6 @@ static void bundled_item_to_json (gpointer keyp,
 
 static void matrix_to_json (void *data,
 			    GretlType type,
-			    int size,
 			    JsonBuilder *jb);
 
 static void list_to_json (void *data,
@@ -1451,7 +1451,7 @@ static void gretl_array_to_json (gretl_array *a,
 	    gretl_array_to_json(data, jb);
 	    json_builder_end_array(jb);
 	} else if (type == GRETL_TYPE_MATRICES) {
-	    matrix_to_json(data, GRETL_TYPE_MATRIX, 0, jb);
+	    matrix_to_json(data, GRETL_TYPE_MATRIX, jb);
 	} else if (type == GRETL_TYPE_LISTS) {
 	    list_to_json(data, jb);
 	}
@@ -1470,30 +1470,21 @@ static void jb_add_double (JsonBuilder *jb, double x)
 /* write matrix @m as a JSON object, including the matrix data in vec
    form */
 
-static void matrix_to_json_as_vec (void *data,
+static void matrix_to_json_as_vec (gretl_matrix *m,
 				   GretlType type,
-				   int size,
 				   JsonBuilder *jb)
 {
-    gretl_matrix *m = NULL;
-    double *val;
+    double *val = m->val;
     int i, n;
 
-    if (type == GRETL_TYPE_SERIES) {
-	n = size;
-	val = (double *) data;
-    } else {
-	m = data;
-	n = m->rows * m->cols;
-	val = m->val;
-    }
+    n = m->rows * m->cols;
 
     json_builder_begin_object(jb);
     json_builder_set_member_name(jb, "type");
     if (type == GRETL_TYPE_SERIES) {
 	json_builder_add_string_value(jb, "gretl_series");
 	json_builder_set_member_name(jb, "size");
-	json_builder_add_int_value(jb, size);
+	json_builder_add_int_value(jb, n);
     } else {
 	json_builder_add_string_value(jb, "gretl_matrix");
 	json_builder_set_member_name(jb, "rows");
@@ -1520,21 +1511,14 @@ static void matrix_to_json_as_vec (void *data,
 
 static void matrix_to_json_via_array (void *data,
 				      GretlType type,
-				      int size,
 				      JsonBuilder *jb)
 {
-    gretl_matrix *m = NULL;
+    gretl_matrix *m = data;
     double *val;
     int i, j, len;
 
-    if (type == GRETL_TYPE_SERIES) {
-	len = size;
-	val = data;
-    } else {
-	m = data;
-	len = gretl_vector_get_length(m);
-	val = m->val;
-    }
+    len = gretl_vector_get_length(m);
+    val = m->val;
 
     json_builder_begin_array(jb);
 
@@ -1560,13 +1544,14 @@ static void matrix_to_json_via_array (void *data,
 
 static void matrix_to_json (void *data,
 			    GretlType type,
-			    int size,
 			    JsonBuilder *jb)
 {
+    gretl_matrix *m = data;
+
     if (mat2arr) {
-	matrix_to_json_via_array(data, type, size, jb);
+	matrix_to_json_via_array(m, type, jb);
     } else {
-	matrix_to_json_as_vec(data, type, size, jb);
+	matrix_to_json_as_vec(m, type, jb);
     }
 }
 
@@ -1615,7 +1600,7 @@ static void bundled_item_to_json (gpointer keyp,
 	json_builder_add_int_value(jb, k);
     } else if (item->type == GRETL_TYPE_MATRIX ||
 	       item->type == GRETL_TYPE_SERIES) {
-	matrix_to_json(item->data, item->type, item->size, jb);
+	matrix_to_json(item->data, item->type, jb);
     } else if (item->type == GRETL_TYPE_BUNDLE) {
 	GHashTable *ht = gretl_bundle_get_content(item->data);
 

@@ -49,10 +49,10 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     const char *note;
     GretlType type;
     void *val;
-    int size = 0;
+    int virtual = 0;
     int err = 0;
 
-    val = gretl_bundle_get_data(bundle, key, &type, &size, &err);
+    val = gretl_bundle_get_data_full(bundle, key, &type, &virtual, &err);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -60,33 +60,29 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 
     note = gretl_bundle_get_note(bundle, key);
 
-    if (type == GRETL_TYPE_SERIES && size <= dataset->n) {
-	const double *x = (double *) val;
-
-	save_bundled_series(x, 0, size - 1, key, note, vwin);
-    } else if (type == GRETL_TYPE_MATRIX &&
-	       vector_suitable_for_series((gretl_matrix *) val)) {
-	const gretl_matrix *m = val;
-	int t1 = gretl_matrix_get_t1(m);
-	int t2 = gretl_matrix_get_t2(m);
-
-	save_bundled_series(m->val, t1, t2, key, note, vwin);
-    } else if (type == GRETL_TYPE_VSERIES) {
+    if (virtual) {
 	gretl_matrix *m;
 
-	m = bundle_get_virtual_series(bundle, (const char *) val,
+	m = bundle_get_virtual_object(bundle, type, (const char *) val,
 				      dataset, &err);
 	if (!err) {
 	    int t1 = gretl_matrix_get_t1(m);
 	    int t2 = gretl_matrix_get_t2(m);
 
-	    if (t1 > 0 && t2 > 0) {
+	    if (t1 >= 0 && t2 >= t1) {
 		save_bundled_series(m->val, t1, t2, key, note, vwin);
 	    } else {
 		save_bundled_series(m->val, 0, m->rows - 1, key, note, vwin);
 	    }
 	    gretl_matrix_free(m);
 	}
+    } else if ((type == GRETL_TYPE_MATRIX || type == GRETL_TYPE_SERIES) &&
+	       vector_suitable_for_series((gretl_matrix *) val)) {
+	const gretl_matrix *m = val;
+	int t1 = gretl_matrix_get_t1(m);
+	int t2 = gretl_matrix_get_t2(m);
+
+	save_bundled_series(m->val, t1, t2, key, note, vwin);
     } else {
 	char vname[VNAMELEN];
 	gchar *blurb;
@@ -121,7 +117,8 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 		*xp = *(double *) val;
 	    }
 	    err = user_var_add_or_replace(vname, GRETL_TYPE_DOUBLE, xp);
-	} else if (type == GRETL_TYPE_MATRIX) {
+	} else if (type == GRETL_TYPE_MATRIX ||
+		   type == GRETL_TYPE_SERIES) {
 	    gretl_matrix *orig = (gretl_matrix *) val;
 	    gretl_matrix *m = gretl_matrix_copy(orig);
 
@@ -130,12 +127,6 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	    } else {
 		err = user_var_add_or_replace(vname, GRETL_TYPE_MATRIX, m);
 	    }
-	} else if (type == GRETL_TYPE_SERIES) {
-	    double *x = (double *) val;
-	    gretl_matrix *m;
-
-	    m = gretl_vector_from_array(x, size, GRETL_MOD_NONE);
-	    err = user_var_add_or_replace(vname, GRETL_TYPE_MATRIX, m);
 	} else if (type == GRETL_TYPE_STRING) {
 	    char *s = gretl_strdup((char *) val);
 
@@ -255,7 +246,7 @@ static gchar *bundle_content_label (bundled_item *bi,
 	    label = g_strdup_printf("%s (%s, length %d)", keystr,
 				    typestr, n);
 	}
-    } else if (bi->type == GRETL_TYPE_VSERIES) {
+    } else if (bi->virtual) {
 	if (note != NULL) {
 	    label = g_strdup_printf("%s (%s: %s)", keystr,
 				    typestr, note);

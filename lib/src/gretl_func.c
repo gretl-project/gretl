@@ -6576,7 +6576,7 @@ static void real_bundle_package_info (const fnpkg *pkg,
         gretl_array *D = gretl_array_from_strings(pkg->depends,
                                                   pkg->n_depends,
                                                   1, &err);
-        gretl_bundle_donate_data(b, "depends", D, GRETL_TYPE_ARRAY, 0);
+        gretl_bundle_donate_data(b, "depends", D, GRETL_TYPE_ARRAY);
     }
     if (pkg->provider != NULL) {
         gretl_bundle_set_string(b, "provider", pkg->provider);
@@ -6599,7 +6599,7 @@ static void real_bundle_package_info (const fnpkg *pkg,
 
             if (!err) {
 		gretl_bundle_set_string(b, "resource_dir", resdir);
-                gretl_bundle_donate_data(b, "resources", R, GRETL_TYPE_ARRAY, 0);
+                gretl_bundle_donate_data(b, "resources", R, GRETL_TYPE_ARRAY);
             }
         }
     }

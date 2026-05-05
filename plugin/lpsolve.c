@@ -183,7 +183,7 @@ static int *get_constraint_types (gretl_bundle *b,
     GretlType t;
     void *ptr;
 
-    ptr = gretl_bundle_get_data(b, "ctypes", &t, NULL, err);
+    ptr = gretl_bundle_get_data(b, "ctypes", &t, err);
 
     if (!*err) {
 	if (t == GRETL_TYPE_ARRAY) {
@@ -541,7 +541,7 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
 	} else {
 	    S = gretl_string_split("dual lower upper", &ns, NULL);
 	    gretl_matrix_set_colnames(SE, S);
-	    gretl_bundle_donate_data(ret, "sensitivity", SE, GRETL_TYPE_MATRIX, 0);
+	    gretl_bundle_donate_data(ret, "sensitivity", SE, GRETL_TYPE_MATRIX);
 
 	}
     }
@@ -550,9 +550,9 @@ static int get_lp_model_data (lprec *lp, gretl_bundle *ret,
 	print_lpsolve_output(lp, VV, VC, prn);
     }
 
-    gretl_bundle_donate_data(ret, "constraint_values", VC, GRETL_TYPE_MATRIX, 0);
-    gretl_bundle_donate_data(ret, "variable_values", VV, GRETL_TYPE_MATRIX, 0);
-    gretl_bundle_donate_data(ret, "shadow_prices", SP, GRETL_TYPE_MATRIX, 0);
+    gretl_bundle_donate_data(ret, "constraint_values", VC, GRETL_TYPE_MATRIX);
+    gretl_bundle_donate_data(ret, "variable_values", VV, GRETL_TYPE_MATRIX);
+    gretl_bundle_donate_data(ret, "shadow_prices", SP, GRETL_TYPE_MATRIX);
 
     free(prim);
     free(dual);

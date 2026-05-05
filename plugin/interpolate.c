@@ -1031,9 +1031,9 @@ static int fill_chowlin_bundle (struct gls_info *G,
 	gretl_bundle_set_scalar(b, "SSR", G->SSR);
     }
     m = gretl_matrix_copy(G->b);
-    gretl_bundle_donate_data(b, "coeff", m, GRETL_TYPE_MATRIX, 0);
+    gretl_bundle_donate_data(b, "coeff", m, GRETL_TYPE_MATRIX);
     if (G->se != NULL) {
-	gretl_bundle_donate_data(b, "stderr", G->se, GRETL_TYPE_MATRIX, 0);
+	gretl_bundle_donate_data(b, "stderr", G->se, GRETL_TYPE_MATRIX);
 	G->se = NULL;
     }
 

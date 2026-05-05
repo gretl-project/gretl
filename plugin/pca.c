@@ -246,7 +246,7 @@ static int pca_save_bundle (VMatrix *cmat,
     cnames[1] = gretl_strdup("percent");
     cnames[2] = gretl_strdup("cum.");
     gretl_matrix_set_colnames(m, cnames);
-    gretl_bundle_donate_data(b, "eigenvals", m, GRETL_TYPE_MATRIX, 0);
+    gretl_bundle_donate_data(b, "eigenvals", m, GRETL_TYPE_MATRIX);
     cnames = NULL;
 
     /* loadings */
@@ -259,7 +259,7 @@ static int pca_save_bundle (VMatrix *cmat,
     }
     gretl_matrix_set_colnames(C, cnames);
     gretl_matrix_set_rownames(C, rnames);
-    gretl_bundle_donate_data(b, "loadings", C, GRETL_TYPE_MATRIX, 0);
+    gretl_bundle_donate_data(b, "loadings", C, GRETL_TYPE_MATRIX);
     *pC = NULL;
 
     set_last_result_data(b, GRETL_TYPE_BUNDLE);

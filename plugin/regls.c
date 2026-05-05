@@ -293,15 +293,15 @@ static void regls_info_free (regls_info *ri)
 static void regls_set_crit_data (regls_info *ri)
 {
     if (ri->nlam > 1) {
-	gretl_bundle_donate_data(ri->b, "crit", ri->crit, GRETL_TYPE_MATRIX, 0);
+	gretl_bundle_donate_data(ri->b, "crit", ri->crit, GRETL_TYPE_MATRIX);
 	if (ri->BIC != NULL) {
-	    gretl_bundle_donate_data(ri->b, "BIC", ri->BIC, GRETL_TYPE_MATRIX, 0);
+	    gretl_bundle_donate_data(ri->b, "BIC", ri->BIC, GRETL_TYPE_MATRIX);
 	}
 	if (ri->R2 != NULL) {
-	    gretl_bundle_donate_data(ri->b, "R2", ri->R2, GRETL_TYPE_MATRIX, 0);
+	    gretl_bundle_donate_data(ri->b, "R2", ri->R2, GRETL_TYPE_MATRIX);
 	}
 	if (ri->edf != NULL) {
-	    gretl_bundle_donate_data(ri->b, "edf", ri->edf, GRETL_TYPE_MATRIX, 0);
+	    gretl_bundle_donate_data(ri->b, "edf", ri->edf, GRETL_TYPE_MATRIX);
 	}
 	ri->crit = ri->BIC = ri->R2 = ri->edf = NULL;
     } else {
@@ -1497,7 +1497,7 @@ static gretl_matrix *make_coeff_matrix (regls_info *ri)
     B = gretl_zero_matrix_new(rows, ri->nlam);
 
     if (B != NULL) {
-	gretl_bundle_donate_data(ri->b, "B", B, GRETL_TYPE_MATRIX, 0);
+	gretl_bundle_donate_data(ri->b, "B", B, GRETL_TYPE_MATRIX);
     }
 
     return B;
@@ -1720,7 +1720,7 @@ static int ccd_regls (regls_info *ri)
     }
 
     if (!err) {
-	gretl_bundle_donate_data(ri->b, "B", ci.B, GRETL_TYPE_MATRIX, 0);
+	gretl_bundle_donate_data(ri->b, "B", ci.B, GRETL_TYPE_MATRIX);
 	ci.B = NULL;
 	if (ri->lamscale != LAMSCALE_NONE) {
 	    gretl_bundle_set_scalar(ri->b, "lmax", ci.lmax * ri->n);
@@ -2078,7 +2078,7 @@ static int svd_ridge (regls_info *ri)
     }
 
     if (!err) {
-	gretl_bundle_donate_data(ri->b, "B", B, GRETL_TYPE_MATRIX, 0);
+	gretl_bundle_donate_data(ri->b, "B", B, GRETL_TYPE_MATRIX);
 	B = NULL;
 	if (ri->lamscale != LAMSCALE_NONE) {
 	    gretl_bundle_set_scalar(ri->b, "lmax", lmax * ri->n);
@@ -2088,7 +2088,7 @@ static int svd_ridge (regls_info *ri)
 	    // ri->lam->val[0] /= ri->n;
 	    if (V != NULL) {
 		gretl_bundle_donate_data(ri->b, "vcv", V,
-					 GRETL_TYPE_MATRIX, 0);
+					 GRETL_TYPE_MATRIX);
 	    }
 	}
     }
@@ -2617,7 +2617,7 @@ static int post_xvalidation_task (regls_info *ri,
     S[1] = gretl_strdup("se_MSE");
     gretl_matrix_set_colnames(metrics, S);
 
-    gretl_bundle_donate_data(ri->b, "crit", metrics, GRETL_TYPE_MATRIX, 0);
+    gretl_bundle_donate_data(ri->b, "crit", metrics, GRETL_TYPE_MATRIX);
     gretl_bundle_set_int(ri->b, "idxmin", imin + 1);
     gretl_bundle_set_int(ri->b, "idx1se", i1se + 1);
     gretl_bundle_set_scalar(ri->b, "lfmin", ri->lfrac->val[imin]);

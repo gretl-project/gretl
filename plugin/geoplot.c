@@ -299,10 +299,10 @@ static gretl_array *geojson_get_features (const char *fname,
 	} else {
 	    b = jfunc(JSON, NULL, NULL, err);
 	    if (!*err) {
-		a = gretl_bundle_steal_data(b, "features", &type, NULL, err);
+		a = gretl_bundle_steal_data(b, "features", &type, err);
 	    }
 	    if (!*err && gretl_bundle_has_key(b, "crs")) {
-		c = gretl_bundle_get_data(b, "crs", &type, NULL, err);
+		c = gretl_bundle_get_data(b, "crs", &type, err);
 		if (!*err && type == GRETL_TYPE_BUNDLE) {
 		    *non_standard = crs_is_nonstandard(c);
 		}
@@ -330,7 +330,7 @@ static gretl_array *features_from_bundle (gretl_bundle *b,
 	gretl_bundle *c = NULL;
 	GretlType type = 0;
 
-	c = gretl_bundle_get_data(b, "crs", &type, NULL, err);
+	c = gretl_bundle_get_data(b, "crs", &type, err);
 	if (!*err && type == GRETL_TYPE_BUNDLE) {
 	    *non_standard = crs_is_nonstandard(c);
 	}
@@ -624,8 +624,7 @@ int dbf_get_properties (gretl_array *ff, const char *dbfname)
 	    }
 	}
 
-	gretl_bundle_donate_data(bf, "properties", pj,
-				 GRETL_TYPE_BUNDLE, 0);
+	gretl_bundle_donate_data(bf, "properties", pj, GRETL_TYPE_BUNDLE);
     }
 
     DBFClose(DBF);
@@ -842,9 +841,9 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
 
 	if (!*err) {
 	    /* attach array of coordinate matrices under geometry */
-	    gretl_bundle_donate_data(bgi, "coordinates", mi, GRETL_TYPE_ARRAY, 0);
+	    gretl_bundle_donate_data(bgi, "coordinates", mi, GRETL_TYPE_ARRAY);
 	    /* attach geometry bundle under feature[i] */
-	    gretl_bundle_donate_data(bfi, "geometry", bgi, GRETL_TYPE_BUNDLE, 0);
+	    gretl_bundle_donate_data(bfi, "geometry", bgi, GRETL_TYPE_BUNDLE);
 	    gretl_bundle_set_string(bfi, "type", "Feature");
 	    /* and attach feature[i] to features array */
 	    gretl_array_set_data(ff, i, bfi);
@@ -867,12 +866,10 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
     if (!*err) {
 	gretl_matrix *bbox;
 
-	gretl_bundle_donate_data(ret, "features", ff,
-				 GRETL_TYPE_ARRAY, 0);
+	gretl_bundle_donate_data(ret, "features", ff, GRETL_TYPE_ARRAY);
 	bbox = make_bbox(gmin, gmax);
 	if (bbox != NULL) {
-	    gretl_bundle_donate_data(ret, "bbox", bbox,
-				     GRETL_TYPE_MATRIX, 0);
+	    gretl_bundle_donate_data(ret, "bbox", bbox, GRETL_TYPE_MATRIX);
 	}
     } else {
 	gretl_array_destroy(ff);
@@ -1104,7 +1101,7 @@ static int geojson_to_csv (const char *fname,
 	    pp = gretl_bundle_get_bundle(fi, "properties", &err);
 	    for (j=0; j<nk && !err; j++) {
 		key = gretl_array_get_data(keys, j);
-		ptr = gretl_bundle_get_data(pp, key, &type, NULL, &err);
+		ptr = gretl_bundle_get_data(pp, key, &type, &err);
 		if (err) {
 		    /* ignore the missing data */
 		    err = 0;
@@ -1382,7 +1379,7 @@ static int transform_ranges (gretl_bundle *opts, int proj)
 	    mercator(&mxy->val[1], &mxy->val[3]);
 
 	    gretl_bundle_donate_data(opts, "mxy__", mxy,
-				     GRETL_TYPE_MATRIX, 0);
+				     GRETL_TYPE_MATRIX);
 	} else {
 	    err = E_DATA;
 	}

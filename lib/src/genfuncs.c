@@ -2082,7 +2082,7 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     /* obsvar */
     Lambda = gretl_matrix_from_scalar(sqrt_lam);
     err = gretl_bundle_donate_data(b, "obsvar", Lambda,
-                                   GRETL_TYPE_MATRIX, 0);
+                                   GRETL_TYPE_MATRIX);
 
     /* diffuse prior */
     err = gretl_bundle_set_scalar(b, "diffuse", 1);
@@ -2096,7 +2096,7 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
     gretl_matrix_set(a0, 0, 0, 2*x[0] - x[1]);
     gretl_matrix_set(a0, 1, 0, 3*x[0] - 2*x[1]);
     err = gretl_bundle_donate_data(b, "inistate", a0,
-                                   GRETL_TYPE_MATRIX, 0);
+                                   GRETL_TYPE_MATRIX);
     if (err) {
         goto bailout;
     }
