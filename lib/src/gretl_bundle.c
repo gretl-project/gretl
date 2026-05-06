@@ -2975,6 +2975,7 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "bundled-item")) {
+	    size = 0;
             key = (char *) xmlGetProp(cur, (XUC) "key");
             type = gretl_xml_get_type_property(cur);
 	    virtual = gretl_xml_get_prop_as_bool(cur, "virtual");
@@ -2982,8 +2983,6 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
             if (key == NULL || type == 0) {
                 err = E_DATA;
             } else {
-                int size = 0;
-
 		if (type == GRETL_TYPE_STRING || virtual) {
                     char *s;
 
