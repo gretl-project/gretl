@@ -4595,18 +4595,18 @@ int do_nonparam_model (selector *sr)
 
 static double *nonparam_retrieve_fitted (gretl_bundle *bundle)
 {
-    double *m;
-    int n, err = 0;
+    gretl_matrix *m;
+    int err = 0;
 
-    m = gretl_bundle_get_series(bundle, "m", &n, &err);
+    m = gretl_bundle_get_series(bundle, "m", &err);
 
     if (err) {
         gui_errmsg(err);
-    } else if (n != dataset->n) {
+    } else if (m->rows != dataset->n) {
         errbox(_("Series length does not match the dataset"));
     }
 
-    return m;
+    return m->val;
 }
 
 void add_nonparam_data (windata_t *vwin)

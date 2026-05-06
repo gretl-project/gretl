@@ -63,7 +63,7 @@ int gretl_bundles_swap_content (gretl_bundle *b1, gretl_bundle *b2);
 
 void *gretl_bundle_get_element (gretl_bundle *bundle, const char *key,
 				GretlType *type, int *virtual,
-				int *ownit, int *err);
+				int *err);
 
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 			     GretlType *type, int *err);
@@ -91,9 +91,9 @@ gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
 				       const char *key,
 				       int *err);
 
-double *gretl_bundle_get_series (gretl_bundle *bundle,
-				 const char *key,
-				 int *n, int *err);
+gretl_matrix *gretl_bundle_get_series (gretl_bundle *bundle,
+				       const char *key,
+				       int *err);
 
 int *gretl_bundle_get_list (gretl_bundle *bundle,
 			    const char *key,

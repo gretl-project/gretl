@@ -319,8 +319,8 @@ static int real_user_var_add (const char *name,
     */
 
 #if UVDEBUG
-    fprintf(stderr, "real_user_var_add: '%s', level %d, err = %d\n",
-            name, u->level, err);
+    fprintf(stderr, "real_user_var_add: '%s', level %d, private %d, shell %d, err = %d\n",
+            name, u->level, (opt & OPT_P)? 1 : 0, (opt & OPT_S)? 1 : 0, err);
 #endif
 
     if (!err) {

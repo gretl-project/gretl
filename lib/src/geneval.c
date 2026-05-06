@@ -6161,14 +6161,14 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
             const char *key = mspec_get_string(r->v.mspec, 0);
             GretlType type = GRETL_TYPE_NONE;
             void *val = NULL;
-            int tmp = 0;
             int virtual = 0;
 
             if (key == NULL) {
                 p->err = E_TYPES;
             } else {
+		/* FIXME virtual? */
                 val = gretl_bundle_get_element(l->v.b, key, &type,
-                                               &virtual, &tmp, &p->err);
+                                               &virtual, &p->err);
             }
             if (!p->err) {
                 int t = gen_type_from_gretl_type(type);
@@ -6179,7 +6179,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
                         ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
                     }
                 } else {
-                    ret = get_aux_node(p, t, 0, tmp ? TMP_NODE : 0);
+                    ret = get_aux_node(p, t, 0, 0);
                     if (!p->err) {
                         ret->v.ptr = val;
                     }
@@ -11802,8 +11802,8 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
         return ret;
     }
 
-    val = gretl_bundle_get_element(l->v.b, key, &type, &virtual,
-				   &is_tmp, &p->err);
+    val = gretl_bundle_get_element(l->v.b, key, &type,
+				   &virtual, &p->err);
     if (p->err) {
         return ret;
     }
@@ -11820,6 +11820,9 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     }
 
     if (virtual) {
+	if (ret == NULL) {
+	    ret = aux_matrix_node(p);
+	}
 	ret->v.m =
 	    bundle_get_virtual_object(l->v.b, type, (const char *) val,
 				      p->dset, &p->err);
@@ -15953,8 +15956,8 @@ static NODE *fevalb_get_bundled_series (gretl_bundle *b,
                                         parser *p)
 {
     NODE *ret = NULL;
-    double *x = NULL;
-    int n, s;
+    gretl_matrix *m = NULL;
+    int s;
 
     s = sample_size(p->dset);
     if (s == 0) {
@@ -15962,16 +15965,15 @@ static NODE *fevalb_get_bundled_series (gretl_bundle *b,
         return NULL;
     }
 
-    x = gretl_bundle_get_series(b, key, &n, NULL);
-    if (x == NULL) {
+    m = gretl_bundle_get_series(b, key, NULL);
+    if (m == NULL) {
         p->err = E_DATA;
-    } else if (n != p->dset->n && n != s) {
+    } else if (m->rows != p->dset->n && m->rows != s) {
         p->err = E_NONCONF;
     }
 
     if (!p->err) {
         int v = current_series_index(p->dset, key);
-        size_t sz = s * sizeof *x;
 
         if (v < 0) {
             /* we need a new series */
@@ -15982,7 +15984,14 @@ static NODE *fevalb_get_bundled_series (gretl_bundle *b,
             }
         }
         if (!p->err) {
-            memcpy(p->dset->Z[v] + p->dset->t1, x, sz);
+	    double *dest = p->dset->Z[v] + p->dset->t1;
+	    double *src = m->val;
+	    size_t sz = s * sizeof *src;
+
+	    if (m->rows == p->dset->n) {
+		src += p->dset->t1;
+	    }
+	    memcpy(dest, src, sz);
             ret = new_node(SERIES);
             ret->vnum = v;
             ret->v.xvec = p->dset->Z[v];

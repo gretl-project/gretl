@@ -175,6 +175,8 @@ static GretlType virtual_type (const char *s)
     }
 }
 
+#define get_gen_str(s) ((const char *) s + 15)
+
 static int bundled_item_copy_in_data (bundled_item *item, void *ptr)
 {
     int err = 0;
@@ -261,6 +263,7 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
     item->type = type;
     item->key = NULL;
     item->note = NULL;
+    item->virtual = 0;
 
     if (item->type == GRETL_TYPE_STRING && is_virtual_object(ptr)) {
 	item->virtual = 1;
@@ -284,16 +287,18 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
     return item;
 }
 
-static void bundled_item_free_data (GretlType type, void *data)
+static void bundled_item_free_data (bundled_item *item)
 {
-    if (type == GRETL_TYPE_MATRIX) {
-        gretl_matrix_free((gretl_matrix *) data);
-    } else if (type == GRETL_TYPE_BUNDLE) {
-        gretl_bundle_destroy((gretl_bundle *) data);
-    } else if (type == GRETL_TYPE_ARRAY) {
-        gretl_array_destroy((gretl_array *) data);
+    if (item->virtual) {
+	free(item->data);
+    } else if (item->type == GRETL_TYPE_MATRIX) {
+        gretl_matrix_free((gretl_matrix *) item->data);
+    } else if (item->type == GRETL_TYPE_BUNDLE) {
+        gretl_bundle_destroy((gretl_bundle *) item->data);
+    } else if (item->type == GRETL_TYPE_ARRAY) {
+        gretl_array_destroy((gretl_array *) item->data);
     } else {
-        free(data);
+        free(item->data);
     }
 }
 
@@ -357,7 +362,7 @@ static int bundled_item_replace_data (bundled_item *item,
         }
     } else {
         /* free then copy or donate */
-        bundled_item_free_data(item->type, item->data);
+        bundled_item_free_data(item);
         if (copy) {
             err = bundled_item_copy_in_data(item, ptr);
         } else {
@@ -391,7 +396,7 @@ static void bundle_item_destroy (gpointer data)
     }
 #endif
 
-    bundled_item_free_data(item->type, item->data);
+    bundled_item_free_data(item);
     g_free(item->key);
     free(item->note);
     free(item);
@@ -514,7 +519,6 @@ static void *real_bundle_get_data (gretl_bundle *bundle,
                                    const char *key,
                                    GretlType *type,
 				   int *virtual,
-                                   int *ownit,
                                    int get_target,
                                    int *err)
 {
@@ -569,9 +573,7 @@ static void *real_bundle_get_data (gretl_bundle *bundle,
  * @bundle: bundle to access.
  * @key: name of key to access.
  * @type: location to receive data type, or NULL.
- * @ownit: location to receive indication that the
- * element in question is newly allocated, not just a
- * pointer to something in the bundle.
+ * @virtual: location to receive "virtual" flag.
  * @err: location to receive error code, or NULL.
  *
  * Returns: the item pointer associated with @key in the
@@ -581,18 +583,14 @@ static void *real_bundle_get_data (gretl_bundle *bundle,
  * the intent is simply to determine whether @bundle contains
  * an item under the specified @key, @err should generally be
  * left NULL.
- *
- * If the content of @ownit is non-zero on return, the caller
- * has ownership of the retuned data; otherwise the return
- * value is the actual data pointer from within the bundle.
  */
 
 void *gretl_bundle_get_element (gretl_bundle *bundle, const char *key,
                                 GretlType *type, int *virtual,
-				int *ownit, int *err)
+				int *err)
 {
     return real_bundle_get_data(bundle, key, type,
-                                virtual, ownit, 0, err);
+                                virtual, 0, err);
 }
 
 /**
@@ -620,7 +618,7 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
                              GretlType *type, int *err)
 {
     return real_bundle_get_data(bundle, key, type,
-                                NULL, NULL, 0, err);
+                                NULL, 0, err);
 }
 
 /**
@@ -650,7 +648,7 @@ void *gretl_bundle_get_data_full (gretl_bundle *bundle, const char *key,
 				  int *err)
 {
     return real_bundle_get_data(bundle, key, type,
-                                virtual, NULL, 0, err);
+                                virtual, 0, err);
 }
 
 /* As gretl_bundle_get_data() except that the caller is looking
@@ -664,7 +662,7 @@ void *gretl_bundle_get_target (gretl_bundle *bundle, const char *key,
 {
     /* FIXME virtual member? */
     return real_bundle_get_data(bundle, key, type,
-                                NULL, NULL, 1, err);
+                                NULL, 1, err);
 }
 
 /**
@@ -921,37 +919,39 @@ gretl_bundle *gretl_bundle_get_bundle (gretl_bundle *bundle,
  * gretl_bundle_get_series:
  * @bundle: bundle to access.
  * @key: name of key to access.
- * @n: location to receive length of series.
  * @err: location to receive error code.
  *
  * Returns: the series associated with @key in the
- * specified @bundle, if any; otherwise NULL.
+ * specified @bundle, if any, in the form of a column
+ * vector; otherwise NULL.
  */
 
-double *gretl_bundle_get_series (gretl_bundle *bundle,
-                                 const char *key,
-                                 int *n, int *err)
+gretl_matrix *gretl_bundle_get_series (gretl_bundle *bundle,
+				       const char *key,
+				       int *err)
 {
-    double *x = NULL;
+    gretl_matrix *m = NULL;
     GretlType type;
+    int virtual = 0;
     void *ptr;
     int myerr = 0;
 
-    ptr = gretl_bundle_get_data(bundle, key, &type, &myerr);
+    ptr = gretl_bundle_get_data_full(bundle, key, &type,
+				     &virtual, &myerr);
 
-    if (ptr == NULL) {
+    if (ptr == NULL || virtual) {
 	myerr = E_INVARG;
     } else if (type != GRETL_TYPE_SERIES) {
         myerr = E_TYPES;
     } else {
-        x = (double *) ptr;
+        m = (gretl_matrix *) ptr;
     }
 
     if (err != NULL) {
         *err = myerr;
     }
 
-    return x;
+    return m;
 }
 
 /**
@@ -1352,7 +1352,7 @@ const char *gretl_bundle_get_string (gretl_bundle *bundle,
 				     &virtual, &myerr);
 
     if (virtual) {
-	s = (const char *) ptr + 15;
+	s = get_gen_str(ptr);
     } else if (type == GRETL_TYPE_STRING) {
 	s = (const char *) ptr;
     } else {
@@ -1493,6 +1493,12 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
         bundled_item *item = g_hash_table_lookup(b->ht, key);
         int replace = 0;
 
+#if 0
+	if (type == GRETL_TYPE_STRING && is_virtual_object(ptr)) {
+	    type = virtual_type(ptr);
+	}
+#endif
+
         if (item != NULL) {
             replace = 1;
             if (item->type == type) {
@@ -1591,6 +1597,8 @@ int gretl_bundle_set_string (gretl_bundle *bundle, const char *key,
                              const char *str)
 {
     GretlType t = GRETL_TYPE_STRING;
+
+    fprintf(stderr, "HERE gretl_bundle_set_string\n");
 
     //if (string_is_vseries(str)) {
     //	t = GRETL_TYPE_VSERIES;
@@ -3445,7 +3453,7 @@ char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
     return S;
 }
 
-/* apparatus for supporting "virtual series" in bundles */
+/* apparatus for supporting virtual bundle members */
 
 #define T_UNSET (-1)
 #define T_INVALID (-2)
@@ -3484,8 +3492,8 @@ static void check_bundled_object (gpointer listitem,
 		if (t2 != vi->t2) {
 		    vi->t2 = vi->t2 == T_UNSET ? t2 : T_INVALID;
 		}
-		private_matrix_add_as_shell(m, bi->key);
 	    }
+	    private_matrix_add_as_shell(m, bi->key);
 	} else if (bi->type == GRETL_TYPE_DOUBLE) {
 	    /* found a scalar named in vi->ids */
 	    double val = *(double *) bi->data;
@@ -3554,8 +3562,9 @@ gretl_matrix *bundle_get_virtual_object (gretl_bundle *b,
 {
     gretl_matrix *ret = NULL;
     struct vsinfo vi = {T_UNSET, T_UNSET, 0, NULL};
+    const char *gen_str = get_gen_str(s);
 
-    vi.ids = ids_in_expr(s, &vi.nids);
+    vi.ids = ids_in_expr(gen_str, &vi.nids);
     if (vi.nids == 0) {
 	*err = E_INVARG;
 	goto bailout;
@@ -3570,7 +3579,7 @@ gretl_matrix *bundle_get_virtual_object (gretl_bundle *b,
 	const char *creator = gretl_bundle_get_creator(b);
 
 	set_bundle_pkg(creator);
-	ret = generate_matrix(s, dset, err);
+	ret = generate_matrix(gen_str, dset, err);
 	set_bundle_pkg(NULL);
     }
 
