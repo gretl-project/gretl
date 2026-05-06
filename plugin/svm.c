@@ -2074,7 +2074,7 @@ static int cross_validate_worker_task (sv_data *data,
     int err = 0;
 
     /* get our sub-task matrix */
-    task = gretl_matrix_mpi_receive(0, &err);
+    task = gretl_matrix_receive(0, &err);
 
     /* do the actual cross validation */
     for (i=0; i<task->rows && !err; i++) {
@@ -2325,7 +2325,7 @@ static int carve_up_xvalidation (sv_data *data,
 	    err = E_ALLOC;
 	}
      	for (i=1; i<nproc && !err; i++) {
-	    mi = gretl_matrix_mpi_receive(i, &err);
+	    mi = gretl_matrix_receive(i, &err);
 	    if (mi != NULL) {
 		gretl_matrix_inscribe_matrix(Tmp, mi, row, 0, GRETL_MOD_NONE);
 		row += mi->rows;

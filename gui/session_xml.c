@@ -440,7 +440,7 @@ static gretl_bundle *session_model_to_bundle (const char *fname,
 	    mb = bundle_from_system(ptr, otype, dset, err);
 	}
 	/* add the model's name to its bundle */
-	gretl_bundle_set_data(mb, "name", (char *) name, GRETL_TYPE_STRING);
+	gretl_bundle_set_string(mb, "name", (char *) name);
     }
 
     if (ptr != NULL) {

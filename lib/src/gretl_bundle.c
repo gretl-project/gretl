@@ -1493,12 +1493,6 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
         bundled_item *item = g_hash_table_lookup(b->ht, key);
         int replace = 0;
 
-#if 0
-	if (type == GRETL_TYPE_STRING && is_virtual_object(ptr)) {
-	    type = virtual_type(ptr);
-	}
-#endif
-
         if (item != NULL) {
             replace = 1;
             if (item->type == type) {
@@ -1571,6 +1565,12 @@ int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
 {
     int err;
 
+    if (type == GRETL_TYPE_SERIES) {
+	fprintf(stderr, "gretl_bundle_set_data: got GRETL_TYPE_SERIES\n");
+	fprintf(stderr, " use gretl_bundle_set_series() instead\n");
+	return E_TYPES;
+    }
+
     if (bundle == NULL) {
         err = E_UNKVAR;
     } else {
@@ -1596,15 +1596,7 @@ int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
 int gretl_bundle_set_string (gretl_bundle *bundle, const char *key,
                              const char *str)
 {
-    GretlType t = GRETL_TYPE_STRING;
-
-    fprintf(stderr, "HERE gretl_bundle_set_string\n");
-
-    //if (string_is_vseries(str)) {
-    //	t = GRETL_TYPE_VSERIES;
-    //}
-
-    return gretl_bundle_set_data(bundle, key, (void *) str, t);
+    return gretl_bundle_set_data(bundle, key, (void *) str, GRETL_TYPE_STRING);
 }
 
 /**
@@ -3486,11 +3478,9 @@ static void check_bundled_object (gpointer listitem,
 		int t1 = gretl_matrix_get_t1(m);
 		int t2 = gretl_matrix_get_t2(m);
 
-		if (t1 != vi->t1) {
-		    vi->t1 = vi->t1 == T_UNSET ? t1 : T_INVALID;
-		}
-		if (t2 != vi->t2) {
-		    vi->t2 = vi->t2 == T_UNSET ? t2 : T_INVALID;
+		if (vi->t1 == T_UNSET) {
+		    vi->t1 = t1;
+		    vi->t2 = t2;
 		}
 	    }
 	    private_matrix_add_as_shell(m, bi->key);
@@ -3563,6 +3553,7 @@ gretl_matrix *bundle_get_virtual_object (gretl_bundle *b,
     gretl_matrix *ret = NULL;
     struct vsinfo vi = {T_UNSET, T_UNSET, 0, NULL};
     const char *gen_str = get_gen_str(s);
+    const char *creator;
 
     vi.ids = ids_in_expr(gen_str, &vi.nids);
     if (vi.nids == 0) {
@@ -3571,21 +3562,17 @@ gretl_matrix *bundle_get_virtual_object (gretl_bundle *b,
     }
 
     set_bundle_namespace(b, &vi);
-
-    if (type == GRETL_TYPE_SERIES &&
-	(vi.t1 == T_INVALID || vi.t2 == T_INVALID)) {
-	*err = E_INVARG;
-    } else {
-	const char *creator = gretl_bundle_get_creator(b);
-
-	set_bundle_pkg(creator);
-	ret = generate_matrix(gen_str, dset, err);
-	set_bundle_pkg(NULL);
-    }
+    creator = gretl_bundle_get_creator(b);
+    set_bundle_pkg(creator);
+    ret = generate_matrix(gen_str, dset, err);
+    set_bundle_pkg(NULL);
 
     if (type == GRETL_TYPE_SERIES && *err == 0) {
-	if (ret->cols == 1 && vi.t1 >= 0 && vi.t2 >= vi.t1 &&
-	    ret->rows == vi.t2 - vi.t1 + 1) {
+	if (ret->cols > 1) {
+	    *err = E_TYPES;
+	} else if (vi.t1 >= 0 && vi.t2 >= vi.t1 &&
+		   ret->rows == vi.t2 - vi.t1 + 1) {
+	    /* heuristic: could perhaps be wrong? */
 	    gretl_matrix_set_t1(ret, vi.t1);
 	    gretl_matrix_set_t2(ret, vi.t2);
 	}
@@ -3596,7 +3583,7 @@ gretl_matrix *bundle_get_virtual_object (gretl_bundle *b,
 
  bailout:
 
-    if (*err == E_INVARG) {
+    if (*err) {
 	gretl_errmsg_sprintf("'%s': invalid virtual %s specifier",
 			     gretl_type_get_name(type), s);
     }
