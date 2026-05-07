@@ -321,9 +321,8 @@ static void sort_files_stack (int role)
     }
 }
 
-/* Returns the number of file collections found and pushed;
-   writes non-zero to @err if something show-stopping
-   occurs
+/* Returns the number of file collections found and pushed; writes
+   non-zero to @err if something show-stopping occurs.
 */
 
 static int get_file_collections_from_dir (const char *path, GDir *dir,
@@ -538,6 +537,9 @@ static int build_file_collections (int role)
             if (ns > 0) {
                 sort_files_stack(PS_FILES);
             }
+	    if (nu > 0) {
+		fprintf(stderr, "Found %d USER file collections\n", nu);
+	    }
         }
         collections_built = TRUE;
     }

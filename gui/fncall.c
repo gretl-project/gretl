@@ -3070,7 +3070,7 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 	PRN *prn = NULL;
 	int autopos = -1;
 	int badpos = -1;
-	int close_on_exec;
+	int close_on_exec = 0;
 	int err;
 
 	err = bufopen(&prn);
@@ -3089,7 +3089,9 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 	    }
 	}
 
-	close_on_exec = widget_get_int(w, "close");
+	if (w != NULL) {
+	    close_on_exec = widget_get_int(w, "close");
+	}
 
 	if (!err) {
 	    err = real_GUI_function_call(cinfo, close_on_exec, prn);

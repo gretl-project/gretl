@@ -9460,7 +9460,7 @@ static void print_fatal_error (const char *s, PRN *prn)
     pprintf(prn, "> %s\n", s);
 }
 
-/* run commands from runfile or buf, output to prn */
+/* run commands from @runfile or @buf, output to @prn */
 
 int execute_script (char *runfile, const char *buf,
                     PRN *prn, int exec_code,

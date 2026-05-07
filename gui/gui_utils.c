@@ -1136,7 +1136,7 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     return vwin;
 }
 
-static void mnl_probs_callback (GtkAction *action, gpointer p)
+static void outcome_probs_callback (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
@@ -1145,7 +1145,13 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 
     if (pmod == NULL) return;
 
-    P = mn_logit_probabilities(pmod, pmod->t1, pmod->t2, dataset, &err);
+    if (gretl_model_get_int(pmod, "multinom")) {
+	P = mn_logit_probabilities(pmod, pmod->t1, pmod->t2,
+				   dataset, &err);
+    } else {
+	P = ordered_probabilities(pmod, pmod->yhat, pmod->t1, pmod->t2,
+				  dataset, &err);
+    }
 
     if (err) {
 	gui_errmsg(err);
@@ -1194,7 +1200,7 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
     }
 }
 
-static void add_multinomial_probs_item (windata_t *vwin)
+static void add_outcome_probs_item (windata_t *vwin)
 {
     const gchar *mpath = "/menubar/Analysis";
     GtkActionEntry entry;
@@ -1202,7 +1208,7 @@ static void add_multinomial_probs_item (windata_t *vwin)
     action_entry_init(&entry);
     entry.name = "mnlprobs";
     entry.label = _("Outcome probabilities");
-    entry.callback = G_CALLBACK(mnl_probs_callback);
+    entry.callback = G_CALLBACK(outcome_probs_callback);
     vwin_menu_add_item(vwin, mpath, &entry);
 }
 
@@ -1296,6 +1302,9 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
     }
 }
 
+/* set to 1 to use $allprobs instead of oprobit_predict */
+#define ORDERED_USE_ALLPROBS 0
+
 static void set_analysis_menu_state (windata_t *vwin, const MODEL *pmod)
 {
     GtkUIManager *ui = vwin->ui;
@@ -1309,13 +1318,24 @@ static void set_analysis_menu_state (windata_t *vwin, const MODEL *pmod)
 	if (gretl_model_get_int(pmod, "multinom")) {
 	    /* relax this? */
 	    flip(ui, "/menubar/Analysis/Forecasts", FALSE);
-	    add_multinomial_probs_item(vwin);
+	    add_outcome_probs_item(vwin);
+#if ORDERED_USE_ALLPROBS
+	} else if (gretl_model_get_int(pmod, "ordered")) {
+	    add_outcome_probs_item(vwin);
+#endif
 	} else if (gretl_model_get_int(pmod, "binary")) {
 	    add_odds_ratios_item(vwin);
 	}
-    } else if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
-	/* random effects probit */
-	flip(ui, "/menubar/Analysis/Forecasts", FALSE);
+    } else if (pmod->ci == PROBIT) {
+#if ORDERED_USE_ALLPROBS
+	if (gretl_model_get_int(pmod, "ordered")) {
+	    add_outcome_probs_item(vwin);
+	}
+#endif
+	if (pmod->opt & OPT_E) {
+	    /* random effects probit */
+	    flip(ui, "/menubar/Analysis/Forecasts", FALSE);
+	}
     }
 
     if (pmod->ncoeff == 1) {

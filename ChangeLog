@@ -1,3 +1,6 @@
+version 2026c, in progress
+- GUI: fix for call to function package with no arguments
+
 2026-04-30 version 2026b
 - new function which() to determine which elements of a
   given matrix satisfy a specified condition
@@ -26,7 +29,7 @@
   when executing a Python script, via Pandas
 - "panplot" command: correct suport for the --font option
 - matrix "slicing": correct handling of an empty selection
-  vector, and sypport use of row and column names when
+  vector, and support use of row and column names when
   indexing into matrices
 - script editor: handle "doc strings" in hansl functions
   via "question mark-click"
