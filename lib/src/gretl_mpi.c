@@ -1010,8 +1010,7 @@ static int gretl_uint64_bcast (guint64 *pu, int root)
 */
 
 static int compose_msgbuf (char *buf, GretlType type,
-                           const char *key, int *size,
-                           void *data)
+                           const char *key, void *data)
 {
     int n = 0;
 
@@ -1023,8 +1022,6 @@ static int compose_msgbuf (char *buf, GretlType type,
         n = sizeof(unsigned int);
     } else if (type == GRETL_TYPE_UINT64) {
         n = sizeof(guint64);
-    } else if (type == GRETL_TYPE_SERIES) {
-        n = *size;
     } else if (type == GRETL_TYPE_STRING) {
         char *s = data;
         n = strlen(s) + 1;
@@ -1032,6 +1029,7 @@ static int compose_msgbuf (char *buf, GretlType type,
         int *list = data;
         n = (list[0] + 1) * sizeof(int);
     } else if (type == GRETL_TYPE_MATRIX ||
+	       type == GRETL_TYPE_SERIES ||
                type == GRETL_TYPE_BUNDLE ||
                type == GRETL_TYPE_ARRAY) {
         n = 0;
@@ -1040,9 +1038,6 @@ static int compose_msgbuf (char *buf, GretlType type,
     }
 
     sprintf(buf, "%d %s %d", type, key, n);
-    if (size != NULL) {
-	*size = n;
-    }
 
     return 0;
 }
@@ -1117,7 +1112,7 @@ static int gretl_bundle_bcast (gretl_bundle **pb,
 
             data = gretl_bundle_get_data(b, rkey, &type, &err);
             if (!err) {
-                compose_msgbuf(msgbuf, type, rkey, &size, data);
+                compose_msgbuf(msgbuf, type, rkey, data);
                 if (type == GRETL_TYPE_MATRIX ||
 		    type == GRETL_TYPE_SERIES) {
                     m = (gretl_matrix *) data;
@@ -1865,7 +1860,7 @@ static int gretl_bundle_send (gretl_bundle *b, int dest)
         data = gretl_bundle_get_data_full(b, key, &type, &virtual, &err);
         if (!err) {
             /* send info on the bundle member */
-            compose_msgbuf(msgbuf, type, key, NULL, data);
+            compose_msgbuf(msgbuf, type, key, data);
             err = mpi_send(msgbuf, msglen, mpi_byte, dest,
                            TAG_BMEMB_INFO, mpi_comm_world);
         }
