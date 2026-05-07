@@ -53,7 +53,7 @@ static int exec_line (ExecState *s)
 
     if (gretl_compiling_function()) {
         return gretl_function_append_line(s);
-    } else if (!strncmp(line, "function ", 9)) {
+    } else if (!strncmp(s->line, "function ", 9)) {
 	err = parse_command_line(s, NULL, NULL);
     }
 

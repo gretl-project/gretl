@@ -11737,6 +11737,40 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
 
 #endif /* USE_RLIB or not */
 
+/* Extracting a "series", stored in the form of a column vector, from a
+   bundle. Whether we can truly get it as a series depends on the
+   current state of the dataset. Failing that, we'll get it as a vector.
+*/
+
+static NODE *bundled_series_node (parser *p,
+				  gretl_matrix *m,
+                                  int *is_tmp)
+{
+    NODE *ret = NULL;
+    int n = m->rows;
+    int t;
+
+    if (n <= p->dset->n) {
+        ret = aux_series_node(p);
+        if (!p->err) {
+            for (t=p->dset->t1; t<=p->dset->t2 && t<n; t++) {
+                ret->v.xvec[t] = m->val[t];
+            }
+            *is_tmp = 1;
+        }
+    } else if (n > 0) {
+        ret = aux_matrix_node(p);
+	if (!p->err) {
+	    ret->v.m = gretl_matrix_copy(m);
+	    *is_tmp = 1;
+	}
+    } else {
+        p->err = E_DATA;
+    }
+
+    return ret;
+}
+
 /* Getting an object from within a bundle: on the left is the bundle
    reference, on the right should be a string: the key to look up to get
    content.
@@ -11777,13 +11811,14 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 	return ret;
     }
 
-    if (virtual || type == GRETL_TYPE_SERIES) {
+    if (virtual) {
 	ret = aux_matrix_node(p);
-    } else {
+    } else if (type != GRETL_TYPE_SERIES) {
 	ret = aux_node_for_type(type, p);
     }
 
     if (virtual) {
+	/* FIXME series case? */
 	ret->v.m =
 	    bundle_get_virtual_object(l->v.b, type, (const char *) val,
 				      p->dset, &p->err);
@@ -11792,9 +11827,10 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
         ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
     } else if (type == GRETL_TYPE_STRING) {
         ret->v.str = (char *) val;
-    } else if (type == GRETL_TYPE_MATRIX ||
-	       type == GRETL_TYPE_SERIES) {
+    } else if (type == GRETL_TYPE_MATRIX) {
         ret->v.m = (gretl_matrix *) val;
+    } else if (type == GRETL_TYPE_SERIES) {
+	ret = bundled_series_node(p, (gretl_matrix *) val, &is_tmp);
     } else if (type == GRETL_TYPE_BUNDLE) {
         ret->v.b = (gretl_bundle *) val;
     } else if (type == GRETL_TYPE_ARRAY) {
