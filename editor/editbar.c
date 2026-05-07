@@ -28,6 +28,7 @@
 #include "winstack.h"
 #include "tabwin.h"
 #include "gretl_www.h"
+#include "load_functions.h"
 #include "editbar.h"
 
 #ifdef G_OS_WIN32
@@ -401,6 +402,15 @@ static void exec_callback (GtkWidget *w, windata_t *vwin)
     } else {
         do_run_script(w, vwin);
     }
+
+#if 0
+    /* FIXME : when vwin->role == EDIT_HANSL we could also offer
+       to load the functions in the editor window into memory.
+    */
+    gchar *buf = textview_get_hansl(vwin->text, 0);
+    load_functions(buf);
+    g_free(buf);
+#endif
 }
 
 static void show_stderr (GtkWidget *w, windata_t *vwin)
