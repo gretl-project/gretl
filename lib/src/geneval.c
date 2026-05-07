@@ -1141,6 +1141,13 @@ static int gen_type_from_gretl_type (GretlType t)
     return UNDEF;
 }
 
+static NODE *aux_node_for_type (GretlType t, parser *p)
+{
+    int gen_t = gen_type_from_gretl_type(t);
+
+    return get_aux_node(p, gen_t, 0, 0);
+}
+
 static GretlType gretl_type_from_gen_type (int gen_t)
 {
     int i, n = G_N_ELEMENTS(conversions);
@@ -3384,7 +3391,7 @@ const double *get_colvec_as_series (NODE *n, int f, parser *p)
    current full series length with NAs if necessary.
 */
 
-double *copy_colvec_as_series (NODE *n, int *size, parser *p)
+double *copy_colvec_as_series (NODE *n, parser *p)
 {
     double *ret = NULL;
 
@@ -3407,7 +3414,6 @@ double *copy_colvec_as_series (NODE *n, int *size, parser *p)
             }
         }
         if (!p->err) {
-            *size = p->dset->n;
             if (r == p->dset->n) {
                 memcpy(ret, m->val, sz);
             } else {
@@ -5754,17 +5760,15 @@ static NODE *array_element_node (gretl_array *a, int i,
 {
     NODE *ret = NULL;
     GretlType type = 0;
-    int gen_t;
     void *data;
 
     data = gretl_array_get_element(a, i-1, &type, &p->err);
 
     if (p->err == E_INVARG) {
         gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
+    } else {
+	ret = aux_node_for_type(type, p);
     }
-
-    gen_t = gen_type_from_gretl_type(type);
-    ret = get_aux_node(p, gen_t, 0, 0);
 
     if (!p->err) {
         if (type == GRETL_TYPE_STRING) {
@@ -11733,45 +11737,6 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
 
 #endif /* USE_RLIB or not */
 
-/* Extracting series data @x of length @n from a bundle: whether
-   we can get it as a series depends on the current state of the
-   dataset. Failing that, we'll get it as a vector.
-*/
-
-static NODE *bundled_series_node (parser *p, const double *x,
-                                  int n, int *is_tmp)
-{
-    NODE *ret = NULL;
-    int t;
-
-    if (n <= p->dset->n) {
-        ret = aux_series_node(p);
-        if (!p->err) {
-            for (t=p->dset->t1; t<=p->dset->t2 && t<n; t++) {
-                ret->v.xvec[t] = x[t];
-            }
-            *is_tmp = 1;
-        }
-    } else if (n > 0) {
-        ret = aux_matrix_node(p);
-        if (!p->err) {
-            ret->v.m = gretl_matrix_alloc(n, 1);
-            if (ret->v.m == NULL) {
-                p->err = E_ALLOC;
-            } else {
-                for (t=0; t<n; t++) {
-                    ret->v.m->val[t] = x[t];
-                }
-                *is_tmp = 1;
-            }
-        }
-    } else {
-        p->err = E_DATA;
-    }
-
-    return ret;
-}
-
 /* Getting an object from within a bundle: on the left is the bundle
    reference, on the right should be a string: the key to look up to get
    content.
@@ -11782,22 +11747,20 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     char *key = r->v.str;
     GretlType type;
     int querying;
-    int size = 0;
     int virtual = 0;
     int is_tmp = 0;
-    int gen_t;
     void *val = NULL;
     NODE *ret = NULL;
 
     querying = (p->flags & P_OBJQRY)? 1 : 0;
 
 #if EDEBUG
-    fprintf(stderr, "get_bundle_member: %s[\"%s\"], query=%d\n",
+    fprintf(stderr, "get_bundle_member: %s[\"%s\"], querying = %d\n",
             l->vname, key, querying);
 #endif
 
     if (querying && !gretl_bundle_has_key(l->v.b, key)) {
-        ret = get_aux_node(p, EMPTY, 0, 0);
+        ret = aux_empty_node(p);
         ret->flags |= MUT_NODE;
         return ret;
     }
@@ -11808,19 +11771,16 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
         return ret;
     }
 
-    if (virtual) {
-	if (querying) {
-	    ret = aux_empty_node(p);
-	    ret->t = gen_type_from_gretl_type(type);
-	    return ret;
-	} else {
-	    ret = aux_matrix_node(p);
-	}
+    if (querying) {
+	ret = aux_empty_node(p);
+	ret->t = gen_type_from_gretl_type(type);
+	return ret;
+    }
+
+    if (virtual || type == GRETL_TYPE_SERIES) {
+	ret = aux_matrix_node(p);
     } else {
-	gen_t = gen_type_from_gretl_type(type);
-	if (type != GRETL_TYPE_SERIES) {
-	    ret = get_aux_node(p, gen_t, 0, 0);
-	}
+	ret = aux_node_for_type(type, p);
     }
 
     if (virtual) {
@@ -11832,21 +11792,20 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
         ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
     } else if (type == GRETL_TYPE_STRING) {
         ret->v.str = (char *) val;
-    } else if (type == GRETL_TYPE_MATRIX) {
+    } else if (type == GRETL_TYPE_MATRIX ||
+	       type == GRETL_TYPE_SERIES) {
         ret->v.m = (gretl_matrix *) val;
     } else if (type == GRETL_TYPE_BUNDLE) {
         ret->v.b = (gretl_bundle *) val;
     } else if (type == GRETL_TYPE_ARRAY) {
         ret->v.a = (gretl_array *) val;
-    } else if (type == GRETL_TYPE_SERIES) {
-        ret = bundled_series_node(p, (const double *) val, size, &is_tmp);
     } else if (type == GRETL_TYPE_LIST) {
         if (stored_list_ok((const int *) val, p->dset)) {
             /* extract as list */
             ret->v.ivec = (int *) val;
             is_tmp = 0;
         } else {
-            /* fallback: extract list as row vector */
+            /* fallback: extract as row vector */
             ret->t = MAT;
             ret->v.m = gretl_list_to_vector((const int *) val, &p->err);
             is_tmp = 1;
@@ -12191,7 +12150,7 @@ static int lhs_type_check (GretlType spec, GretlType rhs, int t)
 }
 
 static void *get_mod_assign_result (void *lp, GretlType ltype,
-                                    NODE *r, int *size, parser *p)
+                                    NODE *r, parser *p)
 {
     void *ret = NULL;
     NODE *l, *op;
@@ -12284,10 +12243,6 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
             } else if (ev->t == LIST) {
                 ret = ev->v.ivec;
             } else if (ev->t == SERIES) {
-                /* FIXME sample range? */
-                if (size != NULL) {
-                    *size = p->dset->n;
-                }
                 ret = ev->v.xvec;
             } else if (ev->t == NUM) {
                 ret = lp;
@@ -12350,7 +12305,6 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     gretl_bundle *bundle;
     void *ptr = NULL;
     char *key = NULL;
-    int size = 0;
     int donate = 0;
     int err = 0;
 
@@ -12404,7 +12358,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
             return err; /* handled */
         }
         if (!err) {
-            ptr = get_mod_assign_result(lp, ltype, rhs, &size, p);
+            ptr = get_mod_assign_result(lp, ltype, rhs, p);
             err = p->err;
             if (p->op == INC || p->op == DEC) {
                 return err; /* handled */
@@ -12466,7 +12420,6 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
                     err = p->err;
                 } else {
                     type = GRETL_TYPE_SERIES;
-                    size = p->dset->n;
                     donate = 1;
                 }
             } else if (targ == GRETL_TYPE_MATRIX) {
@@ -12488,7 +12441,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
                 ptr = &rhs->v.m->val[0];
                 type = GRETL_TYPE_DOUBLE;
             } else if (targ == GRETL_TYPE_SERIES) {
-                ptr = copy_colvec_as_series(rhs, &size, p);
+                ptr = copy_colvec_as_series(rhs, p);
                 if (!p->err) {
                     type = GRETL_TYPE_SERIES;
                     donate = 1;
@@ -12502,10 +12455,8 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
             }
             break;
         case SERIES:
-	    /* FIXME */
             ptr = rhs->v.xvec;
             type = GRETL_TYPE_SERIES;
-            size = p->dset->n;
             donate = !reusable(p) && is_tmp_node(rhs);
             break;
         case BUNDLE:
@@ -12660,7 +12611,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
             return err; /* handled */
         }
         if (!err) {
-            ptr = get_mod_assign_result(lp, ltype, rhs, NULL, p);
+            ptr = get_mod_assign_result(lp, ltype, rhs, p);
             err = p->err;
             if (p->op == INC || p->op == DEC) {
                 return err; /* handled */
@@ -22076,12 +22027,12 @@ static void series_from_matrix (double *y, const gretl_matrix *m,
         for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
             y[t] = xy_calc(y[t], m->val[s], p->op, SERIES, p);
         }
-    } else if (mt2 > 0 && mt2 >= mt1) {
+    } else if (mt1 >= 0 && mt2 >= mt1) {
         /* align using matrix "t1" value */
         for (t=mt1; t<mt1 + k && t<=p->dset->t2; t++) {
             if (t >= p->dset->t1) {
                 y[t] = xy_calc(y[t], m->val[t-mt1], p->op,
-                                  SERIES, p);
+			       SERIES, p);
             }
         }
     }

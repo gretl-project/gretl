@@ -223,6 +223,7 @@ static int bundled_item_copy_in_data (bundled_item *item, void *ptr)
         item->data = gretl_strdup((char *) ptr);
         break;
     case GRETL_TYPE_MATRIX:
+    case GRETL_TYPE_SERIES:
         item->data = gretl_matrix_copy((gretl_matrix *) ptr);
         break;
     case GRETL_TYPE_LIST:
@@ -1697,7 +1698,9 @@ int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
     m = gretl_matrix_alloc(len, 1);
     memcpy(m->val, x, len * sizeof *x);
 
-    return gretl_bundle_set_data(bundle, key, m, GRETL_TYPE_MATRIX);
+    return real_bundle_set_data(bundle, key, m,
+				GRETL_TYPE_SERIES,
+				0, NULL);
 }
 
 /**
@@ -1722,7 +1725,9 @@ int gretl_bundle_donate_series (gretl_bundle *bundle, const char *key,
 
     gretl_matrix_init_full(m, len, 1, x);
 
-    return gretl_bundle_donate_data(bundle, key, m, GRETL_TYPE_MATRIX);
+    return real_bundle_set_data(bundle, key, m,
+				GRETL_TYPE_SERIES,
+				0, NULL);
 }
 
 /**
