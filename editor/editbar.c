@@ -395,22 +395,91 @@ static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
                                   TRUE);
 }
 
+static void set_choice (GtkWidget *w, int *choice)
+{
+    *choice = widget_get_int(w, "action");
+}
+
+static gint exec_choice_dialog (windata_t *vwin)
+{
+    GtkWidget *dialog;
+    GtkDialogFlags flags = GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT;
+    GtkWidget *vbox;
+    GtkWidget *button;
+    GSList *group = NULL;
+    gint result;
+    int i, choice = 1;
+    const char *labels[] = {
+	N_("Execute script"),
+	N_("(Re-)load functions")
+    };
+
+    dialog = gtk_dialog_new_with_buttons(NULL,
+					 GTK_WINDOW(vwin_toplevel(vwin)),
+					 flags,
+					 _("_OK"), GTK_RESPONSE_ACCEPT,
+					 _("_Cancel"), GTK_RESPONSE_REJECT,
+					 NULL);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    for (i=0; i<2; i++) {
+	button = gtk_radio_button_new_with_label(group, _(labels[i]));
+	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
+	g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(i+1));
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_choice), &choice);
+	if (i == 0) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+	}
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    }
+    gtk_widget_show_all(vbox);
+
+    result = gtk_dialog_run(GTK_DIALOG(dialog));
+    if (result != GTK_RESPONSE_ACCEPT) {
+	choice = 0;
+    }
+
+    gtk_widget_destroy(dialog);
+
+    return choice;
+}
+
+static int have_functions (const gchar *buf)
+{
+    const char *p = buf;
+    int nf = 0;
+
+    while (strstr(p, "function ") != NULL) {
+	p += 8;
+	nf++;
+    }
+
+    return nf;
+}
+
 static void exec_callback (GtkWidget *w, windata_t *vwin)
 {
     if (widget_get_int(vwin->mbar, "exec_is_kill")) {
         cancel_run_script();
+    } else if (vwin->role == EDIT_HANSL) {
+	gchar *buf = textview_get_hansl(vwin->text, 0);
+
+	if (have_functions(buf) > 1) {
+	    int choice = exec_choice_dialog(vwin);
+
+	    if (choice == 1) {
+		gretlcli_exec_script(vwin, buf);
+	    } else if (choice == 2) {
+		load_functions(buf);
+	    }
+	} else {
+	    gretlcli_exec_script(vwin, buf);
+	}
+	g_free(buf);
     } else {
         do_run_script(w, vwin);
     }
-
-#if 0
-    /* FIXME : when vwin->role == EDIT_HANSL we could also offer
-       to load the functions in the editor window into memory.
-    */
-    gchar *buf = textview_get_hansl(vwin->text, 0);
-    load_functions(buf);
-    g_free(buf);
-#endif
 }
 
 static void show_stderr (GtkWidget *w, windata_t *vwin)

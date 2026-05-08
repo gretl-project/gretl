@@ -569,8 +569,6 @@ void populate_gretlcli_path_combo (GtkWidget *box)
     populate_gretlcli_combo(box, &gretlcli_paths, 1);
 }
 
-
-
 /* Called from settings.c: put whatever gretlcli path was
    selected, via the Editor tab under Preferences/General,
    into first position in @gretlcli_paths.
@@ -592,7 +590,7 @@ static gchar *get_cli_path (void)
     }
 }
 
-static int gretlcli_exec_script (windata_t *vwin, gchar *buf)
+int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 {
     gchar *inpname = gretl_make_dotpath("cli_XXXXXX.inp");
     FILE *fp = gretl_mktemp(inpname, "wb");
