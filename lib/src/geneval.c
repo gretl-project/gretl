@@ -11795,6 +11795,23 @@ static NODE *bundled_series_node (gretl_matrix *m,
     return ret;
 }
 
+static void attach_bundled_list (NODE *n,
+				 int *vals,
+				 int *is_tmp,
+				 parser *p)
+{
+    if (stored_list_ok(vals, p->dset)) {
+	/* extract as list */
+	n->v.ivec = vals;
+	*is_tmp = 0;
+    } else {
+	/* fallback: extract as row vector */
+	n->t = MAT;
+	n->v.m = gretl_list_to_vector(vals, &p->err);
+	*is_tmp = 1;
+    }
+}
+
 static NODE *virtual_object_node (gretl_bundle *b,
 				  const char *key,
 				  GretlType type,
@@ -11884,16 +11901,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_ARRAY) {
         ret->v.a = (gretl_array *) val;
     } else if (type == GRETL_TYPE_LIST) {
-        if (stored_list_ok((const int *) val, p->dset)) {
-            /* extract as list */
-            ret->v.ivec = (int *) val;
-            is_tmp = 0;
-        } else {
-            /* fallback: extract as row vector */
-            ret->t = MAT;
-            ret->v.m = gretl_list_to_vector((const int *) val, &p->err);
-            is_tmp = 1;
-        }
+	attach_bundled_list(ret, (int *) val, &is_tmp, p);
     } else {
         p->err = E_DATA;
     }
