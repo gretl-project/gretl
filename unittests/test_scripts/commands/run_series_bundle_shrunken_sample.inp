@@ -11,11 +11,13 @@ series B.y = y_full
 # Restrict sample
 smpl 1 5 --permanent
 
-catch eval B.y          # this failed before 2022c
+# this failed before 2022c
+catch eval B.y
 assert($error == FALSE)
 
-catch series y_restricted  = B.y
-assert($error != FALSE)
+# this failed before 2026c
+catch series y_restricted = B.y
+assert($error == FALSE)
 
 print "Successfully finished tests."
 quit
