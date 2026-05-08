@@ -165,10 +165,10 @@ int gretl_bundle_set_uint64 (gretl_bundle *bundle, const char *key,
                              uint64_t val);
 
 int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
-			     const double *x, int len);
+			     const double *x, const DATASET *dset);
 
 int gretl_bundle_donate_series (gretl_bundle *bundle, const char *key,
-				double *x, int len);
+				double *x, const DATASET *dset);
 
 int gretl_bundle_set_list (gretl_bundle *bundle, const char *key,
 			   const int *list);

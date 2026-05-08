@@ -1681,7 +1681,7 @@ int gretl_bundle_set_uint64 (gretl_bundle *bundle, const char *key,
  * @bundle: target bundle.
  * @key: name of key to create or replace.
  * @x: array of doubles.
- * @len: the current series length.
+ * @dset: the current dataset.
  *
  * Copies @x as a member of @bundle under the name @key.
  * If @key is already present in the bundle the original
@@ -1690,11 +1690,18 @@ int gretl_bundle_set_uint64 (gretl_bundle *bundle, const char *key,
  * Returns: 0 on success, error code on error.
  */
 
-int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
-                             const double *x, int len)
+int gretl_bundle_set_series (gretl_bundle *bundle,
+			     const char *key,
+                             const double *x,
+			     const DATASET *dset)
 {
     gretl_matrix *m;
+    int len = dset->n;
 
+    /* FIXME: do we want to make this vector the full
+       length of the dataset, or restrict it to the
+       current sample length and set t1, t2 on it?
+    */
     m = gretl_matrix_alloc(len, 1);
     memcpy(m->val, x, len * sizeof *x);
 
@@ -1708,7 +1715,7 @@ int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
  * @bundle: target bundle.
  * @key: name of key to create or replace.
  * @x: array of doubles.
- * @len: the current series length.
+ * @dset: the current dataset.
  *
  * Sets @x as a member of @bundle under the name @key:
  * the bundle takes ownership of the array.
@@ -1718,11 +1725,17 @@ int gretl_bundle_set_series (gretl_bundle *bundle, const char *key,
  * Returns: 0 on success, error code on error.
  */
 
-int gretl_bundle_donate_series (gretl_bundle *bundle, const char *key,
-				double *x, int len)
+int gretl_bundle_donate_series (gretl_bundle *bundle,
+				const char *key,
+				double *x,
+				const DATASET *dset)
 {
     gretl_matrix *m = malloc(sizeof *m);
+    int len = dset->n;
 
+    /* FIXME: see the comment above about
+       gretl_bundle_set_series()
+    */
     gretl_matrix_init_full(m, len, 1, x);
 
     return real_bundle_set_data(bundle, key, m,
@@ -3033,7 +3046,12 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
                     double *xvec = gretl_xml_get_double_array(cur, doc, &size, &err);
 
                     if (!err) {
-			gretl_bundle_donate_series(b, key, xvec, size);
+			DATASET dset = {0};
+
+			dset.n = size;
+			dset.t1 = 0;
+			dset.t2 = dset.n - 1;
+			gretl_bundle_donate_series(b, key, xvec, &dset);
                     }
                 } else if (type == GRETL_TYPE_MATRIX ||
 			   type == GRETL_TYPE_SERIES) {
@@ -3787,7 +3805,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
         berr = gretl_model_get_series(x, pmod, dset, i);
         if (!berr) {
             key = mvarname(i) + 1;
-            *err = gretl_bundle_set_series(b, key, x, dset->n);
+            *err = gretl_bundle_set_series(b, key, x, dset);
         }
     }
 

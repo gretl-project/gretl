@@ -11755,6 +11755,16 @@ static NODE *bundled_series_node (gretl_matrix *m,
     int n = m->rows;
     int t, s;
 
+    if (p->targ == MAT) {
+	/* a matrix was requested */
+	ret = aux_matrix_node(p);
+	if (!p->err) {
+	    ret->v.m = m;
+	    *is_tmp = virtual;
+	}
+	return ret;
+    }
+
     if (n == p->dset->n ||
 	n == sample_size(p->dset) ||
 	(mt1 >= 0 && mt2 >= mt1)) {
@@ -12616,7 +12626,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
         if (donate) {
             /* it's OK to hand over the data pointer */
 	    if (type == GRETL_TYPE_SERIES) {
-		err = gretl_bundle_donate_series(bundle, key, ptr, p->dset->n);
+		err = gretl_bundle_donate_series(bundle, key, ptr, p->dset);
 	    } else {
 		err = gretl_bundle_donate_data(bundle, key, ptr, type);
 	    }
@@ -12626,7 +12636,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
         } else {
             /* the data must be copied into the bundle */
 	    if (type == GRETL_TYPE_SERIES) {
-		err = gretl_bundle_set_series(bundle, key, ptr, p->dset->n);
+		err = gretl_bundle_set_series(bundle, key, ptr, p->dset);
 	    } else {
 		err = gretl_bundle_set_data(bundle, key, ptr, type);
 	    }
@@ -15944,9 +15954,9 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
                 gtype = gretl_type_from_gen_type(e->t);
 		if (gtype == GRETL_TYPE_SERIES) {
 		    if (donate) {
-			gretl_bundle_donate_series(b, key, e->v.xvec, p->dset->n);
+			gretl_bundle_donate_series(b, key, e->v.xvec, p->dset);
 		    } else {
-			gretl_bundle_set_series(b, key, e->v.xvec, p->dset->n);
+			gretl_bundle_set_series(b, key, e->v.xvec, p->dset);
 		    }
 		} else if (type_can_be_bundled(gtype)) {
                     ptr = node_get_ptr(e, t->t, p, &donate);

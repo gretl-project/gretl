@@ -4541,7 +4541,7 @@ int do_nonparam_model (selector *sr)
             gretl_bundle_set_int(bundle, "d", d);
             gretl_bundle_set_scalar(bundle, "q", q);
             gretl_bundle_set_int(bundle, "robust", robust);
-            gretl_bundle_set_series(bundle, "m", m, dataset->n);
+            gretl_bundle_set_series(bundle, "m", m, dataset);
             lib_command_sprintf("loess(%s, %s, %d, %g, %d)",
                                 yname, xname, d, q, robust);
             record_command_verbatim();
@@ -4561,7 +4561,7 @@ int do_nonparam_model (selector *sr)
             gretl_bundle_set_scalar(bundle, "h", h);
             gretl_bundle_set_int(bundle, "LOO", LOO);
             gretl_bundle_set_scalar(bundle, "trim", trim);
-            gretl_bundle_set_series(bundle, "m", m, dataset->n);
+            gretl_bundle_set_series(bundle, "m", m, dataset);
             lib_command_sprintf("nadarwat(%s, %s, %g, %d, %g)",
                                 yname, xname, h, LOO, trim);
             record_command_verbatim();
