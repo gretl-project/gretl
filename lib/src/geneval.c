@@ -11737,35 +11737,88 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
 
 #endif /* USE_RLIB or not */
 
-/* Extracting a "series", stored in the form of a column vector, from a
-   bundle. Whether we can truly get it as a series depends on the
-   current state of the dataset. Failing that, we'll get it as a vector.
+/* Extracting what is nominally a series, stored in the form of a column
+   vector, from a bundle. Whether we can truly get it as a series
+   depends on the current state of the dataset. Failing that, we'll get
+   it as a vector.
 */
 
-static NODE *bundled_series_node (parser *p,
-				  gretl_matrix *m,
-                                  int *is_tmp)
+static NODE *bundled_series_node (gretl_matrix *m,
+				  int virtual,
+                                  int *is_tmp,
+				  parser *p)
 {
     NODE *ret = NULL;
+    double *y = NULL;
+    int mt1 = gretl_matrix_get_t1(m);
+    int mt2 = gretl_matrix_get_t2(m);
     int n = m->rows;
-    int t;
+    int t, s;
 
-    if (n <= p->dset->n) {
-        ret = aux_series_node(p);
-        if (!p->err) {
-            for (t=p->dset->t1; t<=p->dset->t2 && t<n; t++) {
-                ret->v.xvec[t] = m->val[t];
-            }
-            *is_tmp = 1;
-        }
-    } else if (n > 0) {
-        ret = aux_matrix_node(p);
+    if (n == p->dset->n ||
+	n == sample_size(p->dset) ||
+	(mt1 >= 0 && mt2 >= mt1)) {
+	ret = aux_series_node(p);
 	if (!p->err) {
-	    ret->v.m = gretl_matrix_copy(m);
-	    *is_tmp = 1;
+	    y = ret->v.xvec;
 	}
+    }
+
+    if (y != NULL) {
+	/* transcribe to series */
+	if (n == p->dset->n) {
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		y[t] = m->val[t];
+	    }
+	} else if (n == sample_size(p->dset)) {
+	    for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
+		y[t] = m->val[s];
+	    }
+	} else {
+	    /* align using mt1 */
+	    for (t=mt1; t<mt1 + n && t<=p->dset->t2; t++) {
+		if (t >= p->dset->t1) {
+		    y[t] = m->val[t-mt1];
+		}
+	    }
+	}
+	*is_tmp = 1;
     } else {
-        p->err = E_DATA;
+	/* vector fallback */
+	ret = aux_matrix_node(p);
+	if (!p->err) {
+	    ret->v.m = m;
+	    *is_tmp = virtual;
+	}
+    }
+
+    return ret;
+}
+
+static NODE *virtual_object_node (gretl_bundle *b,
+				  const char *key,
+				  GretlType type,
+				  int *is_tmp,
+				  parser *p)
+{
+    gretl_matrix *m;
+    NODE *ret = NULL;
+
+    m = bundle_get_virtual_object(b, type, key, p->dset, &p->err);
+
+    if (!p->err) {
+	if (type == GRETL_TYPE_SERIES) {
+	    ret = bundled_series_node(m, 1, is_tmp, p);
+	    if (!p->err && ret->t == SERIES) {
+		gretl_matrix_free(m);
+	    }
+	} else {
+	    ret = aux_matrix_node(p);
+	    if (!p->err) {
+		ret->v.m = m;
+		*is_tmp = 1;
+	    }
+	}
     }
 
     return ret;
@@ -11811,18 +11864,13 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 	return ret;
     }
 
-    if (virtual) {
-	ret = aux_matrix_node(p);
-    } else if (type != GRETL_TYPE_SERIES) {
+    if (type != GRETL_TYPE_SERIES) {
 	ret = aux_node_for_type(type, p);
     }
 
     if (virtual) {
-	/* FIXME series case? */
-	ret->v.m =
-	    bundle_get_virtual_object(l->v.b, type, (const char *) val,
-				      p->dset, &p->err);
-	is_tmp = 1;
+	ret = virtual_object_node(l->v.b, (const char *) val,
+				  type, &is_tmp, p);
     } else if (gretl_is_scalar_type(type)) {
         ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
     } else if (type == GRETL_TYPE_STRING) {
@@ -11830,7 +11878,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_MATRIX) {
         ret->v.m = (gretl_matrix *) val;
     } else if (type == GRETL_TYPE_SERIES) {
-	ret = bundled_series_node(p, (gretl_matrix *) val, &is_tmp);
+	ret = bundled_series_node((gretl_matrix *) val, 0, &is_tmp, p);
     } else if (type == GRETL_TYPE_BUNDLE) {
         ret->v.b = (gretl_bundle *) val;
     } else if (type == GRETL_TYPE_ARRAY) {
@@ -22037,7 +22085,13 @@ static int series_from_strings_array (DATASET *dset, int v,
     return series_from_strings(dset, v, S, ns);
 }
 
-static void series_from_matrix (double *y, const gretl_matrix *m,
+/* We come here is the genr target is SERIES but we got a matrix on the
+   right-hand side. @y is the storage area for the series and @m is the
+   source matrix.
+*/
+
+static void series_from_matrix (double *y,
+				const gretl_matrix *m,
                                 parser *p)
 {
     int k = gretl_vector_get_length(m);
@@ -22049,22 +22103,22 @@ static void series_from_matrix (double *y, const gretl_matrix *m,
         /* result needs special alignment */
         align_matrix_to_series(y, m, p);
     } else if (k == 1) {
-        /* result is effectively a scalar */
+        /* the result is effectively a scalar */
         for (t=p->dset->t1; t<=p->dset->t2; t++) {
             y[t] = xy_calc(y[t], m->val[0], p->op, SERIES, p);
         }
     } else if (k == p->dset->n) {
-        /* treat result as full-length series */
+        /* treat the result as a full-length series */
         for (t=p->dset->t1; t<=p->dset->t2; t++) {
             y[t] = xy_calc(y[t], m->val[t], p->op, SERIES, p);
         }
     } else if (k == sample_size(p->dset)) {
-        /* treat as series of current sample length */
+        /* treat as a series of the current sample length */
         for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
             y[t] = xy_calc(y[t], m->val[s], p->op, SERIES, p);
         }
     } else if (mt1 >= 0 && mt2 >= mt1) {
-        /* align using matrix "t1" value */
+        /* align using the matrix "t1" value */
         for (t=mt1; t<mt1 + k && t<=p->dset->t2; t++) {
             if (t >= p->dset->t1) {
                 y[t] = xy_calc(y[t], m->val[t-mt1], p->op,
