@@ -422,30 +422,25 @@ static void create_pop_item (GtkWidget *popup, char *str,
     gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
 }
 
-static GtkWidget *exec_popup;
-
 static void exec_choice_popup (windata_t *vwin,
 			       gchar *buf)
 {
-    static char *exec_items[] = {
+    static GtkWidget *exec_popup;
+    const char *exec_items[] = {
 	N_("Execute script"),
 	N_("(Re-)load functions")
     };
-    gboolean starting = FALSE;
     int i;
 
     if (exec_popup == NULL) {
 	exec_popup = gtk_menu_new();
-	starting = TRUE;
-    }
-    g_object_set_data(G_OBJECT(exec_popup), "vwin", vwin);
-    g_object_set_data_full(G_OBJECT(exec_popup), "buf", buf, g_free);
-    if (starting) {
 	for (i=0; i<2; i++) {
 	    create_pop_item(exec_popup, _(exec_items[i]),
 			    exec_popup_callback);
 	}
     }
+    g_object_set_data(G_OBJECT(exec_popup), "vwin", vwin);
+    g_object_set_data_full(G_OBJECT(exec_popup), "buf", buf, g_free);
 
 #if GTK_MAJOR_VERSION == 2
     GdkEvent *event = gtk_get_current_event();
