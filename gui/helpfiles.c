@@ -1508,19 +1508,19 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
 
 static void function_info_popup (const char *sig,
 				 const char *doc,
-				 GtkWidget *tview)
+				 windata_t *vwin)
 {
-    GtkWidget *top, *vmain;
-    windata_t *vwin;
+    GtkWidget *top = vwin_toplevel(vwin);
+    GtkWidget *poptop;
+    windata_t *popwin;
 
-    vwin = view_function_signature(sig, doc);
-    vmain = vwin_toplevel(vwin);
-    top = gtk_widget_get_toplevel(tview);
-    gtk_window_set_transient_for(GTK_WINDOW(vmain), GTK_WINDOW(top));
-    gtk_window_set_destroy_with_parent(GTK_WINDOW(vmain), TRUE);
-    gtk_window_set_position(GTK_WINDOW(vmain),
+    popwin = view_function_signature(sig, doc, vwin);
+    poptop = vwin_toplevel(popwin);
+    gtk_window_set_transient_for(GTK_WINDOW(poptop), GTK_WINDOW(top));
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(poptop), TRUE);
+    gtk_window_set_position(GTK_WINDOW(poptop),
 			    GTK_WIN_POS_CENTER_ON_PARENT);
-    gtk_widget_show(vmain);
+    gtk_widget_show(poptop);
 }
 
 /* try getting the signature of a hansl function */
@@ -1563,7 +1563,7 @@ static int hansl_func_help (const gchar *id, windata_t *vwin)
 	    gretl_print_destroy(prn);
 	}
 
-	function_info_popup(buf1, buf2, vwin->text);
+	function_info_popup(buf1, buf2, vwin);
 	free(buf1);
 	free(buf2);
 	ret = 1;

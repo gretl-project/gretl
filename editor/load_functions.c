@@ -52,13 +52,16 @@ static int exec_line (ExecState *s)
     int err = 0;
 
     if (gretl_compiling_function()) {
-        return gretl_function_append_line(s);
+        err = gretl_function_append_line(s);
     } else if (!strncmp(s->line, "function ", 9)) {
 	err = parse_command_line(s, NULL, NULL);
     }
 
     if (!err && s->cmd->ci == FUNC) {
 	err = gretl_cmd_exec(s, NULL);
+    }
+    if (err) {
+	gretl_errmsg_prepend(s->line, err);
     }
 
     return err;
@@ -74,7 +77,7 @@ int load_functions (const char *buf)
     if (buf == NULL || *buf == '\0') {
 	errbox(_("No functions to load"));
 	return -1;
-    }    
+    }
 
     if (!cmd_init_done) {
 	gretl_cmd_init(&edcmd);
@@ -96,7 +99,7 @@ int load_functions (const char *buf)
 	    tailstrip(line);
 	} else {
 	    int contd = top_n_tail(line, sizeof line, &exec_err);
-		
+
 	    while (contd && !state.in_comment && !exec_err) {
 		/* handle continued lines */
 		gotline = get_input_line(tmp, buf, &exec_err);

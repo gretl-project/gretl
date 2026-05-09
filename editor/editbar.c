@@ -395,22 +395,94 @@ static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
                                   TRUE);
 }
 
+static void exec_popup_callback (GtkWidget *w, gpointer data)
+{
+    GtkWidget *popup = (GtkWidget *) data;
+    windata_t *vwin = g_object_get_data(G_OBJECT(popup), "vwin");
+    gchar *buf = g_object_get_data(G_OBJECT(popup), "buf");
+    const gchar *str = gtk_menu_item_get_label(GTK_MENU_ITEM(w));
+
+    if (!strcmp(str, _("Execute script"))) {
+	gretlcli_exec_script(vwin, buf);
+    } else {
+	load_functions(buf);
+    }
+}
+
+static void create_pop_item (GtkWidget *popup, char *str,
+			     GtkCallback callback)
+{
+    GtkWidget *item;
+
+    item = gtk_menu_item_new_with_label(str);
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(callback),
+		     popup);
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
+}
+
+static void exec_choice_popup (windata_t *vwin,
+			       gchar *buf)
+{
+    static GtkWidget *exec_popup;
+    const char *exec_items[] = {
+	N_("Execute script"),
+	N_("(Re-)load functions")
+    };
+    int i;
+
+    if (exec_popup == NULL) {
+	exec_popup = gtk_menu_new();
+	for (i=0; i<2; i++) {
+	    create_pop_item(exec_popup, _(exec_items[i]),
+			    exec_popup_callback);
+	}
+    }
+    g_object_set_data(G_OBJECT(exec_popup), "vwin", vwin);
+    g_object_set_data_full(G_OBJECT(exec_popup), "buf", buf, g_free);
+
+#if GTK_MAJOR_VERSION == 2
+    GdkEvent *event = gtk_get_current_event();
+
+    gtk_menu_popup(GTK_MENU(exec_popup), NULL, NULL, NULL, NULL,
+		   ((GdkEventButton *) event)->button,
+		   ((GdkEventButton *) event)->time);
+    gdk_event_free(event);
+#else
+    gtk_menu_popup_at_pointer(GTK_MENU(exec_popup), NULL);
+#endif
+}
+
+static int have_functions (const gchar *buf)
+{
+    const char *p = buf;
+    int nf = 0;
+
+    while (strstr(p, "function ") != NULL) {
+	p += 8;
+	nf++;
+    }
+
+    return nf;
+}
+
 static void exec_callback (GtkWidget *w, windata_t *vwin)
 {
     if (widget_get_int(vwin->mbar, "exec_is_kill")) {
         cancel_run_script();
+    } else if (vwin->role == EDIT_HANSL) {
+	gchar *buf = textview_get_hansl(vwin->text, 0);
+
+	if (have_functions(buf) > 1) {
+	    exec_choice_popup(vwin, buf);
+	} else {
+	    gretlcli_exec_script(vwin, buf);
+	    g_free(buf);
+	}
     } else {
         do_run_script(w, vwin);
     }
-
-#if 0
-    /* FIXME : when vwin->role == EDIT_HANSL we could also offer
-       to load the functions in the editor window into memory.
-    */
-    gchar *buf = textview_get_hansl(vwin->text, 0);
-    load_functions(buf);
-    g_free(buf);
-#endif
 }
 
 static void show_stderr (GtkWidget *w, windata_t *vwin)

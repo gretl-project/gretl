@@ -30,7 +30,7 @@
 const gchar *copyright = "Copyright (C) 2000-2025 Allin Cottrell and "
                          "Riccardo \"Jack\" Lucchetti";
 const gchar *bonmot = N_("\"By econometricians, for econometricians.\"");
-const gchar *website = "http://gretl.sourceforge.net/";
+const gchar *website = "https://gretl.sourceforge.net/";
 
 #if GTK_MAJOR_VERSION == 3
 # define GTKV "gtk3"

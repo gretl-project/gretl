@@ -1186,25 +1186,24 @@ void set_style_for_textview (GtkWidget *text, const char *id)
     }
 }
 
-static void sourceview_attach_handlers (GtkWidget *text,
-                                        windata_t *vwin)
+static void sourceview_attach_handlers (windata_t *vwin)
 {
     if (gretl_script_role(vwin->role)) {
-	g_signal_connect(G_OBJECT(text), "key-press-event",
+	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(script_key_handler), vwin);
-	g_signal_connect(G_OBJECT(text), "button-press-event",
+	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 			 G_CALLBACK(script_popup_handler),
 			 vwin);
-	g_signal_connect(G_OBJECT(text), "button-release-event",
+	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
     } else if (foreign_script_role(vwin->role)) {
-	g_signal_connect(G_OBJECT(text), "key-press-event",
+	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(foreign_script_key_handler), vwin);
-	g_signal_connect(G_OBJECT(text), "button-press-event",
+	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 			 G_CALLBACK(script_popup_handler),
 			 vwin);
     } else if (vwin->role == VIEW_LOG) {
-	g_signal_connect(G_OBJECT(text), "button-release-event",
+	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
     }
 }
@@ -1249,7 +1248,7 @@ static GtkWidget *create_duplicate_source_view (windata_t *vwin)
 			 G_CALLBACK(catch_viewer_key), vwin);
     }
 
-    sourceview_attach_handlers(text, vwin);
+    sourceview_attach_handlers(vwin);
 
     if (editing_hansl(vwin->role)) {
 	connect_link_signals(text, vwin);
@@ -1259,7 +1258,8 @@ static GtkWidget *create_duplicate_source_view (windata_t *vwin)
 }
 
 void create_source (windata_t *vwin, int hsize, int vsize,
-		    int nlines, gboolean editable)
+		    int nlines, gboolean editable,
+		    gboolean attach_handlers)
 {
     GtkSourceLanguageManager *lm = NULL;
     GtkSourceBuffer *sbuf;
@@ -1360,8 +1360,9 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			 G_CALLBACK(catch_viewer_key), vwin);
     }
 
-    sourceview_attach_handlers(vwin->text, vwin);
-
+    if (attach_handlers) {
+	sourceview_attach_handlers(vwin);
+    }
     if (editing_hansl(vwin->role)) {
 	connect_link_signals(vwin->text, vwin);
     }

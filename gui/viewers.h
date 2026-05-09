@@ -83,7 +83,8 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 				       int role);
 
 windata_t *view_function_signature (const char *sig,
-				    const char *doc);
+				    const char *doc,
+				    windata_t *vwin);
 
 windata_t *hansl_output_viewer_new (PRN *prn, int mode,
 				    const char *title);
