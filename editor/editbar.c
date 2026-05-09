@@ -395,54 +395,68 @@ static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
                                   TRUE);
 }
 
-static void set_choice (GtkWidget *w, int *choice)
+static void exec_popup_callback (GtkWidget *w, gpointer data)
 {
-    *choice = widget_get_int(w, "action");
+    GtkWidget *popup = (GtkWidget *) data;
+    windata_t *vwin = g_object_get_data(G_OBJECT(popup), "vwin");
+    gchar *buf = g_object_get_data(G_OBJECT(popup), "buf");
+    const gchar *str = gtk_menu_item_get_label(GTK_MENU_ITEM(w));
+
+    if (!strcmp(str, _("Execute script"))) {
+	gretlcli_exec_script(vwin, buf);
+    } else {
+	load_functions(buf);
+    }
 }
 
-static gint exec_choice_dialog (windata_t *vwin)
+static void create_pop_item (GtkWidget *popup, char *str,
+			     GtkCallback callback)
 {
-    GtkWidget *dialog;
-    GtkDialogFlags flags = GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT;
-    GtkWidget *vbox;
-    GtkWidget *button;
-    GSList *group = NULL;
-    gint result;
-    int i, choice = 1;
-    const char *labels[] = {
+    GtkWidget *item;
+
+    item = gtk_menu_item_new_with_label(str);
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(callback),
+		     popup);
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
+}
+
+static GtkWidget *exec_popup;
+
+static void exec_choice_popup (windata_t *vwin,
+			       gchar *buf)
+{
+    static char *exec_items[] = {
 	N_("Execute script"),
 	N_("(Re-)load functions")
     };
+    gboolean starting = FALSE;
+    int i;
 
-    dialog = gtk_dialog_new_with_buttons(NULL,
-					 GTK_WINDOW(vwin_toplevel(vwin)),
-					 flags,
-					 _("_OK"), GTK_RESPONSE_ACCEPT,
-					 _("_Cancel"), GTK_RESPONSE_REJECT,
-					 NULL);
-
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-    for (i=0; i<2; i++) {
-	button = gtk_radio_button_new_with_label(group, _(labels[i]));
-	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 5);
-	g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(i+1));
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(set_choice), &choice);
-	if (i == 0) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+    if (exec_popup == NULL) {
+	exec_popup = gtk_menu_new();
+	starting = TRUE;
+    }
+    g_object_set_data(G_OBJECT(exec_popup), "vwin", vwin);
+    g_object_set_data_full(G_OBJECT(exec_popup), "buf", buf, g_free);
+    if (starting) {
+	for (i=0; i<2; i++) {
+	    create_pop_item(exec_popup, _(exec_items[i]),
+			    exec_popup_callback);
 	}
-	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    }
-    gtk_widget_show_all(vbox);
-
-    result = gtk_dialog_run(GTK_DIALOG(dialog));
-    if (result != GTK_RESPONSE_ACCEPT) {
-	choice = 0;
     }
 
-    gtk_widget_destroy(dialog);
+#if GTK_MAJOR_VERSION == 2
+    GdkEvent *event = gtk_get_current_event();
 
-    return choice;
+    gtk_menu_popup(GTK_MENU(exec_popup), NULL, NULL, NULL, NULL,
+		   ((GdkEventButton *) event)->button,
+		   ((GdkEventButton *) event)->time);
+    gdk_event_free(event);
+#else
+    gtk_menu_popup_at_pointer(GTK_MENU(exec_popup), NULL);
+#endif
 }
 
 static int have_functions (const gchar *buf)
@@ -466,17 +480,11 @@ static void exec_callback (GtkWidget *w, windata_t *vwin)
 	gchar *buf = textview_get_hansl(vwin->text, 0);
 
 	if (have_functions(buf) > 1) {
-	    int choice = exec_choice_dialog(vwin);
-
-	    if (choice == 1) {
-		gretlcli_exec_script(vwin, buf);
-	    } else if (choice == 2) {
-		load_functions(buf);
-	    }
+	    exec_choice_popup(vwin, buf);
 	} else {
 	    gretlcli_exec_script(vwin, buf);
+	    g_free(buf);
 	}
-	g_free(buf);
     } else {
         do_run_script(w, vwin);
     }
