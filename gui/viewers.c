@@ -45,6 +45,8 @@
 #include "cmd_private.h"
 #endif
 
+#define YELLOW_BG "#F5ECAB" /* was "#EDE28D" */
+
 static gboolean not_space (gunichar c, gpointer p)
 {
     return !g_unichar_isspace(c);
@@ -1244,9 +1246,9 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 
 #ifndef GRETL_EDIT
     if (role == VIEW_PKG_CODE || role == VIEW_PKG_SAMPLE || role == VIEW_LOG) {
-	create_source(vwin, hsize, vsize, 0, FALSE);
+	create_source(vwin, hsize, vsize, 0, FALSE, TRUE);
     } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
-	create_source(vwin, hsize, vsize, 0, TRUE);
+	create_source(vwin, hsize, vsize, 0, TRUE, TRUE);
     } else if (role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
 	/* editable text */
 	create_text(vwin, hsize, vsize, nlines, TRUE);
@@ -1401,17 +1403,6 @@ view_file_with_title (const char *filename, int editable, fmode mode,
     use_tab = use_tabbed_editor();
 #endif
 
-#if 0
-    /* experimental, not yet */
-    if (swallow && role == EDIT_HANSL) {
-	ins = mainwin_get_vwin_insertion();
-	fprintf(stderr, "HERE ins=%d, title '%s'\n", ins, given_title);
-	if (ins) {
-	    preset_viewer_flag(VWIN_SWALLOW);
-	}
-    }
-#endif
-
     if (!ins && role == EDIT_HANSL && use_tab) {
 	vwin = viewer_tab_new(role, filename, NULL);
     } else if (editing_alt_script(role) && use_tab) {
@@ -1459,7 +1450,7 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 #endif
 
     if (textview_use_highlighting(role) || editable) {
-	create_source(vwin, hsize, vsize, 0, editable);
+	create_source(vwin, hsize, vsize, 0, editable, TRUE);
     } else {
 	create_text(vwin, hsize, vsize, 0, editable);
     }
@@ -1510,12 +1501,6 @@ view_file_with_title (const char *filename, int editable, fmode mode,
     cursor_to_top(vwin);
     gtk_widget_grab_focus(vwin->text);
     connect_text_sizer(vwin);
-
-#if 0 /* not yet */
-    if (vwin->flags & VWIN_SWALLOW) {
-	mainwin_insert_vwin(vwin);
-    }
-#endif
 
     return vwin;
 }
@@ -1719,7 +1704,7 @@ static void set_popup_bg (GtkWidget *widget)
 
 	color = g_malloc(sizeof *color);
 	cmap = gdk_colormap_get_system();
-	gdk_color_parse("#EDE28D", color);
+	gdk_color_parse(YELLOW_BG, color);
 	gdk_colormap_alloc_color(cmap, color, FALSE, TRUE);
     }
 
@@ -1734,7 +1719,7 @@ static void set_popup_bg (GtkWidget *widget)
     static int done;
 
     if (!done) {
-	gdk_rgba_parse(&rgbp, "#EDE28D");
+	gdk_rgba_parse(&rgbp, YELLOW_BG);
         done = 1;
     }
     gtk_widget_override_background_color(widget,
@@ -1828,19 +1813,70 @@ static void drag_to_move (GtkWidget *src, GdkEventButton *event,
 			       event->time);
 }
 
+#ifdef GRETL_EDIT
+
+static void show_link_cursor (GtkWidget *w, gpointer p)
+{
+    GdkWindow *window = gtk_widget_get_window(w);
+    GdkCursor *c = gdk_cursor_new(GDK_HAND2);
+
+    if (c != NULL) {
+        gdk_window_set_cursor(window, c);
+        gdk_cursor_unref(c);
+    }
+}
+
+static void revert_cursor (GtkWidget *w, gpointer p)
+{
+    GdkWindow *window = gtk_widget_get_window(w);
+
+    if (window != NULL) {
+        gdk_window_set_cursor(window, NULL);
+    }
+}
+
+static void find_function_def (GtkWidget *w, gpointer data)
+{
+    gchar *needle = g_object_get_data(G_OBJECT(w), "needle");
+    windata_t *vwin = g_object_get_data(G_OBJECT(w), "searchwin");
+    GtkTextView *tview;
+    GtkTextBuffer *tbuf;
+    GtkTextIter start, match;
+    gboolean found;
+
+    tview = GTK_TEXT_VIEW(vwin->text);
+    tbuf = gtk_text_view_get_buffer(tview);
+    gtk_text_buffer_get_start_iter(tbuf, &start);
+    found = gtk_text_iter_forward_search(&start, needle,
+					 GTK_TEXT_SEARCH_TEXT_ONLY,
+					 &match, NULL, NULL);
+    if (found) {
+	GtkTextMark *targ;
+
+	gtk_text_buffer_place_cursor(tbuf, &match);
+	targ = gtk_text_buffer_create_mark(tbuf, "targ", &match, FALSE);
+	gtk_text_view_scroll_to_mark(tview, targ, 0.05, FALSE, 0, 0);
+    }
+
+    gtk_widget_destroy(gtk_widget_get_toplevel(w));
+}
+
+#endif /* GRETL_EDIT */
+
 /* A text viewer window specialized to the case of showing the signature
    (plus doc string if available) for a hansl function. The window will
    be undecorated.
 */
 
 windata_t *view_function_signature (const char *sig,
-				    const char *doc)
+				    const char *doc,
+				    windata_t *vwin)
 {
-    windata_t *vwin;
+    windata_t *popwin;
     int nl, hsize = 0;
 
-    vwin = gretl_viewer_new_with_parent(NULL, VIEW_SIGNATURE, NULL, NULL);
-    if (vwin == NULL) {
+    popwin = gretl_viewer_new_with_parent(vwin, VIEW_SIGNATURE, NULL, NULL);
+    if (popwin == NULL) {
 	return NULL;
     }
 
@@ -1849,25 +1885,58 @@ windata_t *view_function_signature (const char *sig,
 	nl += line_count(doc, &hsize);
     }
 
-    create_source(vwin, hsize, 100, nl, FALSE);
-    gtk_container_add(GTK_CONTAINER(vwin->vbox), vwin->text);
-    gtk_widget_show(vwin->text);
-    gtk_window_set_decorated(GTK_WINDOW(vwin->main), FALSE);
+    create_source(popwin, hsize, 100, nl, FALSE, FALSE);
+    gtk_container_add(GTK_CONTAINER(popwin->vbox), popwin->text);
+    gtk_widget_show(popwin->text);
+    gtk_window_set_decorated(GTK_WINDOW(popwin->main), FALSE);
     if (!sourceview_style_is_dark()) {
-	set_popup_bg(vwin->text);
+	set_popup_bg(popwin->text);
     }
-    sourceview_insert_buffer(vwin, sig);
+    sourceview_insert_buffer(popwin, sig);
     if (doc != NULL) {
-	textview_append_plain_text(vwin->text, doc);
+	textview_append_plain_text(popwin->text, doc);
     }
 
-    add_text_closer(vwin);
-    gtk_widget_show(vwin->vbox);
+#ifdef GRETL_EDIT
+    if (1) {
+	/* enable search for function definition */
+	const gchar *p = strchr(sig, '(');
+	gchar *needle = g_strndup(sig, p - sig);
+	GtkWidget *ebox = gtk_event_box_new();
+	GtkWidget *label;
+	gchar *fmt = NULL;
+	gchar *buf = NULL;
 
-    g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
-		     G_CALLBACK(drag_to_move), vwin->main);
+	gtk_event_box_set_visible_window(GTK_EVENT_BOX(ebox), FALSE);
+	gtk_widget_set_can_default(ebox, FALSE);
+	fmt = g_strdup_printf("<span color=\"%s\">%%s</span>", blue_for_text());
+	buf = g_markup_printf_escaped(fmt, _("Find definition"));
+	label = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(label), buf);
+	g_free(buf);
+	g_free(fmt);
+	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
+	set_popup_bg(label);
+	gtk_container_add(GTK_CONTAINER(ebox), label);
+	gtk_box_pack_start(GTK_BOX(popwin->vbox), ebox, FALSE, FALSE, 0);
+	g_object_set_data_full(G_OBJECT(ebox), "needle", needle, g_free);
+	g_object_set_data(G_OBJECT(ebox), "searchwin", vwin);
+	g_signal_connect(ebox, "button-release-event",
+			 G_CALLBACK(find_function_def), NULL);
+	g_signal_connect(ebox, "enter-notify-event",
+			 G_CALLBACK(show_link_cursor), NULL);
+	g_signal_connect(ebox, "leave-notify-event",
+			 G_CALLBACK(revert_cursor), NULL);
+    }
+#endif
 
-    return vwin;
+    add_text_closer(popwin);
+    gtk_widget_show_all(popwin->vbox);
+
+    g_signal_connect(G_OBJECT(popwin->text), "button-press-event",
+		     G_CALLBACK(drag_to_move), popwin->main);
+
+    return popwin;
 }
 
 /* Called on destroying an editing window: give the user a chance to
@@ -1910,7 +1979,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
 #endif
 
-    create_source(vwin, hsize, vsize, 0, TRUE);
+    create_source(vwin, hsize, vsize, 0, TRUE, TRUE);
     text_table_setup(vwin->vbox, vwin->text);
 
     /* insert the buffer text */

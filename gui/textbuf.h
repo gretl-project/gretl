@@ -134,7 +134,8 @@ gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event,
 			     gpointer p);
 
 void create_source (windata_t *vwin, int hsize, int vsize,
-		    int nlines, gboolean editable);
+		    int nlines, gboolean editable,
+		    gboolean attach_handlers);
 
 GtkWidget *create_sample_source (const char *style);
 
