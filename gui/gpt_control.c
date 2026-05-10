@@ -1488,7 +1488,7 @@ static int get_gpt_data (GPT_SPEC *spec,
 {
     char s[MAXLEN];
     char *got = NULL;
-    double *x[5] = { NULL };
+    double *x[5] = {NULL};
     char test[5][32];
     char obsfmt[12] = {0};
     int started_data_lines = 0;
@@ -1546,7 +1546,7 @@ static int get_gpt_data (GPT_SPEC *spec,
         }
 
 #if GPDEBUG > 1
-        fprintf(stderr, "reading data, line %d, ncols %d\n", i, ncols);
+        fprintf(stderr, "reading plot data, line %d, ncols %d\n", i, ncols);
 #endif
 
         if (!started_data_lines) {
@@ -1554,7 +1554,9 @@ static int get_gpt_data (GPT_SPEC *spec,
             x[0] = spec->data->val;
             x[1] = x[0] + spec->nobs;
             started_data_lines = 1;
-        }
+        } else if (spec->code == PLOT_FACTORIZED) {
+	    offset = 0;
+	}
 
         x[2] = x[1] + spec->nobs;
         x[3] = x[2] + spec->nobs;
@@ -1599,6 +1601,7 @@ static int get_gpt_data (GPT_SPEC *spec,
             if (i <= imin && *do_markers) {
                 *do_markers = get_gpt_marker(s, spec->markers[t], obsfmt);
                 if (spec->code == PLOT_FACTORIZED && imin == 0) {
+		    /* FIXME ? */
                     imin = 1;
                 }
             }
@@ -1611,8 +1614,14 @@ static int get_gpt_data (GPT_SPEC *spec,
         /* trailer line for data block */
         bufgets(s, sizeof s, buf);
 
-        /* shift 'y' writing location */
-        x[1] += (ncols - 1) * spec->nobs;
+	if (spec->code == PLOT_FACTORIZED) {
+	    /* shift 'x'and 'y' write locations */
+	    x[0] += ncols * spec->nobs;
+	    x[1] += ncols * spec->nobs;
+	} else {
+	    /* shift 'y' write location only */
+	    x[1] += (ncols - 1) * spec->nobs;
+	}
     }
 
 #if GPDEBUG > 1
@@ -1747,23 +1756,6 @@ static int unhandled_label_spec (const char *s)
         return 0;
     }
 }
-
-#if 0 /* unused, for now */
-
-static int unhandled_key_spec (const char *s)
-{
-    if (strstr(s, "enhanced")) {
-        return 1;
-    } else if (strstr(s, "outside") &&
-               (strstr(s, "left") || strstr(s, "right") ||
-                strstr(s, "top") || strstr(s, "bottom"))) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-#endif
 
 /* read a gnuplot source line specifying a text label */
 
@@ -2440,15 +2432,7 @@ static int parse_gp_set_line (GPT_SPEC *spec,
     } else if (!strcmp(key, "x2label")) {
         spec->titles[4] = g_strdup(val);
     } else if (!strcmp(key, "key")) {
-#if 1
         spec->keyspec = gp_keyspec_from_string(val);
-#else
-        if (unhandled != NULL && unhandled_key_spec(val)) {
-            *unhandled = 1;
-        } else {
-            spec->keyspec = gp_keyspec_from_string(val);
-        }
-#endif
     } else if (!strcmp(key, "xtics") || !strcmp(key, "x2tics")) {
         read_xtics_setting(spec, key, val);
     } else if (!strcmp(key, "mxtics")) {
@@ -2663,6 +2647,11 @@ static void get_plot_nobs (png_plot *plot,
             get_boxplot_auxdata(spec, line, buf);
         }
     }
+
+#if GPDEBUG
+    fprintf(stderr, "get_plot_nobs: %d (factorized? %d)\n",
+	    spec->nobs, spec->code == PLOT_FACTORIZED);
+#endif
 }
 
 static int grab_fit_coeffs (GPT_SPEC *spec, const char *s)
@@ -2836,8 +2825,10 @@ static int process_using_spec (const char **ps,
         if (spec->heredata) {
             gretl_list_merge_list(&spec->heredata_cols, cols);
             spec->n_datacols = spec->heredata_cols[0];
-        } else if (spec->n_datacols > 0 && in_gretl_list(cols, 1)) {
-            /* col 1 should already be counted? */
+        } else if (spec->n_datacols > 0 &&
+		   in_gretl_list(cols, 1) &&
+		   spec->code != PLOT_FACTORIZED) {
+            /* col 1 should already be counted */
             spec->n_datacols += line->ncols - 1;
         } else {
             spec->n_datacols += line->ncols;
@@ -3032,8 +3023,13 @@ static int plot_get_data_and_markers (GPT_SPEC *spec,
     }
 
 #if GPDEBUG
-    fprintf(stderr, "plot_get_data, allocating: nobs=%d, n_datacols=%d\n",
+    fprintf(stderr, "plot_get_data, allocating: nobs=%d, n_datacols=%d",
             spec->nobs, spec->n_datacols);
+    if (spec->code == PLOT_FACTORIZED) {
+	fputs(" (factorized)\n", stderr);
+    } else {
+	fputc('\n', stderr);
+    }
 #endif
 
     /* allocate for the plot data... */
