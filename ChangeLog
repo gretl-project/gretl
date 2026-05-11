@@ -1,5 +1,7 @@
 version 2026c, in progress
 - GUI: fix for call to function package with no arguments
+- fix bug: GUI plot editor breaks factorized plots
+- gretl_edit: support loading of function definitions
 
 2026-04-30 version 2026b
 - new function which() to determine which elements of a

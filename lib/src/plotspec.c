@@ -1142,7 +1142,6 @@ static void plotspec_print_data (GPT_SPEC *spec,
 
 	if (!started_data_lines) {
 	    x[0] = spec->data->val;
-	    /* see below for subsequent adjustment of x[1] */
 	    x[1] = x[0] + spec->nobs;
 	    started_data_lines = 1;
 	}
@@ -1177,7 +1176,12 @@ static void plotspec_print_data (GPT_SPEC *spec,
 
 	fputs("e\n", fp);
 
-	x[1] += (ncols - 1) * spec->nobs;
+	if (spec->code == PLOT_FACTORIZED) {
+	    x[0] += ncols * spec->nobs;
+	    x[1] += ncols * spec->nobs;
+	} else {
+	    x[1] += (ncols - 1) * spec->nobs;
+	}
     }
 
     if (spec->auxdata != NULL) {
