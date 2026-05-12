@@ -11738,12 +11738,14 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
 #endif /* USE_RLIB or not */
 
 /* Extracting what is nominally a series, stored in the form of a column
-   vector, from a bundle. Whether we can truly get it as a series
-   depends on the current state of the dataset. Failing that, we'll get
-   it as a vector.
+   vector, from a bundle on node @l. We assume a series is wanted on
+   output unless the result is being directly assigned to a matrix.
+   Whether we can truly get it as a series depends on the current state
+   of the dataset. Failing that, we'll get it as a vector.
 */
 
-static NODE *bundled_series_node (gretl_matrix *m,
+static NODE *bundled_series_node (NODE *l,
+				  gretl_matrix *m,
 				  int virtual,
                                   int *is_tmp,
 				  parser *p)
@@ -11755,8 +11757,8 @@ static NODE *bundled_series_node (gretl_matrix *m,
     int n = m->rows;
     int t, s;
 
-    if (p->targ == MAT) {
-	/* a matrix was requested */
+    if (p->targ == MAT && l->parent == p->tree) {
+	/* a matrix is wanted */
 	ret = aux_matrix_node(p);
 	if (!p->err) {
 	    ret->v.m = m;
@@ -11822,7 +11824,7 @@ static void attach_bundled_list (NODE *n,
     }
 }
 
-static NODE *virtual_object_node (gretl_bundle *b,
+static NODE *virtual_object_node (NODE *n,
 				  const char *key,
 				  GretlType type,
 				  int *is_tmp,
@@ -11831,11 +11833,11 @@ static NODE *virtual_object_node (gretl_bundle *b,
     gretl_matrix *m;
     NODE *ret = NULL;
 
-    m = bundle_get_virtual_object(b, type, key, p->dset, &p->err);
+    m = bundle_get_virtual_object(n->v.b, type, key, p->dset, &p->err);
 
     if (!p->err) {
 	if (type == GRETL_TYPE_SERIES) {
-	    ret = bundled_series_node(m, 1, is_tmp, p);
+	    ret = bundled_series_node(n, m, 1, is_tmp, p);
 	    if (!p->err && ret->t == SERIES) {
 		gretl_matrix_free(m);
 	    }
@@ -11896,7 +11898,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     }
 
     if (virtual) {
-	ret = virtual_object_node(l->v.b, (const char *) val,
+	ret = virtual_object_node(l, (const char *) val,
 				  type, &is_tmp, p);
     } else if (gretl_is_scalar_type(type)) {
         ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
@@ -11905,7 +11907,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_MATRIX) {
         ret->v.m = (gretl_matrix *) val;
     } else if (type == GRETL_TYPE_SERIES) {
-	ret = bundled_series_node((gretl_matrix *) val, 0, &is_tmp, p);
+	ret = bundled_series_node(l, (gretl_matrix *) val, 0, &is_tmp, p);
     } else if (type == GRETL_TYPE_BUNDLE) {
         ret->v.b = (gretl_bundle *) val;
     } else if (type == GRETL_TYPE_ARRAY) {
