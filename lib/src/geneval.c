@@ -6177,7 +6177,6 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	if (key == NULL) {
 	    p->err = E_TYPES;
 	} else {
-	    /* FIXME virtual? */
 	    val = gretl_bundle_get_element(l->v.b, key, &type,
 					   &virtual, &p->err);
 	}
@@ -11907,7 +11906,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 	return ret;
     }
 
-    if (type != GRETL_TYPE_SERIES) {
+    if (type != GRETL_TYPE_SERIES && !virtual) {
 	ret = aux_node_for_type(type, p);
     }
 

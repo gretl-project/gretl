@@ -1497,7 +1497,7 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 
         if (item != NULL) {
             replace = 1;
-            if (item->type == type) {
+            if (item->type == type && !item->virtual) {
                 /* we can take a shortcut */
                 return bundled_item_replace_data(item, ptr, type, copy);
             }
