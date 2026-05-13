@@ -292,7 +292,8 @@ static void bundled_item_free_data (bundled_item *item)
 {
     if (item->virtual) {
 	free(item->data);
-    } else if (item->type == GRETL_TYPE_MATRIX) {
+    } else if (item->type == GRETL_TYPE_MATRIX ||
+	       item->type == GRETL_TYPE_SERIES) {
         gretl_matrix_free((gretl_matrix *) item->data);
     } else if (item->type == GRETL_TYPE_BUNDLE) {
         gretl_bundle_destroy((gretl_bundle *) item->data);

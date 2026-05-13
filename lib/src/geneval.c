@@ -15906,7 +15906,7 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
 
     if (f == F_DEFARRAY) {
         gretl_array *A;
-        int donate;
+        int donate = 0;
         void *ptr;
 
 	if (ptype > 0) {
@@ -15950,7 +15950,7 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
         GretlType gtype;
         char *key = NULL;
         void *ptr;
-        int donate;
+        int donate = 0;
 
         if (b == NULL) {
             p->err = E_ALLOC;
@@ -15969,6 +15969,7 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
                 /* we need some valid content */
                 gtype = gretl_type_from_gen_type(e->t);
 		if (gtype == GRETL_TYPE_SERIES) {
+		    ptr = node_get_ptr(e, t->t, p, &donate);
 		    if (donate) {
 			gretl_bundle_donate_series(b, key, e->v.xvec, p->dset);
 		    } else {
