@@ -3188,10 +3188,11 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
     return err;
 }
 
-static void set_underflow_warning (int n)
+static void set_underflow_warning (int n, const char *fname)
 {
     gchar *msg;
 
+    fprintf(stderr, "underflow in %s\n", fname);
     msg = g_strdup_printf(_("Data file contains %d subnormal values"), n);
     gretl_warnmsg_set(msg);
     g_free(msg);
@@ -3417,7 +3418,7 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (!err && n_uflow > 0) {
-	set_underflow_warning(n_uflow);
+	set_underflow_warning(n_uflow, fname);
     }
 
     return err;
@@ -3558,7 +3559,7 @@ static int read_observations_subset (xmlDocPtr doc,
     }
 
     if (!err && n_uflow > 0) {
-	set_underflow_warning(n_uflow);
+	set_underflow_warning(n_uflow, fname);
     }
 
     return err;
