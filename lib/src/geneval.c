@@ -166,6 +166,9 @@ static char *get_opstr (int op);
 static gretl_bundle *node_get_bundle (NODE *n, parser *p);
 static int gen_type_is_arrayable (int gen_t);
 static GretlType gretl_type_from_gen_type (int gen_t);
+static NODE *bundled_series_node (NODE *l, gretl_matrix *m,
+				  int virtual, int *is_tmp,
+				  parser *p);
 
 static int user_qsorting;
 
@@ -6104,110 +6107,121 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
-    if (starting(p)) {
-        if (r == NULL || r->t != MSPEC) {
-            p->err = e_types(r);
-        } else if (l->t == MAT) {
-            ret = submatrix_node(l, r, p);
-        } else if (l->t == ARRAY) {
-            int *vlist = array_subspec_list(l, r, p);
+    if (!starting(p)) {
+	return aux_any_node(p);
+    }
 
-            if (!p->err && vlist[0] == 1) {
-                if (want_singleton_array(l, p)) {
-                    /* produce a 1-element array */
-                    ret = array_subspec_node(l->v.a, vlist, p);
-                } else {
-                    /* extract an array element */
-                    ret = array_element_node(l->v.a, vlist[1], p);
-                }
-            } else if (!p->err) {
-                ret = array_subspec_node(l->v.a, vlist, p);
-            }
-            free(vlist);
-        } else if (l->t == LIST || l->t == STR) {
-            int *vlist = array_subspec_list(l, r, p);
+    if (r == NULL || r->t != MSPEC) {
+	p->err = e_types(r);
+    } else if (l->t == MAT) {
+	ret = submatrix_node(l, r, p);
+    } else if (l->t == ARRAY) {
+	int *vlist = array_subspec_list(l, r, p);
 
-            if (!p->err && vlist[0] == 1 && l->t == LIST) {
-                /* singleton list selection */
-                ret = list_member_by_pos(l, vlist[1], p);
-            } else if (!p->err && gretl_list_is_consecutive(vlist)) {
-                /* selected elements are consecutive */
-                int r1 = vlist[1];
-                int r2 = vlist[vlist[0]];
+	if (!p->err && vlist[0] == 1) {
+	    if (want_singleton_array(l, p)) {
+		/* produce a 1-element array */
+		ret = array_subspec_node(l->v.a, vlist, p);
+	    } else {
+		/* extract an array element */
+		ret = array_element_node(l->v.a, vlist[1], p);
+	    }
+	} else if (!p->err) {
+	    ret = array_subspec_node(l->v.a, vlist, p);
+	}
+	free(vlist);
+    } else if (l->t == LIST || l->t == STR) {
+	int *vlist = array_subspec_list(l, r, p);
 
-                if (l->t == LIST) {
-                    ret = list_range_node(l->v.ivec, r1, r2, p);
-                } else {
-                    ret = string_range_node(l->v.str, r1, r2, p);
-                }
-            } else if (!p->err) {
-                /* selection is not consecutive */
-                if (l->t == STR) {
-                    ret = aux_string_node(p);
-                    ret->v.str = gretl_utf8_select(l->v.str, vlist);
-                } else {
-                    ret = aux_list_node(p);
-                    ret->v.ivec = gretl_list_select(l->v.ivec, vlist, &p->err);
-                }
-            }
-            free(vlist);
-        } else if (l->t == SERIES) {
-            int t = mspec_get_series_index(r->v.mspec, p);
+	if (!p->err && vlist[0] == 1 && l->t == LIST) {
+	    /* singleton list selection */
+	    ret = list_member_by_pos(l, vlist[1], p);
+	} else if (!p->err && gretl_list_is_consecutive(vlist)) {
+	    /* selected elements are consecutive */
+	    int r1 = vlist[1];
+	    int r2 = vlist[vlist[0]];
 
-            if (!p->err) {
-                ret = aux_scalar_node(p);
-                if (!p->err) {
-                    ret->v.xval = l->v.xvec[t-1];
-                }
-            }
-        } else if (l->t == BUNDLE) {
-            /* the "mspec" must hold a single key string */
-            const char *key = mspec_get_string(r->v.mspec, 0);
-            GretlType type = GRETL_TYPE_NONE;
-            void *val = NULL;
-            int virtual = 0;
+	    if (l->t == LIST) {
+		ret = list_range_node(l->v.ivec, r1, r2, p);
+	    } else {
+		ret = string_range_node(l->v.str, r1, r2, p);
+	    }
+	} else if (!p->err) {
+	    /* selection is not consecutive */
+	    if (l->t == STR) {
+		ret = aux_string_node(p);
+		ret->v.str = gretl_utf8_select(l->v.str, vlist);
+	    } else {
+		ret = aux_list_node(p);
+		ret->v.ivec = gretl_list_select(l->v.ivec, vlist, &p->err);
+	    }
+	}
+	free(vlist);
+    } else if (l->t == SERIES) {
+	int t = mspec_get_series_index(r->v.mspec, p);
 
-            if (key == NULL) {
-                p->err = E_TYPES;
-            } else {
-		/* FIXME virtual? */
-                val = gretl_bundle_get_element(l->v.b, key, &type,
-                                               &virtual, &p->err);
-            }
-            if (!p->err) {
-                int t = gen_type_from_gretl_type(type);
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	    if (!p->err) {
+		ret->v.xval = l->v.xvec[t-1];
+	    }
+	}
+    } else if (l->t == BUNDLE) {
+	/* the "mspec" must hold a single key string */
+	const char *key = mspec_get_string(r->v.mspec, 0);
+	GretlType type = GRETL_TYPE_NONE;
+	void *val = NULL;
+	int virtual = 0;
+	int is_tmp = 0;
 
-                if (t == NUM) {
-                    ret = aux_scalar_node(p);
-                    if (!p->err) {
-                        ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
-                    }
-                } else {
-                    ret = get_aux_node(p, t, 0, 0);
-                    if (!p->err) {
-                        ret->v.ptr = val;
-                    }
-                }
-            }
-        } else if (l->t == NUM) {
-            /* allow "indexing into" a scalar, but only for a
-               single index with value 1
-            */
-            int i = get_single_element(r->v.mspec, p);
+	if (key == NULL) {
+	    p->err = E_TYPES;
+	} else {
+	    /* FIXME virtual? */
+	    val = gretl_bundle_get_element(l->v.b, key, &type,
+					   &virtual, &p->err);
+	}
+	if (!p->err) {
+	    int t = gen_type_from_gretl_type(type);
 
-            if (i == 1) {
-                ret = aux_scalar_node(p);
-                if (!p->err) {
-                    ret->v.xval = l->v.xval;
-                }
-            } else {
-                p->err = E_TYPES;
-            }
-        } else {
-            p->err = e_types(l);
-        }
+	    if (t == NUM) {
+		ret = aux_scalar_node(p);
+		if (!p->err) {
+		    ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
+		}
+	    } else if (t == SERIES) {
+		gretl_matrix *m = val;
+
+		ret = bundled_series_node(l, m, virtual, &is_tmp, p);
+	    } else {
+		ret = get_aux_node(p, t, 0, 0);
+		if (!p->err) {
+		    ret->v.ptr = val;
+		}
+	    }
+	    if (is_tmp) {
+		ret->flags |= TMP_NODE;
+	    } else {
+		ret->flags &= ~TMP_NODE;
+	    }
+	    ret->flags |= MUT_NODE;
+	}
+    } else if (l->t == NUM) {
+	/* allow "indexing into" a scalar, but only for a
+	   single index with value 1
+	*/
+	int i = get_single_element(r->v.mspec, p);
+
+	if (i == 1) {
+	    ret = aux_scalar_node(p);
+	    if (!p->err) {
+		ret->v.xval = l->v.xval;
+	    }
+	} else {
+	    p->err = E_TYPES;
+	}
     } else {
-        ret = aux_any_node(p);
+	p->err = e_types(l);
     }
 
     return ret;
