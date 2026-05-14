@@ -112,6 +112,7 @@ SRCS = excel_import.c \
 	jrestrict.c \
 	jalpha.c \
 	kernel.c \
+	kmeans.c \
 	longname.c \
 	pca.c \
 	progress_bar.c \
@@ -171,6 +172,7 @@ PLUGINS = arma.la \
 	garch.la \
 	johansen.la \
 	kernel.la \
+	kmeans.la \
 	nistcheck.la \
 	range-mean.la \
 	stats_tables.la \
@@ -320,6 +322,9 @@ fractals.la: fractals.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 kernel.la: kernel.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+kmeans.la: kmeans.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 vif.la: vif.lo
