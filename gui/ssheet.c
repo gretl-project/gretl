@@ -2275,7 +2275,6 @@ catch_sheet_edit_key (GtkWidget *view, GdkEventKey *key,
 #if CELLDEBUG
 	fprintf(stderr, "catch_edit_key: GDK_Right\n");
 #endif
-
 	n = (s != NULL)? strlen(s) : 0;
 	if (pos == n) {
 	    sheet->next = NEXT_RIGHT;
@@ -2307,6 +2306,14 @@ static void nullify_sheet_entry (gpointer p, Spreadsheet *sheet)
     sheet->entry = NULL;
 }
 
+static void cell_editing_done (GtkCellEditable *cell_editable,
+			       Spreadsheet *sheet)
+{
+#if CELLDEBUG
+    fprintf(stderr, "*** editing-done\n");
+#endif
+}
+
 static void cell_edit_start (GtkCellRenderer *r,
 			     GtkCellEditable *ed,
 			     gchar *path,
@@ -2319,6 +2326,8 @@ static void cell_edit_start (GtkCellRenderer *r,
 	sheet->entry = GTK_WIDGET(ed);
 	g_signal_connect(G_OBJECT(ed), "key-press-event",
 			 G_CALLBACK(catch_sheet_edit_key), sheet);
+	g_signal_connect(G_OBJECT(ed), "editing-done",
+			 G_CALLBACK(cell_editing_done), sheet);
 	g_signal_connect(G_OBJECT(ed), "destroy",
 			 G_CALLBACK(nullify_sheet_entry), sheet);
     }
