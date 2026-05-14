@@ -1330,30 +1330,24 @@ static void update_cell_position (GtkTreeView *view,
     GtkTreePath *path = NULL;
     GtkTreeViewColumn *col = NULL;
     static int i0, j0;
-
-#if CELLDEBUG > 1
-    fprintf(stderr, "*** cursor-changed\n");
-#endif
+    int i = i0;
+    int j = j0;
 
     gtk_tree_view_get_cursor(view, &path, &col);
 
     if (path != NULL && col != NULL) {
-	int i = gtk_tree_path_get_indices(path)[0];
-	int j = get_treeview_column_number(col);
-
+	i = gtk_tree_path_get_indices(path)[0];
+	j = get_treeview_column_number(col);
 	if (j > 0 && (i != i0 || j != j0)) {
-#if CELLDEBUG > 1
-	    fprintf(stderr, " now in cell(%d, %d)\n", i, j);
-#endif
 	    set_locator_label(sheet, path, col);
 	    i0 = i;
 	    j0 = j;
-	} else {
-#if CELLDEBUG > 1
-	   fprintf(stderr, " still in cell(%d, %d)\n", i0, j0);
-#endif
 	}
     }
+
+#if CELLDEBUG > 1
+    fprintf(stderr, "\"cursor-changed\": cursor in cell(%d, %d)\n", i, j);
+#endif
 
     if (path != NULL) {
 	gtk_tree_path_free(path);
@@ -1377,9 +1371,9 @@ static void update_matrix_from_sheet_full (Spreadsheet *sheet)
     set_ok_transforms(sheet);
 }
 
-/* callback from uservar.c, for use when a scalar is added,
-   deleted or changed by means other than the spreadsheet, and the
-   scalars spreadsheet is currently displayed */
+/* callback from uservar.c, for use when a scalar is added, deleted or
+   changed by means other than the spreadsheet, and the scalars
+   spreadsheet is currently displayed */
 
 static void scalars_changed_callback (void)
 {
@@ -1504,8 +1498,8 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
 }
 
 /* handle the case where observations have been inserted (not just
-   appended); we need to shift the original dataset observations
-   "down" by one place for each insertion
+   appended); we need to shift the original dataset observations "down"
+   by one place for each insertion
 */
 
 static void process_inserts_for_series (Spreadsheet *sheet, int v)
@@ -1523,8 +1517,8 @@ static void process_inserts_for_series (Spreadsheet *sheet, int v)
     }
 }
 
-/* pull modified values from the data-editing spreadsheet
-   into the main dataset */
+/* pull modified values from the data-editing spreadsheet into the main
+   dataset */
 
 static void update_dataset_from_sheet (Spreadsheet *sheet)
 {
@@ -2380,8 +2374,8 @@ static void manufacture_keystroke (GtkWidget *widget,
     gint n_keys;
 
 #if GTK_MAJOR_VERSION >= 3 || defined(G_OS_WIN32)
-    /* with GDK 3, we can't pass NULL for keymap below -- and neither
-       (it appears) for GDK 2 on MS Windows
+    /* with GDK3, we can't pass NULL for keymap below -- and neither
+       (it appears) for GDK2 on MS Windows
     */
     keymap = gdk_keymap_get_for_display(gdk_display_get_default());
 #endif
@@ -2394,34 +2388,40 @@ static void manufacture_keystroke (GtkWidget *widget,
 	g_free(keys);
 
 	event = gdk_event_new(GDK_KEY_PRESS);
-	event->key.window = g_object_ref(gtk_widget_get_window(widget));
+	event->key.window = gtk_widget_get_window(widget);
+	g_object_ref(event->key.window);
 	event->key.hardware_keycode = hardware_keycode;
 	event->key.keyval = gdk_unicode_to_keyval(uval);
 	event->key.length = 1;
-	event->key.send_event = FALSE;
+	event->key.send_event = TRUE;
 	event->key.time = GDK_CURRENT_TIME;
 
 #if GTK_MAJOR_VERSION >= 3
-	/* we now get warning spew if no device is attached */
+	/* we get a warning if no device is attached */
 	gdk_event_set_device(event, gdk_event_get_device(orig));
 #endif
-
-	gtk_main_do_event(event);
+	fprintf(stderr, "manufacture_keystroke, putting event\n");
+	gdk_event_put(event);
 	gdk_event_free(event);
     }
 }
 
+/* filter for keys that could be part of a numeric entry */
+
 static int numeric_key (guint *kval, Spreadsheet *sheet)
 {
-    if (*kval >= GDK_KP_0 && *kval <= GDK_KP_9) {
-	*kval = GDK_0 + (*kval - GDK_KP_0);
+    guint k = *kval;
+
+    if (k >= GDK_KP_0 && k <= GDK_KP_9) {
+	/* translate keypad keys to regular keys */
+	*kval = k = GDK_0 + (*kval - GDK_KP_0);
     }
 
-    if (*kval >= GDK_0 && *kval <= GDK_9) {
+    if (k >= GDK_0 && k <= GDK_9) {
 	return 1;
-    } else if (*kval == GDK_minus || *kval == GDK_period) {
+    } else if (k == GDK_minus || k == GDK_period) {
 	return 1;
-    } else if ((sheet->flags & SHEET_USE_COMMA) && *kval == GDK_comma) {
+    } else if ((sheet->flags & SHEET_USE_COMMA) && k == GDK_comma) {
 	return 1;
     }
 
@@ -2434,41 +2434,34 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEvent *event,
 				   Spreadsheet *sheet)
 {
     guint kval = ((GdkEventKey*) event)->keyval;
+    GtkTreeViewColumn *col = NULL;
+    GtkTreePath *path = NULL;
 
 #if CELLDEBUG
-    fprintf(stderr, "catch_spreadsheet_key: %d (tab=%d)\n", kval, GDK_Tab);
+    fprintf(stderr, "catch_spreadsheet_key: kval %d\n", kval);
 #endif
 
     if (kval == GDK_Tab) {
-	/* FIXME */
-	return FALSE;
+	/* FIXME? */
+	return TRUE;
     }
 
     if (kval == GDK_Left) {
 	if (sheet->cmd != SHEET_EDIT_SCALARS) {
-	    GtkTreeViewColumn *col = NULL;
-
 	    gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), NULL, &col);
-
 	    if (col != NULL) {
 		if (get_treeview_column_number(col) == 1) {
 		    /* if in column 1, don't move left */
 		    return TRUE;
 		}
 	    }
-
 	    return FALSE;
 	}
-    }
-
-    if (kval == GDK_Up || kval == GDK_Down) {
-	GtkTreePath *path = NULL;
-	GtkTreeViewColumn *col = NULL;
+    } else if (kval == GDK_Up || kval == GDK_Down) {
 	int i;
 
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &col);
 	i = (gtk_tree_path_get_indices(path))[0];
-
 	if (kval == GDK_Down && i < sheet->datarows - 1) {
 	    gtk_tree_path_next(path);
 	} else if (kval == GDK_Up && i > 0) {
@@ -2479,27 +2472,22 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEvent *event,
 	gtk_tree_path_free(path);
 	return TRUE;
     } else if (numeric_key(&kval, sheet)) {
-	GtkTreePath *path = NULL;
-	GtkTreeViewColumn *col = NULL;
-
 #if CELLDEBUG
 	fprintf(stderr, "numeric key: start editing, k = %d\n", kval);
 #endif
-
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &col);
 	if (path != NULL && col != NULL) {
 	    gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, col,
 				     TRUE);
 	    gtk_tree_path_free(path);
+	    fprintf(stderr, " call manufacture_keystroke\n");
 	    manufacture_keystroke(view, event, kval);
 	}
+	return TRUE;
     } else if (editing_scalars(sheet) && alpha_key(kval)) {
-	GtkTreePath *path = NULL;
-	GtkTreeViewColumn *col = NULL;
 	gboolean ret = FALSE;
 
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &col);
-
 	if (path != NULL && col != NULL) {
 	    if (get_treeview_column_number(col) >= 1) {
 		/* not a text cell */
@@ -2511,7 +2499,6 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEvent *event,
 	    }
 	    gtk_tree_path_free(path);
 	}
-
 	return ret;
     }
 
@@ -2532,30 +2519,24 @@ static gint catch_spreadsheet_click (GtkWidget *view,
 	return FALSE;
     }
 
-    if (sheet->matrix == NULL && !editing_scalars(sheet) &&
-	(right_click(event))) {
-
+    if (sheet->matrix == NULL && !editing_scalars(sheet) && right_click(event)) {
+	/* pop up context menu */
 	if (sheet->popup == NULL) {
 	    build_sheet_popup(sheet);
 	}
-
 	gtk_menu_popup(GTK_MENU(sheet->popup), NULL, NULL, NULL, NULL,
 		       event->button, event->time);
 	return TRUE;
-    }
-
-    if (event->button == 1) {
+    } else if (event->button == 1) {
 	GtkTreePath *path = NULL, *oldpath = NULL;
 	GtkTreeViewColumn *column = NULL, *oldcol = NULL;
 
 #if CELLDEBUG
 	fprintf(stderr, "Got button 1 click\n");
 #endif
-
 	/* where's the cursor at present? */
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(sheet->view),
 				 &oldpath, &oldcol);
-
 	if (oldpath != NULL) {
 	    if (oldcol != NULL && sheet->entry != NULL) {
 		const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sheet->entry));
@@ -2575,14 +2556,12 @@ static gint catch_spreadsheet_click (GtkWidget *view,
 				      (gint) event->y,
 				      &path, &column,
 				      NULL, NULL);
-
 	if (path != NULL && column != NULL) {
 	    gint colnum = get_treeview_column_number(column);
 
 #if CELLDEBUG
 	    fprintf(stderr, "*** Clicked column: colnum = %d\n", colnum);
 #endif
-
 	    if (colnum == 0 && !editing_scalars(sheet)) {
 		/* don't respond to a click in a non-editable column */
 		ret = TRUE;
@@ -2611,7 +2590,6 @@ static void sheet_show_popup (GtkWidget *w, Spreadsheet *sheet)
     if (sheet->popup == NULL) {
 	build_sheet_popup(sheet);
     }
-
     gtk_menu_popup(GTK_MENU(sheet->popup), NULL, NULL, NULL, NULL,
 		   1, gtk_get_current_event_time());
 }
