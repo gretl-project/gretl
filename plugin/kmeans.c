@@ -506,7 +506,7 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
     d = gretl_vector_alloc(m);
     an = gretl_matrix_alloc(k, 2);
     c = gretl_matrix_alloc(k, n);
-    clustid = gretl_vector_alloc(m);
+    clustid = gretl_column_vector_alloc(m);
 
     if (ic1 == NULL || ic2 == NULL || nc == NULL || ncp == NULL ||
 	itran == NULL || live == NULL || d == NULL || an == NULL) {

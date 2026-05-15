@@ -481,6 +481,7 @@ enum {
     F_JSONGETB,
     F_TSOLVEPD,
     HF_REGLS,
+    HF_KMEANS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_URCPVAL,
     F_RANDGEN,
