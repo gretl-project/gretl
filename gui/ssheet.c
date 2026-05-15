@@ -363,28 +363,6 @@ static void get_current_location (GtkTreeView *tv,
     gtk_tree_path_free(path);
 }
 
-#if 0
-
-static int get_current_row (GtkTreeView *tv)
-{
-    /* Which row is currently selected? */
-    GtkTreeSelection *sel = gtk_tree_view_get_selection (tv);
-    GtkTreeModel *model;
-    GtkTreeIter iter;
-    gint row = -1;
-
-    if (gtk_tree_selection_get_selected(sel, &model, &iter)) {
-	GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
-
-	row = gtk_tree_path_get_indices(path)[0];
-	gtk_tree_path_free(path);
-    }
-
-    return row;
-}
-
-#endif
-
 static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
 			       GtkTreeViewColumn *column)
 {
@@ -462,98 +440,6 @@ static void move_column_focus (Spreadsheet *sheet,
 	start_editing(sheet->tv, current_row, next_col);
     }
 }
-
-#if 0
-
-static void move_to_next_column (Spreadsheet *sheet, GtkTreePath *path,
-				 GtkTreeViewColumn *col)
-{
-    GtkTreeView *view = sheet->tv;
-    int colnum = get_treeview_column_number(col);
-    GtkTreeViewColumn *newcol;
-    int colmin = 1;
-
-#if CELLDEBUG
-    fprintf(stderr, "move_to_next_column: sheet->next = %d\n", sheet->next);
-#endif
-
-    if (sheet->next == NEXT_LEFT) {
-	colnum--;
-    } else {
-	colnum++;
-    }
-
-#if CELLDEBUG
-    fprintf(stderr, "move_to_next_column: colnum = %d\n", colnum);
-#endif
-
-    if (editing_scalars(sheet)) {
-	colmin = 0;
-    }
-    if (colnum < colmin || colnum > sheet->datacols) {
-	return;
-    }
-    newcol = gtk_tree_view_get_column(view, colnum);
-
-    if (newcol != NULL) {
-	GtkCellRenderer *r = get_sheet_renderer(sheet, colnum);
-
-	gtk_tree_view_set_cursor_on_cell(view, path, newcol, r, FALSE);
-    }
-}
-
-static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
-			       GtkTreeViewColumn *column)
-{
-    GtkTreeView *view = sheet->tv;
-    gint newrow = -1;
-
-    if (sheet->next == NEXT_SAME) {
-	sheet->next = NEXT_DOWN;
-	return;
-    }
-
-    if (sheet->next == NEXT_RIGHT) {
-#if CELLDEBUG
-	fprintf(stderr, "move_to_next_cell: got NEXT_RIGHT\n");
-#endif
-	move_to_next_column(sheet, path, column);
-	return;
-    } else if (sheet->next == NEXT_UP) {
-	newrow = gtk_tree_path_get_indices(path)[0] - 1;
-    } else {
-	newrow = gtk_tree_path_get_indices(path)[0] + 1;
-    }
-
-#if CELLDEBUG
-    fprintf(stderr, "move_to_next_cell: newrow = %d\n", newrow);
-#endif
-
-    if (newrow >= 0 && newrow < sheet->n_rows) {
-	GtkTreePath *newpath;
-	gchar pstr[12];
-
-	sprintf(pstr, "%d", newrow);
-	newpath = gtk_tree_path_new_from_string(pstr);
-	if (newpath != NULL) {
-	    int colnum = get_treeview_column_number(column);
-	    GtkCellRenderer *r = get_sheet_renderer(sheet, colnum);
-
-	    gtk_tree_view_set_cursor_on_cell(view, newpath, column,
-					     r, FALSE);
-	    gtk_tree_path_free(newpath);
-	}
-    } else {
-#if CELLDEBUG
-	fprintf(stderr, "move_to_next_cell: calling move_to_next_column\n");
-#endif
-	move_to_next_column(sheet, path, column);
-    }
-
-    sheet->next = NEXT_DOWN;
-}
-
-#endif
 
 static void update_sheet_matrix (Spreadsheet *sheet)
 {
@@ -2489,6 +2375,33 @@ static gboolean on_sheet_keypress (GtkWidget *widget,
     }
 }
 
+#if 0 /* _may_ be wanted in a modified form, for on_sheet_click() */
+
+static void editing_check (Spreadsheet *sheet)
+{
+    GtkTreePath *oldpath = NULL;
+    GtkTreeViewColumn *oldcol = NULL;
+
+    gtk_tree_view_get_cursor(sheet->tv, &oldpath, &oldcol);
+
+    if (oldpath != NULL) {
+	if (oldcol != NULL && sheet->ed != NULL) {
+	    const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sheet->ed));
+	    gchar *pathstr = gtk_tree_path_to_string(oldpath);
+
+# if CELLDEBUG
+	    fprintf(stderr, "click: calling on_value_edited\n");
+# endif
+	    /* FIXME */
+	    cell_edited_callback(oldcol, pathstr, txt, sheet);
+	    g_free(pathstr);
+	}
+	gtk_tree_path_free(oldpath);
+    }
+}
+
+#endif
+
 static gint on_sheet_click (GtkWidget *view,
 			    GdkEventButton *event,
 			    Spreadsheet *sheet)
@@ -2496,7 +2409,7 @@ static gint on_sheet_click (GtkWidget *view,
     gint ret = FALSE;
 
 #if CELLDEBUG
-    fprintf(stderr, "** on_sheet_click()\n");
+    fprintf(stderr, "** on_sheet_click(): button %d\n", event->button);
 #endif
 
     if (event->type != GDK_BUTTON_PRESS) {
@@ -2512,27 +2425,8 @@ static gint on_sheet_click (GtkWidget *view,
 		       event->button, event->time);
 	return TRUE;
     } else if (event->button == 1) {
-	GtkTreePath *path = NULL, *oldpath = NULL;
-	GtkTreeViewColumn *column = NULL, *oldcol = NULL;
-
-#if CELLDEBUG
-	fprintf(stderr, "Got button 1 click\n");
-#endif
-	/* where's the cursor at present? */
-	gtk_tree_view_get_cursor(sheet->tv, &oldpath, &oldcol);
-	if (oldpath != NULL) {
-	    if (oldcol != NULL && sheet->ed != NULL) {
-		const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sheet->ed));
-		gchar *pathstr = gtk_tree_path_to_string(oldpath);
-
-#if CELLDEBUG
-		fprintf(stderr, "click: calling on_value_edited\n");
-#endif
-		cell_edited_callback(oldcol, pathstr, txt, sheet);
-		g_free(pathstr);
-	    }
-	    gtk_tree_path_free(oldpath);
-	}
+	GtkTreePath *path = NULL;
+	GtkTreeViewColumn *column = NULL;
 
 	gtk_tree_view_get_path_at_pos(sheet->tv,
 				      (gint) event->x,
@@ -2541,7 +2435,6 @@ static gint on_sheet_click (GtkWidget *view,
 				      NULL, NULL);
 	if (path != NULL && column != NULL) {
 	    gint colnum = get_treeview_column_number(column);
-
 #if CELLDEBUG
 	    fprintf(stderr, "*** Clicked column: colnum = %d\n", colnum);
 #endif
@@ -2552,7 +2445,7 @@ static gint on_sheet_click (GtkWidget *view,
 		/* call to delete scalar */
 		sheet_delete_scalar(sheet, path);
 	    } else {
-		/* activate clicked cell for editing */
+		/* activate the clicked cell for editing */
 		gtk_tree_view_set_cursor(sheet->tv, path,
 					 column, TRUE);
 		ret = TRUE;
@@ -2562,7 +2455,7 @@ static gint on_sheet_click (GtkWidget *view,
     }
 
 #if CELLDEBUG
-    fprintf(stderr, "on_sheet_click returning %d\n", ret);
+    fprintf(stderr, "on_sheet_click: returning %d\n", ret);
 #endif
 
     return ret;
