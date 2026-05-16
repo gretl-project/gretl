@@ -108,13 +108,13 @@ static void update_an (gretl_matrix *an, int l1, int l2, double al1, double al2)
    @d (m)
    @itran (k)
    @live (k)
-   @indx: the number of steps since a transfer took place
+   @icount: the number of steps since a transfer took place
 
 */
 
 static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		   int *ic2, int *nc, gretl_matrix *an, int ncp[],
-		   gretl_vector *d, int itran[], int live[], int *indx)
+		   gretl_vector *d, int itran[], int live[], int *icount)
 {
     int m = a->rows;
     int n = a->cols;
@@ -145,7 +145,7 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
     }
 
     for (i=0; i<m; i++) {
-	*indx = *indx + 1;
+	*icount = *icount + 1;
 	l1 = ic1[i];
 	l2 = ic2[i];
 	ll = l2;
@@ -188,7 +188,7 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		/* Update cluster centers, line, ncp and an for clusters
 		   l1 and l2, and update ic1[i] and ic2[i].
 		*/
-		*indx = 0;
+		*icount = 0;
 		live[l1-1] = m + i;
 		live[l2-1] = m + i;
 		ncp[l1-1] = i + 1;
@@ -213,7 +213,7 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 	    }
 	}
 
-	if (*indx == m) {
+	if (*icount == m) {
 	    return;
 	}
     }
@@ -246,13 +246,13 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
    @ncp (k)
    @d (m)
    @itran (k)
-   @indx: the number of steps since a transfer took place
+   @icount: the number of steps since a transfer took place
 
 */
 
 static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		   int *ic2, int *nc, gretl_matrix *an, int ncp[],
-		   gretl_vector *d, int itran[], int *indx)
+		   gretl_vector *d, int itran[], int *icount)
 {
     int m = a->rows;
     int n = a->cols;
@@ -307,11 +307,11 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		    /* Update cluster centers, ncp, nc, itran, and an
 		      for clusters l1 and l2.  Also update ic1[i] and
 		      ic2[i].  If any updating occurs in this stage,
-		      *indx is set back to 0.
+		      *icount is set back to 0.
 		    */
 		    if (di < r2) {
 			icoun = 0;
-			*indx = 0;
+			*icount = 0;
 			itran[l1-1] = 1;
 			itran[l2-1] = 1;
 			ncp[l1-1] = istep + m;
@@ -347,6 +347,53 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
     }
 }
 
+static void find_nearest_neighbors (const gretl_matrix *a,
+				    const gretl_matrix *c,
+				    int *ic1, int *ic2,
+				    double *dt)
+{
+    double da, db, dc;
+    double temp;
+    int i, j, l, il;
+
+    for (i=0; i<a->rows; i++) {
+	ic1[i] = 1;
+	ic2[i] = 2;
+	for (il=0; il<2; il++) {
+	    dt[il] = 0.0;
+	    for (j=0; j<a->cols; j++) {
+		da = gretl_matrix_get(a, i, j) - gretl_matrix_get(c, il, j);
+		dt[il] = dt[il] + da * da;
+	    }
+	}
+	if (dt[1] < dt[0]) {
+	    ic1[i] = 2;
+	    ic2[i] = 1;
+	    temp = dt[0];
+	    dt[0] = dt[1];
+	    dt[1] = temp;
+	}
+	for (l=2; l<c->rows; l++) {
+	    db = 0.0;
+	    for (j=0; j<a->cols; j++) {
+		dc = gretl_matrix_get(a, i, j) - gretl_matrix_get(c, l, j);
+		db = db + dc * dc;
+	    }
+	    if (db < dt[1]) {
+		if (dt[0] <= db) {
+		    dt[1] = db;
+		    ic2[i] = l+1;
+		} else {
+		    dt[1] = dt[0];
+		    ic2[i] = ic1[i];
+		    dt[0] = db;
+		    ic1[i] = l+1;
+		}
+	    }
+	}
+    }
+}
+
 /* kmeans() carries out the K-means algorithm
 
    @a (m x n): the data points
@@ -362,14 +409,13 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
     gretl_vector *clustid;
     gretl_matrix *an;
     gretl_matrix *c;
-    double aa, da, db, dc;
+    double aa, da;
     double dt[2];
     int i;
     int *ic1;
     int *ic2;
     int ij;
-    int il;
-    int indx;
+    int icount;
     int *itran;
     int j;
     int l;
@@ -405,6 +451,11 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	goto bailout;
     }
 
+    /* At this point the basic set-up is complete. This is the point to
+       which we'd return if iterating over random initial selection of
+       the cluster centers.
+    */
+
     /* Initialize the cluster centers. Here, we arbitrarily make the
        first k data points cluster centers.
     */
@@ -417,44 +468,7 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
     /* For each point i, find its two closest centers, ic1[i] and
        ic2[i].  Assign the point to ic1[i].
     */
-    for (i=0; i<m; i++) {
-	ic1[i] = 1;
-	ic2[i] = 2;
-
-	for (il=0; il<2; il++) {
-	    dt[il] = 0.0;
-	    for (j=0; j<n; j++) {
-		da = gretl_matrix_get(a, i, j) - gretl_matrix_get(c, il, j);
-		dt[il] = dt[il] + da * da;
-	    }
-	}
-	if (dt[1] < dt[0]) {
-	    ic1[i] = 2;
-	    ic2[i] = 1;
-	    temp = dt[0];
-	    dt[0] = dt[1];
-	    dt[1] = temp;
-	}
-
-	for (l=2; l<k; l++) {
-	    db = 0.0;
-	    for (j=0; j<n; j++) {
-		dc = gretl_matrix_get(a, i, j) - gretl_matrix_get(c, l, j);
-		db = db + dc * dc;
-	    }
-	    if (db < dt[1]) {
-		if (dt[0] <= db) {
-		    dt[1] = db;
-		    ic2[i] = l+1;
-		} else {
-		    dt[1] = dt[0];
-		    ic2[i] = ic1[i];
-		    dt[0] = db;
-		    ic1[i] = l+1;
-		}
-	    }
-	}
-    }
+    find_nearest_neighbors(a, c, ic1, ic2, dt);
 
     /* Update cluster centers to be the average of points contained
        within them.
@@ -478,7 +492,7 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	   an[l,2] = nc[l] / (nc[l] + 1)
 
 	   itran[l] = 1 if cluster l is updated in the quick-transfer stage,
-	   otherwise = 0
+	   otherwise = 0.
 
 	   In the optimal-transfer stage, ncp[l] stores the step at
 	   which cluster l is last updated.
@@ -493,45 +507,42 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	ncp[l] = -1;
     }
 
-    indx = 0;
+    icount = 0;
     *err = E_NOCONV;
 
     for (ij=0; ij<maxiter; ij++)  {
 	/* In this stage, there is only one pass through the data.  Each
-	   point is re-allocated, if necessary, to the cluster that will
-	   induce the maximum reduction in within-cluster sum of
+	   point is reallocated, if necessary, to the cluster that
+	   gives the maximum reduction in the within-cluster sum of
 	   squares.
 	*/
-	optra(a, c, ic1, ic2, nc, an, ncp, d, itran, live, &indx);
-
-	/* Stop if no transfer took place in the last m optimal transfer
-	   steps.
-	*/
-	if (indx == m) {
+	optra(a, c, ic1, ic2, nc, an, ncp, d, itran, live, &icount);
+	if (icount == m) {
+	    /* No optimal transfer in the last m steps: OK, stop */
 	    *err = 0;
 	    break;
 	}
-
-	/* Each point is tested in turn to see if it should be
-	   re-allocated to the cluster to which it is most likely to be
-	   transferred, ic2[i], from its present cluster, ic1[i].  Loop
-	   through the data until no further change is to take place.
+	/* Each point i is tested to see if it should be reallocated to
+	   cluster ic2[i] from ic1[i].  Loop through the data until no
+	   further change is to take place.
 	*/
-	qtran(a, c, ic1, ic2, nc, an, ncp, d, itran, &indx);
-
-	/* If there are only two clusters, there is no need to repeat
-	   the optimal transfer stage.
-	*/
+	qtran(a, c, ic1, ic2, nc, an, ncp, d, itran, &icount);
 	if (k == 2) {
+	    /* only two clusters: no need to repeat optra() */
 	    *err = 0;
 	    break;
 	}
-
-	/* ncp has to be set to 0 before entering optra() */
+	/* reset ncp to 0 before re-entering optra() */
 	for (l=0; l<k; l++) {
 	    ncp[l] = 0;
 	}
     }
+
+    /* If we were iterating over random initial selection of centers,
+       this is presumably the point at which we'd zip back to the top
+       of the iteration (possibly wiping put a non-zero *err if it
+       could have been bad luck).
+    */
 
     if (*err) {
 	goto bailout;
