@@ -478,11 +478,6 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	goto bailout;
     }
 
-    /* At this point the basic set-up is complete. This is the point to
-       which we'd return if iterating over random initial selection of
-       the cluster centers.
-    */
-
     /* Initialize the cluster centers. Here, we arbitrarily make the
        first k data points cluster centers.
     */
@@ -491,6 +486,11 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	    gretl_matrix_set(c, i, j, gretl_matrix_get(a, i, j));
 	}
     }
+
+    /** At this point the basic set-up is complete. This is the point to
+	which we'd return if iterating over random initial selection of
+	the cluster centers.
+    **/
 
     /* For each point i, find its two closest centers, ic1[i] and
        ic2[i].  Assign the point to ic1[i].
@@ -515,8 +515,8 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	}
 	/* Initialize an, itran and ncp.
 
-	   an[l,1] = nc[l] / (nc[l] - 1)
-	   an[l,2] = nc[l] / (nc[l] + 1)
+	   an[l,0] = nc[l] / (nc[l] - 1)
+	   an[l,1] = nc[l] / (nc[l] + 1)
 
 	   itran[l] = 1 if cluster l is updated in the quick-transfer stage,
 	   otherwise = 0.
