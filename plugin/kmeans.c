@@ -394,6 +394,33 @@ static void find_nearest_neighbors (const gretl_matrix *a,
     }
 }
 
+static void add_clustinfo_colnames (const gretl_matrix *a,
+				    gretl_matrix *cinfo)
+{
+    int n = cinfo->cols;
+    char **S = strings_array_new(n);
+
+    if (S != NULL) {
+	const char **Sa = gretl_matrix_get_colnames(a);
+	char tmp[12];
+	int i;
+
+	for (i=0; i<n; i++) {
+	    if (i == 0) {
+		S[i] = gretl_strdup("nc");
+	    } else if (i == n-1) {
+		S[i] = gretl_strdup("SST");
+	    } else if (Sa != NULL) {
+		S[i] = gretl_strdup(Sa[i-1]);
+	    } else {
+		sprintf(tmp, "a%d", i);
+		S[i] = gretl_strdup(tmp);
+	    }
+	}
+	gretl_matrix_set_colnames(cinfo, S);
+    }
+}
+
 /* kmeans() carries out the K-means algorithm
 
    @a (m x n): the data points
@@ -599,6 +626,7 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	    }
 	}
 
+	add_clustinfo_colnames(a, cinfo);
 	if (!reuse) {
 	    *clustinfo = cinfo;
 	}
