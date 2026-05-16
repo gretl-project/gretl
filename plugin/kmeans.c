@@ -17,12 +17,13 @@
  *
  */
 
-/* Code for the K means problem, based on John Burkardt's C rendition of
+/* Code for the K-means problem, based on John Burkardt's C rendition of
    Applied Statistics Algorithm 136, originally coded in FORTRAN by
    J. A. Hartigan and M. A. Wong, Journal of the Royal Statistical
    Society Series C: Applied Statistics, Volume 28, Issue 1, March 1979,
-   Pages 100–108, https://doi.org/10.2307/2346830 .  Adapted for gretl
-   by Jack Lucchetti, May 2026.
+   Pages 100–108, https://doi.org/10.2307/2346830
+
+   Adapted for gretl by Jack Lucchetti, May 2026.
 */
 
 #include "libgretl.h"
@@ -54,7 +55,7 @@ static int init_centers (int *nc, gretl_matrix *c, int *ic1,
     }
 
     /* Check to see if there is any empty cluster at this stage */
-    for (l = 0; l < k; l++)  {
+    for (l=0; l<k; l++)  {
 	if (nc[l] == 0)  {
 	    err = 1;
 	    break;
@@ -89,60 +90,28 @@ static void update_an (gretl_matrix *an, int l1, int l2, double al1, double al2)
     gretl_matrix_set(an, l2-1, 1, (al2 + 1.0) / (al2 + 2.0));
 }
 
-/******************************************************************************/
+/* optra() carries out the optimal transfer stage: each point is
+   reallocated, if necessary, to the cluster that will induce the
+   maximum reduction in the within-cluster sum of squares.
+
+   @a (m x n): the data points
+   @c (k x n): the cluster centers
+   @ic1 (m): the cluster to which each point is assigned
+   @ic2 (m): the cluster to which each point is most likely
+     to be transferred to at each step
+   @nc (k): the number of points in each cluster
+   @an (k x 2)
+   @ncp (k)
+   @d (m)
+   @itran (k)
+   @live (k)
+   @indx: the number of steps since a transfer took place
+
+*/
 
 static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		   int *ic2, int *nc, gretl_matrix *an, int ncp[],
 		   gretl_vector *d, int itran[], int live[], int *indx)
-
-/******************************************************************************/
-/*
-  Purpose:
-
-    OPTRA carries out the optimal transfer stage.
-
-  Discussion:
-
-    This is the optimal transfer stage.
-
-    Each point is re-allocated, if necessary, to the cluster that
-    will induce a maximum reduction in the within-cluster sum of
-    squares.
-
-  Licensing:
-
-    This code is distributed under the GNU LGPL license.
-
-  Author:
-
-    Original FORTRAN77 version by John Hartigan, Manchek Wong.
-    Original C version by John Burkardt.
-    Adapted for libgretl by Jack Lucchetti.
-
-  Reference:
-
-    John Hartigan, Manchek Wong,
-    Algorithm AS 136:
-    A K-Means Clustering Algorithm,
-    Applied Statistics,
-    Volume 28, Number 1, 1979, pages 100-108.
-
-  Parameters:
-
-    Input, double A(M,N), the points.
-    Input/output, double C(K,N), the cluster centers.
-    Input/output, int IC1(M), the cluster to which each point is assigned.
-    Input/output, int IC2(M), used to store the cluster which each point
-    	is most likely to be transferred to at each step.
-
-    Input/output, int NC(K), the number of points in each cluster.
-    Input/output, double AN(K,2).
-    Input/output, int NCP(K).
-    Input/output, double D(M).
-    Input/output, int ITRAN(K).
-    Input/output, int LIVE(K).
-    Input/output, int *INDX, the number of steps since a transfer took place.
-*/
 {
     int m = a->rows;
     int n = a->cols;
@@ -161,10 +130,10 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
     double rr;
     double tmp;
 
-    /* If cluster L is updated in the last quick-transfer stage, it
+    /* If cluster l is updated in the last quick-transfer stage, it
        belongs to the live set throughout this stage.  Otherwise, at
        each step, it is not in the live set if it has not been updated
-       in the last M optimal transfer steps.
+       in the last m optimal transfer steps.
     */
     for (l=0; l<k; l++) {
 	if (itran[l] == 1) {
@@ -178,25 +147,25 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 	l2 = ic2[i];
 	ll = l2;
 
-	/* If point I is the only member of cluster L1, no transfer */
+	/* If point i is the only member of cluster l1, no transfer */
 
 	if (nc[l1-1] > 1) {
-	    /* If L1 has not yet been updated in this stage, no need to
-	       re-compute D(I).
+	    /* If l1 has not yet been updated in this stage, no need to
+	       re-compute d[i].
 	    */
 	    if (ncp[l1-1] != 0) {
 		de = compute_ith_distance(i, a, c, l1);
 		gretl_vector_set(d, i, de * gretl_matrix_get(an, l1-1, 0));
 	    }
 
-	    /* Find the cluster with minimum R2 */
+	    /* Find the cluster with minimum r2 */
 	    da = compute_ith_distance(i, a, c, l2);
 	    r2 = da * gretl_matrix_get(an, l2-1, 1);
 
 	    for (l=1; l<=k; l++) {
-		/* If LIVE(L1) <= I, then L1 is not in the live set.  If
+		/* If live[l1] <= i, then l1 is not in the live set.  If
 		   this is true, we only need to consider clusters that
-		   are in the live set for possible transfer of point I.
+		   are in the live set for possible transfer of point i.
 		   Otherwise, we need to consider all possible clusters.
 		*/
 		if ((i < live[l1-1]-1 || i < live[l2-1]-1) && l != l1 && l != ll) {
@@ -209,12 +178,12 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		}
 	    }
 
-	    /* If no transfer is necessary, L2 is the new IC2(I) */
+	    /* If no transfer is necessary, l2 is the new ic2[i] */
 	    if (gretl_vector_get(d, i) <= r2) {
 		ic2[i] = l2;
 	    } else {
-		/* Update cluster centers, LIVE, NCP and AN for clusters
-		   L1 and L2, and update IC1(I) and IC2(I).
+		/* Update cluster centers, line, ncp and an for clusters
+		   l1 and l2, and update ic1[i] and ic2[i].
 		*/
 		*indx = 0;
 		live[l1-1] = m + i;
@@ -246,8 +215,8 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 	}
     }
 
-    /* ITRAN(L) = 0 before entering QTRAN. Also, LIVE(L) has to be
-       decreased by M before re-entering OPTRA.
+    /* itran(l) = 0 before entering qtran(). Also, live(l) has to be
+       decreased by m before re-entering optra().
     */
     for (l=1; l<=k; l++) {
 	itran[l-1] = 0;
@@ -255,73 +224,32 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
     }
 }
 
-/******************************************************************************/
+/* qtran() carries out the quick transfer stage.
+
+   @ic1 and @ic2 record the cluster to which point i belongs and the
+   cluster to which it is most likely to be transferred, respectively.
+
+   For each point i, ic1[i] and ic2[i] are switched, if necessary, to
+   reduce the within-cluster sum of squares.  The cluster centers are
+   updated after each step.
+
+   @a (m x n): the data points
+   @c (k x n): the cluster centers
+   @ic1 (m): the cluster to which each point is assigned
+   @ic2 (m): the cluster to which each point is most likely
+     to be transferred to at each step
+   @nc (k): the number of points in each cluster
+   @an (k x 2)
+   @ncp (k)
+   @d (m)
+   @itran (k)
+   @indx: the number of steps since a transfer took place
+
+*/
 
 static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		   int *ic2, int *nc, gretl_matrix *an, int ncp[],
 		   gretl_vector *d, int itran[], int *indx)
-
-/******************************************************************************/
-/*
-  Purpose:
-
-    QTRAN carries out the quick transfer stage.
-
-  Discussion:
-
-    This is the quick transfer stage.
-
-    IC1(I) is the cluster which point I belongs to.
-    IC2(I) is the cluster which point I is most likely to be
-    transferred to.
-
-    For each point I, IC1(I) and IC2(I) are switched, if necessary, to
-    reduce within-cluster sum of squares.  The cluster centers are
-    updated after each step.
-
-  Licensing:
-
-    This code is distributed under the GNU LGPL license.
-
-  Author:
-
-    Original FORTRAN77 version by John Hartigan, Manchek Wong.
-    Original C version by John Burkardt.
-    Adapted for libgretl by Jack Lucchetti.
-
-  Reference:
-
-    John Hartigan, Manchek Wong,
-    Algorithm AS 136:
-    A K-Means Clustering Algorithm,
-    Applied Statistics,
-    Volume 28, Number 1, 1979, pages 100-108.
-
-  Parameters:
-
-    Input, double A(M,N), the points.
-    Input/output, double C(K,N), the cluster centers.
-
-    Input/output, int IC1(M), the cluster to which each
-    point is assigned.
-
-    Input/output, int IC2(M), used to store the cluster
-    which each point is most likely to be transferred to at each step.
-
-    Input/output, int NC(K), the number of points in
-    each cluster.
-
-    Input/output, double AN(K, 2).
-
-    Input/output, int NCP(K).
-
-    Input/output, double D(M).
-
-    Input/output, int ITRAN(K).
-
-    Input/output, int INDX, counts the number of steps
-    since the last transfer.
-*/
 {
     int m = a->rows;
     int n = a->cols;
@@ -341,9 +269,9 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
     double r2;
     double tmp;
 
-    /* In the optimal transfer stage, NCP(L) indicates the step at which
-       cluster L is last updated.  In the quick transfer stage, NCP(L)
-       is equal to the step at which cluster L is last updated plus M.
+    /* In the optimal transfer stage, ncp[l] indicates the step at which
+       cluster l is last updated.  In the quick transfer stage, ncp[l]
+       is equal to the step at which cluster l is last updated plus m.
     */
     icoun = 0;
     istep = 0;
@@ -355,28 +283,28 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 	    l1 = ic1[i];
 	    l2 = ic2[i];
 
-	    /* If point I is the only member of cluster L1, no transfer */
+	    /* If point i is the only member of cluster l1, no transfer */
 	    if (nc[l1-1] > 1) {
-		/* If NCP(L1) < ISTEP, no need to re-compute distance
-		   from point I to cluster L1.  Note that if cluster L1
-		   is last updated exactly M steps ago, we still need to
-		   compute the distance from point I to cluster L1.
+		/* If ncp[l1] < istep, no need to recompute distance
+		   from point i to cluster l1.  Note that if cluster l1
+		   is last updated exactly m steps ago, we still need to
+		   compute the distance from point i to cluster l1.
 		*/
 		if (istep <= ncp[l1-1]) {
 		    di = compute_ith_distance(i, a, c, l1);
 		    gretl_vector_set(d, i, di * gretl_matrix_get(an, l1-1, 0));
 		}
-		/* If NCP(L1) <= ISTEP and NCP(L2) <= ISTEP, there will
-		   be no transfer of point I at this step.
+		/* If ncp[l1] <= istep and ncp[l2] <= istep, there will
+		   be no transfer of point i at this step.
 		*/
 		if (istep < ncp[l1-1] || istep < ncp[l2-1]) {
 		    r2 = gretl_vector_get(d, i) / gretl_matrix_get(an, l2-1, 1);
 		    di = compute_ith_distance(i, a, c, l2);
 
-		    /* Update cluster centers, NCP, NC, ITRAN, AN1 and
-		      AN2 for clusters L1 and L2.  Also update IC1(I)
-		      and IC2(I).  Note that if any updating occurs in
-		      this stage, INDX is set back to 0.
+		    /* Update cluster centers, ncp, nc, itran, and an
+		      for clusters l1 and l2.  Also update ic1[i] and
+		      ic2[i].  If any updating occurs in this stage,
+		      *indx is set back to 0.
 		    */
 		    if (di < r2) {
 			icoun = 0;
@@ -405,7 +333,7 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		}
 	    }
 
-	    /* If no re-allocation took place in the last M steps,
+	    /* If no re-allocation took place in the last m steps,
 	       we're finished.
 	    */
 	    done = icoun == m;
@@ -416,56 +344,16 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
     }
 }
 
-/******************************************************************************/
+/* kmeans() carries out the K-means algorithm
+
+   @a (m x n): the data points
+   @k: the assumed number of clusters
+   @clustinfo: pointer to get information on the clusters
+*/
 
 gretl_matrix *kmeans (const gretl_matrix *a, int k,
 		      gretl_matrix **clustinfo,
 		      int *err)
-
-/******************************************************************************/
-/*
-  Purpose:
-
-    kmeans carries out the K-means algorithm.
-
-  Discussion:
-
-    This routine attempts to divide M points in N-dimensional space into
-    K clusters so that the within cluster sum of squares is minimized.
-
-  Licensing:
-
-    This code is distributed under the GNU LGPL license.
-
-  Author:
-
-    Original FORTRAN77 version by John Hartigan, Manchek Wong.
-    Original C version by John Burkardt.
-    Adapted for libgretl by Jack Lucchetti.
-
-  Reference:
-
-    John Hartigan, Manchek Wong,
-    Algorithm AS 136:
-    A K-Means Clustering Algorithm,
-    Applied Statistics,
-    Volume 28, Number 1, 1979, pages 100-108.
-
-  Parameters:
-
-    Input, double A(M,N), the points.
-    Input/output, double C(K,N), the cluster centers.
-    Output, int IC1(M), the cluster to which each point is assigned.
-    Output, double CLUSTINFO(K,2): the number of points in each cluster (col. 1),
-    the within-cluster sum of squares of each cluster (col. 2).
-
-  Returs: error code.
-    0, no error was detected.
-    1, at least one cluster is empty after the initial assignment.  A better
-       set of initial cluster centers is needed.
-    E_NOCONV, the allowed maximum number off iterations was exceeded.
-    E_NONCONF, K is less than or equal to 1, or greater than or equal to M.
-*/
 {
     gretl_vector *d;
     gretl_vector *clustid;
@@ -515,7 +403,7 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
     }
 
     /* Initialize the cluster centers. Here, we arbitrarily make the
-       first K data points cluster centers.
+       first k data points cluster centers.
     */
     for (i=0; i<k; i++)  {
 	for (j=0; j<n; j++)  {
@@ -523,8 +411,8 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	}
     }
 
-    /* For each point I, find its two closest centers, IC1(I) and
-       IC2(I).  Assign the point to IC1(I).
+    /* For each point i, find its two closest centers, ic1[i] and
+       ic2[i].  Assign the point to ic1[i].
     */
     for (i=0; i<m; i++) {
 	ic1[i] = 1;
@@ -583,18 +471,19 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	    temp = gretl_matrix_get(c, l, j) / aa;
 	    gretl_matrix_set(c, l, j, temp);
 	}
-	/* Initialize AN, ITRAN and NCP.
+	/* Initialize an, itran and ncp.
 
-	   AN(L,1) = NC(L) / (NC(L) - 1)
-	   AN(L,2) = NC(L) / (NC(L) + 1)
-	   ITRAN(L) = 1 if cluster L is updated in the quick-transfer stage,
-	   = 0 otherwise
+	   an[l,1] = nc[l] / (nc[l] - 1)
+	   an[l,2] = nc[l] / (nc[l] + 1)
 
-	   In the optimal-transfer stage, NCP(L) stores the step at
-	   which cluster L is last updated.
+	   itran[l] = 1 if cluster l is updated in the quick-transfer stage,
+	   otherwise = 0
 
-	   In the quick-transfer stage, NCP(L) stores the step at which
-	   cluster L is last updated plus M.
+	   In the optimal-transfer stage, ncp[l] stores the step at
+	   which cluster l is last updated.
+
+	   In the quick-transfer stage, ncp[l] stores the step at which
+	   cluster l is last updated plus m.
 	*/
 	temp = (1.0 < aa) ? aa / (aa - 1.0) : HUGE;
 	gretl_matrix_set(an, l, 0, temp);
@@ -614,7 +503,7 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	*/
 	optra(a, c, ic1, ic2, nc, an, ncp, d, itran, live, &indx);
 
-	/* Stop if no transfer took place in the last M optimal transfer
+	/* Stop if no transfer took place in the last m optimal transfer
 	   steps.
 	*/
 	if (indx == m) {
@@ -624,12 +513,12 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 
 	/* Each point is tested in turn to see if it should be
 	   re-allocated to the cluster to which it is most likely to be
-	   transferred, IC2(I), from its present cluster, IC1(I).  Loop
+	   transferred, ic2[i], from its present cluster, ic1[i].  Loop
 	   through the data until no further change is to take place.
 	*/
 	qtran(a, c, ic1, ic2, nc, an, ncp, d, itran, &indx);
 
-	/* If there are only two clusters, there is no need to re-enter
+	/* If there are only two clusters, there is no need to repeat
 	   the optimal transfer stage.
 	*/
 	if (k == 2) {
@@ -637,7 +526,7 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	    break;
 	}
 
-	/* NCP has to be set to 0 before entering OPTRA */
+	/* ncp has to be set to 0 before entering optra() */
 	for (l=0; l<k; l++) {
 	    ncp[l] = 0;
 	}
