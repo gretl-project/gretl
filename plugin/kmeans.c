@@ -18,10 +18,13 @@
  */
 
 /* Code for the K-means problem, based on John Burkardt's C rendition of
-   Applied Statistics Algorithm 136, originally coded in FORTRAN by
-   J. A. Hartigan and M. A. Wong, Journal of the Royal Statistical
-   Society Series C: Applied Statistics, Volume 28, Issue 1, March 1979,
-   Pages 100–108, https://doi.org/10.2307/2346830
+   Applied Statistics Algorithm 136 under the GNU GPL; see
+   https://people.math.sc.edu/Burkardt/cpp_src/asa136/asa136.html
+
+   This algorithm was originally coded in FORTRAN by J. A. Hartigan and
+   M. A. Wong. See Journal of the Royal Statistical Society Series C:
+   Applied Statistics, Volume 28, Issue 1, March 1979, Pages 100–108.
+   See https://doi.org/10.2307/2346830
 
    Adapted for gretl by Jack Lucchetti, May 2026.
 */
@@ -425,7 +428,6 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 		dt[il] = dt[il] + da * da;
 	    }
 	}
-
 	if (dt[1] < dt[0]) {
 	    ic1[i] = 2;
 	    ic2[i] = 1;
@@ -440,7 +442,6 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 		dc = gretl_matrix_get(a, i, j) - gretl_matrix_get(c, l, j);
 		db = db + dc * dc;
 	    }
-
 	    if (db < dt[1]) {
 		if (dt[0] <= db) {
 		    dt[1] = db;
@@ -458,12 +459,12 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
     /* Update cluster centers to be the average of points contained
        within them.
     */
+
     *err = init_centers(nc, c, ic1, a);
     if (*err) {
 	/* there's at least one empty cluster */
 	goto bailout;
     }
-
     for (l=0; l<k; l++)  {
 	/* compute centroids as averages */
 	aa = (double) (nc[l]);
@@ -537,38 +538,59 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
     }
 
     if (clustinfo != NULL) {
-	/* Compute the within-cluster sum of squares for each cluster */
-	gretl_matrix *cinfo = gretl_zero_matrix_new(k, 2);
+	gretl_matrix *cinfo = NULL;
+	int reuse = 0;
+
+	if (*clustinfo != NULL) {
+	    cinfo = *clustinfo;
+	    if (cinfo->rows == k && cinfo->cols == n+2) {
+		reuse = 1;
+	    } else {
+		gretl_matrix_free(*clustinfo);
+		cinfo = NULL;
+	    }
+	}
+	if (cinfo == NULL) {
+	    cinfo = gretl_zero_matrix_new(k, n+2);
+	}
 
 	gretl_matrix_zero(c);
 	for (i=0; i<m; i++) {
 	    l = ic1[i];
+	    /* cumulate cluster sums */
 	    for (j=0; j<n; j++)  {
 		temp = gretl_matrix_get(c, l-1, j) + gretl_matrix_get(a, i, j);
 		gretl_matrix_set(c, l-1, j, temp);
 	    }
 	}
 	for (j=0; j<n; j++) {
+	    /* get cluster means */
 	    for (l=0; l<k; l++) {
 		temp = gretl_matrix_get(c, l, j) / (double) (nc[l]);
 		gretl_matrix_set(c, l, j, temp);
 	    }
 	    for (i=0; i<m; i++) {
+		/* sum of squared deviations in cluster i (last col) */
 		l = ic1[i];
 		da = gretl_matrix_get(a, i, j) - gretl_matrix_get(c, l-1, j);
-		temp = gretl_matrix_get(cinfo, l-1, 1) + da * da;
-		gretl_matrix_set(cinfo, l-1, 1, temp);
+		temp = gretl_matrix_get(cinfo, l-1, n+1) + da * da;
+		gretl_matrix_set(cinfo, l-1, n+1, temp);
 	    }
 	}
+
 	for (i=0; i<k; i++) {
+	    /* count of points in cluster i (first col) */
 	    gretl_matrix_set(cinfo, i, 0, nc[i]);
+	    /* per-cluster centroids (middle cols) */
+	    for (j=0; j<n; j++) {
+		temp = gretl_matrix_get(c, i, j);
+		gretl_matrix_set(cinfo, i, j+1, temp);
+	    }
 	}
 
-	if (*clustinfo != NULL) {
-	    /* or we could insist on a correctly sized matrix on input */
-	    gretl_matrix_free(*clustinfo);
+	if (!reuse) {
+	    *clustinfo = cinfo;
 	}
-	*clustinfo = cinfo;
     }
 
     /* fill the output vector */
