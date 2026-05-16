@@ -68,6 +68,31 @@ static int init_centers (int *nc, gretl_matrix *c, int *ic1,
     return err;
 }
 
+#if 0 /* not yet */
+
+static void use_k_random_candidates (const gretl_matrix *a,
+				     gretl_matrix *c)
+{
+    int k = c->rows;
+    int n = c->cols;
+    int m = a->rows;
+    gretl_vector *v = gretl_vector_alloc(k);
+    int i, j, r;
+
+    /* fill @v with @k draws from 1,2,...,@m without replacement */
+    fill_permutation_vector(v, m);
+
+    for (i=0; i<k; i++)  {
+	r = v->val[i];
+	for (j=0; j<n; j++)  {
+	    gretl_matrix_set(c, r, j, gretl_matrix_get(a, r, j));
+	}
+    }
+
+    gretl_matrix_free(v);
+}
+
+#endif /* not yet */
 
 static double compute_ith_distance (int i, const gretl_matrix *a,
 				    const gretl_matrix *c, int l1)
@@ -246,13 +271,12 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
    @ncp (k)
    @d (m)
    @itran (k)
-   @icount: the number of steps since a transfer took place
-
+   @indx: the number of steps since a transfer took place
 */
 
 static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		   int *ic2, int *nc, gretl_matrix *an, int ncp[],
-		   gretl_vector *d, int itran[], int *icount)
+		   gretl_vector *d, int itran[], int *indx)
 {
     int m = a->rows;
     int n = a->cols;
@@ -303,15 +327,14 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		if (istep < ncp[l1-1] || istep < ncp[l2-1]) {
 		    r2 = gretl_vector_get(d, i) / gretl_matrix_get(an, l2-1, 1);
 		    di = compute_ith_distance(i, a, c, l2);
-
 		    /* Update cluster centers, ncp, nc, itran, and an
 		      for clusters l1 and l2.  Also update ic1[i] and
 		      ic2[i].  If any updating occurs in this stage,
-		      *icount is set back to 0.
+		      *indx is set back to 0.
 		    */
 		    if (di < r2) {
 			icoun = 0;
-			*icount = 0;
+			*indx = 0;
 			itran[l1-1] = 1;
 			itran[l2-1] = 1;
 			ncp[l1-1] = istep + m;
@@ -421,11 +444,12 @@ static void add_clustinfo_colnames (const gretl_matrix *a,
     }
 }
 
-/* kmeans() carries out the K-means algorithm
+/* kmeans() carries out the K-means algorithm.
 
    @a (m x n): the data points
    @k: the assumed number of clusters
    @clustinfo: pointer to get information on the clusters
+   @err: location to receive error code
 */
 
 gretl_matrix *kmeans (const gretl_matrix *a, int k,
