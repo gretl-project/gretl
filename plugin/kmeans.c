@@ -164,7 +164,8 @@ static void update_an (gretl_matrix *an, int l1, int l2, double al1, double al2)
 
 /* optra() carries out the optimal transfer stage: each point is
    reallocated, if necessary, to the cluster that will induce the
-   maximum reduction in the within-cluster sum of squares.
+   maximum reduction in the within-cluster sum of squares. This
+   involves a single pass through the data.
 
    @a (m x n): the data points
    @c (k x n): the cluster centers
@@ -303,7 +304,8 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 
    For each point i, ic1[i] and ic2[i] are switched, if necessary, to
    reduce the within-cluster sum of squares.  The cluster centers are
-   updated after each step.
+   updated after each step. This involves as many passes through the
+   data as are required.
 
    @a (m x n): the data points
    @c (k x n): the cluster centers
@@ -402,7 +404,6 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		    }
 		}
 	    }
-
 	    /* If no re-allocation took place in the last m steps,
 	       we're finished.
 	    */
