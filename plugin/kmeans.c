@@ -31,6 +31,14 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "matrix_extra.h"
+
+typedef enum {
+    INIT_AUTO,
+    INIT_USER,
+    INIT_RAND,
+    INIT_FIN
+} InitFlag;
 
 static int init_centers (int *nc, gretl_matrix *c, int *ic1,
 			 const gretl_matrix *a)
@@ -40,7 +48,7 @@ static int init_centers (int *nc, gretl_matrix *c, int *ic1,
     int m = a->rows;
     int n = a->cols;
     int err = 0;
-    double temp;
+    double tmp;
 
     for (l=0; l<k; l++) {
 	nc[l] = 0;
@@ -52,8 +60,8 @@ static int init_centers (int *nc, gretl_matrix *c, int *ic1,
 	l = ic1[i] - 1;
 	nc[l]++;
 	for (j=0; j<n; j++) {
-	    temp = gretl_matrix_get(c, l, j) + gretl_matrix_get(a, i, j);
-	    gretl_matrix_set(c, l, j, temp);
+	    tmp = gretl_matrix_get(c, l, j) + gretl_matrix_get(a, i, j);
+	    gretl_matrix_set(c, l, j, tmp);
 	}
     }
 
@@ -91,8 +99,6 @@ static gretl_matrix *compute_sst_full (const gretl_matrix *a,
     return sstvec;
 }
 
-#if 0 /* not yet: for use with iteration */
-
 /* Just get the sum of per-cluster SSTs */
 
 static double compute_sst (const gretl_matrix *a,
@@ -114,29 +120,31 @@ static double compute_sst (const gretl_matrix *a,
     return sst;
 }
 
-static void use_k_random_candidates (const gretl_matrix *a,
+static void get_k_random_candidates (const gretl_matrix *a,
 				     gretl_matrix *c)
 {
     int k = c->rows;
     int n = c->cols;
-    int m = a->rows;
     gretl_vector *v = gretl_vector_alloc(k);
+    double tmp;
     int i, j, r;
 
     /* fill @v with @k draws from 1,2,...,@m without replacement */
-    fill_permutation_vector(v, m);
+    fill_permutation_vector(v, a->rows);
+#if 0
+    gretl_matrix_print(v, "randomized v");
+#endif
 
     for (i=0; i<k; i++)  {
-	r = v->val[i];
+	r = (int) v->val[i] - 1;
 	for (j=0; j<n; j++)  {
-	    gretl_matrix_set(c, r, j, gretl_matrix_get(a, r, j));
+	    tmp = gretl_matrix_get(a, r, j);
+	    gretl_matrix_set(c, i, j, tmp);
 	}
     }
 
     gretl_matrix_free(v);
 }
-
-#endif /* not yet */
 
 static double compute_ith_distance (int i, const gretl_matrix *a,
 				    const gretl_matrix *c, int l1)
@@ -462,27 +470,6 @@ static void find_nearest_neighbors (const gretl_matrix *a,
     }
 }
 
-gretl_matrix *get_clustinfo_target (gretl_matrix **clustinfo,
-				    int k, int n, int *reuse)
-{
-    gretl_matrix *cinfo = NULL;
-
-    if (*clustinfo != NULL) {
-	cinfo = *clustinfo;
-	if (cinfo->rows == k && cinfo->cols == n+2) {
-	    *reuse = 1;
-	} else {
-	    gretl_matrix_free(*clustinfo);
-	    cinfo = NULL;
-	}
-    }
-    if (cinfo == NULL) {
-	cinfo = gretl_zero_matrix_new(k, n+2);
-    }
-
-    return cinfo;
-}
-
 static void add_clustinfo_colnames (const gretl_matrix *a,
 				    gretl_matrix *cinfo)
 {
@@ -510,9 +497,12 @@ static void add_clustinfo_colnames (const gretl_matrix *a,
     }
 }
 
-static int kmeans_init (const gretl_matrix *a, gretl_matrix *c,
-			int *ic1, int *ic2, gretl_matrix *an,
-			int *nc, int *itran, int *ncp)
+static int kmeans_init (const gretl_matrix *a,
+			gretl_matrix *c,
+			int *ic1, int *ic2,
+			gretl_matrix *an,
+			int *nc, int *itran,
+			int *ncp, InitFlag iflag)
 {
     int i, j;
     int k = c->rows;
@@ -521,13 +511,17 @@ static int kmeans_init (const gretl_matrix *a, gretl_matrix *c,
     double huge = libset_get_double(CONV_HUGE);
     int err = 0;
 
-    /* Initialize the cluster centers. Here, we arbitrarily make the
-       first k data points cluster centers.
-    */
-    for (i=0; i<k; i++)  {
-	for (j=0; j<n; j++)  {
-	    gretl_matrix_set(c, i, j, gretl_matrix_get(a, i, j));
+    if (iflag == INIT_AUTO) {
+	/* Make the first k data points the cluster centers */
+	for (i=0; i<k; i++) {
+	    for (j=0; j<n; j++) {
+		gretl_matrix_set(c, i, j, gretl_matrix_get(a, i, j));
+	    }
 	}
+    } else if (iflag == INIT_RAND) {
+	get_k_random_candidates(a, c);
+    } else {
+	; /* INIT_USER or INIT_FIN: use the incoming @c as is */
     }
 
     /* For each point i, find its two closest centers, ic1[i] and
@@ -559,6 +553,22 @@ static int kmeans_init (const gretl_matrix *a, gretl_matrix *c,
     return err;
 }
 
+static int check_opts (gretl_bundle *b,
+		       int *rand_iters,
+		       int *verbosity)
+{
+    int err = 0;
+
+    if (gretl_bundle_has_key(b, "iters")) {
+	*rand_iters = gretl_bundle_get_int(b, "iters", &err);
+    }
+    if (gretl_bundle_has_key(b, "verbosity")) {
+	*verbosity = gretl_bundle_get_int(b, "verbosity", &err);
+    }
+
+    return err;
+}
+
 /* kmeans() carries out the K-means algorithm.
 
    @a (m x n): the data points
@@ -567,15 +577,19 @@ static int kmeans_init (const gretl_matrix *a, gretl_matrix *c,
    @err: location to receive error code
 */
 
-gretl_matrix *kmeans (const gretl_matrix *a, int k,
-		      gretl_matrix **clustinfo,
-		      int *err)
+gretl_bundle *kmeans (const gretl_matrix *a,
+		      int k, const gretl_matrix *c0,
+		      const gretl_bundle *opts,
+		      PRN *prn, int *err)
 {
-    gretl_vector *d;
-    gretl_vector *clustid;
-    gretl_matrix *an;
-    gretl_matrix *c;
+    gretl_bundle *ret = NULL;
+    gretl_vector *d = NULL;
+    gretl_vector *clustid = NULL;
+    gretl_matrix *an = NULL;
+    gretl_matrix *c = NULL;
+    gretl_matrix *cmin = NULL;
     double temp;
+    double SSTmin, SST;
     int *iwork;
     int *ic1;
     int *ic2;
@@ -588,10 +602,32 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
     int maxiter = 128;
     int m = a->rows;
     int n = a->cols;
+    int ri = 1;
+    InitFlag iflag = INIT_AUTO;
+    int rand_iters = 0;
+    int verbosity = 0;
 
-    if (k <= 1 || m <= k) {
+    /* initial checks */
+    if (c0 != NULL) {
+	k = c0->rows;
+	if (c0->cols != n) {
+	    *err = E_NONCONF;
+	}
+    }
+    if (!*err && (k <= 1 || m <= k)) {
 	*err = E_NONCONF;
+    }
+    if (!*err && opts != NULL) {
+	*err = check_opts((gretl_bundle *) opts, &rand_iters, &verbosity);
+    }
+    if (*err) {
 	return NULL;
+    }
+
+    if (verbosity) {
+	pprintf(prn, "_kmeans: m=%d, n=%d, k=%d, initial centers %s\n",
+		m, n, k, c0 == NULL ? "automatic" : "user-specified");
+	pprintf(prn, "%d random iterations requested\n", rand_iters);
     }
 
     /* integer-valued workspace */
@@ -603,9 +639,18 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
     itran = ncp + k;
     live = itran + k;
 
+    if (c0 != NULL) {
+	c = gretl_matrix_copy(c0);
+	iflag = INIT_USER;
+    } else {
+	c = gretl_matrix_alloc(k, n);
+    }
+    if (rand_iters > 0) {
+	/* recorder for "best so far" */
+    	cmin = gretl_matrix_alloc(k, n);
+    }
     d = gretl_vector_alloc(m);
     an = gretl_matrix_alloc(k, 2);
-    c = gretl_matrix_alloc(k, n);
     clustid = gretl_column_vector_alloc(m);
 
     if (iwork == NULL || d == NULL || an == NULL ||
@@ -614,7 +659,11 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	goto bailout;
     }
 
-    *err = kmeans_init(a, c, ic1, ic2, an, nc, itran, ncp);
+    SSTmin = libset_get_double(CONV_HUGE);
+
+ start_outer_loop:
+
+    *err = kmeans_init(a, c, ic1, ic2, an, nc, itran, ncp, iflag);
     if (*err) {
 	goto bailout;
     }
@@ -641,28 +690,41 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	}
     }
 
-    /* If we were iterating over random initial selection of centers,
-       this is presumably the point at which we'd zip back to the top
-       of the iteration (possibly wiping put a non-zero *err if it
-       could have been bad luck?).
-    */
-
     if (*err) {
 	goto bailout;
+    } else if (iflag != INIT_FIN) {
+	if (verbosity > 2) {
+	    pprintf(prn, "  point transfers converged in %d iterations\n", i+1);
+	}
+	if (rand_iters > 0 && ri <= rand_iters) {
+	    SST = compute_sst(a, c, ic1);
+	    if (verbosity > 1) {
+		pprintf(prn, "iteration %d: SST = %g\n", ri, SST);
+	    }
+	    if (SST < SSTmin) {
+		SSTmin = SST;
+		gretl_matrix_copy_values(cmin, c);
+	    }
+	    iflag = INIT_RAND;
+	    ri++;
+	    goto start_outer_loop;
+	}
     }
 
-#if 0 /* not yet */
-    double SST = compute_sst(a, c, ic1);
-    fprintf(stderr, "HERE SST = %g\n", SST);
-#endif
+    if (iflag == INIT_RAND) {
+	if (verbosity > 1) {
+	    pprintf(prn, "Minimum SST = %g\n", SSTmin);
+	}
+	gretl_matrix_copy_values(c, cmin);
+	iflag = INIT_FIN;
+	goto start_outer_loop;
+    }
 
-    if (clustinfo != NULL) {
-	gretl_matrix *cinfo;
-	gretl_vector *sst;
-	int reuse = 0;
+    ret = gretl_bundle_new();
 
-	cinfo = get_clustinfo_target(clustinfo, k, n, &reuse);
-	sst = compute_sst_full(a, c, ic1);
+    if (!*err) {
+	gretl_matrix *cinfo = gretl_zero_matrix_new(k, n+2);
+	gretl_vector *sst = compute_sst_full(a, c, ic1);
 
 	for (i=0; i<k; i++) {
 	    /* count of points in cluster i (first col) */
@@ -678,22 +740,27 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 
 	gretl_matrix_free(sst);
 	add_clustinfo_colnames(a, cinfo);
-	if (!reuse) {
-	    *clustinfo = cinfo;
+	if (verbosity) {
+	    gretl_matrix_print_to_prn(cinfo, "Cluster information:", prn);
 	}
+	gretl_bundle_donate_data(ret, "clustinfo", cinfo,
+				 GRETL_TYPE_MATRIX, 0);
     }
 
     /* fill the output vector */
     for (i=0; i<m; i++) {
 	gretl_vector_set(clustid, i, ic1[i]);
     }
+    gretl_bundle_donate_data(ret, "clustid", clustid,
+			     GRETL_TYPE_MATRIX, 0);
 
  bailout:
 
     gretl_matrix_free(an);
     gretl_matrix_free(c);
+    gretl_matrix_free(cmin);
     gretl_vector_free(d);
     free(iwork);
 
-    return clustid;
+    return ret;
 }
