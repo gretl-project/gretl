@@ -510,6 +510,65 @@ static void add_clustinfo_colnames (const gretl_matrix *a,
     }
 }
 
+int init(const gretl_matrix *a, gretl_matrix *c,
+	 int *ic1, int *ic2, gretl_matrix *an,
+	 int *nc, int *itran, int *ncp)
+{
+    int i, j;
+    int k = c->rows;
+    int n = a->cols;
+    int err = 0;
+
+    double aa;
+    double dt[2];
+    double HUGE = libset_get_double(CONV_HUGE);
+
+    /* Initialize the cluster centers. Here, we arbitrarily make the
+       first k data points cluster centers.
+    */
+    for (i=0; i<k; i++)  {
+	for (j=0; j<n; j++)  {
+	    gretl_matrix_set(c, i, j, gretl_matrix_get(a, i, j));
+	}
+    }
+
+    /** At this point the basic set-up is complete. This is the point to
+	which we'd return if iterating over random initial selection of
+	the cluster centers.
+    **/
+
+    /* For each point i, find its two closest centers, ic1[i] and
+       ic2[i].  Assign the point to ic1[i].
+    */
+    find_nearest_neighbors(a, c, ic1, ic2, dt);
+
+    err = init_centers(nc, c, ic1, a);
+    if (err) {
+	/* there's at least one empty cluster */
+	return err;
+    }
+
+    double temp;
+    
+    for (i=0; i<k; i++)  {
+	/* compute centroids per cluster */
+	aa = (double) (nc[i]);
+	for (j=0; j<n; j++) {
+	    temp = gretl_matrix_get(c, i, j) / aa;
+	    gretl_matrix_set(c, i, j, temp);
+	}
+	/* initialize an, itran, ncp */
+	temp = (aa > 1.0) ? aa / (aa - 1.0) : HUGE;
+	gretl_matrix_set(an, i, 0, temp);
+	gretl_matrix_set(an, i, 1, aa / (aa + 1.0));
+	itran[i] = 1;
+	ncp[i] = -1;
+    }
+
+    return err;
+}
+
+	 
 /* kmeans() carries out the K-means algorithm.
 
    @a (m x n): the data points
@@ -526,22 +585,16 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
     gretl_vector *clustid;
     gretl_matrix *an;
     gretl_matrix *c;
-    double aa;
-    double dt[2];
-    int i;
+    int i, j, l;
     int *ic1;
     int *ic2;
-    int ij;
     int indx;
     int *itran;
-    int j;
-    int l;
     int *live;
     int *nc;
     int *ncp;
     double temp;
     int maxiter = 128;
-    double HUGE = libset_get_double(CONV_HUGE);
     int m = a->rows;
     int n = a->cols;
 
@@ -568,50 +621,16 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	goto bailout;
     }
 
-    /* Initialize the cluster centers. Here, we arbitrarily make the
-       first k data points cluster centers.
-    */
-    for (i=0; i<k; i++)  {
-	for (j=0; j<n; j++)  {
-	    gretl_matrix_set(c, i, j, gretl_matrix_get(a, i, j));
-	}
-    }
+    *err = init(a, c, ic1, ic2, an, nc, itran, ncp);
 
-    /** At this point the basic set-up is complete. This is the point to
-	which we'd return if iterating over random initial selection of
-	the cluster centers.
-    **/
-
-    /* For each point i, find its two closest centers, ic1[i] and
-       ic2[i].  Assign the point to ic1[i].
-    */
-    find_nearest_neighbors(a, c, ic1, ic2, dt);
-
-    *err = init_centers(nc, c, ic1, a);
     if (*err) {
-	/* there's at least one empty cluster */
 	goto bailout;
     }
-
-    for (l=0; l<k; l++)  {
-	/* compute centroids per cluster */
-	aa = (double) (nc[l]);
-	for (j=0; j<n; j++) {
-	    temp = gretl_matrix_get(c, l, j) / aa;
-	    gretl_matrix_set(c, l, j, temp);
-	}
-	/* initialize an, itran, ncp */
-	temp = (aa > 1.0) ? aa / (aa - 1.0) : HUGE;
-	gretl_matrix_set(an, l, 0, temp);
-	gretl_matrix_set(an, l, 1, aa / (aa + 1.0));
-	itran[l] = 1;
-	ncp[l] = -1;
-    }
-
+    
     indx = 0;
     *err = E_NOCONV;
 
-    for (ij=0; ij<maxiter; ij++)  {
+    for (i=0; i<maxiter; i++)  {
 	optra(a, c, ic1, ic2, nc, an, ncp, d, itran, live, &indx);
 	if (indx == m) {
 	    /* No optimal transfer in the last m steps: OK, stop */
