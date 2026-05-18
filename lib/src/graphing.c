@@ -6100,7 +6100,7 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
    expression.
 */
 
-static char *fixpc (const char *s)
+static char *fix_percent (const char *s)
 {
     gchar *ret = NULL;
     const char *p = s;
@@ -6218,7 +6218,7 @@ int plot_corrmat (VMatrix *corr, const DATASET *dset, gretlopt opt)
     for (i=0; i<n; i++) {
 	pname = plotname(dset, corr->list[i+1], 1);
 	if (strchr(pname, '%')) {
-	    tmp = fixpc(pname);
+	    tmp = fix_percent(pname);
 	    fprintf(fp, "\"%s\" %d", tmp, n-i-1);
 	    free(tmp);
 	} else {
@@ -6235,7 +6235,7 @@ int plot_corrmat (VMatrix *corr, const DATASET *dset, gretlopt opt)
     for (i=0; i<n; i++) {
 	pname = plotname(dset, corr->list[i+1], 1);
 	if (strchr(pname, '%')) {
-	    tmp = fixpc(pname);
+	    tmp = fix_percent(pname);
 	    fprintf(fp, "\"%s\" %d", tmp, i);
 	    free(tmp);
 	} else {
