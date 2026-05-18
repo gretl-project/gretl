@@ -99,7 +99,8 @@ enum {
     P_PUREBIN,
     P_BDSTEST,
     P_LPSOLVE,
-    P_STEPWISE
+    P_STEPWISE,
+    P_KMEANS
 } plugin_codes;
 
 struct plugin_info {
@@ -165,7 +166,8 @@ struct plugin_info plugins[] = {
     { P_PUREBIN,         "purebin",         NULL },
     { P_BDSTEST,         "bdstest",         NULL },
     { P_LPSOLVE,         "lpsolve",         NULL },
-    { P_STEPWISE,        "stepwise",        NULL }
+    { P_STEPWISE,        "stepwise",        NULL },
+    { P_KMEANS,          "kmeans",          NULL }
 };
 
 struct plugin_function_info plugin_functions[] = {
@@ -263,6 +265,9 @@ struct plugin_function_info plugin_functions[] = {
     { "array_kernel_density",  P_KERNEL },
     { "kernel_density_matrix", P_KERNEL },
     { "multiple_kd_matrix",    P_KERNEL },
+
+    /* K-means algorithm */
+    { "kmeans", P_KMEANS },
 
     /* Hurst exponent estimation */
     { "hurst_exponent", P_FRACTAL },

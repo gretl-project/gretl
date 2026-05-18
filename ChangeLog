@@ -1,6 +1,9 @@
 version 2026c, in progress
 - GUI: fix for call to function package with no arguments
 - fix bug: GUI plot editor breaks factorized plots
+- fix bug: crash in GUI data editor on Windows
+- fix bug: correlation matrix heatmap broken if the
+  graph-name of an included series contains '%'
 - gretl_edit: support loading of function definitions
 
 2026-04-30 version 2026b

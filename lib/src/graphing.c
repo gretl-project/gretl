@@ -6095,6 +6095,43 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
     return finalize_plot_input_file(fp);
 }
 
+/* Return a string which doubles any singleton %-signs in @s,
+   so that gnuplot doesn't choke when @s is used in a tics
+   expression.
+*/
+
+static char *fix_percent (const char *s)
+{
+    gchar *ret = NULL;
+    const char *p = s;
+    int len = strlen(s);
+    int n = 0;
+
+    while (*p) {
+	if (*p == '%' && *(p+1) != '%') {
+	    n++;
+	}
+	p++;
+    }
+
+    if (n > 0) {
+	int i = 0;
+
+	ret = calloc(len + n + 1, 1);
+	while (*s) {
+	    ret[i++] = *s;
+	    if (*s == '%' && *(s+1) != '%') {
+		ret[i++] = '%';
+	    }
+	    s++;
+	}
+    } else {
+	ret = gretl_strdup(s);
+    }
+
+    return ret;
+}
+
 /**
  * plot_corrmat:
  * @corr: pointer to correlation matrix struct.
@@ -6109,6 +6146,7 @@ int plot_corrmat (VMatrix *corr, const DATASET *dset, gretlopt opt)
 {
     FILE *fp;
     const char *pname;
+    char *tmp;
     double rcrit = 0.0;
     int i, j, df, n, idx;
     int allpos = 1;
@@ -6179,7 +6217,13 @@ int plot_corrmat (VMatrix *corr, const DATASET *dset, gretlopt opt)
     fputs("set ytics (", fp);
     for (i=0; i<n; i++) {
 	pname = plotname(dset, corr->list[i+1], 1);
-        fprintf(fp, "\"%s\" %d", pname, n-i-1);
+	if (strchr(pname, '%')) {
+	    tmp = fix_percent(pname);
+	    fprintf(fp, "\"%s\" %d", tmp, n-i-1);
+	    free(tmp);
+	} else {
+	    fprintf(fp, "\"%s\" %d", pname, n-i-1);
+	}
         if (i < n - 1) {
             fputs(", ", fp);
         }
@@ -6190,7 +6234,13 @@ int plot_corrmat (VMatrix *corr, const DATASET *dset, gretlopt opt)
     fputs("set xtics (", fp);
     for (i=0; i<n; i++) {
 	pname = plotname(dset, corr->list[i+1], 1);
-        fprintf(fp, "\"%s\" %d", pname, i);
+	if (strchr(pname, '%')) {
+	    tmp = fix_percent(pname);
+	    fprintf(fp, "\"%s\" %d", tmp, i);
+	    free(tmp);
+	} else {
+	    fprintf(fp, "\"%s\" %d", pname, i);
+	}
         if (i < n - 1) {
             fputs(", ", fp);
         }
