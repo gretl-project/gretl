@@ -68,7 +68,7 @@ static int init_centers (int *nc, gretl_matrix *c, int *ic1,
     /* Check to see if there is any empty cluster at this stage */
     for (l=0; l<k; l++)  {
 	if (nc[l] == 0)  {
-	    err = 1;
+	    err = E_INVARG;
 	    break;
 	}
     }
@@ -120,6 +120,27 @@ static double compute_sst (const gretl_matrix *a,
     return sst;
 }
 
+static double global_sst (const gretl_matrix *a)
+{
+    double sst = 0;
+    double cmean, d;
+    int i, j;
+
+    for (j=0; j<a->cols; j++) {
+	cmean = 0.0;
+	for (i=0; i<a->rows; i++) {
+	    cmean += gretl_matrix_get(a, i, j);
+	}
+	cmean /= a->rows;
+	for (i=0; i<a->rows; i++) {
+	    d = gretl_matrix_get(a, i, j) - cmean;
+	    sst += d * d;
+	}
+    }
+
+    return sst;
+}
+
 static void get_k_random_candidates (const gretl_matrix *a,
 				     gretl_matrix *c)
 {
@@ -131,9 +152,6 @@ static void get_k_random_candidates (const gretl_matrix *a,
 
     /* fill @v with @k draws from 1,2,...,@m without replacement */
     fill_permutation_vector(v, a->rows);
-#if 0
-    gretl_matrix_print(v, "randomized v");
-#endif
 
     for (i=0; i<k; i++)  {
 	r = (int) v->val[i] - 1;
@@ -187,7 +205,6 @@ static void update_an (gretl_matrix *an, int l1, int l2, double al1, double al2)
    @itran (k)
    @live (k)
    @indx: the number of steps since a transfer took place
-
 */
 
 static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
@@ -384,7 +401,7 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		    /* Update cluster centers, ncp, nc, itran, and an
 		      for clusters l1 and l2.  Also update ic1[i] and
 		      ic2[i].  If any updating occurs in this stage,
-		      *indx is set back to 0.
+		      *indx is reset to 0.
 		    */
 		    if (di < r2) {
 			icoun = 0;
@@ -412,7 +429,7 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		    }
 		}
 	    }
-	    /* If no re-allocation took place in the last m steps,
+	    /* If no reallocation took place in the last m steps,
 	       we're finished.
 	    */
 	    done = icoun == m;
@@ -602,7 +619,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     int maxiter = 128;
     int m = a->rows;
     int n = a->cols;
-    int ri = 1;
+    int ri = 0;
     InitFlag iflag = INIT_AUTO;
     int rand_iters = 0;
     int verbosity = 0;
@@ -692,14 +709,20 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 
     if (*err) {
 	goto bailout;
-    } else if (iflag != INIT_FIN) {
+    }
+
+    if (iflag != INIT_FIN) {
 	if (verbosity > 2) {
 	    pprintf(prn, "  point transfers converged in %d iterations\n", i+1);
 	}
 	if (rand_iters > 0 && ri <= rand_iters) {
 	    SST = compute_sst(a, c, ic1);
 	    if (verbosity > 1) {
-		pprintf(prn, "iteration %d: SST = %g\n", ri, SST);
+		if (ri == 0) {
+		    pprintf(prn, "initial SST = %g\n", SST);
+		} else {
+		    pprintf(prn, "iteration %d: SST = %g\n", ri, SST);
+		}
 	    }
 	    if (SST < SSTmin) {
 		SSTmin = SST;
@@ -722,7 +745,8 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 
     ret = gretl_bundle_new();
 
-    if (!*err) {
+    /* build the clustinfo matrix */
+    {
 	gretl_matrix *cinfo = gretl_zero_matrix_new(k, n+2);
 	gretl_vector *sst = compute_sst_full(a, c, ic1);
 
@@ -753,6 +777,8 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     }
     gretl_bundle_donate_data(ret, "clustid", clustid,
 			     GRETL_TYPE_MATRIX, 0);
+    /* for reference, add the global SST */
+    gretl_bundle_set_scalar(ret, "global_SST", global_sst(a));
 
  bailout:
 
