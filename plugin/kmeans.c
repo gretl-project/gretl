@@ -417,11 +417,11 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 
 static void find_nearest_neighbors (const gretl_matrix *a,
 				    const gretl_matrix *c,
-				    int *ic1, int *ic2,
-				    double *dt)
+				    int *ic1, int *ic2)
 {
     double da, db, dc;
     double temp;
+    double dt[2];
     int i, j, l, il;
 
     for (i=0; i<a->rows; i++) {
@@ -510,22 +510,16 @@ static void add_clustinfo_colnames (const gretl_matrix *a,
     }
 }
 
-int init(const gretl_matrix *a, gretl_matrix *c,
-	 int *ic1, int *ic2, gretl_matrix *an,
-	 int *nc, int *itran, int *ncp)
+static int kmeans_init (const gretl_matrix *a, gretl_matrix *c,
+			int *ic1, int *ic2, gretl_matrix *an,
+			int *nc, int *itran, int *ncp)
 {
     int i, j;
     int k = c->rows;
     int n = a->cols;
+    double aa, tmp;
+    double huge = libset_get_double(CONV_HUGE);
     int err = 0;
-
-    double aa;
-    double dt[2];
-#ifdef WIN32	
-    double HUGE_win32 = libset_get_double(CONV_HUGE);
-#else
-	double HUGE = libset_get_double(CONV_HUGE);
-#endif
 
     /* Initialize the cluster centers. Here, we arbitrarily make the
        first k data points cluster centers.
@@ -536,15 +530,10 @@ int init(const gretl_matrix *a, gretl_matrix *c,
 	}
     }
 
-    /** At this point the basic set-up is complete. This is the point to
-	which we'd return if iterating over random initial selection of
-	the cluster centers.
-    **/
-
     /* For each point i, find its two closest centers, ic1[i] and
        ic2[i].  Assign the point to ic1[i].
     */
-    find_nearest_neighbors(a, c, ic1, ic2, dt);
+    find_nearest_neighbors(a, c, ic1, ic2);
 
     err = init_centers(nc, c, ic1, a);
     if (err) {
@@ -552,22 +541,16 @@ int init(const gretl_matrix *a, gretl_matrix *c,
 	return err;
     }
 
-    double temp;
-    
     for (i=0; i<k; i++)  {
 	/* compute centroids per cluster */
 	aa = (double) (nc[i]);
 	for (j=0; j<n; j++) {
-	    temp = gretl_matrix_get(c, i, j) / aa;
-	    gretl_matrix_set(c, i, j, temp);
+	    tmp = gretl_matrix_get(c, i, j) / aa;
+	    gretl_matrix_set(c, i, j, tmp);
 	}
 	/* initialize an, itran, ncp */
-#ifdef WIN32	
-	temp = (aa > 1.0) ? aa / (aa - 1.0) : HUGE_win32;
-#else
-	temp = (aa > 1.0) ? aa / (aa - 1.0) : HUGE;
-#endif
-	gretl_matrix_set(an, i, 0, temp);
+	tmp = (aa > 1.0) ? aa / (aa - 1.0) : huge;
+	gretl_matrix_set(an, i, 0, tmp);
 	gretl_matrix_set(an, i, 1, aa / (aa + 1.0));
 	itran[i] = 1;
 	ncp[i] = -1;
@@ -576,7 +559,6 @@ int init(const gretl_matrix *a, gretl_matrix *c,
     return err;
 }
 
-	 
 /* kmeans() carries out the K-means algorithm.
 
    @a (m x n): the data points
@@ -593,15 +575,16 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
     gretl_vector *clustid;
     gretl_matrix *an;
     gretl_matrix *c;
-    int i, j, l;
+    double temp;
+    int *iwork;
     int *ic1;
     int *ic2;
-    int indx;
-    int *itran;
-    int *live;
     int *nc;
     int *ncp;
-    double temp;
+    int *itran;
+    int *live;
+    int indx;
+    int i, j, l;
     int maxiter = 128;
     int m = a->rows;
     int n = a->cols;
@@ -611,30 +594,31 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 	return NULL;
     }
 
-    ic1 = malloc(m * sizeof *ic2);
-    ic2 = malloc(m * sizeof *ic2);
-    nc = malloc(k * sizeof *nc);
-    ncp = malloc(k * sizeof *ncp);
-    itran = malloc(k * sizeof *itran);
-    live = malloc(k * sizeof *live);
+    /* integer-valued workspace */
+    iwork = malloc((2*m + 4*k) * sizeof *iwork);
+    ic1 = iwork;
+    ic2 = ic1 + m;
+    nc = ic2 + m;
+    ncp = nc + k;
+    itran = ncp + k;
+    live = itran + k;
 
     d = gretl_vector_alloc(m);
     an = gretl_matrix_alloc(k, 2);
     c = gretl_matrix_alloc(k, n);
     clustid = gretl_column_vector_alloc(m);
 
-    if (ic1 == NULL || ic2 == NULL || nc == NULL || ncp == NULL ||
-	itran == NULL || live == NULL || d == NULL || an == NULL) {
+    if (iwork == NULL || d == NULL || an == NULL ||
+	c == NULL || clustid == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
 
-    *err = init(a, c, ic1, ic2, an, nc, itran, ncp);
-
+    *err = kmeans_init(a, c, ic1, ic2, an, nc, itran, ncp);
     if (*err) {
 	goto bailout;
     }
-    
+
     indx = 0;
     *err = E_NOCONV;
 
@@ -670,7 +654,7 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
 #if 0 /* not yet */
     double SST = compute_sst(a, c, ic1);
     fprintf(stderr, "HERE SST = %g\n", SST);
-#endif    
+#endif
 
     if (clustinfo != NULL) {
 	gretl_matrix *cinfo;
@@ -709,13 +693,7 @@ gretl_matrix *kmeans (const gretl_matrix *a, int k,
     gretl_matrix_free(an);
     gretl_matrix_free(c);
     gretl_vector_free(d);
-
-    free(ic1);
-    free(ic2);
-    free(nc);
-    free(ncp);
-    free(itran);
-    free(live);
+    free(iwork);
 
     return clustid;
 }
