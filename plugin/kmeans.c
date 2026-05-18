@@ -521,7 +521,11 @@ int init(const gretl_matrix *a, gretl_matrix *c,
 
     double aa;
     double dt[2];
-    double HUGE = libset_get_double(CONV_HUGE);
+#ifdef WIN32	
+    double HUGE_win32 = libset_get_double(CONV_HUGE);
+#else
+	double HUGE = libset_get_double(CONV_HUGE);
+#endif
 
     /* Initialize the cluster centers. Here, we arbitrarily make the
        first k data points cluster centers.
@@ -558,7 +562,11 @@ int init(const gretl_matrix *a, gretl_matrix *c,
 	    gretl_matrix_set(c, i, j, temp);
 	}
 	/* initialize an, itran, ncp */
+#ifdef WIN32	
+	temp = (aa > 1.0) ? aa / (aa - 1.0) : HUGE_win32;
+#else
 	temp = (aa > 1.0) ? aa / (aa - 1.0) : HUGE;
+#endif
 	gretl_matrix_set(an, i, 0, temp);
 	gretl_matrix_set(an, i, 1, aa / (aa + 1.0));
 	itran[i] = 1;
