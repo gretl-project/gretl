@@ -34,7 +34,8 @@
 #include "matrix_extra.h"
 
 typedef enum {
-    INIT_AUTO,
+    INIT_FAST,
+    INIT_HW,
     INIT_USER,
     INIT_RAND,
     INIT_FIN
@@ -120,8 +121,6 @@ static double compute_sst (const gretl_matrix *a,
     return sst;
 }
 
-#if 0 /* not yet */
-
 /* The initialization of @c suggested in the last paragraph of
    Hartigan and Wong (1979): sort the data points by euclidean
    distance from the global centroid, and select K evenly spaced
@@ -175,8 +174,6 @@ static int hartigan_wong_init (const gretl_matrix *a,
 
     return err;
 }
-
-#endif /* not yet */
 
 static double global_sst (const gretl_matrix *a)
 {
@@ -586,7 +583,7 @@ static int kmeans_init (const gretl_matrix *a,
     double huge = libset_get_double(CONV_HUGE);
     int err = 0;
 
-    if (iflag == INIT_AUTO) {
+    if (iflag == INIT_FAST) {
 	/* Make the first k data points the cluster centers */
 	for (i=0; i<k; i++) {
 	    for (j=0; j<n; j++) {
@@ -595,6 +592,8 @@ static int kmeans_init (const gretl_matrix *a,
 	}
     } else if (iflag == INIT_RAND) {
 	get_k_random_candidates(a, c);
+    } else if (iflag == INIT_HW) {
+	hartigan_wong_init(a, c);
     } else {
 	; /* INIT_USER or INIT_FIN: use the incoming @c as is */
     }
@@ -629,16 +628,26 @@ static int kmeans_init (const gretl_matrix *a,
 }
 
 static int check_opts (gretl_bundle *b,
-		       int *rand_iters,
-		       int *verbosity)
+		       int *rand_starts,
+		       int *verbosity,
+		       InitFlag *iflag)
 {
     int err = 0;
 
-    if (gretl_bundle_has_key(b, "iters")) {
-	*rand_iters = gretl_bundle_get_int(b, "iters", &err);
+    if (gretl_bundle_has_key(b, "rand_starts")) {
+	*rand_starts = gretl_bundle_get_int(b, "rand_starts", &err);
     }
     if (gretl_bundle_has_key(b, "verbosity")) {
 	*verbosity = gretl_bundle_get_int(b, "verbosity", &err);
+    }
+    if (gretl_bundle_has_key(b, "init")) {
+	int itype = gretl_bundle_get_int(b, "init", &err);
+
+	if (itype == 2) {
+	    *iflag = INIT_HW;
+	} else if (itype != 1) {
+	    err = E_INVARG;
+	}
     }
 
     return err;
@@ -678,8 +687,8 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     int m = a->rows;
     int n = a->cols;
     int ri = 0;
-    InitFlag iflag = INIT_AUTO;
-    int rand_iters = 0;
+    InitFlag iflag = INIT_FAST;
+    int rand_starts = 0;
     int verbosity = 0;
 
     /* initial checks */
@@ -693,7 +702,8 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	*err = E_NONCONF;
     }
     if (!*err && opts != NULL) {
-	*err = check_opts((gretl_bundle *) opts, &rand_iters, &verbosity);
+	*err = check_opts((gretl_bundle *) opts, &rand_starts,
+			  &verbosity, &iflag);
     }
     if (*err) {
 	return NULL;
@@ -702,7 +712,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     if (verbosity) {
 	pprintf(prn, "_kmeans: m=%d, n=%d, k=%d, initial centers %s\n",
 		m, n, k, c0 == NULL ? "automatic" : "user-specified");
-	pprintf(prn, "%d random iterations requested\n", rand_iters);
+	pprintf(prn, "%d random starts requested\n", rand_starts);
     }
 
     /* integer-valued workspace */
@@ -720,7 +730,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     } else {
 	c = gretl_matrix_alloc(k, n);
     }
-    if (rand_iters > 0) {
+    if (rand_starts > 0) {
 	/* recorder for "best so far" */
     	cmin = gretl_matrix_alloc(k, n);
     }
@@ -773,13 +783,13 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	if (verbosity > 2) {
 	    pprintf(prn, "  point transfers converged in %d iterations\n", i+1);
 	}
-	if (rand_iters > 0 && ri <= rand_iters) {
+	if (rand_starts > 0 && ri <= rand_starts) {
 	    SST = compute_sst(a, c, ic1);
 	    if (verbosity > 1) {
 		if (ri == 0) {
 		    pprintf(prn, "initial SST = %g\n", SST);
 		} else {
-		    pprintf(prn, "iteration %d: SST = %g\n", ri, SST);
+		    pprintf(prn, "start %d: SST = %g\n", ri, SST);
 		}
 	    }
 	    if (SST < SSTmin) {
