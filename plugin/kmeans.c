@@ -33,7 +33,7 @@
 #include "libset.h"
 #include "matrix_extra.h"
 
-typedef enum {
+typedef enum InitFlag_ {
     INIT_FAST,
     INIT_HW,
     INIT_USER,
@@ -41,33 +41,97 @@ typedef enum {
     INIT_FIN
 } InitFlag;
 
-static int init_centers (int *nc, gretl_matrix *c, int *ic1,
-			 const gretl_matrix *a)
+typedef struct hw_info_ {
+    const gretl_matrix *a; /* data points, m x n */
+    gretl_matrix *c;       /* cluster centroids, k x n */
+    gretl_matrix *cmin;    /* for random sequence */
+    double *ameans;        /* column means of @a */
+    int *ic1;              /* best centroid per point */
+    int *ic2;              /* next best centroid per point */
+    int m;                 /* number of observations */
+    int n;                 /* dimension of observations */
+    int k;                 /* number of clusters */
+} hw_info;
+
+static double *get_ameans (const gretl_matrix *a)
+{
+    double *ameans = malloc(a->cols * sizeof *ameans);
+    int i, j;
+
+    for (j=0; j<a->cols; j++) {
+	ameans[j] = 0.0;
+	for (i=0; i<a->rows; i++) {
+	    ameans[j] += gretl_matrix_get(a, i, j);
+	}
+	ameans[j] /= a->rows;
+    }
+
+    return ameans;
+}
+
+static int build_hw_info (hw_info *hw,
+			  const gretl_matrix *a,
+			  const gretl_matrix *c0,
+			  int k,
+			  int rand_starts,
+			  InitFlag *iflag)
+{
+    int err = 0;
+
+    hw->m = a->rows;
+    hw->n = a->cols;
+    hw->k = k;
+    hw->a = a;
+    if (c0 != NULL) {
+	hw->c = gretl_matrix_copy(c0);
+	*iflag = INIT_USER; /* override */
+    } else {
+	hw->c = gretl_matrix_alloc(hw->k, hw->n);
+    }
+    hw->ic1 = malloc(2 * hw->m * sizeof *hw->ic1);
+    hw->ic2 = hw->ic1 + hw->m;
+    if (rand_starts > 0) {
+	/* recorder for "best so far" */
+	hw->cmin = gretl_matrix_alloc(hw->k, hw->n);
+    } else {
+	hw->cmin = NULL;
+    }
+    hw->ameans = get_ameans(a);
+
+    return err;
+}
+
+static void destroy_hw_info (hw_info *hw)
+{
+    gretl_matrix_free(hw->c);
+    gretl_matrix_free(hw->cmin);
+    free(hw->ameans);
+    free(hw->ic1);
+}
+
+static int init_centers (hw_info *hw, int *nc)
 {
     int i, j, l;
-    int k = c->rows;
-    int m = a->rows;
-    int n = a->cols;
     int err = 0;
     double tmp;
 
-    for (l=0; l<k; l++) {
+    for (l=0; l<hw->k; l++) {
 	nc[l] = 0;
     }
 
-    gretl_matrix_zero(c);
+    gretl_matrix_zero(hw->c);
 
-    for (i=0; i<m; i++) {
-	l = ic1[i] - 1;
+    for (i=0; i<hw->m; i++) {
+	l = hw->ic1[i] - 1;
 	nc[l]++;
-	for (j=0; j<n; j++) {
-	    tmp = gretl_matrix_get(c, l, j) + gretl_matrix_get(a, i, j);
-	    gretl_matrix_set(c, l, j, tmp);
+	for (j=0; j<hw->n; j++) {
+	    tmp = gretl_matrix_get(hw->c, l, j) + gretl_matrix_get(hw->a, i, j);
+	    gretl_matrix_set(hw->c, l, j, tmp);
 	}
     }
 
     /* Check to see if there is any empty cluster at this stage */
-    for (l=0; l<k; l++)  {
+    for (l=0; l<hw->k; l++)  {
 	if (nc[l] == 0)  {
 	    err = E_INVARG;
 	    break;
@@ -77,43 +141,42 @@ static int init_centers (int *nc, gretl_matrix *c, int *ic1,
     return err;
 }
 
-/* Get the vector of per-cluster SSTs */
+/* Get the k-vector of per-cluster SSTs */
 
-static gretl_matrix *compute_sst_full (const gretl_matrix *a,
-				       const gretl_matrix *c,
-				       const int *ic1)
+static double *compute_sst_full (hw_info *hw)
 {
-    gretl_vector *sstvec;
+    double *sst;
     double d;
     int i, j, l;
 
-    sstvec = gretl_zero_matrix_new(c->rows, 1);
+    sst = malloc(hw->k * sizeof *sst);
+    for (l=0; l<hw->k; l++) {
+	sst[l] = 0.0;
+    }
 
-    for (i=0; i<a->rows; i++) {
-	l = ic1[i] - 1;
-	for (j=0; j<a->cols; j++) {
-	    d = gretl_matrix_get(a, i, j) - gretl_matrix_get(c, l, j);
-	    sstvec->val[l] += d * d;
+    for (i=0; i<hw->m; i++) {
+	l = hw->ic1[i] - 1;
+	for (j=0; j<hw->n; j++) {
+	    d = gretl_matrix_get(hw->a, i, j) - gretl_matrix_get(hw->c, l, j);
+	    sst[l] += d * d;
 	}
     }
 
-    return sstvec;
+    return sst;
 }
 
 /* Just get the sum of per-cluster SSTs */
 
-static double compute_sst (const gretl_matrix *a,
-			   const gretl_matrix *c,
-			   const int *ic1)
+static double compute_sst (hw_info *hw)
 {
     double sst = 0;
     double d;
     int i, j, l;
 
-    for (i=0; i<a->rows; i++) {
-	l = ic1[i] - 1;
-	for (j=0; j<a->cols; j++) {
-	    d = gretl_matrix_get(a, i, j) - gretl_matrix_get(c, l, j);
+    for (i=0; i<hw->m; i++) {
+	l = hw->ic1[i] - 1;
+	for (j=0; j<hw->n; j++) {
+	    d = gretl_matrix_get(hw->a, i, j) - gretl_matrix_get(hw->c, l, j);
 	    sst += d * d;
 	}
     }
@@ -127,28 +190,20 @@ static double compute_sst (const gretl_matrix *a,
    points from the sorted array.
 */
 
-static int hartigan_wong_init (const gretl_matrix *a,
-			       gretl_matrix *c)
+static int hartigan_wong_init (hw_info *hw)
 {
     gretl_matrix *dmat;
     gretl_matrix *s;
     double d, d2i, cmean;
-    int m = a->rows;
-    int n = a->cols;
-    int k = c->rows;
     int i, j, l, r;
     int err = 0;
 
-    dmat = gretl_zero_matrix_new(m, 2);
+    dmat = gretl_zero_matrix_new(hw->m, 2);
 
-    for (j=0; j<n; j++) {
-	cmean = 0.0;
-	for (i=0; i<m; i++) {
-	    cmean += gretl_matrix_get(a, i, j);
-	}
-	cmean /= m;
-	for (i=0; i<m; i++) {
-	    d = gretl_matrix_get(a, i, j) - cmean;
+    for (j=0; j<hw->n; j++) {
+	cmean = hw->ameans[j];
+	for (i=0; i<hw->m; i++) {
+	    d = gretl_matrix_get(hw->a, i, j) - cmean;
 	    d2i = gretl_matrix_get(dmat, i, 0) + d * d;
 	    gretl_matrix_set(dmat, i, 0, d2i);
 	    if (j == 0) {
@@ -159,13 +214,13 @@ static int hartigan_wong_init (const gretl_matrix *a,
 
     s = gretl_matrix_sort_by_column(dmat, 0, &err);
 
-    for (l=1; l<=k; l++) {
-	i = (l-1) * m/k;
+    for (l=1; l<=hw->k; l++) {
+	i = (l-1) * hw->m/hw->k;
 	r = gretl_matrix_get(s, i, 1);
 	// fprintf(stderr, "L=%d, i=%d, r=%d\n", l, i, r);
-	for (j=0; j<n; j++) {
-	    d = gretl_matrix_get(a, r, j);
-	    gretl_matrix_set(tmp, l-1, j, d);
+	for (j=0; j<hw->n; j++) {
+	    d = gretl_matrix_get(hw->a, r, j);
+	    gretl_matrix_set(hw->c, l-1, j, d);
 	}
     }
 
@@ -175,20 +230,16 @@ static int hartigan_wong_init (const gretl_matrix *a,
     return err;
 }
 
-static double global_sst (const gretl_matrix *a)
+static double global_sst (hw_info *hw)
 {
     double sst = 0;
     double cmean, d;
     int i, j;
 
-    for (j=0; j<a->cols; j++) {
-	cmean = 0.0;
-	for (i=0; i<a->rows; i++) {
-	    cmean += gretl_matrix_get(a, i, j);
-	}
-	cmean /= a->rows;
-	for (i=0; i<a->rows; i++) {
-	    d = gretl_matrix_get(a, i, j) - cmean;
+    for (j=0; j<hw->n; j++) {
+	cmean = hw->ameans[j];
+	for (i=0; i<hw->m; i++) {
+	    d = gretl_matrix_get(hw->a, i, j) - cmean;
 	    sst += d * d;
 	}
     }
@@ -196,38 +247,36 @@ static double global_sst (const gretl_matrix *a)
     return sst;
 }
 
-static void get_k_random_candidates (const gretl_matrix *a,
-				     gretl_matrix *c)
+static void get_k_random_candidates (hw_info *hw)
 {
-    int k = c->rows;
-    int n = c->cols;
-    gretl_vector *v = gretl_vector_alloc(k);
+    gretl_vector *v = gretl_vector_alloc(hw->k);
     double tmp;
     int i, j, r;
 
     /* fill @v with @k draws from 1,2,...,@m without replacement */
-    fill_permutation_vector(v, a->rows);
+    fill_permutation_vector(v, hw->m);
 
-    for (i=0; i<k; i++)  {
+    for (i=0; i<hw->k; i++)  {
 	r = (int) v->val[i] - 1;
-	for (j=0; j<n; j++)  {
-	    tmp = gretl_matrix_get(a, r, j);
-	    gretl_matrix_set(c, i, j, tmp);
+	for (j=0; j<hw->n; j++)  {
+	    tmp = gretl_matrix_get(hw->a, r, j);
+	    gretl_matrix_set(hw->c, i, j, tmp);
 	}
     }
 
     gretl_matrix_free(v);
 }
 
-static double compute_ith_distance (int i, const gretl_matrix *a,
-				    const gretl_matrix *c, int l1)
+static double compute_ith_distance (hw_info *hw,
+				    int i, int l1)
+
 {
-    double dif, dist = 0.0;
+    double d, dist = 0.0;
     int j;
 
-    for (j=0; j<a->cols; j++) {
-	dif = gretl_matrix_get(a, i, j) - gretl_matrix_get(c, l1-1, j);
-	dist += dif * dif;
+    for (j=0; j<hw->n; j++) {
+	d = gretl_matrix_get(hw->a, i, j) - gretl_matrix_get(hw->c, l1-1, j);
+	dist += d * d;
     }
 
     return dist;
@@ -248,10 +297,10 @@ static void update_an (gretl_matrix *an, int l1, int l2, double al1, double al2)
    maximum reduction in the within-cluster sum of squares. This
    involves a single pass through the data.
 
-   @a (m x n): the data points
-   @c (k x n): the cluster centers
-   @ic1 (m): the cluster to which each point is assigned
-   @ic2 (m): the cluster to which each point is most likely
+   @hw->a (m x n): the data points
+   @hw->c (k x n): the cluster centers
+   @hw->ic1 (m): the cluster to which each point is assigned
+   @hw->ic2 (m): the cluster to which each point is most likely
      to be transferred to at each step
    @nc (k): the number of points in each cluster
    @an (k x 2)
@@ -262,13 +311,10 @@ static void update_an (gretl_matrix *an, int l1, int l2, double al1, double al2)
    @indx: the number of steps since a transfer took place
 */
 
-static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
-		   int *ic2, int *nc, gretl_matrix *an, int ncp[],
-		   gretl_vector *d, int itran[], int live[], int *indx)
+static void optra (hw_info *hw, int *nc, gretl_matrix *an,
+		   int ncp[], gretl_vector *d, int itran[],
+		   int live[], int *indx)
 {
-    int m = a->rows;
-    int n = a->cols;
-    int k = c->rows;
     double aij;
     double al1;
     double al2;
@@ -288,16 +334,16 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
        each step, it is not in the live set if it has not been updated
        in the last m optimal transfer steps.
     */
-    for (l=0; l<k; l++) {
+    for (l=0; l<hw->k; l++) {
 	if (itran[l] == 1) {
-	    live[l] = m + 1;
+	    live[l] = hw->m + 1;
 	}
     }
 
-    for (i=0; i<m; i++) {
+    for (i=0; i<hw->m; i++) {
 	*indx = *indx + 1;
-	l1 = ic1[i];
-	l2 = ic2[i];
+	l1 = hw->ic1[i];
+	l2 = hw->ic2[i];
 	ll = l2;
 
 	/* If point i is the only member of cluster l1, no transfer */
@@ -307,15 +353,15 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 	       re-compute d[i].
 	    */
 	    if (ncp[l1-1] != 0) {
-		de = compute_ith_distance(i, a, c, l1);
+		de = compute_ith_distance(hw, i, l1);
 		gretl_vector_set(d, i, de * gretl_matrix_get(an, l1-1, 0));
 	    }
 
 	    /* Find the cluster with minimum r2 */
-	    da = compute_ith_distance(i, a, c, l2);
+	    da = compute_ith_distance(hw, i, l2);
 	    r2 = da * gretl_matrix_get(an, l2-1, 1);
 
-	    for (l=1; l<=k; l++) {
+	    for (l=1; l<=hw->k; l++) {
 		/* If live[l1] <= i, then l1 is not in the live set.  If
 		   this is true, we only need to consider clusters that
 		   are in the live set for possible transfer of point i.
@@ -323,7 +369,7 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		*/
 		if ((i < live[l1-1]-1 || i < live[l2-1]-1) && l != l1 && l != ll) {
 		    rr = r2 / gretl_matrix_get(an, l-1, 1);
-		    dc = compute_ith_distance(i, a, c, l);
+		    dc = compute_ith_distance(hw, i, l);
 		    if (dc < rr)  {
 			r2 = dc * gretl_matrix_get(an, l-1, 1);
 			l2 = l;
@@ -333,37 +379,36 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 
 	    /* If no transfer is necessary, l2 is the new ic2[i] */
 	    if (gretl_vector_get(d, i) <= r2) {
-		ic2[i] = l2;
+		hw->ic2[i] = l2;
 	    } else {
 		/* Update cluster centers, line, ncp and an for clusters
 		   l1 and l2, and update ic1[i] and ic2[i].
 		*/
 		*indx = 0;
-		live[l1-1] = m + i;
-		live[l2-1] = m + i;
+		live[l1-1] = hw->m + i;
+		live[l2-1] = hw->m + i;
 		ncp[l1-1] = i + 1;
 		ncp[l2-1] = i + 1;
-		al1 = (double) ( nc[l1-1] );
+		al1 = (double) (nc[l1-1]);
 		alw = al1 - 1.0;
-		al2 = (double) ( nc[l2-1] );
+		al2 = (double) (nc[l2-1]);
 		alt = al2 + 1.0;
-		for (j=0; j<n; j++) {
-		    aij = gretl_matrix_get(a, i, j);
-		    tmp = (gretl_matrix_get(c, l1-1, j) * al1 - aij ) / alw;
-		    gretl_matrix_set(c, l1-1, j, tmp);
-		    tmp = (gretl_matrix_get(c, l2-1, j) * al2 + aij ) / alt;
-		    gretl_matrix_set(c, l2-1, j, tmp);
+		for (j=0; j<hw->n; j++) {
+		    aij = gretl_matrix_get(hw->a, i, j);
+		    tmp = (gretl_matrix_get(hw->c, l1-1, j) * al1 - aij) / alw;
+		    gretl_matrix_set(hw->c, l1-1, j, tmp);
+		    tmp = (gretl_matrix_get(hw->c, l2-1, j) * al2 + aij) / alt;
+		    gretl_matrix_set(hw->c, l2-1, j, tmp);
 		}
-
 		nc[l1-1] = nc[l1-1] - 1;
 		nc[l2-1] = nc[l2-1] + 1;
 		update_an(an, l1, l2, al1, al2);
-		ic1[i] = l2;
-		ic2[i] = l1;
+		hw->ic1[i] = l2;
+		hw->ic2[i] = l1;
 	    }
 	}
 
-	if (*indx == m) {
+	if (*indx == hw->m) {
 	    return;
 	}
     }
@@ -371,9 +416,9 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
     /* itran(l) = 0 before entering qtran(). Also, live(l) has to be
        decreased by m before re-entering optra().
     */
-    for (l=1; l<=k; l++) {
+    for (l=1; l<=hw->k; l++) {
 	itran[l-1] = 0;
-	live[l-1] = live[l-1] - m;
+	live[l-1] = live[l-1] - hw->m;
     }
 }
 
@@ -387,10 +432,10 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
    updated after each step. This involves as many passes through the
    data as are required.
 
-   @a (m x n): the data points
-   @c (k x n): the cluster centers
-   @ic1 (m): the cluster to which each point is assigned
-   @ic2 (m): the cluster to which each point is most likely
+   @hw->a (m x n): the data points
+   @hw->c (k x n): the cluster centers
+   @hw->ic1 (m): the cluster to which each point is assigned
+   @hw->ic2 (m): the cluster to which each point is most likely
      to be transferred to at each step
    @nc (k): the number of points in each cluster
    @an (k x 2)
@@ -400,12 +445,10 @@ static void optra (const gretl_matrix *a, gretl_matrix *c, int *ic1,
    @indx: the number of steps since a transfer took place
 */
 
-static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
-		   int *ic2, int *nc, gretl_matrix *an, int ncp[],
-		   gretl_vector *d, int itran[], int *indx)
+static void qtran (hw_info *hw, int *nc, gretl_matrix *an,
+		   int ncp[], gretl_vector *d, int itran[],
+		   int *indx)
 {
-    int m = a->rows;
-    int n = a->cols;
     double aij;
     double al1;
     double al2;
@@ -430,11 +473,11 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
     istep = 0;
 
     while (!done) {
-	for (i=0; i<m; i++) {
+	for (i=0; i<hw->m; i++) {
 	    icoun++;
 	    istep++;
-	    l1 = ic1[i];
-	    l2 = ic2[i];
+	    l1 = hw->ic1[i];
+	    l2 = hw->ic2[i];
 
 	    /* If point i is the only member of cluster l1, no transfer */
 	    if (nc[l1-1] > 1) {
@@ -444,7 +487,7 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		   compute the distance from point i to cluster l1.
 		*/
 		if (istep <= ncp[l1-1]) {
-		    di = compute_ith_distance(i, a, c, l1);
+		    di = compute_ith_distance(hw, i, l1);
 		    gretl_vector_set(d, i, di * gretl_matrix_get(an, l1-1, 0));
 		}
 		/* If ncp[l1] <= istep and ncp[l2] <= istep, there will
@@ -452,7 +495,7 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 		*/
 		if (istep < ncp[l1-1] || istep < ncp[l2-1]) {
 		    r2 = gretl_vector_get(d, i) / gretl_matrix_get(an, l2-1, 1);
-		    di = compute_ith_distance(i, a, c, l2);
+		    di = compute_ith_distance(hw, i, l2);
 		    /* Update cluster centers, ncp, nc, itran, and an
 		      for clusters l1 and l2.  Also update ic1[i] and
 		      ic2[i].  If any updating occurs in this stage,
@@ -463,31 +506,31 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
 			*indx = 0;
 			itran[l1-1] = 1;
 			itran[l2-1] = 1;
-			ncp[l1-1] = istep + m;
-			ncp[l2-1] = istep + m;
+			ncp[l1-1] = istep + hw->m;
+			ncp[l2-1] = istep + hw->m;
 			al1 = (double) (nc[l1-1]);
 			alw = al1 - 1.0;
 			al2 = (double) (nc[l2-1]);
 			alt = al2 + 1.0;
-			for (j=0; j<n; j++) {
-			    aij = gretl_matrix_get(a, i, j);
-			    tmp = (gretl_matrix_get(c, l1-1, j) * al1 - aij) / alw;
-			    gretl_matrix_set(c, l1-1, j, tmp);
-			    tmp = (gretl_matrix_get(c, l2-1, j) * al2 + aij) / alt;
-			    gretl_matrix_set(c, l2-1, j, tmp);
+			for (j=0; j<hw->n; j++) {
+			    aij = gretl_matrix_get(hw->a, i, j);
+			    tmp = (gretl_matrix_get(hw->c, l1-1, j) * al1 - aij) / alw;
+			    gretl_matrix_set(hw->c, l1-1, j, tmp);
+			    tmp = (gretl_matrix_get(hw->c, l2-1, j) * al2 + aij) / alt;
+			    gretl_matrix_set(hw->c, l2-1, j, tmp);
 			}
 			nc[l1-1] = nc[l1-1] - 1;
 			nc[l2-1] = nc[l2-1] + 1;
 			update_an(an, l1, l2, al1, al2);
-			ic1[i] = l2;
-			ic2[i] = l1;
+			hw->ic1[i] = l2;
+			hw->ic2[i] = l1;
 		    }
 		}
 	    }
 	    /* If no reallocation took place in the last m steps,
 	       we're finished.
 	    */
-	    done = icoun == m;
+	    done = icoun == hw->m;
 	    if (done) {
 		break;
 	    }
@@ -495,47 +538,47 @@ static void qtran (const gretl_matrix *a, gretl_matrix *c, int *ic1,
     }
 }
 
-static void find_nearest_neighbors (const gretl_matrix *a,
-				    const gretl_matrix *c,
-				    int *ic1, int *ic2)
+static void find_nearest_neighbors (hw_info *hw)
 {
     double da, db, dc;
-    double temp;
+    double tmp;
     double dt[2];
     int i, j, l, il;
 
-    for (i=0; i<a->rows; i++) {
-	ic1[i] = 1;
-	ic2[i] = 2;
+    for (i=0; i<hw->m; i++) {
+	hw->ic1[i] = 1;
+	hw->ic2[i] = 2;
 	for (il=0; il<2; il++) {
 	    dt[il] = 0.0;
-	    for (j=0; j<a->cols; j++) {
-		da = gretl_matrix_get(a, i, j) - gretl_matrix_get(c, il, j);
+	    for (j=0; j<hw->n; j++) {
+		tmp = gretl_matrix_get(hw->c, il, j);
+		da = gretl_matrix_get(hw->a, i, j) - tmp;
 		dt[il] = dt[il] + da * da;
 	    }
 	}
 	if (dt[1] < dt[0]) {
-	    ic1[i] = 2;
-	    ic2[i] = 1;
-	    temp = dt[0];
+	    hw->ic1[i] = 2;
+	    hw->ic2[i] = 1;
+	    tmp = dt[0];
 	    dt[0] = dt[1];
-	    dt[1] = temp;
+	    dt[1] = tmp;
 	}
-	for (l=2; l<c->rows; l++) {
+	for (l=2; l<hw->k; l++) {
 	    db = 0.0;
-	    for (j=0; j<a->cols; j++) {
-		dc = gretl_matrix_get(a, i, j) - gretl_matrix_get(c, l, j);
+	    for (j=0; j<hw->n; j++) {
+		tmp = gretl_matrix_get(hw->c, l, j);
+		dc = gretl_matrix_get(hw->a, i, j) - tmp;
 		db = db + dc * dc;
 	    }
 	    if (db < dt[1]) {
 		if (dt[0] <= db) {
 		    dt[1] = db;
-		    ic2[i] = l+1;
+		    hw->ic2[i] = l+1;
 		} else {
 		    dt[1] = dt[0];
-		    ic2[i] = ic1[i];
+		    hw->ic2[i] = hw->ic1[i];
 		    dt[0] = db;
-		    ic1[i] = l+1;
+		    hw->ic1[i] = l+1;
 		}
 	    }
 	}
@@ -569,31 +612,28 @@ static void add_clustinfo_colnames (const gretl_matrix *a,
     }
 }
 
-static int kmeans_init (const gretl_matrix *a,
-			gretl_matrix *c,
-			int *ic1, int *ic2,
+static int kmeans_init (hw_info *hw,
 			gretl_matrix *an,
 			int *nc, int *itran,
 			int *ncp, InitFlag iflag)
 {
     int i, j;
-    int k = c->rows;
-    int n = a->cols;
     double aa, tmp;
     double huge = libset_get_double(CONV_HUGE);
     int err = 0;
 
     if (iflag == INIT_FAST) {
 	/* Make the first k data points the cluster centers */
-	for (i=0; i<k; i++) {
-	    for (j=0; j<n; j++) {
-		gretl_matrix_set(c, i, j, gretl_matrix_get(a, i, j));
+	for (i=0; i<hw->k; i++) {
+	    for (j=0; j<hw->n; j++) {
+		tmp = gretl_matrix_get(hw->a, i, j);
+		gretl_matrix_set(hw->c, i, j, tmp);
 	    }
 	}
     } else if (iflag == INIT_RAND) {
-	get_k_random_candidates(a, c);
+	get_k_random_candidates(hw);
     } else if (iflag == INIT_HW) {
-	hartigan_wong_init(a, c);
+	hartigan_wong_init(hw);
     } else {
 	; /* INIT_USER or INIT_FIN: use the incoming @c as is */
     }
@@ -601,20 +641,20 @@ static int kmeans_init (const gretl_matrix *a,
     /* For each point i, find its two closest centers, ic1[i] and
        ic2[i].  Assign the point to ic1[i].
     */
-    find_nearest_neighbors(a, c, ic1, ic2);
+    find_nearest_neighbors(hw);
 
-    err = init_centers(nc, c, ic1, a);
+    err = init_centers(hw, nc);
     if (err) {
 	/* there's at least one empty cluster */
 	return err;
     }
 
-    for (i=0; i<k; i++)  {
+    for (i=0; i<hw->k; i++)  {
 	/* compute centroids per cluster */
 	aa = (double) (nc[i]);
-	for (j=0; j<n; j++) {
-	    tmp = gretl_matrix_get(c, i, j) / aa;
-	    gretl_matrix_set(c, i, j, tmp);
+	for (j=0; j<hw->n; j++) {
+	    tmp = gretl_matrix_get(hw->c, i, j) / aa;
+	    gretl_matrix_set(hw->c, i, j, tmp);
 	}
 	/* initialize an, itran, ncp */
 	tmp = (aa > 1.0) ? aa / (aa - 1.0) : huge;
@@ -656,7 +696,8 @@ static int check_opts (gretl_bundle *b,
 /* kmeans() carries out the K-means algorithm.
 
    @a (m x n): the data points
-   @k: the assumed number of clusters
+   @k: the assumed number of clusters (or 0)
+   @c0: initial specification of clusters (or NULL)
    @clustinfo: pointer to get information on the clusters
    @err: location to receive error code
 */
@@ -667,16 +708,13 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 		      PRN *prn, int *err)
 {
     gretl_bundle *ret = NULL;
+    hw_info hw = {0};
     gretl_vector *d = NULL;
     gretl_vector *clustid = NULL;
     gretl_matrix *an = NULL;
-    gretl_matrix *c = NULL;
-    gretl_matrix *cmin = NULL;
-    double temp;
+    double tmp;
     double SSTmin, SST;
     int *iwork;
-    int *ic1;
-    int *ic2;
     int *nc;
     int *ncp;
     int *itran;
@@ -709,37 +747,30 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	return NULL;
     }
 
+    build_hw_info(&hw, a, c0, k, rand_starts, &iflag);
+
     if (verbosity) {
 	pprintf(prn, "_kmeans: m=%d, n=%d, k=%d, initial centers %s\n",
 		m, n, k, c0 == NULL ? "automatic" : "user-specified");
+	if (c0 == NULL) {
+	    pprintf(prn, "automatic method: %s\n", iflag == INIT_FAST ?
+		    "simple, fast" : "Hartigan-Wong");
+	}
 	pprintf(prn, "%d random starts requested\n", rand_starts);
     }
 
     /* integer-valued workspace */
-    iwork = malloc((2*m + 4*k) * sizeof *iwork);
-    ic1 = iwork;
-    ic2 = ic1 + m;
-    nc = ic2 + m;
+    iwork = malloc(4 * k * sizeof *iwork);
+    nc = iwork;
     ncp = nc + k;
     itran = ncp + k;
     live = itran + k;
 
-    if (c0 != NULL) {
-	c = gretl_matrix_copy(c0);
-	iflag = INIT_USER;
-    } else {
-	c = gretl_matrix_alloc(k, n);
-    }
-    if (rand_starts > 0) {
-	/* recorder for "best so far" */
-    	cmin = gretl_matrix_alloc(k, n);
-    }
     d = gretl_vector_alloc(m);
     an = gretl_matrix_alloc(k, 2);
     clustid = gretl_column_vector_alloc(m);
 
-    if (iwork == NULL || d == NULL || an == NULL ||
-	c == NULL || clustid == NULL) {
+    if (iwork == NULL || d == NULL || an == NULL || clustid == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
@@ -748,7 +779,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 
  start_outer_loop:
 
-    *err = kmeans_init(a, c, ic1, ic2, an, nc, itran, ncp, iflag);
+    *err = kmeans_init(&hw, an, nc, itran, ncp, iflag);
     if (*err) {
 	goto bailout;
     }
@@ -757,13 +788,13 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     *err = E_NOCONV;
 
     for (i=0; i<maxiter; i++)  {
-	optra(a, c, ic1, ic2, nc, an, ncp, d, itran, live, &indx);
+	optra(&hw, nc, an, ncp, d, itran, live, &indx);
 	if (indx == m) {
 	    /* No optimal transfer in the last m steps: OK, stop */
 	    *err = 0;
 	    break;
 	}
-	qtran(a, c, ic1, ic2, nc, an, ncp, d, itran, &indx);
+	qtran(&hw, nc, an, ncp, d, itran, &indx);
 	if (k == 2) {
 	    /* only two clusters: no need to repeat optra() */
 	    *err = 0;
@@ -784,7 +815,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	    pprintf(prn, "  point transfers converged in %d iterations\n", i+1);
 	}
 	if (rand_starts > 0 && ri <= rand_starts) {
-	    SST = compute_sst(a, c, ic1);
+	    SST = compute_sst(&hw);
 	    if (verbosity > 1) {
 		if (ri == 0) {
 		    pprintf(prn, "initial SST = %g\n", SST);
@@ -794,7 +825,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	    }
 	    if (SST < SSTmin) {
 		SSTmin = SST;
-		gretl_matrix_copy_values(cmin, c);
+		gretl_matrix_copy_values(hw.cmin, hw.c);
 	    }
 	    iflag = INIT_RAND;
 	    ri++;
@@ -806,7 +837,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	if (verbosity > 1) {
 	    pprintf(prn, "Minimum SST = %g\n", SSTmin);
 	}
-	gretl_matrix_copy_values(c, cmin);
+	gretl_matrix_copy_values(hw.c, hw.cmin);
 	iflag = INIT_FIN;
 	goto start_outer_loop;
     }
@@ -816,21 +847,21 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     /* build the clustinfo matrix */
     {
 	gretl_matrix *cinfo = gretl_zero_matrix_new(k, n+2);
-	gretl_vector *sst = compute_sst_full(a, c, ic1);
+	double *sst = compute_sst_full(&hw);
 
 	for (i=0; i<k; i++) {
 	    /* count of points in cluster i (first col) */
 	    gretl_matrix_set(cinfo, i, 0, (double) nc[i]);
 	    /* per-cluster centroids (middle cols) */
 	    for (j=0; j<n; j++) {
-		temp = gretl_matrix_get(c, i, j);
-		gretl_matrix_set(cinfo, i, j+1, temp);
+		tmp = gretl_matrix_get(hw.c, i, j);
+		gretl_matrix_set(cinfo, i, j+1, tmp);
 	    }
 	    /* per-cluster SST (last col) */
-	    gretl_matrix_set(cinfo, i, n+1, sst->val[i]);
+	    gretl_matrix_set(cinfo, i, n+1, sst[i]);
 	}
 
-	gretl_matrix_free(sst);
+	free(sst);
 	add_clustinfo_colnames(a, cinfo);
 	if (verbosity) {
 	    gretl_matrix_print_to_prn(cinfo, "Cluster information:", prn);
@@ -841,18 +872,17 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 
     /* fill the output vector */
     for (i=0; i<m; i++) {
-	gretl_vector_set(clustid, i, ic1[i]);
+	gretl_vector_set(clustid, i, hw.ic1[i]);
     }
     gretl_bundle_donate_data(ret, "clustid", clustid,
 			     GRETL_TYPE_MATRIX, 0);
     /* for reference, add the global SST */
-    gretl_bundle_set_scalar(ret, "global_SST", global_sst(a));
+    gretl_bundle_set_scalar(ret, "global_SST", global_sst(&hw));
 
  bailout:
 
+    destroy_hw_info(&hw);
     gretl_matrix_free(an);
-    gretl_matrix_free(c);
-    gretl_matrix_free(cmin);
     gretl_vector_free(d);
     free(iwork);
 
