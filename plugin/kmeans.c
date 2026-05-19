@@ -120,6 +120,64 @@ static double compute_sst (const gretl_matrix *a,
     return sst;
 }
 
+#if 0 /* not yet */
+
+/* The initialization of @c suggested in the last paragraph of
+   Hartigan and Wong (1979): sort the data points by euclidean
+   distance from the global centroid, and select K evenly spaced
+   points from the sorted array.
+*/
+
+static int hartigan_wong_init (const gretl_matrix *a,
+			       gretl_matrix *c)
+{
+    gretl_matrix *dmat;
+    gretl_matrix *s;
+    double d, d2i, cmean;
+    int m = a->rows;
+    int n = a->cols;
+    int k = c->rows;
+    int i, j, l, r;
+    int err = 0;
+
+    dmat = gretl_zero_matrix_new(m, 2);
+
+    for (j=0; j<n; j++) {
+	cmean = 0.0;
+	for (i=0; i<m; i++) {
+	    cmean += gretl_matrix_get(a, i, j);
+	}
+	cmean /= m;
+	for (i=0; i<m; i++) {
+	    d = gretl_matrix_get(a, i, j) - cmean;
+	    d2i = gretl_matrix_get(dmat, i, 0) + d * d;
+	    gretl_matrix_set(dmat, i, 0, d2i);
+	    if (j == 0) {
+		gretl_matrix_set(dmat, i, 1, (double) i);
+	    }
+	}
+    }
+
+    s = gretl_matrix_sort_by_column(dmat, 0, &err);
+
+    for (l=1; l<=k; l++) {
+	i = (l-1) * m/k;
+	r = gretl_matrix_get(s, i, 1);
+	// fprintf(stderr, "L=%d, i=%d, r=%d\n", l, i, r);
+	for (j=0; j<n; j++) {
+	    d = gretl_matrix_get(a, r, j);
+	    gretl_matrix_set(tmp, l-1, j, d);
+	}
+    }
+
+    gretl_matrix_free(dmat);
+    gretl_matrix_free(s);
+
+    return err;
+}
+
+#endif /* not yet */
+
 static double global_sst (const gretl_matrix *a)
 {
     double sst = 0;
