@@ -26,7 +26,7 @@
    Applied Statistics, Volume 28, Issue 1, March 1979, Pages 100–108.
    See https://doi.org/10.2307/2346830
 
-   Adapted for gretl by Jack Lucchetti, May 2026.
+   Adapted for gretl by Allin Cottrell and Jack Lucchetti, May 2026.
 */
 
 #include "libgretl.h"
@@ -34,8 +34,8 @@
 #include "matrix_extra.h"
 
 typedef enum InitFlag_ {
-    INIT_FAST,
     INIT_HW,
+    INIT_FAST,
     INIT_USER,
     INIT_RAND,
     INIT_FIN
@@ -133,7 +133,8 @@ static int init_centers (hw_info *hw, int *nc)
     /* Check to see if there is any empty cluster at this stage */
     for (l=0; l<hw->k; l++)  {
 	if (nc[l] == 0)  {
-	    err = E_INVARG;
+	    err = E_ZERO;
+	    gretl_errmsg_sprintf(_("Cluster %d is empty; stopping."), l+1);
 	    break;
 	}
     }
@@ -684,7 +685,7 @@ static int check_opts (gretl_bundle *b,
 	int itype = gretl_bundle_get_int(b, "init", &err);
 
 	if (itype == 2) {
-	    *iflag = INIT_HW;
+	    *iflag = INIT_FAST;
 	} else if (itype != 1) {
 	    err = E_INVARG;
 	}
@@ -725,7 +726,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     int m = a->rows;
     int n = a->cols;
     int ri = 0;
-    InitFlag iflag = INIT_FAST;
+    InitFlag iflag = INIT_HW;
     int rand_starts = 0;
     int verbosity = 0;
 
