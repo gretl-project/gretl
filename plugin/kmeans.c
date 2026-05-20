@@ -187,7 +187,7 @@ static double compute_sst (hw_info *hw)
 
 /* The initialization of @c suggested in the last paragraph of
    Hartigan and Wong (1979): sort the data points by euclidean
-   distance from the global centroid, and select K evenly spaced
+   distance from the global centroid, and select k evenly spaced
    points from the sorted array.
 */
 
@@ -197,6 +197,7 @@ static int hartigan_wong_init (hw_info *hw)
     gretl_matrix *s;
     double d, d2i, cmean;
     int i, j, l, r;
+    int step;
     int err = 0;
 
     dmat = gretl_zero_matrix_new(hw->m, 2);
@@ -214,14 +215,13 @@ static int hartigan_wong_init (hw_info *hw)
     }
 
     s = gretl_matrix_sort_by_column(dmat, 0, &err);
+    step = hw->m / hw->k;
 
-    for (l=1; l<=hw->k; l++) {
-	i = (l-1) * hw->m/hw->k;
-	r = gretl_matrix_get(s, i, 1);
-	// fprintf(stderr, "L=%d, i=%d, r=%d\n", l, i, r);
+    for (l=0; l<hw->k; l++) {
+	r = gretl_matrix_get(s, l * step, 1);
 	for (j=0; j<hw->n; j++) {
 	    d = gretl_matrix_get(hw->a, r, j);
-	    gretl_matrix_set(hw->c, l-1, j, d);
+	    gretl_matrix_set(hw->c, l, j, d);
 	}
     }
 
