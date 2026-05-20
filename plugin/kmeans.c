@@ -53,17 +53,29 @@ typedef struct hw_info_ {
     int k;                 /* number of clusters */
 } hw_info;
 
-static double *get_ameans (const gretl_matrix *a)
+static double *get_ameans (const gretl_matrix *a, int *err)
 {
     double *ameans = malloc(a->cols * sizeof *ameans);
+    double aij;
     int i, j;
 
+    *err = 0;
     for (j=0; j<a->cols; j++) {
 	ameans[j] = 0.0;
 	for (i=0; i<a->rows; i++) {
-	    ameans[j] += gretl_matrix_get(a, i, j);
+	    aij = gretl_matrix_get(a, i, j);
+	    if (na(aij)) {
+		*err = E_MISSDATA;
+		break;
+	    } else {
+		ameans[j] += aij;
+	    }
 	}
-	ameans[j] /= a->rows;
+	if (*err) {
+	    break;
+	} else {
+	    ameans[j] /= a->rows;
+	}
     }
 
     return ameans;
@@ -96,7 +108,8 @@ static int build_hw_info (hw_info *hw,
     } else {
 	hw->cmin = NULL;
     }
-    hw->ameans = get_ameans(a);
+    
+    hw->ameans = get_ameans(a, &err);
 
     return err;
 }
@@ -748,8 +761,13 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	return NULL;
     }
 
-    build_hw_info(&hw, a, c0, k, rand_starts, &iflag);
+    *err = build_hw_info(&hw, a, c0, k, rand_starts, &iflag);
 
+    if (*err) {
+	destroy_hw_info(&hw);
+	return NULL;
+    }
+    
     if (verbosity) {
 	pprintf(prn, "_kmeans: m=%d, n=%d, k=%d, initial centers %s\n",
 		m, n, k, c0 == NULL ? "automatic" : "user-specified");
