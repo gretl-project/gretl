@@ -57,14 +57,6 @@ enum {
     SHEET_AT_POINT
 };
 
-enum {
-    NEXT_DOWN,
-    NEXT_RIGHT,
-    NEXT_UP,
-    NEXT_LEFT,
-    NEXT_SAME
-};
-
 typedef struct {
     GtkTreeView *tv;
     GtkWidget *win;
@@ -104,6 +96,7 @@ typedef struct {
 
 #define editing_series(s) (s->cmd == SHEET_EDIT_VARLIST || \
                            s->cmd == SHEET_EDIT_DATASET || \
+			   s->cmd == SHEET_EDIT_NEWVAR || \
                            s->cmd == SHEET_NEW_DATASET)
 
 #define SERIES_DIGITS 10
@@ -126,7 +119,7 @@ static void sheet_show_popup (GtkWidget *w, Spreadsheet *sheet);
 static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet);
 static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet);
 
-static void add_scalar_callback (GtkWidget *w, Spreadsheet *sheet);
+static void name_var_dialog (GtkWidget *w, Spreadsheet *sheet);
 static void update_scalars_from_sheet (Spreadsheet *sheet);
 static void scalars_changed_callback (void);
 
@@ -146,7 +139,7 @@ static GretlToolItem series_items[] = {
 };
 
 static GretlToolItem scalar_items[] = {
-    { N_("Add..."),  GTK_STOCK_ADD,    G_CALLBACK(add_scalar_callback), 0 }
+    { N_("Add..."),  GTK_STOCK_ADD,    G_CALLBACK(name_var_dialog), 0 }
 };
 
 static int n_series_items = G_N_ELEMENTS(series_items);
@@ -391,14 +384,6 @@ static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
 		       sheet->cid, sheet->location);
 }
 
-#if 0
-static GtkCellRenderer *get_sheet_renderer (Spreadsheet *sheet,
-					    gint col)
-{
-    return col == 0 ? sheet->textcell : sheet->datacell;
-}
-#endif
-
 static void start_editing (GtkTreeView *tv, gint row, gint col)
 {
     GtkTreePath *path = gtk_tree_path_new_from_indices(row, -1);
@@ -417,9 +402,10 @@ static void move_row_focus (Spreadsheet *sheet,
 {
     gint next_row = current_row + delta;
 
+#if CELLDEBUG
     fprintf(stderr, "move_row_focus -> row %d, col %d\n", next_row,
 	    current_col);
-
+#endif
     if (next_row >= 0 && next_row < sheet->n_rows) {
 	start_editing(sheet->tv, next_row, current_col);
     }
@@ -431,11 +417,12 @@ static void move_column_focus (Spreadsheet *sheet,
 			       gint delta)
 {
     gint next_col = current_col + delta;
-    gint colmin = editing_scalars(sheet) ? 0 : 1;
+    gint colmin = 1;
 
+#if CELLDEBUG
     fprintf(stderr, "move_column_focus -> row %d, col %d\n", current_row,
 	    next_col);
-
+#endif
     if (next_col >= colmin && next_col < sheet->totcols) {
 	start_editing(sheet->tv, current_row, next_col);
     }
@@ -503,8 +490,9 @@ static void maybe_update_column_names (Spreadsheet *sheet)
     }
 }
 
-/* in case we're editing a pre-existing matrix, carry the
-   modifications back */
+/* In case we're editing a pre-existing matrix, carry the modifications
+   back.
+*/
 
 static void update_saved_matrix (Spreadsheet *sheet)
 {
@@ -551,7 +539,6 @@ static void update_sheet_matrix_element (Spreadsheet *sheet,
     } else {
 	x = atof(new_text);
     }
-
     gretl_matrix_set(sheet->matrix, i, j, x);
 }
 
@@ -588,7 +575,6 @@ maybe_update_store (Spreadsheet *sheet, const gchar *new_text,
     if (old_text == NULL || strcmp(old_text, new_text)) {
 	gtk_list_store_set(GTK_LIST_STORE(model), &iter,
 			   colnum, new_text, -1);
-
 	if (sheet->matrix != NULL) {
 	    update_sheet_matrix_element(sheet, new_text, path_string, colnum);
 	    sheet_set_modified(sheet, TRUE);
@@ -599,7 +585,6 @@ maybe_update_store (Spreadsheet *sheet, const gchar *new_text,
 	}
     }
 
-    // move_to_next_cell(sheet, path, col);
     gtk_tree_path_free(path);
     g_free(old_text);
 }
@@ -617,40 +602,6 @@ static int scalar_try_genr (gchar **ps)
     }
 
     return err;
-}
-
-/* right now, this is only used for renaming or adding a scalar */
-
-static void sheet_text_cell_edited (GtkCellRendererText *cell,
-				    const gchar *path_string,
-				    const gchar *user_text,
-				    Spreadsheet *sheet)
-{
-    int err = 0;
-
-    if (*user_text != '\0') {
-	err = gui_validate_varname_strict(user_text,
-					  GRETL_TYPE_DOUBLE,
-					  sheet->win);
-    }
-
-    if (err) {
-	GtkTreeViewColumn *column;
-	GtkTreePath *path;
-
-	path = gtk_tree_path_new_from_string(path_string);
-	column = gtk_tree_view_get_column(sheet->tv, 0);
-	gtk_tree_view_set_cursor_on_cell(sheet->tv, path, column,
-					 (GtkCellRenderer *) cell,
-					 TRUE);
-	if (sheet->ed != NULL) {
-	    gtk_entry_set_text(GTK_ENTRY(sheet->ed), user_text);
-	    gtk_editable_select_region(GTK_EDITABLE(sheet->ed), 0, -1);
-	}
-	gtk_tree_path_free(path);
-    } else {
-	maybe_update_store(sheet, user_text, path_string);
-    }
 }
 
 static void on_value_edited (GtkCellRendererText *cell,
@@ -704,18 +655,18 @@ static void on_value_edited (GtkCellRendererText *cell,
     }
 }
 
+#if 0
+
 static void cell_edited_callback (GtkTreeViewColumn *column,
 				  const gchar *path_string,
 				  const gchar *user_text,
 				  Spreadsheet *sheet)
 
 {
-    if (editing_scalars(sheet) && get_treeview_column_number(column) == 0) {
-	sheet_text_cell_edited(NULL, path_string, user_text, sheet);
-    } else {
-	on_value_edited(NULL, path_string, user_text, sheet);
-    }
+    on_value_edited(NULL, path_string, user_text, sheet);
 }
+
+#endif
 
 static void
 spreadsheet_scroll_to_new_col (Spreadsheet *sheet, GtkTreeViewColumn *column)
@@ -787,7 +738,8 @@ static int real_add_new_series (Spreadsheet *sheet, const char *varname)
     return 0;
 }
 
-static void add_scalar_callback (GtkWidget *w, Spreadsheet *sheet)
+static void add_scalar_callback (Spreadsheet *sheet,
+				 const char *vname)
 {
     GtkTreeView *view = sheet->tv;
     GtkTreeViewColumn *column;
@@ -801,12 +753,12 @@ static void add_scalar_callback (GtkWidget *w, Spreadsheet *sheet)
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_list_store_append(store, &iter);
 
-    gtk_list_store_set(store, &iter, 0, "", 1, "", 2, sheet->pbuf, -1);
+    gtk_list_store_set(store, &iter, 0, vname, 1, "", 2, sheet->pbuf, -1);
     sheet->n_rows += 1;
 
     pstr = g_strdup_printf("%d", sheet->n_rows - 1);
     path = gtk_tree_path_new_from_string(pstr);
-    column = gtk_tree_view_get_column(view, 0);
+    column = gtk_tree_view_get_column(view, 1);
     gtk_tree_view_set_cursor(view, path, column, TRUE);
     gtk_tree_path_free(path);
     g_free(pstr);
@@ -937,29 +889,48 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
     sheet_set_modified(sheet, TRUE);
 }
 
-static void name_new_var (GtkWidget *widget, dialog_t *dlg)
+static void name_new_var (GtkWidget *widget, dialog_t *dlg,
+			  GretlType type)
 {
     Spreadsheet *sheet = (Spreadsheet *) edit_dialog_get_data(dlg);
     GtkWidget *parent = edit_dialog_get_window(dlg);
     const gchar *buf;
     char varname[VNAMELEN];
+    int err = 0;
 
     buf = edit_dialog_get_text(dlg);
-
-    if (buf == NULL || gui_validate_varname(buf,
-					    GRETL_TYPE_SERIES,
-					    parent)) {
+    if (buf == NULL || *buf == '\0') {
+	return;
+    } else if (gui_validate_varname(buf, type, parent)) {
 	return;
     }
 
     *varname = 0;
     strncat(varname, buf, VNAMELEN - 1);
-
     edit_dialog_close(dlg);
 
-    if (real_add_new_series(sheet, varname)) {
-	nomem();
+    if (type == GRETL_TYPE_SERIES) {
+	if (real_add_new_series(sheet, varname)) {
+	    nomem();
+	}
+    } else {
+	err = gui_validate_varname_strict(varname,
+					  GRETL_TYPE_DOUBLE,
+					  sheet->win);
+	if (!err) {
+	    add_scalar_callback(sheet, varname);
+	}
     }
+}
+
+static void name_new_series (GtkWidget *widget, dialog_t *dlg)
+{
+    name_new_var(widget, dlg, GRETL_TYPE_SERIES);
+}
+
+static void name_new_scalar (GtkWidget *widget, dialog_t *dlg)
+{
+    name_new_var(widget, dlg, GRETL_TYPE_DOUBLE);
 }
 
 static void name_new_obs (GtkWidget *widget, dialog_t *dlg)
@@ -978,17 +949,26 @@ static void name_new_obs (GtkWidget *widget, dialog_t *dlg)
     real_add_new_obs(sheet, obsmarker, 1);
 }
 
-static void name_var_dialog (Spreadsheet *sheet)
+static void name_var_dialog (GtkWidget *w, Spreadsheet *sheet)
 {
     gchar *msg;
 
-    msg = g_strdup_printf(_("Enter name for new variable\n"
+    if (editing_scalars(sheet)) {
+	msg = g_strdup_printf(_("Enter name for new scalar\n"
 			    "(max. %d characters)"),
-			  VNAMELEN - 1);
+			      VNAMELEN - 1);
+        edit_dialog(0, _("gretl: name variable"),
+		    msg, NULL, name_new_scalar, sheet,
+		    VARCLICK_NONE, sheet->win);
+    } else {
+	msg = g_strdup_printf(_("Enter name for new series\n"
+			    "(max. %d characters)"),
+			      VNAMELEN - 1);
+        edit_dialog(0, _("gretl: name variable"),
+		    msg, NULL, name_new_series, sheet,
+		    VARCLICK_NONE, sheet->win);
+    }
 
-    edit_dialog(0, _("gretl: name variable"),
-		msg, NULL, name_new_var, sheet,
-		VARCLICK_NONE, sheet->win);
     g_free(msg);
 }
 
@@ -1057,25 +1037,20 @@ static GtkListStore *make_sheet_liststore (Spreadsheet *sheet)
 
     /* obs col, data cols */
     ncols = sheet->totcols = sheet->datacols + 1;
-
     if (editing_scalars(sheet)) {
 	/* allow for trash-can column */
 	ncols++;
     }
-
     types = mymalloc(ncols * sizeof *types);
     if (types == NULL) {
 	return NULL;
     }
-
     for (i=0; i<sheet->totcols; i++) {
 	types[i] = G_TYPE_STRING;
     }
-
     if (editing_scalars(sheet)) {
 	types[i] = GDK_TYPE_PIXBUF;
     }
-
     store = gtk_list_store_newv(ncols, types);
     free(types);
 
@@ -1257,7 +1232,7 @@ static void popup_sheet_insert_obs (GtkWidget *w, Spreadsheet *sheet)
 
 static void popup_sheet_add_var (GtkWidget *w, Spreadsheet *sheet)
 {
-    name_var_dialog(sheet);
+    name_var_dialog(w, sheet);
 }
 
 static void sheet_delete_scalar (Spreadsheet *sheet, GtkTreePath *path)
@@ -1272,26 +1247,21 @@ static void sheet_delete_scalar (Spreadsheet *sheet, GtkTreePath *path)
     gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &vname, -1);
 
     set_scalar_edit_callback(NULL);
-
     err = user_var_delete_by_name(vname, NULL);
     if (!err) {
 	mark_session_changed();
     }
-
     gtk_list_store_remove(store, &iter);
-    sheet->n_rows--;
-
+    sheet->n_rows -= 1;
     set_scalar_edit_callback(scalars_changed_callback);
 }
 
 static void build_sheet_popup (Spreadsheet *sheet)
 {
     sheet->popup = gtk_menu_new();
-
     add_popup_item(_("Add Variable"), sheet->popup,
 		   G_CALLBACK(popup_sheet_add_var),
 		   sheet);
-
     if (sheet->flags & SHEET_ADD_OBS_OK) {
 	add_popup_item(_("Add Observation"), sheet->popup,
 		       G_CALLBACK(popup_sheet_add_obs),
@@ -1304,8 +1274,7 @@ static void build_sheet_popup (Spreadsheet *sheet)
     }
 }
 
-/* this is connected to the "cursor-changed" signal
-   on the treeview */
+/* This is connected to the "cursor-changed" signal. */
 
 static void update_cell_position (GtkTreeView *view,
 				  Spreadsheet *sheet)
@@ -1317,7 +1286,6 @@ static void update_cell_position (GtkTreeView *view,
     int j = j0;
 
     gtk_tree_view_get_cursor(view, &path, &col);
-
     if (path != NULL && col != NULL) {
 	i = gtk_tree_path_get_indices(path)[0];
 	j = get_treeview_column_number(col);
@@ -1354,9 +1322,10 @@ static void update_matrix_from_sheet_full (Spreadsheet *sheet)
     set_ok_transforms(sheet);
 }
 
-/* callback from uservar.c, for use when a scalar is added, deleted or
+/* Callback from uservar.c, for use when a scalar is added, deleted or
    changed by means other than the spreadsheet, and the scalars
-   spreadsheet is currently displayed */
+   spreadsheet is currently displayed.
+*/
 
 static void scalars_changed_callback (void)
 {
@@ -1428,8 +1397,9 @@ static int scalars_differ (double x, double y)
     }
 }
 
-/* put modified values from the spreadsheet into the array
-   of saved scalars */
+/* Put modified values from the spreadsheet into the array of saved
+   scalars.
+*/
 
 static void update_scalars_from_sheet (Spreadsheet *sheet)
 {
@@ -1465,24 +1435,23 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
 	}
 	g_free(vname);
 	g_free(val);
-	gtk_tree_model_iter_next(model, &iter);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    gtk_tree_model_iter_next(model, &iter);
+	}
     }
 
     if (sheet_is_modified(sheet)) {
 	mark_session_changed();
 	sheet_set_modified(sheet, FALSE);
     }
-
     set_scalar_edit_callback(scalars_changed_callback);
-
-    if (err) {
-	gui_errmsg(err);
-    }
 }
 
-/* handle the case where observations have been inserted (not just
+/* Handle the case where observations have been inserted (not just
    appended); we need to shift the original dataset observations "down"
-   by one place for each insertion
+   by one place for each insertion.
 */
 
 static void process_inserts_for_series (Spreadsheet *sheet, int v)
@@ -1500,8 +1469,9 @@ static void process_inserts_for_series (Spreadsheet *sheet, int v)
     }
 }
 
-/* pull modified values from the data-editing spreadsheet into the main
-   dataset */
+/* Pull modified values from the data-editing spreadsheet into the main
+   dataset.
+*/
 
 static void update_dataset_from_sheet (Spreadsheet *sheet)
 {
@@ -1523,7 +1493,6 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
     model = gtk_tree_view_get_model(view);
 
     /* first extend the series length, if needed */
-
     if (newobs > 0) {
 	if (dataset_add_observations(dataset, newobs, OPT_A) ||
 	    dataset_destroy_hidden_variables(dataset, 0)) {
@@ -1533,7 +1502,6 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
     }
 
     /* then add any new series to the dataset */
-
     if (newvars > 0) {
 	int vj, v0 = sheet->varlist[0];
 	const gchar *title;
@@ -1713,7 +1681,7 @@ static void select_first_editable_cell (Spreadsheet *sheet)
     } else {
 	column = gtk_tree_view_get_column(view, 1);
 	gtk_tree_view_set_cursor_on_cell(view, path, column,
-					 sheet->datacell, FALSE);
+					 sheet->datacell, TRUE);
     }
 
     if (sheet->locator != NULL) {
@@ -1981,12 +1949,10 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
     }
 
     tail = slist = user_var_list_for_type(GRETL_TYPE_DOUBLE);
-
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    /* insert names and values of scalar variables */
-
+    /* Insert names and values of scalar variables. */
     while (tail) {
 	u = tail->data;
 	strcpy(vname, user_var_get_name(u)); /* underscores? */
@@ -2066,7 +2032,7 @@ static void maybe_update_scalars_sheet (Spreadsheet *sheet)
     }
 }
 
-static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
+static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd sc)
 {
     gchar rowlabel[OBSLEN];
     GtkTreeView *view = sheet->tv;
@@ -2081,19 +2047,16 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
 
     /* insert observation markers */
-
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     for (t=dataset->t1; t<=dataset->t2; t++) {
 	get_obs_string(rowlabel, t, dataset);
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, rowlabel, -1);
     }
-
     sheet->n_rows = dataset->t2 - dataset->t1 + 1;
 
     /* insert data values */
-
-    if (c == SHEET_NEW_DATASET) {
+    if (sc == SHEET_NEW_DATASET || sc == SHEET_EDIT_NEWVAR) {
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 	for (t=dataset->t1; t<=dataset->t2; t++) {
 	    gtk_list_store_set(store, &iter, 1, "", -1);
@@ -2222,9 +2185,9 @@ static gboolean on_edit_keypress (GtkCellEditable *ed,
 {
     gint row, col;
 
-    sheet->next = NEXT_DOWN; /* ? */
-
+#if CELLDEBUG > 1
     printf("catch_sheet_edit_key (ed %p)\n", (void *) ed);
+#endif
 
     get_current_location(sheet->tv, &row, &col);
     if (row < 0) {
@@ -2240,7 +2203,6 @@ static gboolean on_edit_keypress (GtkCellEditable *ed,
 	gtk_cell_editable_editing_done(sheet->ed);
 	sheet->ed = NULL;
 	move_row_focus(sheet, row, col, -1);
-	//sheet->next = NEXT_UP;
 	return TRUE;
     } else if (key->keyval == GDK_Right && sheet->ed != NULL) {
 #if CELLDEBUG
@@ -2249,9 +2211,14 @@ static gboolean on_edit_keypress (GtkCellEditable *ed,
 	gtk_cell_editable_editing_done(sheet->ed);
 	sheet->ed = NULL;
 	move_column_focus(sheet, row, col, +1);
-	//sheet->next = NEXT_RIGHT;
-	//commit_and_move_right(sheet, s);
 	return TRUE;
+    } else if (key->keyval == GDK_Left && sheet->ed != NULL) {
+#if CELLDEBUG
+	fprintf(stderr, " GDK_Left\n");
+#endif
+	gtk_cell_editable_editing_done(sheet->ed);
+	sheet->ed = NULL;
+	move_column_focus(sheet, row, col, -1);
     } else if (key->keyval == GDK_Return) {
 #if CELLDEBUG
 	fprintf(stderr, " GDK_Return\n");
@@ -2310,30 +2277,16 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
 {
     GtkCellRenderer *r;
 
-    sheet->textcell = r = gtk_cell_renderer_text_new();
+    /* immutable obs label or scalar name */
+    sheet->textcell = gtk_cell_renderer_text_new();
+    g_object_set(sheet->textcell, "ypad", 1,
+		 "xalign", 1.0,
+		 "background", "#DEDEDE",
+		 "mode", GTK_CELL_RENDERER_MODE_INERT,
+		 NULL);
 
-    if (editing_scalars(sheet)) {
-	/* editable name */
-	g_object_set(r, "ypad", 1,
-		     "xalign", 1.0,
-		     "editable", TRUE,
-		     "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
-		     NULL);
-	g_signal_connect(r, "editing-started",
-			 G_CALLBACK(on_editing_started), sheet);
-	g_signal_connect(r, "edited",
-			 G_CALLBACK(sheet_text_cell_edited), sheet);
-    } else {
-	/* immutable label */
-	g_object_set(r, "ypad", 1,
-		     "xalign", 1.0,
-		     "background", "#DEDEDE",
-		     "mode", GTK_CELL_RENDERER_MODE_INERT,
-		     NULL);
-    }
-
+    /* editable value cells */
     sheet->datacell = r = gtk_cell_renderer_text_new();
-
     g_object_set(r, "ypad", 1,
 		 "xalign", 1.0,
 		 "family", "Monospace",
@@ -2673,7 +2626,7 @@ static int sheet_list_empty (Spreadsheet *sheet)
     return ret;
 }
 
-static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
+static Spreadsheet *spreadsheet_new (SheetCmd sc, int varnum)
 {
     Spreadsheet *sheet;
 
@@ -2696,14 +2649,13 @@ static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
     sheet->added_vars = 0;
     sheet->orig_main_v = 0;
     sheet->orig_nobs = 0;
-    sheet->next = NEXT_DOWN;
     sheet->cid = 0;
     sheet->varlist = NULL;
     sheet->matrix = NULL;
     sheet->oldmat = NULL;
     sheet->colnames = NULL;
     sheet->rownames = NULL;
-    sheet->cmd = c;
+    sheet->cmd = sc;
     sheet->flags = 0;
 
     sheet->edits = NULL;
@@ -2713,7 +2665,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
 
     strcpy(sheet->numfmt, "%.*g");
 
-    if (c == SHEET_EDIT_MATRIX || c == SHEET_EDIT_SCALARS) {
+    if (sc == SHEET_EDIT_MATRIX || sc == SHEET_EDIT_SCALARS) {
 	sheet->digits = DBL_DIG;
 	return sheet;
     }
@@ -2728,7 +2680,8 @@ static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
     if (sheet->cmd == SHEET_NEW_DATASET) {
 	sheet->varlist = gretl_list_new(1);
     } else {
-	if (sheet->cmd == SHEET_EDIT_VARLIST) {
+	if (sheet->cmd == SHEET_EDIT_VARLIST ||
+	    sheet->cmd == SHEET_EDIT_NEWVAR) {
 	    if (varnum > 0) {
 		sheet->varlist = gretl_list_new(1);
 		if (sheet->varlist != NULL) {
@@ -2894,8 +2847,9 @@ static void size_data_window (Spreadsheet *sheet, int hscroll)
     gtk_window_set_default_size(GTK_WINDOW(sheet->win), w, h);
 }
 
-/* hack to avoid losing a not-yet-committed edit to a cell
-   in the sheet, on choosing Save, Apply, OK, etc */
+/* Hack to avoid losing a not-yet-committed edit to a cell in the sheet,
+   on choosing Save, Apply, OK, etc.
+*/
 
 static gboolean
 button_entered (GtkWidget *w, GdkEventCrossing *e, Spreadsheet *sheet)
@@ -2906,10 +2860,8 @@ button_entered (GtkWidget *w, GdkEventCrossing *e, Spreadsheet *sheet)
 	gchar *pathstr;
 
 	gtk_tree_view_get_cursor(sheet->tv, &path, NULL);
-
 	if (path != NULL) {
 	    pathstr = gtk_tree_path_to_string(path);
-	    sheet->next = NEXT_SAME;
 	    on_value_edited(NULL, pathstr, s, sheet);
 	    g_free(pathstr);
 	    gtk_tree_path_free(path);
@@ -2976,6 +2928,9 @@ static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
 
     for (i=0; i<n_items; i++) {
 	item = &items[i];
+	if (sheet->cmd == SHEET_EDIT_NEWVAR && item->flag == SHEET_ADD_BTN) {
+	    continue;
+	}
 	button = gretl_toolbar_insert(tbar, item, item->func, sheet, -1);
 	if (!editing_scalars(sheet)) {
 	    if (item->flag == SHEET_APPLY_BTN) {
@@ -3043,12 +2998,12 @@ static void sheet_add_matrix_locator (Spreadsheet *sheet, GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(status_box), sheet->locator, FALSE, FALSE, 0);
 }
 
-/* this has to block when the user is defining a matrix in the
-   course of responding to the function call dialog; otherwise
-   it should not block
+/* This has to block when the user is defining a matrix in the course of
+   responding to the function call dialog; otherwise it should not
+   block.
 */
 
-static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
+static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
 				   int block)
 {
     Spreadsheet *sheet = *psheet;
@@ -3067,7 +3022,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	} else {
 	    gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit matrix"));
 	}
-    } else if (c == SHEET_EDIT_SCALARS) {
+    } else if (sc == SHEET_EDIT_SCALARS) {
 	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: scalars"));
     } else {
 	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit data"));
@@ -3075,7 +3030,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 
     if (sheet->matrix != NULL) {
 	size_matrix_window(sheet);
-    } else if (c == SHEET_EDIT_SCALARS) {
+    } else if (sc == SHEET_EDIT_SCALARS) {
 	size_scalars_window(sheet);
 	hscroll = 0;
     } else {
@@ -3102,12 +3057,11 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	sheet_add_matrix_menu(sheet, main_vbox);
 	sheet_add_matrix_locator(sheet, main_vbox);
     } else {
-	if (c != SHEET_EDIT_SCALARS) {
+	if (sc != SHEET_EDIT_SCALARS) {
 	    if (sheet->varlist != NULL) {
 		int i;
 
 		sheet->datacols = 0;
-
 		for (i=sheet->varlist[0]; i>0; i--) {
 		    if (series_is_hidden(dataset, sheet->varlist[i])) {
 			gretl_list_delete_at_pos(sheet->varlist, i);
@@ -3143,7 +3097,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     if (sheet->matrix != NULL) {
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(free_matrix_sheet), sheet);
-    } else if (c == SHEET_EDIT_SCALARS) {
+    } else if (sc == SHEET_EDIT_SCALARS) {
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(free_spreadsheet), psheet); /* FIXME? */
     } else {
@@ -3205,7 +3159,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	    tmp = gtk_button_new_from_stock(GTK_STOCK_ADD);
 	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
 	    g_signal_connect(G_OBJECT(tmp), "clicked",
-			     G_CALLBACK(add_scalar_callback), sheet);
+			     G_CALLBACK(name_var_dialog), sheet);
 	    gtk_widget_show(tmp);
 
 	    tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
@@ -3220,12 +3174,12 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 	}
     }
 
-    if (c == SHEET_EDIT_MATRIX) {
+    if (sc == SHEET_EDIT_MATRIX) {
 	err = add_matrix_data_to_sheet(sheet);
-    } else if (c == SHEET_EDIT_SCALARS) {
+    } else if (sc == SHEET_EDIT_SCALARS) {
 	err = add_scalars_to_sheet(sheet);
     } else {
-	err = add_data_to_sheet(sheet, c);
+	err = add_data_to_sheet(sheet, sc);
     }
 
     if (err) {
@@ -3241,8 +3195,8 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 
     window_list_add(sheet->win, SSHEET);
     gtk_widget_show(sheet->win);
-    select_first_editable_cell(sheet);
     gtk_widget_grab_focus(GTK_WIDGET(sheet->tv));
+    select_first_editable_cell(sheet);
 
     if (editing_series(sheet)) {
 	/* we can't have the user making confounding changes elsewhere,
@@ -3257,7 +3211,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
     }
 }
 
-void show_spreadsheet (SheetCmd c)
+void show_spreadsheet (SheetCmd sc)
 {
     static Spreadsheet *sheet;
 
@@ -3271,12 +3225,12 @@ void show_spreadsheet (SheetCmd c)
 	return;
     }
 
-    sheet = spreadsheet_new(c, 0);
+    sheet = spreadsheet_new(sc, 0);
     if (sheet == NULL) {
 	return;
     }
 
-    real_show_spreadsheet(&sheet, c, 0);
+    real_show_spreadsheet(&sheet, sc, 0);
 }
 
 void show_spreadsheet_for_series (int varnum)
