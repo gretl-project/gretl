@@ -34,8 +34,7 @@
 #include "matrix_extra.h"
 
 typedef enum InitFlag_ {
-    INIT_HW,
-    INIT_FAST,
+    INIT_AUTO,
     INIT_USER,
     INIT_RAND,
     INIT_FIN
@@ -46,6 +45,7 @@ typedef struct hw_info_ {
     gretl_matrix *c;       /* cluster centroids, k x n */
     gretl_matrix *cmin;    /* for random sequence */
     double *ameans;        /* column means of @a */
+    double *d;             /* distances array */
     int *ic1;              /* best centroid per point */
     int *ic2;              /* next best centroid per point */
     int m;                 /* number of observations */
@@ -60,20 +60,18 @@ static double *get_ameans (const gretl_matrix *a, int *err)
     int i, j;
 
     *err = 0;
-    for (j=0; j<a->cols; j++) {
+
+    for (j=0; j<a->cols && !*err; j++) {
 	ameans[j] = 0.0;
-	for (i=0; i<a->rows; i++) {
+	for (i=0; i<a->rows && !*err; i++) {
 	    aij = gretl_matrix_get(a, i, j);
 	    if (na(aij)) {
 		*err = E_MISSDATA;
-		break;
 	    } else {
 		ameans[j] += aij;
 	    }
 	}
-	if (*err) {
-	    break;
-	} else {
+	if (!*err) {
 	    ameans[j] /= a->rows;
 	}
     }
@@ -108,7 +106,8 @@ static int build_hw_info (hw_info *hw,
     } else {
 	hw->cmin = NULL;
     }
-    
+
+    hw->d = malloc(hw->m * sizeof *hw->d);
     hw->ameans = get_ameans(a, &err);
 
     return err;
@@ -119,6 +118,7 @@ static void destroy_hw_info (hw_info *hw)
     gretl_matrix_free(hw->c);
     gretl_matrix_free(hw->cmin);
     free(hw->ameans);
+    free(hw->d);
     free(hw->ic1);
 }
 
@@ -296,14 +296,39 @@ static double compute_ith_distance (hw_info *hw,
     return dist;
 }
 
-static void update_an (gretl_matrix *an, int l1, int l2, double al1, double al2)
-{
-    double tmp = (al1 > 2.0) ? (al1 - 1.0) / (al1 - 2.0) : 1.0e100;
+/* This update component is common to optra() and qtran(). */
 
+void update_on_transfer (hw_info *hw, int *nc, gretl_matrix *an,
+			 int i, int l1, int l2)
+{
+    double al1, al2;
+    double alt, alw;
+    double aij, tmp;
+    int j;
+
+    al1 = (double) (nc[l1-1]);
+    alw = al1 - 1.0;
+    al2 = (double) (nc[l2-1]);
+    alt = al2 + 1.0;
+    for (j=0; j<hw->n; j++) {
+	aij = gretl_matrix_get(hw->a, i, j);
+	tmp = (gretl_matrix_get(hw->c, l1-1, j) * al1 - aij) / alw;
+	gretl_matrix_set(hw->c, l1-1, j, tmp);
+	tmp = (gretl_matrix_get(hw->c, l2-1, j) * al2 + aij) / alt;
+	gretl_matrix_set(hw->c, l2-1, j, tmp);
+    }
+    nc[l1-1] = nc[l1-1] - 1;
+    nc[l2-1] = nc[l2-1] + 1;
+
+    /* update @an */
+    tmp = (al1 > 2.0) ? (al1 - 1.0) / (al1 - 2.0) : 1.0e100;
     gretl_matrix_set(an, l1-1, 1, (al1 - 1.0) / al1);
     gretl_matrix_set(an, l1-1, 0, tmp);
     gretl_matrix_set(an, l2-1, 0, (al2 + 1.0) / al2);
     gretl_matrix_set(an, l2-1, 1, (al2 + 1.0) / (al2 + 2.0));
+
+    hw->ic1[i] = l2;
+    hw->ic2[i] = l1;
 }
 
 /* optra() carries out the optimal transfer stage: each point is
@@ -319,34 +344,29 @@ static void update_an (gretl_matrix *an, int l1, int l2, double al1, double al2)
    @nc (k): the number of points in each cluster
    @an (k x 2)
    @ncp (k)
-   @d (m)
+   @hw->d (m)
    @itran (k)
    @live (k)
    @indx: the number of steps since a transfer took place
 */
 
 static void optra (hw_info *hw, int *nc, gretl_matrix *an,
-		   int ncp[], gretl_vector *d, int itran[],
-		   int live[], int *indx)
+		   int ncp[], int itran[], int live[],
+		   int *indx)
 {
-    double aij;
-    double al1;
-    double al2;
-    double alt;
-    double alw;
     double da;
     double dc;
     double de;
-    int i, j, l;
+    int i, l;
     int l1, l2, ll;
+    int done = 0;
     double r2;
     double rr;
-    double tmp;
 
     /* If cluster l is updated in the last quick-transfer stage, it
        belongs to the live set throughout this stage.  Otherwise, at
-       each step, it is not in the live set if it has not been updated
-       in the last m optimal transfer steps.
+       each step, it is not live if it has not been updated in the
+       last m optimal transfer steps.
     */
     for (l=0; l<hw->k; l++) {
 	if (itran[l] == 1) {
@@ -368,7 +388,7 @@ static void optra (hw_info *hw, int *nc, gretl_matrix *an,
 	    */
 	    if (ncp[l1-1] != 0) {
 		de = compute_ith_distance(hw, i, l1);
-		gretl_vector_set(d, i, de * gretl_matrix_get(an, l1-1, 0));
+		hw->d[i] = de * gretl_matrix_get(an, l1-1, 0);
 	    }
 
 	    /* Find the cluster with minimum r2 */
@@ -381,7 +401,10 @@ static void optra (hw_info *hw, int *nc, gretl_matrix *an,
 		   are in the live set for possible transfer of point i.
 		   Otherwise, we need to consider all possible clusters.
 		*/
-		if ((i < live[l1-1]-1 || i < live[l2-1]-1) && l != l1 && l != ll) {
+		if (l == l1 || l == ll) {
+		    continue;
+		}
+		if (i < live[l1-1]-1 || i < live[l2-1]-1) {
 		    rr = r2 / gretl_matrix_get(an, l-1, 1);
 		    dc = compute_ith_distance(hw, i, l);
 		    if (dc < rr)  {
@@ -392,10 +415,10 @@ static void optra (hw_info *hw, int *nc, gretl_matrix *an,
 	    }
 
 	    /* If no transfer is necessary, l2 is the new ic2[i] */
-	    if (gretl_vector_get(d, i) <= r2) {
+	    if (hw->d[i] <= r2) {
 		hw->ic2[i] = l2;
 	    } else {
-		/* Update cluster centers, line, ncp and an for clusters
+		/* Update cluster centers, live, ncp and an for clusters
 		   l1 and l2, and update ic1[i] and ic2[i].
 		*/
 		*indx = 0;
@@ -403,33 +426,21 @@ static void optra (hw_info *hw, int *nc, gretl_matrix *an,
 		live[l2-1] = hw->m + i;
 		ncp[l1-1] = i + 1;
 		ncp[l2-1] = i + 1;
-		al1 = (double) (nc[l1-1]);
-		alw = al1 - 1.0;
-		al2 = (double) (nc[l2-1]);
-		alt = al2 + 1.0;
-		for (j=0; j<hw->n; j++) {
-		    aij = gretl_matrix_get(hw->a, i, j);
-		    tmp = (gretl_matrix_get(hw->c, l1-1, j) * al1 - aij) / alw;
-		    gretl_matrix_set(hw->c, l1-1, j, tmp);
-		    tmp = (gretl_matrix_get(hw->c, l2-1, j) * al2 + aij) / alt;
-		    gretl_matrix_set(hw->c, l2-1, j, tmp);
-		}
-		nc[l1-1] = nc[l1-1] - 1;
-		nc[l2-1] = nc[l2-1] + 1;
-		update_an(an, l1, l2, al1, al2);
-		hw->ic1[i] = l2;
-		hw->ic2[i] = l1;
+		update_on_transfer(hw, nc, an, i, l1, l2);
 	    }
 	}
 
 	if (*indx == hw->m) {
-	    return;
+	    done = 1;
+	    break;
 	}
     }
 
-    /* itran(l) = 0 before entering qtran(). Also, live(l) has to be
-       decreased by m before re-entering optra().
-    */
+    if (done) {
+	return;
+    }
+
+    /* resets prior to re-entering optra() */
     for (l=1; l<=hw->k; l++) {
 	itran[l-1] = 0;
 	live[l-1] = live[l-1] - hw->m;
@@ -454,101 +465,78 @@ static void optra (hw_info *hw, int *nc, gretl_matrix *an,
    @nc (k): the number of points in each cluster
    @an (k x 2)
    @ncp (k)
-   @d (m)
+   @hw->d (m)
    @itran (k)
    @indx: the number of steps since a transfer took place
 */
 
 static void qtran (hw_info *hw, int *nc, gretl_matrix *an,
-		   int ncp[], gretl_vector *d, int itran[],
-		   int *indx)
+		   int ncp[], int itran[], int *indx)
 {
-    double aij;
-    double al1;
-    double al2;
-    double alt;
-    double alw;
     double di;
-    int i;
-    int icoun;
-    int istep;
+    int icoun = 0;
+    int istep = 0;
     int done = 0;
-    int j;
-    int l1;
-    int l2;
+    int i, l1, l2;
     double r2;
-    double tmp;
 
     /* In the optimal transfer stage, ncp[l] indicates the step at which
        cluster l is last updated.  In the quick transfer stage, ncp[l]
        is equal to the step at which cluster l is last updated plus m.
     */
-    icoun = 0;
-    istep = 0;
 
-    while (!done) {
-	for (i=0; i<hw->m; i++) {
-	    icoun++;
-	    istep++;
-	    l1 = hw->ic1[i];
-	    l2 = hw->ic2[i];
+ restart:
 
-	    /* If point i is the only member of cluster l1, no transfer */
-	    if (nc[l1-1] > 1) {
-		/* If ncp[l1] < istep, no need to recompute distance
-		   from point i to cluster l1.  Note that if cluster l1
-		   is last updated exactly m steps ago, we still need to
-		   compute the distance from point i to cluster l1.
-		*/
-		if (istep <= ncp[l1-1]) {
-		    di = compute_ith_distance(hw, i, l1);
-		    gretl_vector_set(d, i, di * gretl_matrix_get(an, l1-1, 0));
-		}
-		/* If ncp[l1] <= istep and ncp[l2] <= istep, there will
-		   be no transfer of point i at this step.
-		*/
-		if (istep < ncp[l1-1] || istep < ncp[l2-1]) {
-		    r2 = gretl_vector_get(d, i) / gretl_matrix_get(an, l2-1, 1);
-		    di = compute_ith_distance(hw, i, l2);
-		    /* Update cluster centers, ncp, nc, itran, and an
-		      for clusters l1 and l2.  Also update ic1[i] and
-		      ic2[i].  If any updating occurs in this stage,
-		      *indx is reset to 0.
-		    */
-		    if (di < r2) {
-			icoun = 0;
-			*indx = 0;
-			itran[l1-1] = 1;
-			itran[l2-1] = 1;
-			ncp[l1-1] = istep + hw->m;
-			ncp[l2-1] = istep + hw->m;
-			al1 = (double) (nc[l1-1]);
-			alw = al1 - 1.0;
-			al2 = (double) (nc[l2-1]);
-			alt = al2 + 1.0;
-			for (j=0; j<hw->n; j++) {
-			    aij = gretl_matrix_get(hw->a, i, j);
-			    tmp = (gretl_matrix_get(hw->c, l1-1, j) * al1 - aij) / alw;
-			    gretl_matrix_set(hw->c, l1-1, j, tmp);
-			    tmp = (gretl_matrix_get(hw->c, l2-1, j) * al2 + aij) / alt;
-			    gretl_matrix_set(hw->c, l2-1, j, tmp);
-			}
-			nc[l1-1] = nc[l1-1] - 1;
-			nc[l2-1] = nc[l2-1] + 1;
-			update_an(an, l1, l2, al1, al2);
-			hw->ic1[i] = l2;
-			hw->ic2[i] = l1;
-		    }
-		}
-	    }
-	    /* If no reallocation took place in the last m steps,
-	       we're finished.
+    for (i=0; i<hw->m; i++) {
+	icoun++;
+	istep++;
+	l1 = hw->ic1[i];
+	l2 = hw->ic2[i];
+
+	/* If point i is the only member of cluster l1, no transfer */
+	if (nc[l1-1] > 1) {
+	    /* If ncp[l1] < istep, no need to recompute distance
+	       from point i to cluster l1.  Note that if cluster l1
+	       is last updated exactly m steps ago, we still need to
+	       compute the distance from point i to cluster l1.
 	    */
-	    done = icoun == hw->m;
-	    if (done) {
-		break;
+	    if (istep <= ncp[l1-1]) {
+		di = compute_ith_distance(hw, i, l1);
+		hw->d[i] = di * gretl_matrix_get(an, l1-1, 0);
+	    }
+	    /* If ncp[l1] <= istep and ncp[l2] <= istep, there will
+	       be no transfer of point i at this step.
+	    */
+	    if (istep < ncp[l1-1] || istep < ncp[l2-1]) {
+		r2 = hw->d[i] / gretl_matrix_get(an, l2-1, 1);
+		di = compute_ith_distance(hw, i, l2);
+		/* Update cluster centers, ncp, nc, itran, and an
+		   for clusters l1 and l2.  Also update ic1[i] and
+		   ic2[i].  If any updating occurs in this stage,
+		   *indx is reset to 0.
+		*/
+		if (di < r2) {
+		    icoun = 0;
+		    *indx = 0;
+		    itran[l1-1] = 1;
+		    itran[l2-1] = 1;
+		    ncp[l1-1] = istep + hw->m;
+		    ncp[l2-1] = istep + hw->m;
+		    update_on_transfer(hw, nc, an, i, l1, l2);
+		}
 	    }
 	}
+	/* If no reallocation took place in the last m steps,
+	   we're finished.
+	*/
+	if (icoun == hw->m) {
+	    done = 1;
+	    break;
+	}
+    } /* end loop over data points */
+
+    if (!done) {
+	goto restart;
     }
 }
 
@@ -636,25 +624,16 @@ static int kmeans_init (hw_info *hw,
     double huge = libset_get_double(CONV_HUGE);
     int err = 0;
 
-    if (iflag == INIT_FAST) {
-	/* Make the first k data points the cluster centers */
-	for (i=0; i<hw->k; i++) {
-	    for (j=0; j<hw->n; j++) {
-		tmp = gretl_matrix_get(hw->a, i, j);
-		gretl_matrix_set(hw->c, i, j, tmp);
-	    }
-	}
+    if (iflag == INIT_AUTO) {
+	hartigan_wong_init(hw);
     } else if (iflag == INIT_RAND) {
 	get_k_random_candidates(hw);
-    } else if (iflag == INIT_HW) {
-	hartigan_wong_init(hw);
     } else {
 	; /* INIT_USER or INIT_FIN: use the incoming @c as is */
     }
 
     /* For each point i, find its two closest centers, ic1[i] and
-       ic2[i].  Assign the point to ic1[i].
-    */
+       ic2[i].  Assign the point to ic1[i]. */
     find_nearest_neighbors(hw);
 
     err = init_centers(hw, nc);
@@ -683,8 +662,7 @@ static int kmeans_init (hw_info *hw,
 
 static int check_opts (gretl_bundle *b,
 		       int *rand_starts,
-		       int *verbosity,
-		       InitFlag *iflag)
+		       int *verbosity)
 {
     int err = 0;
 
@@ -693,15 +671,6 @@ static int check_opts (gretl_bundle *b,
     }
     if (gretl_bundle_has_key(b, "verbosity")) {
 	*verbosity = gretl_bundle_get_int(b, "verbosity", &err);
-    }
-    if (gretl_bundle_has_key(b, "init")) {
-	int itype = gretl_bundle_get_int(b, "init", &err);
-
-	if (itype == 2) {
-	    *iflag = INIT_FAST;
-	} else if (itype != 1) {
-	    err = E_INVARG;
-	}
     }
 
     return err;
@@ -723,11 +692,10 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 {
     gretl_bundle *ret = NULL;
     hw_info hw = {0};
-    gretl_vector *d = NULL;
     gretl_vector *clustid = NULL;
     gretl_matrix *an = NULL;
     double tmp;
-    double SSTmin, SST;
+    double SST, SSTmin;
     int *iwork;
     int *nc;
     int *ncp;
@@ -739,7 +707,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     int m = a->rows;
     int n = a->cols;
     int ri = 0;
-    InitFlag iflag = INIT_HW;
+    InitFlag iflag = INIT_AUTO;
     int rand_starts = 0;
     int verbosity = 0;
 
@@ -755,27 +723,22 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     }
     if (!*err && opts != NULL) {
 	*err = check_opts((gretl_bundle *) opts, &rand_starts,
-			  &verbosity, &iflag);
+			  &verbosity);
     }
     if (*err) {
 	return NULL;
     }
 
     *err = build_hw_info(&hw, a, c0, k, rand_starts, &iflag);
-
     if (*err) {
 	destroy_hw_info(&hw);
 	return NULL;
     }
-    
+
     if (verbosity) {
 	pprintf(prn, "_kmeans: m=%d, n=%d, k=%d, initial centers %s\n",
 		m, n, k, c0 == NULL ? "automatic" : "user-specified");
-	if (c0 == NULL) {
-	    pprintf(prn, "automatic method: %s\n", iflag == INIT_FAST ?
-		    "simple, fast" : "Hartigan-Wong");
-	}
-	pprintf(prn, "%d random starts requested\n", rand_starts);
+	pprintf(prn, "%d randomized restarts requested\n", rand_starts);
     }
 
     /* integer-valued workspace */
@@ -785,11 +748,10 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     itran = ncp + k;
     live = itran + k;
 
-    d = gretl_vector_alloc(m);
     an = gretl_matrix_alloc(k, 2);
     clustid = gretl_column_vector_alloc(m);
 
-    if (iwork == NULL || d == NULL || an == NULL || clustid == NULL) {
+    if (iwork == NULL || an == NULL || clustid == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
@@ -807,13 +769,13 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     *err = E_NOCONV;
 
     for (i=0; i<maxiter; i++)  {
-	optra(&hw, nc, an, ncp, d, itran, live, &indx);
+	optra(&hw, nc, an, ncp, itran, live, &indx);
 	if (indx == m) {
 	    /* No optimal transfer in the last m steps: OK, stop */
 	    *err = 0;
 	    break;
 	}
-	qtran(&hw, nc, an, ncp, d, itran, &indx);
+	qtran(&hw, nc, an, ncp, itran, &indx);
 	if (k == 2) {
 	    /* only two clusters: no need to repeat optra() */
 	    *err = 0;
@@ -858,6 +820,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	}
 	gretl_matrix_copy_values(hw.c, hw.cmin);
 	iflag = INIT_FIN;
+	/* one more pass to re-establish the best result */
 	goto start_outer_loop;
     }
 
@@ -902,7 +865,6 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 
     destroy_hw_info(&hw);
     gretl_matrix_free(an);
-    gretl_vector_free(d);
     free(iwork);
 
     return ret;
