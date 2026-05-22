@@ -155,6 +155,23 @@ static int init_centers (hw_info *hw, int *nc)
     return err;
 }
 
+static double global_sst (hw_info *hw)
+{
+    double sst = 0;
+    double cmean, d;
+    int i, j;
+
+    for (j=0; j<hw->n; j++) {
+	cmean = hw->ameans[j];
+	for (i=0; i<hw->m; i++) {
+	    d = gretl_matrix_get(hw->a, i, j) - cmean;
+	    sst += d * d;
+	}
+    }
+
+    return sst;
+}
+
 /* Get the k-vector of per-cluster SSTs */
 
 static double *compute_sst_full (hw_info *hw)
@@ -183,12 +200,13 @@ static double *compute_sst_full (hw_info *hw)
 
 static double compute_sst (hw_info *hw)
 {
-    double sst = 0;
-    double d;
-    int i, j, l;
+    double d, sst = 0;
+    int i, j, l = 0;
 
     for (i=0; i<hw->m; i++) {
-	l = hw->ic1[i] - 1;
+	if (hw->k > 1) {
+	    l = hw->ic1[i] - 1;
+	}
 	for (j=0; j<hw->n; j++) {
 	    d = gretl_matrix_get(hw->a, i, j) - gretl_matrix_get(hw->c, l, j);
 	    sst += d * d;
@@ -242,23 +260,6 @@ static int hartigan_wong_init (hw_info *hw)
     gretl_matrix_free(s);
 
     return err;
-}
-
-static double global_sst (hw_info *hw)
-{
-    double sst = 0;
-    double cmean, d;
-    int i, j;
-
-    for (j=0; j<hw->n; j++) {
-	cmean = hw->ameans[j];
-	for (i=0; i<hw->m; i++) {
-	    d = gretl_matrix_get(hw->a, i, j) - cmean;
-	    sst += d * d;
-	}
-    }
-
-    return sst;
 }
 
 static void get_k_random_candidates (hw_info *hw)
@@ -614,49 +615,59 @@ static void add_clustinfo_colnames (const gretl_matrix *a,
     }
 }
 
-static gretl_bundle *trivial_case(hw_info *hw)
-{
-/* called with k=1: in this case, there's almost nothing
-   to do
+/* This is called if k = 1, in which case there's almost
+   nothing to do.
 */
-    int err;
-    int i, j;
-    int m = hw->m, n = hw->n;
-    double sst = 0, x;
 
-    gretl_bundle *ret = gretl_bundle_new();
-    gretl_matrix *cinfo = gretl_zero_matrix_new(1, n+2);
+static gretl_bundle *trivial_case (hw_info *hw,
+				   InitFlag iflag,
+				   int verbosity,
+				   PRN *prn,
+				   int *err)
+{
+    gretl_bundle *ret = NULL;
+    gretl_vector *cinfo;
+    gretl_vector *clustid;
+    double gsst = 0;
+    int m = hw->m;
+    int n = hw->n;
+    int j;
 
-    gretl_matrix_set(cinfo, 0, 0, m);
-    gretl_matrix_zero(hw->c);
-    
-    for (i=0; i<m; i++) {
-	hw->ic1[i] = 1;
-	for (j=0; j<n; j++) {
-	    x = gretl_matrix_get(hw->c, 0, j) + gretl_matrix_get(hw->a, i, j);
-	    gretl_matrix_set(hw->c, 0, j, x);
-	}
+    cinfo = gretl_vector_alloc(n+2);
+    clustid = gretl_unit_matrix_new(m, 1);
+
+    if (cinfo == NULL || clustid == NULL) {
+	*err = E_ALLOC;
+	return NULL;
     }
 
+    ret = gretl_bundle_new();
+    gsst = global_sst(hw);
+
+    cinfo->val[0] = m;
     for (j=0; j<n; j++) {
-	x = gretl_matrix_get(hw->c, 0, j) / m;
-	gretl_matrix_set(hw->c, 0, j, x);
-	gretl_matrix_set(cinfo, 0, j+1, x);
-    }
-
-    for (i=0; i<m; i++) {
-	for (j=0; j<n; j++) {
-	    x = gretl_matrix_get(hw->a, i, j) - gretl_matrix_get(hw->c, 0, j);
-	    sst += x * x;
+	if (iflag == INIT_USER) {
+	    cinfo->val[j+1] = hw->c->val[j];
+	} else {
+	    cinfo->val[j+1] = hw->ameans[j];
 	}
     }
-    
-    gretl_matrix_set(cinfo, 0, n+1, sst);
+    if (iflag == INIT_USER) {
+	cinfo->val[n+1] = compute_sst(hw);
+    } else {
+	cinfo->val[n+1] = gsst;
+    }
+
     add_clustinfo_colnames(hw->a, cinfo);
     gretl_bundle_donate_data(ret, "clustinfo", cinfo,
 			     GRETL_TYPE_MATRIX, 0);
+    gretl_bundle_donate_data(ret, "clustid", clustid,
+			     GRETL_TYPE_MATRIX, 0);
+    gretl_bundle_set_scalar(ret, "global_SST", gsst);
 
-    gretl_bundle_set_scalar(ret, "global_SST", sst);
+    if (verbosity) {
+	gretl_matrix_print_to_prn(cinfo, "Cluster information:", prn);
+    }
 
     return ret;
 }
@@ -765,7 +776,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	    *err = E_NONCONF;
 	}
     }
-    
+
     if (!*err && (k < 1 || m <= k)) {
 	*err = E_NONCONF;
     }
@@ -785,24 +796,19 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     }
 
     if (verbosity) {
-	pprintf(prn, "_kmeans: m=%d, n=%d, k=%d, initial centers %s\n",
+	pprintf(prn, "kmeans: m=%d, n=%d, k=%d, initial centers %s\n",
 		m, n, k, c0 == NULL ? "automatic" : "user-specified");
-	pprintf(prn, "%d randomized restarts requested\n", rand_starts);
+	if (k > 1) {
+	    pprintf(prn, "%d randomized restarts requested\n", rand_starts);
+	}
     }
 
     if (k == 1) {
-	clustid = gretl_column_vector_alloc(m);
-	for(i=0; i<m; i++) {
-	    clustid->val[i] = 1;
-	}
-	ret = trivial_case(&hw);
+	ret = trivial_case(&hw, iflag, verbosity, prn, err);
 	destroy_hw_info(&hw);
-	gretl_bundle_donate_data(ret, "clustid", clustid,
-				 GRETL_TYPE_MATRIX, 0);
-
 	return ret;
     }
-    
+
     /* integer-valued workspace */
     iwork = malloc(4 * k * sizeof *iwork);
     nc = iwork;
