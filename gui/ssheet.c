@@ -2718,11 +2718,13 @@ static gint on_sheet_delete (GtkWidget *w, GdkEvent *event,
 {
     int resp;
 
+#if 0 /* not yet */
     if (sheet->ed != NULL) {
-	/* a cell is is being edited */
+	/* a cell is being edited */
 	gtk_cell_editable_editing_done(sheet->ed);
 	sheet->ed = NULL;
     }
+#endif
 
     if (sheet_is_modified(sheet)) {
 	resp = yes_no_cancel_dialog("gretl",
@@ -2752,18 +2754,13 @@ static gint simple_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
 
 static void size_matrix_window (Spreadsheet *sheet)
 {
-    int nc = sheet->datacols;
+    int nc = MAX(sheet->datacols, 2);
     int w, h;
-
-    if (nc < 2) {
-	nc = 2;
-    }
 
     w = get_row_label_width(sheet) + nc * get_data_col_width() + 30;
     if (w > 640) {
 	w = 640;
     }
-
     h = sheet->n_rows * 20 + 160;
     if (h > 480) {
 	h = 480;
@@ -2782,7 +2779,6 @@ static void size_scalars_window (Spreadsheet *sheet)
     if (w > 640) {
 	w = 640;
     }
-
     h = sheet->n_rows * 20 + 160;
     if (h > 480) {
 	h = 480;
@@ -2817,8 +2813,9 @@ static void size_data_window (Spreadsheet *sheet, int hscroll)
 */
 
 static gboolean
-button_entered (GtkWidget *w, GdkEventCrossing *e, Spreadsheet *sheet)
+on_button_entered (GtkWidget *w, GdkEventCrossing *e, Spreadsheet *sheet)
 {
+#if 0 /* broken?? */
     if (sheet->ed != NULL) {
 	const gchar *s = gtk_entry_get_text(GTK_ENTRY(sheet->ed));
 	GtkTreePath *path;
@@ -2832,6 +2829,7 @@ button_entered (GtkWidget *w, GdkEventCrossing *e, Spreadsheet *sheet)
 	    gtk_tree_path_free(path);
 	}
     }
+#endif
 
     return FALSE;
 }
@@ -2904,7 +2902,7 @@ static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
 	    }
 	    if (item->flag != SHEET_ADD_BTN) {
 		g_signal_connect(G_OBJECT(button), "enter-notify-event",
-				 G_CALLBACK(button_entered), sheet);
+				 G_CALLBACK(on_button_entered), sheet);
 	    }
 	}
     }
@@ -3022,21 +3020,19 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
 	sheet_add_matrix_menu(sheet, main_vbox);
 	sheet_add_matrix_locator(sheet, main_vbox);
     } else {
-	if (sc != SHEET_EDIT_SCALARS) {
-	    if (sheet->varlist != NULL) {
-		int i;
+	if (sheet->varlist != NULL) {
+	    int i;
 
-		sheet->datacols = 0;
-		for (i=sheet->varlist[0]; i>0; i--) {
-		    if (series_is_hidden(dataset, sheet->varlist[i])) {
-			gretl_list_delete_at_pos(sheet->varlist, i);
-		    } else {
-			sheet->datacols += 1;
-		    }
+	    sheet->datacols = 0;
+	    for (i=sheet->varlist[0]; i>0; i--) {
+		if (series_is_hidden(dataset, sheet->varlist[i])) {
+		    gretl_list_delete_at_pos(sheet->varlist, i);
+		} else {
+		    sheet->datacols += 1;
 		}
-		if (sheet->varlist[0] < dataset->v - 1) {
-		    sheet->flags |= SHEET_SHORT_VARLIST;
-		}
+	    }
+	    if (sheet->varlist[0] < dataset->v - 1) {
+		sheet->flags |= SHEET_SHORT_VARLIST;
 	    }
 	}
 	sheet_add_toolbar(sheet, main_vbox);
@@ -3068,9 +3064,10 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
     }
 
     if (sheet->matrix != NULL) {
-	/* control buttons (for edting matrices only) */
+	/* control buttons (for editing matrices only) */
 	GtkWidget *button_box;
 
+	/* common setup */
 	button_box = gtk_hbutton_box_new();
 	gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box),
 				  GTK_BUTTONBOX_END);
@@ -3079,22 +3076,23 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
 	gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
 	gtk_container_set_border_width(GTK_CONTAINER(button_box), 0);
 
-	if (sheet->matrix != NULL && sheet->oldmat == NULL) {
+	if (sheet->oldmat != NULL) {
+	    /* editing an existing matrix */
 	    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
 	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
 	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			     G_CALLBACK(button_entered), sheet);
+			     G_CALLBACK(on_button_entered), sheet);
 	    g_signal_connect(G_OBJECT(tmp), "clicked",
 			     G_CALLBACK(get_data_from_sheet), sheet);
 	    g_signal_connect(G_OBJECT(tmp), "clicked",
 			     G_CALLBACK(simple_exit_sheet), sheet);
 	    gtk_widget_show(tmp);
-	} else if (sheet->matrix != NULL) {
+	} else {
 	    /* editing a new matrix */
 	    tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
 	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
 	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			     G_CALLBACK(button_entered), sheet);
+			     G_CALLBACK(on_button_entered), sheet);
 	    g_signal_connect(G_OBJECT(tmp), "clicked",
 			     G_CALLBACK(matrix_save_as), sheet);
 	    gtk_widget_show(tmp);
@@ -3102,7 +3100,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
 	    tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE);
 	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
 	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			     G_CALLBACK(button_entered), sheet);
+			     G_CALLBACK(on_button_entered), sheet);
 	    g_signal_connect(G_OBJECT(tmp), "clicked",
 			     G_CALLBACK(get_data_from_sheet), sheet);
 	    gtk_widget_show(tmp);
@@ -3112,27 +3110,10 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
 	    tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
 	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
 	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			     G_CALLBACK(button_entered), sheet);
+			     G_CALLBACK(on_button_entered), sheet);
 	    g_signal_connect(G_OBJECT(tmp), "clicked",
 			     G_CALLBACK(maybe_exit_sheet), sheet);
 	    gtk_widget_show(tmp);
-	} else {
-	    /* doing scalars */
-	    tmp = gtk_button_new_from_stock(GTK_STOCK_ADD);
-	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	    g_signal_connect(G_OBJECT(tmp), "clicked",
-			     G_CALLBACK(name_var_dialog), sheet);
-	    gtk_widget_show(tmp);
-
-	    tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			     G_CALLBACK(button_entered), sheet);
-	    g_signal_connect(G_OBJECT(tmp), "clicked",
-			     G_CALLBACK(maybe_exit_sheet), sheet);
-	    gtk_widget_show(tmp);
-
-	    set_scalar_edit_callback(scalars_changed_callback);
 	}
     }
 
