@@ -660,9 +660,9 @@ static gretl_bundle *trivial_case (hw_info *hw,
 
     add_clustinfo_colnames(hw->a, cinfo);
     gretl_bundle_donate_data(ret, "clustinfo", cinfo,
-			     GRETL_TYPE_MATRIX, 0);
+			     GRETL_TYPE_MATRIX);
     gretl_bundle_donate_data(ret, "clustid", clustid,
-			     GRETL_TYPE_MATRIX, 0);
+			     GRETL_TYPE_MATRIX);
     gretl_bundle_set_scalar(ret, "global_SST", gsst);
 
     if (verbosity) {
@@ -917,7 +917,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	    gretl_matrix_print_to_prn(cinfo, "Cluster information:", prn);
 	}
 	gretl_bundle_donate_data(ret, "clustinfo", cinfo,
-				 GRETL_TYPE_MATRIX, 0);
+				 GRETL_TYPE_MATRIX);
     }
 
     /* fill the output vector */
@@ -925,7 +925,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	gretl_vector_set(clustid, i, hw.ic1[i]);
     }
     gretl_bundle_donate_data(ret, "clustid", clustid,
-			     GRETL_TYPE_MATRIX, 0);
+			     GRETL_TYPE_MATRIX);
     /* for reference, add the global SST */
     gretl_bundle_set_scalar(ret, "global_SST", global_sst(&hw));
 
