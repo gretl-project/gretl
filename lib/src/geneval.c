@@ -14143,10 +14143,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    /* int k or matrix c0, required */
             node_type_error(f, 2, 0, m, p);
         } else {
-	    gretl_bundle *(*kmeans) (const gretl_matrix *, int,
-				     const gretl_matrix *,
-				     const gretl_bundle *,
-				     PRN *, int *);
 	    gretl_matrix *a = mat_node_get_real_matrix(l, p);
 	    gretl_matrix *c0 = NULL;
 	    gretl_bundle *opts = NULL;
@@ -14166,15 +14162,10 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		}
 	    }
 	    if (!p->err) {
-		kmeans = get_plugin_function("kmeans");
-		if (kmeans == NULL) {
-		    p->err = E_FOPEN;
-		} else {
-		    ret = aux_bundle_node(p);
-		}
+		ret = aux_bundle_node(p);
 	    }
 	    if (!p->err) {
-		ret->v.b = kmeans(a, k, c0, opts, p->prn, &p->err);
+		ret->v.b = gretl_kmeans(a, k, c0, opts, p->prn, &p->err);
 	    }
 	}
     }
