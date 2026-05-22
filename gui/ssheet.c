@@ -391,7 +391,7 @@ static void start_editing (GtkTreeView *tv, gint row, gint col)
     /* Make sure the row is selected & visible */
     gtk_tree_view_set_cursor(tv, path,
 			     gtk_tree_view_get_column(tv, col),
-			     TRUE);   /* start_editing = TRUE */
+			     TRUE); /* start_editing = TRUE */
     gtk_tree_path_free(path);
 }
 
@@ -654,19 +654,6 @@ static void on_value_edited (GtkCellRendererText *cell,
 	move_row_focus(sheet, row, col, +1);
     }
 }
-
-#if 0
-
-static void cell_edited_callback (GtkTreeViewColumn *column,
-				  const gchar *path_string,
-				  const gchar *user_text,
-				  Spreadsheet *sheet)
-
-{
-    on_value_edited(NULL, path_string, user_text, sheet);
-}
-
-#endif
 
 static void
 spreadsheet_scroll_to_new_col (Spreadsheet *sheet, GtkTreeViewColumn *column)
@@ -2199,7 +2186,6 @@ static gboolean on_edit_keypress (GtkCellEditable *ed,
 #if CELLDEBUG
 	fprintf(stderr, " GDK_Up\n");
 #endif
-	fprintf(stderr, " GDK_Up\n");
 	gtk_cell_editable_editing_done(sheet->ed);
 	sheet->ed = NULL;
 	move_row_focus(sheet, row, col, -1);
@@ -2219,6 +2205,7 @@ static gboolean on_edit_keypress (GtkCellEditable *ed,
 	gtk_cell_editable_editing_done(sheet->ed);
 	sheet->ed = NULL;
 	move_column_focus(sheet, row, col, -1);
+	return TRUE;
     } else if (key->keyval == GDK_Return) {
 #if CELLDEBUG
 	fprintf(stderr, " GDK_Return\n");
@@ -2328,33 +2315,6 @@ static gboolean on_sheet_keypress (GtkWidget *widget,
     }
 }
 
-#if 0 /* _may_ be wanted in a modified form, for on_sheet_click() */
-
-static void editing_check (Spreadsheet *sheet)
-{
-    GtkTreePath *oldpath = NULL;
-    GtkTreeViewColumn *oldcol = NULL;
-
-    gtk_tree_view_get_cursor(sheet->tv, &oldpath, &oldcol);
-
-    if (oldpath != NULL) {
-	if (oldcol != NULL && sheet->ed != NULL) {
-	    const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sheet->ed));
-	    gchar *pathstr = gtk_tree_path_to_string(oldpath);
-
-# if CELLDEBUG
-	    fprintf(stderr, "click: calling on_value_edited\n");
-# endif
-	    /* FIXME */
-	    cell_edited_callback(oldcol, pathstr, txt, sheet);
-	    g_free(pathstr);
-	}
-	gtk_tree_path_free(oldpath);
-    }
-}
-
-#endif
-
 static gint on_sheet_click (GtkWidget *view,
 			    GdkEventButton *event,
 			    Spreadsheet *sheet)
@@ -2391,7 +2351,7 @@ static gint on_sheet_click (GtkWidget *view,
 #if CELLDEBUG
 	    fprintf(stderr, "*** Clicked column: colnum = %d\n", colnum);
 #endif
-	    if (colnum == 0 && !editing_scalars(sheet)) {
+	    if (colnum == 0) {
 		/* don't respond to a click in a non-editable column */
 		ret = TRUE;
 	    } else if (editing_scalars(sheet) && colnum == 2) {
@@ -2399,8 +2359,7 @@ static gint on_sheet_click (GtkWidget *view,
 		sheet_delete_scalar(sheet, path);
 	    } else {
 		/* activate the clicked cell for editing */
-		gtk_tree_view_set_cursor(sheet->tv, path,
-					 column, TRUE);
+		gtk_tree_view_set_cursor(sheet->tv, path, column, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -2754,10 +2713,16 @@ static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
     return FALSE;
 }
 
-static gint sheet_delete_event (GtkWidget *w, GdkEvent *event,
-				Spreadsheet *sheet)
+static gint on_sheet_delete (GtkWidget *w, GdkEvent *event,
+			     Spreadsheet *sheet)
 {
     int resp;
+
+    if (sheet->ed != NULL) {
+	/* a cell is is being edited */
+	gtk_cell_editable_editing_done(sheet->ed);
+	sheet->ed = NULL;
+    }
 
     if (sheet_is_modified(sheet)) {
 	resp = yes_no_cancel_dialog("gretl",
@@ -3047,7 +3012,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
     }
 
     g_signal_connect(G_OBJECT(sheet->win), "delete-event",
-		     G_CALLBACK(sheet_delete_event), sheet);
+		     G_CALLBACK(on_sheet_delete), sheet);
 
     main_vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 5);
@@ -3097,9 +3062,6 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
     if (sheet->matrix != NULL) {
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(free_matrix_sheet), sheet);
-    } else if (sc == SHEET_EDIT_SCALARS) {
-	g_signal_connect(G_OBJECT(sheet->win), "destroy",
-			 G_CALLBACK(free_spreadsheet), psheet); /* FIXME? */
     } else {
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(free_spreadsheet), psheet);
@@ -3236,20 +3198,19 @@ void show_spreadsheet (SheetCmd sc)
 void show_spreadsheet_for_series (int varnum)
 {
     static Spreadsheet *sheet;
-    int c = SHEET_EDIT_VARLIST;
+    int sc = SHEET_EDIT_VARLIST;
 
-    if (sheet != NULL) {
-	/* FIXME? */
+    if (sheet != NULL && sheet->cmd == sc) {
 	gtk_window_present(GTK_WINDOW(sheet->win));
 	return;
     }
 
-    sheet = spreadsheet_new(c, varnum);
+    sheet = spreadsheet_new(sc, varnum);
     if (sheet == NULL) {
 	return;
     }
 
-    real_show_spreadsheet(&sheet, c, 0);
+    real_show_spreadsheet(&sheet, sc, 0);
 }
 
 void edit_scalars (void)
