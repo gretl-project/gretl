@@ -614,6 +614,53 @@ static void add_clustinfo_colnames (const gretl_matrix *a,
     }
 }
 
+static gretl_bundle *trivial_case(hw_info *hw)
+{
+/* called with k=1: in this case, there's almost nothing
+   to do
+*/
+    int err;
+    int i, j;
+    int m = hw->m, n = hw->n;
+    double sst = 0, x;
+
+    gretl_bundle *ret = gretl_bundle_new();
+    gretl_matrix *cinfo = gretl_zero_matrix_new(1, n+2);
+
+    gretl_matrix_set(cinfo, 0, 0, m);
+    gretl_matrix_zero(hw->c);
+    
+    for (i=0; i<m; i++) {
+	hw->ic1[i] = 1;
+	for (j=0; j<n; j++) {
+	    x = gretl_matrix_get(hw->c, 0, j) + gretl_matrix_get(hw->a, i, j);
+	    gretl_matrix_set(hw->c, 0, j, x);
+	}
+    }
+
+    for (j=0; j<n; j++) {
+	x = gretl_matrix_get(hw->c, 0, j) / m;
+	gretl_matrix_set(hw->c, 0, j, x);
+	gretl_matrix_set(cinfo, 0, j+1, x);
+    }
+
+    for (i=0; i<m; i++) {
+	for (j=0; j<n; j++) {
+	    x = gretl_matrix_get(hw->a, i, j) - gretl_matrix_get(hw->c, 0, j);
+	    sst += x * x;
+	}
+    }
+    
+    gretl_matrix_set(cinfo, 0, n+1, sst);
+    add_clustinfo_colnames(hw->a, cinfo);
+    gretl_bundle_donate_data(ret, "clustinfo", cinfo,
+			     GRETL_TYPE_MATRIX, 0);
+
+    gretl_bundle_set_scalar(ret, "global_SST", sst);
+
+    return ret;
+}
+
 static int kmeans_init (hw_info *hw,
 			gretl_matrix *an,
 			int *nc, int *itran,
@@ -718,9 +765,11 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	    *err = E_NONCONF;
 	}
     }
-    if (!*err && (k <= 1 || m <= k)) {
+    
+    if (!*err && (k < 1 || m <= k)) {
 	*err = E_NONCONF;
     }
+
     if (!*err && opts != NULL) {
 	*err = check_opts((gretl_bundle *) opts, &rand_starts,
 			  &verbosity);
@@ -741,6 +790,19 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	pprintf(prn, "%d randomized restarts requested\n", rand_starts);
     }
 
+    if (k == 1) {
+	clustid = gretl_column_vector_alloc(m);
+	for(i=0; i<m; i++) {
+	    clustid->val[i] = 1;
+	}
+	ret = trivial_case(&hw);
+	destroy_hw_info(&hw);
+	gretl_bundle_donate_data(ret, "clustid", clustid,
+				 GRETL_TYPE_MATRIX, 0);
+
+	return ret;
+    }
+    
     /* integer-valued workspace */
     iwork = malloc(4 * k * sizeof *iwork);
     nc = iwork;
