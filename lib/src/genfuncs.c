@@ -9174,3 +9174,56 @@ DATASET *matrix_dset_plus_lists (const gretl_matrix *m1,
 
     return mdset;
 }
+
+/**
+ * gretl_kmeans:
+ *
+ * @X: data matrix, m x n.
+ * @k: the number of clusters.
+ * @c0: matrix of initial centroids, k x n, or NULL.
+ * @opts: bundle containing options, or NULL.
+ * @prn: gretl printer.
+ * @err: location to receive error code.
+ *
+ * Assigns the m data-points to k clusters, using algorithm
+ * ASA136 (Hartigan and Wong) to minimize the Euclidean
+ * distance between the points and their respective centroids.
+ *
+ * If the argument @c0 is non-NULL this matrix is used to
+ * initialize the ASA136 iteration, with its row dimension
+ * specifying k. Otherwise the initial @k centroids are set
+ * using the procedure suggested by Hartigan and Wong.
+ *
+ * The @pts bundle can contain integer-valued options
+ * under the keys "rand_starts" and "verbosity". The first
+ * of these specifies a number of re-starts of the k-means
+ * algorithm using centroids based on k of the data points
+ * selected at random. The verbosity value can be 0, 1, 2
+ * or 3, with a default value of 0.
+ *
+ * Returns: a bundle containing @clustid, an m-vector holding the
+ * 1-based index of the cluster to which each data-point is assigned,
+ * plus @clustinfo, a k x (n+2) matrix holding for each cluster the
+ * number of points it comprises, the means of the n variables
+ * and the SST. In addition the global SST is provided.
+ *
+ */
+
+gretl_bundle *gretl_kmeans (const gretl_matrix *X, int k,
+			    const gretl_matrix *c0,
+			    const gretl_bundle *opts,
+			    PRN *prn, int *err)
+{
+    gretl_bundle *(*kmeans) (const gretl_matrix *, int,
+			     const gretl_matrix *,
+			     const gretl_bundle *,
+			     PRN *, int *);
+
+    kmeans = get_plugin_function("kmeans");
+    if (kmeans == NULL) {
+	*err = E_FOPEN;
+	return NULL;
+    } else {
+	return kmeans(X, k, c0, opts, prn, err);
+    }
+}

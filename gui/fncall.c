@@ -2742,7 +2742,10 @@ static void compose_fncall_line (char *line,
 				 char **tmpname,
 				 int *grab_bundle)
 {
+    GretlType pt;
     arglist *alist;
+    char *dstr;
+    int i;
 
     alist = arglist_lookup(cinfo->pkgname, cinfo->func);
     if (alist == NULL) {
@@ -2770,13 +2773,19 @@ static void compose_fncall_line (char *line,
     strcat(line, "(");
 
     if (cinfo->args != NULL) {
-	int i;
-
 	for (i=0; i<cinfo->n_params; i++) {
 	    if (is_nullarg_label(cinfo->args[i])) {
 		strcat(line, "null");
 	    } else {
-		strcat(line, cinfo->args[i]);
+		pt = fn_param_type(cinfo->func, i);
+		if (pt == GRETL_TYPE_DOUBLE && strchr(cinfo->args[i], ',')) {
+		    dstr = gretl_strdup(cinfo->args[i]);
+		    gretl_charsub(dstr, ',', '.');
+		    strcat(line, dstr);
+		    free(dstr);
+		} else {
+		    strcat(line, cinfo->args[i]);
+		}
 	    }
 	    if (alist != NULL) {
 		arglist_record_arg(alist, i, cinfo->args[i]);

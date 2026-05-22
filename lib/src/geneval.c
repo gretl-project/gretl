@@ -14228,41 +14228,37 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
     } else if (f == HF_KMEANS) {
+	post_process = 0;
         if (l->t != MAT) {
             /* matrix a, required */
             node_type_error(f, 1, MAT, l, p);
-        } else if (m->t != NUM) {
-            /* int k, required */
-            node_type_error(f, 2, NUM, m, p);
+        } else if (m->t != NUM && m->t != MAT) {
+	    /* int k or matrix c0, required */
+            node_type_error(f, 2, 0, m, p);
         } else {
 	    gretl_matrix *a = mat_node_get_real_matrix(l, p);
-	    int k = node_get_int(m, p);
-	    const char *uvname = NULL;
-	    user_var *uv = NULL;
+	    gretl_matrix *c0 = NULL;
+	    gretl_bundle *opts = NULL;
+	    int k = 0;
 
+	    if (m->t == NUM) {
+		k = node_get_int(m, p);
+	    } else {
+		c0 = m->v.m;
+	    }
 	    if (!p->err && !null_node(r)) {
-		/* optional pointer-to-matrix */
-		uv = ptr_node_get_uvar(r, MAT, p);
-		if (uv != NULL) {
-		    uvname = user_var_get_name(uv);
+		/* arg3: optional bundle */
+		if (r->t == BUNDLE) {
+		    opts = r->v.b;
+		} else {
+		    node_type_error(f, 3, BUNDLE, r, p);
 		}
 	    }
 	    if (!p->err) {
-		gretl_matrix *(*kmeans) (const gretl_matrix *, int,
-					 gretl_matrix **, int *);
-
-		kmeans = get_plugin_function("kmeans");
-		if (kmeans == NULL) {
-		    p->err = E_FOPEN;
-		} else {
-		    gretl_matrix *c = NULL;
-		    gretl_matrix **mp = (uv != NULL)? &c : NULL;
-
-		    A = kmeans(a, k, mp, &p->err);
-		    if (!p->err && uv != NULL && c != NULL) {
-			user_var_add_or_replace(uvname, GRETL_TYPE_MATRIX, c);
-		    }
-		}
+		ret = aux_bundle_node(p);
+	    }
+	    if (!p->err) {
+		ret->v.b = gretl_kmeans(a, k, c0, opts, p->prn, &p->err);
 	    }
 	}
     }

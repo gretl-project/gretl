@@ -1355,6 +1355,7 @@ static NODE *powterm (parser *p, NODE *l)
 	} else if (sym == G_LPR) {
 	    /* (bundle member or listvar) plus lag spec? */
 	    if (l->t == BMEMB || l->t == LISTVAR) {
+		set_lag_parse_on(p);
 		t = newb2(LAG, l, NULL);
 		if (t != NULL) {
 		    /* 2024-05-02: call base() instead of expr(): this
@@ -1363,6 +1364,7 @@ static NODE *powterm (parser *p, NODE *l)
 		    */
 		    t->R = base(p, NULL);
 		}
+		set_lag_parse_off(p);
 	    } else {
 		context_error('(', p, "powterm");
 	    }
