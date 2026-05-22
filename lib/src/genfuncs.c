@@ -9222,7 +9222,7 @@ gretl_bundle *gretl_kmeans (const gretl_matrix *X, int k,
     kmeans = get_plugin_function("kmeans");
     if (kmeans == NULL) {
 	*err = E_FOPEN;
-	return NULL
+	return NULL;
     } else {
 	return kmeans(X, k, c0, opts, prn, err);
     }
