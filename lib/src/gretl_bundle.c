@@ -181,7 +181,7 @@ static int bundled_item_copy_in_data (bundled_item *item, void *ptr)
 {
     int err = 0;
 
-    if (item->virtual) {
+    if (item->is_virtual) {
 	item->data = gretl_strdup((char *) ptr);
 	return 0;
     }
@@ -264,10 +264,10 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
     item->type = type;
     item->key = NULL;
     item->note = NULL;
-    item->virtual = 0;
+    item->is_virtual = 0;
 
     if (item->type == GRETL_TYPE_STRING && is_virtual_object(ptr)) {
-	item->virtual = 1;
+	item->is_virtual = 1;
 	item->type = virtual_type(ptr);
     }
 
@@ -290,7 +290,7 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
 
 static void bundled_item_free_data (bundled_item *item)
 {
-    if (item->virtual) {
+    if (item->is_virtual) {
 	free(item->data);
     } else if (item->type == GRETL_TYPE_MATRIX ||
 	       item->type == GRETL_TYPE_SERIES) {
@@ -520,7 +520,7 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
 static void *real_bundle_get_data (gretl_bundle *bundle,
                                    const char *key,
                                    GretlType *type,
-				   int *virtual,
+				   int *is_virtual,
                                    int get_target,
                                    int *err)
 {
@@ -550,8 +550,8 @@ static void *real_bundle_get_data (gretl_bundle *bundle,
 	    if (type != NULL) {
 		*type = item->type;
 	    }
-	    if (virtual != NULL) {
-		*virtual = item->virtual;
+	    if (is_virtual != NULL) {
+		*is_virtual = item->is_virtual;
 	    }
         } else {
             if (err != NULL) {
@@ -575,7 +575,7 @@ static void *real_bundle_get_data (gretl_bundle *bundle,
  * @bundle: bundle to access.
  * @key: name of key to access.
  * @type: location to receive data type, or NULL.
- * @virtual: location to receive "virtual" flag.
+ * @is_virtual: location to receive "is_virtual" flag.
  * @err: location to receive error code, or NULL.
  *
  * Returns: the item pointer associated with @key in the
@@ -588,11 +588,11 @@ static void *real_bundle_get_data (gretl_bundle *bundle,
  */
 
 void *gretl_bundle_get_element (gretl_bundle *bundle, const char *key,
-                                GretlType *type, int *virtual,
+                                GretlType *type, int *is_virtual,
 				int *err)
 {
     return real_bundle_get_data(bundle, key, type,
-                                virtual, 0, err);
+                                is_virtual, 0, err);
 }
 
 /**
@@ -628,7 +628,7 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
  * @bundle: bundle to access.
  * @key: name of key to access.
  * @type: location to receive data type, or NULL.
- * @virtual: location to receive virtual status, or NULL.
+ * @is_virtual: location to receive is_virtual status, or NULL.
  * @err: location to receive error code, or NULL.
  *
  * Returns: the item pointer associated with @key in the
@@ -646,11 +646,11 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
  */
 
 void *gretl_bundle_get_data_full (gretl_bundle *bundle, const char *key,
-				  GretlType *type, int *virtual,
+				  GretlType *type, int *is_virtual,
 				  int *err)
 {
     return real_bundle_get_data(bundle, key, type,
-                                virtual, 0, err);
+                                is_virtual, 0, err);
 }
 
 /* As gretl_bundle_get_data() except that the caller is looking
@@ -934,14 +934,14 @@ gretl_matrix *gretl_bundle_get_series (gretl_bundle *bundle,
 {
     gretl_matrix *m = NULL;
     GretlType type;
-    int virtual = 0;
+    int is_virtual = 0;
     void *ptr;
     int myerr = 0;
 
     ptr = gretl_bundle_get_data_full(bundle, key, &type,
-				     &virtual, &myerr);
+				     &is_virtual, &myerr);
 
-    if (ptr == NULL || virtual) {
+    if (ptr == NULL || is_virtual) {
 	myerr = E_INVARG;
     } else if (type != GRETL_TYPE_SERIES) {
         myerr = E_TYPES;
@@ -1346,14 +1346,14 @@ const char *gretl_bundle_get_string (gretl_bundle *bundle,
 {
     const char *s = NULL;
     GretlType type;
-    int virtual = 0;
+    int is_virtual = 0;
     void *ptr;
     int myerr = 0;
 
     ptr = gretl_bundle_get_data_full(bundle, key, &type,
-				     &virtual, &myerr);
+				     &is_virtual, &myerr);
 
-    if (virtual) {
+    if (is_virtual) {
 	s = get_gen_str(ptr);
     } else if (type == GRETL_TYPE_STRING) {
 	s = (const char *) ptr;
@@ -1497,7 +1497,7 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 
         if (item != NULL) {
             replace = 1;
-            if (item->type == type && !item->virtual) {
+            if (item->type == type && !item->is_virtual) {
                 /* we can take a shortcut */
                 return bundled_item_replace_data(item, ptr, type, copy);
             }
@@ -2467,7 +2467,7 @@ static void real_print_bundled_item (bundled_item *item,
     indent = 2 + 2 * bip->indent;
     bufspace(indent, prn);
 
-    if (item->virtual) {
+    if (item->is_virtual) {
 	const char *ts = gretl_type_get_name(item->type);
 	char *s = (char *) item->data;
 
@@ -2726,7 +2726,7 @@ static void write_item_constructor (gpointer value, gpointer p)
     GretlType t = item->type;
     GString *gs = p;
 
-    if (item->virtual) {
+    if (item->is_virtual) {
         char *s = (char *) item->data;
 
 	g_string_append_printf(gs, "%s=\"%s\",", kstr, s);
@@ -2906,13 +2906,13 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 
     if (item->type == GRETL_TYPE_STRING ||
 	gretl_is_scalar_type(item->type) ||
-	item->virtual) {
+	item->is_virtual) {
         pputc(prn, '>');
     } else {
         pputs(prn, ">\n");
     }
 
-    if (item->type == GRETL_TYPE_STRING || item->virtual) {
+    if (item->type == GRETL_TYPE_STRING || item->is_virtual) {
         gretl_xml_put_string((char *) item->data, prn);
     } else if (item->type == GRETL_TYPE_DOUBLE) {
         double x = *(double *) item->data;
@@ -2987,7 +2987,7 @@ void gretl_bundle_serialize (gretl_bundle *b, const char *name,
 static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 {
     GretlType type;
-    int virtual;
+    int is_virtual;
     int size;
     char *key;
     int err = 0;
@@ -2997,12 +2997,12 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 	    size = 0;
             key = (char *) xmlGetProp(cur, (XUC) "key");
             type = gretl_xml_get_type_property(cur);
-	    virtual = gretl_xml_get_prop_as_bool(cur, "virtual");
+	    is_virtual = gretl_xml_get_prop_as_bool(cur, "virtual");
 	    gretl_xml_get_prop_as_int(cur, "size", &size); /* legacy */
             if (key == NULL || type == 0) {
                 err = E_DATA;
             } else {
-		if (type == GRETL_TYPE_STRING || virtual) {
+		if (type == GRETL_TYPE_STRING || is_virtual) {
                     char *s;
 
                     if (!gretl_xml_node_get_trimmed_string(cur, doc, &s)) {

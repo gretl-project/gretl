@@ -41,7 +41,7 @@ typedef struct bundled_item_ bundled_item;
 
 struct bundled_item_ {
     GretlType type;
-    int virtual;
+    int is_virtual;
     gpointer data;
     char *note;
     char *key;
@@ -62,14 +62,14 @@ void *gretl_bundle_get_content (gretl_bundle *bundle);
 int gretl_bundles_swap_content (gretl_bundle *b1, gretl_bundle *b2);
 
 void *gretl_bundle_get_element (gretl_bundle *bundle, const char *key,
-				GretlType *type, int *virtual,
+				GretlType *type, int *is_virtual,
 				int *err);
 
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 			     GretlType *type, int *err);
 
 void *gretl_bundle_get_data_full (gretl_bundle *bundle, const char *key,
-				  GretlType *type, int *virtual,
+				  GretlType *type, int *is_virtual,
 				  int *err);
 
 void *gretl_bundle_get_target (gretl_bundle *bundle, const char *key,

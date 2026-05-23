@@ -1855,9 +1855,9 @@ static int gretl_bundle_send (gretl_bundle *b, int dest)
     for (i=0; i<nk && !err; i++) {
         /* loop across bundle keys */
         const char *key = gretl_array_get_data(keys, i);
-	int virtual = 0;
+	int is_virtual = 0;
 
-        data = gretl_bundle_get_data_full(b, key, &type, &virtual, &err);
+        data = gretl_bundle_get_data_full(b, key, &type, &is_virtual, &err);
         if (!err) {
             /* send info on the bundle member */
             compose_msgbuf(msgbuf, type, key, data);
@@ -1867,7 +1867,7 @@ static int gretl_bundle_send (gretl_bundle *b, int dest)
         if (err) {
             break;
         }
-	if (virtual) {
+	if (is_virtual) {
 	    err = gretl_string_send(data, dest);
 	} else if (type == GRETL_TYPE_MATRIX ||
 		   type == GRETL_TYPE_SERIES) {

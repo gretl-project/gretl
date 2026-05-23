@@ -167,7 +167,7 @@ static gretl_bundle *node_get_bundle (NODE *n, parser *p);
 static int gen_type_is_arrayable (int gen_t);
 static GretlType gretl_type_from_gen_type (int gen_t);
 static NODE *bundled_series_node (NODE *l, gretl_matrix *m,
-				  int virtual, int *is_tmp,
+				  int is_virtual, int *is_tmp,
 				  parser *p);
 
 static int user_qsorting;
@@ -6171,14 +6171,14 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	const char *key = mspec_get_string(r->v.mspec, 0);
 	GretlType type = GRETL_TYPE_NONE;
 	void *val = NULL;
-	int virtual = 0;
+	int is_virtual = 0;
 	int is_tmp = 0;
 
 	if (key == NULL) {
 	    p->err = E_TYPES;
 	} else {
 	    val = gretl_bundle_get_element(l->v.b, key, &type,
-					   &virtual, &p->err);
+					   &is_virtual, &p->err);
 	}
 	if (!p->err) {
 	    int t = gen_type_from_gretl_type(type);
@@ -6191,7 +6191,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	    } else if (t == SERIES) {
 		gretl_matrix *m = val;
 
-		ret = bundled_series_node(l, m, virtual, &is_tmp, p);
+		ret = bundled_series_node(l, m, is_virtual, &is_tmp, p);
 	    } else {
 		ret = get_aux_node(p, t, 0, 0);
 		if (!p->err) {
@@ -11759,7 +11759,7 @@ static NODE *eval_Rfunc (NODE *t, NODE *r, parser *p)
 
 static NODE *bundled_series_node (NODE *l,
 				  gretl_matrix *m,
-				  int virtual,
+				  int is_virtual,
                                   int *is_tmp,
 				  parser *p)
 {
@@ -11775,7 +11775,7 @@ static NODE *bundled_series_node (NODE *l,
 	ret = aux_matrix_node(p);
 	if (!p->err) {
 	    ret->v.m = m;
-	    *is_tmp = virtual;
+	    *is_tmp = is_virtual;
 	}
 	return ret;
     }
@@ -11813,7 +11813,7 @@ static NODE *bundled_series_node (NODE *l,
 	ret = aux_matrix_node(p);
 	if (!p->err) {
 	    ret->v.m = m;
-	    *is_tmp = virtual;
+	    *is_tmp = is_virtual;
 	}
     }
 
@@ -11876,7 +11876,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     char *key = r->v.str;
     GretlType type;
     int querying;
-    int virtual = 0;
+    int is_virtual = 0;
     int is_tmp = 0;
     void *val = NULL;
     NODE *ret = NULL;
@@ -11895,7 +11895,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     }
 
     val = gretl_bundle_get_element(l->v.b, key, &type,
-				   &virtual, &p->err);
+				   &is_virtual, &p->err);
     if (p->err) {
         return ret;
     }
@@ -11906,11 +11906,11 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 	return ret;
     }
 
-    if (type != GRETL_TYPE_SERIES && !virtual) {
+    if (type != GRETL_TYPE_SERIES && !is_virtual) {
 	ret = aux_node_for_type(type, p);
     }
 
-    if (virtual) {
+    if (is_virtual) {
 	ret = virtual_object_node(l, (const char *) val,
 				  type, &is_tmp, p);
     } else if (gretl_is_scalar_type(type)) {
