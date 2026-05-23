@@ -49,10 +49,10 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     const char *note;
     GretlType type;
     void *val;
-    int virtual = 0;
+    int is_virtual = 0;
     int err = 0;
 
-    val = gretl_bundle_get_data_full(bundle, key, &type, &virtual, &err);
+    val = gretl_bundle_get_data_full(bundle, key, &type, &is_virtual, &err);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -60,7 +60,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 
     note = gretl_bundle_get_note(bundle, key);
 
-    if (virtual) {
+    if (is_virtual) {
 	gretl_matrix *m;
 
 	m = bundle_get_virtual_object(bundle, type, (const char *) val,
@@ -246,7 +246,7 @@ static gchar *bundle_content_label (bundled_item *bi,
 	    label = g_strdup_printf("%s (%s, length %d)", keystr,
 				    typestr, n);
 	}
-    } else if (bi->virtual) {
+    } else if (bi->is_virtual) {
 	if (note != NULL) {
 	    label = g_strdup_printf("%s (%s: %s)", keystr,
 				    typestr, note);
