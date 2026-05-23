@@ -84,7 +84,7 @@ typedef struct {
     int added_vars;
     int orig_main_v;
     int next;
-    SheetCmd cmd;
+    SheetCtx ctx;
     SheetFlags flags;
     guint cid;
     guint point;
@@ -94,10 +94,13 @@ typedef struct {
     char numfmt[8];
 } Spreadsheet;
 
-#define editing_series(s) (s->cmd == SHEET_EDIT_VARLIST || \
-                           s->cmd == SHEET_EDIT_DATASET || \
-			   s->cmd == SHEET_EDIT_NEWVAR || \
-                           s->cmd == SHEET_NEW_DATASET)
+#define editing_series(s) (s->ctx == SHEET_EDIT_VARLIST || \
+                           s->ctx == SHEET_EDIT_DATASET || \
+			   s->ctx == SHEET_EDIT_NEWVAR || \
+                           s->ctx == SHEET_NEW_DATASET)
+#define editing_matrix(s) (s->ctx == SHEET_NEW_MATRIX || \
+			   s->ctx == SHEET_EDIT_MATRIX)
+#define editing_scalars(s) (s->ctx == SHEET_EDIT_SCALARS)
 
 #define SERIES_DIGITS 10
 
@@ -188,8 +191,6 @@ static GtkActionEntry matrix_items[] = {
 static Spreadsheet *scalars_sheet;
 
 #define sheet_is_modified(s) (s->flags & SHEET_MODIFIED)
-
-#define editing_scalars(s) (s->cmd == SHEET_EDIT_SCALARS)
 
 static void sheet_set_modified (Spreadsheet *sheet, gboolean s)
 {
@@ -532,7 +533,11 @@ static void update_sheet_matrix_element (Spreadsheet *sheet,
 {
     int i = atoi(path_string);
     int j = colnum - 1;
-    double x = atof(new_text);
+    double x;
+
+#if SSDEBUG
+    fprintf(stderr, "update_sheet_matrix_element: new_text = %s\n", new_text);
+#endif
 
     if (!strcmp(new_text, "nan")) {
 	x = NADBL;
@@ -553,6 +558,10 @@ maybe_update_store (Spreadsheet *sheet, const gchar *new_text,
     GtkTreeIter iter;
     gchar *old_text;
     gint colnum;
+
+#if SSDEBUG
+    fprintf(stderr, "maybe_update_store: new_text = '%s'\n", new_text);
+#endif
 
     gtk_tree_view_get_cursor(view, NULL, &col);
     if (col == NULL) {
@@ -649,6 +658,9 @@ static void on_value_edited (GtkCellRendererText *cell,
 	    maybe_update_store(sheet, new_text, path_string);
 	    g_free(new_text);
 	}
+	/* FIXME we shouldn't do this when on_value_edited is
+	   triggered by Save button or exit
+	*/
 	/* down to next cell? */
 	get_current_location(sheet->tv, &row, &col);
 	move_row_focus(sheet, row, col, +1);
@@ -1299,8 +1311,6 @@ static void update_matrix_from_sheet_full (Spreadsheet *sheet)
 {
     update_sheet_matrix(sheet);
 
-    /* in case we're editing a pre-existing matrix, carry the
-       modifications back */
     if (sheet->oldmat != NULL) {
 	update_saved_matrix(sheet);
     }
@@ -1639,14 +1649,13 @@ static void matrix_save_as (GtkWidget *w, Spreadsheet *sheet)
     }
 }
 
-#define new_matrix(s) (s->cmd == SHEET_EDIT_MATRIX && \
-                       s->oldmat == NULL)
+#define new_matrix(s) (s->ctx == SHEET_NEW_MATRIX)
 
 static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 {
     if (!sheet_is_modified(sheet) && !new_matrix(sheet)) {
 	infobox(_("No changes were made"));
-    } else if (sheet->cmd == SHEET_EDIT_MATRIX) {
+    } else if (editing_matrix(sheet)) {
 	update_matrix_from_sheet_full(sheet);
     } else {
 	update_dataset_from_sheet(sheet);
@@ -2019,7 +2028,7 @@ static void maybe_update_scalars_sheet (Spreadsheet *sheet)
     }
 }
 
-static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd sc)
+static int add_data_to_sheet (Spreadsheet *sheet, SheetCtx ctx)
 {
     gchar rowlabel[OBSLEN];
     GtkTreeView *view = sheet->tv;
@@ -2043,7 +2052,7 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd sc)
     sheet->n_rows = dataset->t2 - dataset->t1 + 1;
 
     /* insert data values */
-    if (sc == SHEET_NEW_DATASET || sc == SHEET_EDIT_NEWVAR) {
+    if (ctx == SHEET_NEW_DATASET || ctx == SHEET_EDIT_NEWVAR) {
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 	for (t=dataset->t1; t<=dataset->t2; t++) {
 	    gtk_list_store_set(store, &iter, 1, "", -1);
@@ -2499,7 +2508,7 @@ static int build_sheet_view (Spreadsheet *sheet)
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
     gtk_tree_selection_set_mode(select, GTK_SELECTION_NONE);
 
-    if (sheet->cmd != SHEET_EDIT_SCALARS) {
+    if (sheet->ctx != SHEET_EDIT_SCALARS) {
 	g_signal_connect(G_OBJECT(view), "cursor-changed",
 			 G_CALLBACK(update_cell_position), sheet);
     }
@@ -2585,7 +2594,7 @@ static int sheet_list_empty (Spreadsheet *sheet)
     return ret;
 }
 
-static Spreadsheet *spreadsheet_new (SheetCmd sc, int varnum)
+static Spreadsheet *spreadsheet_new (SheetCtx ctx, int varnum)
 {
     Spreadsheet *sheet;
 
@@ -2614,7 +2623,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd sc, int varnum)
     sheet->oldmat = NULL;
     sheet->colnames = NULL;
     sheet->rownames = NULL;
-    sheet->cmd = sc;
+    sheet->ctx = ctx;
     sheet->flags = 0;
 
     sheet->edits = NULL;
@@ -2624,7 +2633,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd sc, int varnum)
 
     strcpy(sheet->numfmt, "%.*g");
 
-    if (sc == SHEET_EDIT_MATRIX || sc == SHEET_EDIT_SCALARS) {
+    if (editing_matrix(sheet) || editing_scalars(sheet)) {
 	sheet->digits = DBL_DIG;
 	return sheet;
     }
@@ -2636,11 +2645,11 @@ static Spreadsheet *spreadsheet_new (SheetCmd sc, int varnum)
 	sheet->flags |= SHEET_SUBSAMPLED;
     }
 
-    if (sheet->cmd == SHEET_NEW_DATASET) {
+    if (sheet->ctx == SHEET_NEW_DATASET) {
 	sheet->varlist = gretl_list_new(1);
     } else {
-	if (sheet->cmd == SHEET_EDIT_VARLIST ||
-	    sheet->cmd == SHEET_EDIT_NEWVAR) {
+	if (sheet->ctx == SHEET_EDIT_VARLIST ||
+	    sheet->ctx == SHEET_EDIT_NEWVAR) {
 	    if (varnum > 0) {
 		sheet->varlist = gretl_list_new(1);
 		if (sheet->varlist != NULL) {
@@ -2660,7 +2669,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd sc, int varnum)
     if (sheet->varlist == NULL) {
 	free(sheet);
 	sheet = NULL;
-    } else if (sheet->cmd == SHEET_NEW_DATASET) {
+    } else if (sheet->ctx == SHEET_NEW_DATASET) {
 	sheet->varlist[1] = 1;
     }
 
@@ -2704,7 +2713,7 @@ static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
 	}
     }
 
-    if (sheet->cmd == SHEET_NEW_DATASET) {
+    if (sheet->ctx == SHEET_NEW_DATASET) {
 	empty_dataset_guard();
     }
 
@@ -2718,7 +2727,7 @@ static gint on_sheet_delete (GtkWidget *w, GdkEvent *event,
 {
     int resp;
 
-#if 0 /* not yet */
+#if 1 /* not yet */
     if (sheet->ed != NULL) {
 	/* a cell is being edited */
 	gtk_cell_editable_editing_done(sheet->ed);
@@ -2739,7 +2748,7 @@ static gint on_sheet_delete (GtkWidget *w, GdkEvent *event,
 	}
     }
 
-    if (sheet->cmd == SHEET_NEW_DATASET) {
+    if (sheet->ctx == SHEET_NEW_DATASET) {
 	empty_dataset_guard();
     }
 
@@ -2815,7 +2824,6 @@ static void size_data_window (Spreadsheet *sheet, int hscroll)
 static gboolean
 on_button_entered (GtkWidget *w, GdkEventCrossing *e, Spreadsheet *sheet)
 {
-#if 0 /* broken?? */
     if (sheet->ed != NULL) {
 	const gchar *s = gtk_entry_get_text(GTK_ENTRY(sheet->ed));
 	GtkTreePath *path;
@@ -2827,9 +2835,9 @@ on_button_entered (GtkWidget *w, GdkEventCrossing *e, Spreadsheet *sheet)
 	    on_value_edited(NULL, pathstr, s, sheet);
 	    g_free(pathstr);
 	    gtk_tree_path_free(path);
+	    sheet->ed = NULL;
 	}
     }
-#endif
 
     return FALSE;
 }
@@ -2891,7 +2899,7 @@ static void sheet_add_toolbar (Spreadsheet *sheet, GtkWidget *vbox)
 
     for (i=0; i<n_items; i++) {
 	item = &items[i];
-	if (sheet->cmd == SHEET_EDIT_NEWVAR && item->flag == SHEET_ADD_BTN) {
+	if (sheet->ctx == SHEET_EDIT_NEWVAR && item->flag == SHEET_ADD_BTN) {
 	    continue;
 	}
 	button = gretl_toolbar_insert(tbar, item, item->func, sheet, -1);
@@ -2961,16 +2969,97 @@ static void sheet_add_matrix_locator (Spreadsheet *sheet, GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(status_box), sheet->locator, FALSE, FALSE, 0);
 }
 
+static void add_matrix_button_box (Spreadsheet *sheet,
+				   GtkWidget *main_vbox)
+{
+    GtkWidget *button_box;
+    GtkWidget *tmp;
+
+    /* common setup */
+    button_box = gtk_hbutton_box_new();
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box),
+			      GTK_BUTTONBOX_END);
+    gtk_box_set_spacing(GTK_BOX(button_box), 10);
+    gtk_widget_show(button_box);
+    gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(button_box), 0);
+
+    if (sheet->ctx == SHEET_NEW_MATRIX) {
+	/* specifying a new matrix: just "Save" and "Close" */
+	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE);
+	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			 G_CALLBACK(on_button_entered), sheet);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(get_data_from_sheet), sheet);
+	gtk_widget_show(tmp);
+	sheet->save = tmp;
+
+	tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			 G_CALLBACK(on_button_entered), sheet);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(simple_exit_sheet), sheet);
+	gtk_widget_show(tmp);
+    } else {
+	/* editing a pre-existing matrix */
+	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
+	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			 G_CALLBACK(on_button_entered), sheet);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(matrix_save_as), sheet);
+	gtk_widget_show(tmp);
+
+	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE);
+	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			 G_CALLBACK(on_button_entered), sheet);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(get_data_from_sheet), sheet);
+	gtk_widget_show(tmp);
+	sheet->save = tmp;
+	gtk_widget_set_sensitive(sheet->save, FALSE);
+
+	tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+	gtk_container_add(GTK_CONTAINER(button_box), tmp);
+	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+			 G_CALLBACK(on_button_entered), sheet);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(maybe_exit_sheet), sheet);
+	gtk_widget_show(tmp);
+    }
+}
+
+static void process_sheet_varlist (Spreadsheet *sheet)
+{
+    int i;
+
+    sheet->datacols = 0;
+    for (i=sheet->varlist[0]; i>0; i--) {
+	if (series_is_hidden(dataset, sheet->varlist[i])) {
+	    gretl_list_delete_at_pos(sheet->varlist, i);
+	} else {
+	    sheet->datacols += 1;
+	}
+    }
+    if (sheet->varlist[0] < dataset->v - 1) {
+	sheet->flags |= SHEET_SHORT_VARLIST;
+    }
+}
+
 /* This has to block when the user is defining a matrix in the course of
    responding to the function call dialog; otherwise it should not
    block.
 */
 
-static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
+static void real_show_spreadsheet (Spreadsheet **psheet,
+				   SheetCtx ctx,
 				   int block)
 {
     Spreadsheet *sheet = *psheet;
-    GtkWidget *tmp, *scroller, *main_vbox;
+    GtkWidget *scroller, *main_vbox;
     int hscroll = 1;
     int err = 0;
 
@@ -2985,7 +3074,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
 	} else {
 	    gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit matrix"));
 	}
-    } else if (sc == SHEET_EDIT_SCALARS) {
+    } else if (ctx == SHEET_EDIT_SCALARS) {
 	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: scalars"));
     } else {
 	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit data"));
@@ -2993,7 +3082,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
 
     if (sheet->matrix != NULL) {
 	size_matrix_window(sheet);
-    } else if (sc == SHEET_EDIT_SCALARS) {
+    } else if (ctx == SHEET_EDIT_SCALARS) {
 	size_scalars_window(sheet);
 	hscroll = 0;
     } else {
@@ -3016,24 +3105,12 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 5);
     gtk_container_add(GTK_CONTAINER(sheet->win), main_vbox);
 
-    if (sheet->matrix != NULL) {
+    if (editing_matrix(sheet)) {
 	sheet_add_matrix_menu(sheet, main_vbox);
 	sheet_add_matrix_locator(sheet, main_vbox);
     } else {
 	if (sheet->varlist != NULL) {
-	    int i;
-
-	    sheet->datacols = 0;
-	    for (i=sheet->varlist[0]; i>0; i--) {
-		if (series_is_hidden(dataset, sheet->varlist[i])) {
-		    gretl_list_delete_at_pos(sheet->varlist, i);
-		} else {
-		    sheet->datacols += 1;
-		}
-	    }
-	    if (sheet->varlist[0] < dataset->v - 1) {
-		sheet->flags |= SHEET_SHORT_VARLIST;
-	    }
+	    process_sheet_varlist(sheet);
 	}
 	sheet_add_toolbar(sheet, main_vbox);
     }
@@ -3055,7 +3132,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
     gtk_widget_show(GTK_WIDGET(sheet->tv));
     gtk_widget_show(scroller);
 
-    if (sheet->matrix != NULL) {
+    if (editing_matrix(sheet)) {
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(free_matrix_sheet), sheet);
     } else {
@@ -3064,65 +3141,15 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
     }
 
     if (sheet->matrix != NULL) {
-	/* control buttons (for editing matrices only) */
-	GtkWidget *button_box;
-
-	/* common setup */
-	button_box = gtk_hbutton_box_new();
-	gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box),
-				  GTK_BUTTONBOX_END);
-	gtk_box_set_spacing(GTK_BOX(button_box), 10);
-	gtk_widget_show(button_box);
-	gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
-	gtk_container_set_border_width(GTK_CONTAINER(button_box), 0);
-
-	if (sheet->oldmat != NULL) {
-	    /* editing an existing matrix */
-	    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
-	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			     G_CALLBACK(on_button_entered), sheet);
-	    g_signal_connect(G_OBJECT(tmp), "clicked",
-			     G_CALLBACK(get_data_from_sheet), sheet);
-	    g_signal_connect(G_OBJECT(tmp), "clicked",
-			     G_CALLBACK(simple_exit_sheet), sheet);
-	    gtk_widget_show(tmp);
-	} else {
-	    /* editing a new matrix */
-	    tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
-	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			     G_CALLBACK(on_button_entered), sheet);
-	    g_signal_connect(G_OBJECT(tmp), "clicked",
-			     G_CALLBACK(matrix_save_as), sheet);
-	    gtk_widget_show(tmp);
-
-	    tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE);
-	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			     G_CALLBACK(on_button_entered), sheet);
-	    g_signal_connect(G_OBJECT(tmp), "clicked",
-			     G_CALLBACK(get_data_from_sheet), sheet);
-	    gtk_widget_show(tmp);
-	    sheet->save = tmp;
-	    gtk_widget_set_sensitive(sheet->save, FALSE);
-
-	    tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-	    gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	    g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			     G_CALLBACK(on_button_entered), sheet);
-	    g_signal_connect(G_OBJECT(tmp), "clicked",
-			     G_CALLBACK(maybe_exit_sheet), sheet);
-	    gtk_widget_show(tmp);
-	}
+	add_matrix_button_box(sheet, main_vbox);
     }
 
-    if (sc == SHEET_EDIT_MATRIX) {
+    if (editing_matrix(sheet)) {
 	err = add_matrix_data_to_sheet(sheet);
-    } else if (sc == SHEET_EDIT_SCALARS) {
+    } else if (ctx == SHEET_EDIT_SCALARS) {
 	err = add_scalars_to_sheet(sheet);
     } else {
-	err = add_data_to_sheet(sheet, sc);
+	err = add_data_to_sheet(sheet, ctx);
     }
 
     if (err) {
@@ -3154,7 +3181,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd sc,
     }
 }
 
-void show_spreadsheet (SheetCmd sc)
+void show_spreadsheet (SheetCtx ctx)
 {
     static Spreadsheet *sheet;
 
@@ -3168,30 +3195,30 @@ void show_spreadsheet (SheetCmd sc)
 	return;
     }
 
-    sheet = spreadsheet_new(sc, 0);
+    sheet = spreadsheet_new(ctx, 0);
     if (sheet == NULL) {
 	return;
     }
 
-    real_show_spreadsheet(&sheet, sc, 0);
+    real_show_spreadsheet(&sheet, ctx, 0);
 }
 
 void show_spreadsheet_for_series (int varnum)
 {
     static Spreadsheet *sheet;
-    int sc = SHEET_EDIT_VARLIST;
+    SheetCtx ctx = SHEET_EDIT_VARLIST;
 
-    if (sheet != NULL && sheet->cmd == sc) {
+    if (sheet != NULL && sheet->ctx == ctx) {
 	gtk_window_present(GTK_WINDOW(sheet->win));
 	return;
     }
 
-    sheet = spreadsheet_new(sc, varnum);
+    sheet = spreadsheet_new(ctx, varnum);
     if (sheet == NULL) {
 	return;
     }
 
-    real_show_spreadsheet(&sheet, sc, 0);
+    real_show_spreadsheet(&sheet, ctx, 0);
 }
 
 void edit_scalars (void)
@@ -3609,7 +3636,6 @@ static int matrix_from_spec (struct gui_matrix_spec *s)
     }
 
     err = gui_run_genr(genline, dataset, OPT_NONE, NULL);
-
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -3643,7 +3669,9 @@ static void gui_matrix_spec_init (struct gui_matrix_spec *s,
     }
 }
 
-static void gui_edit_matrix (gretl_matrix *m, const char *name)
+static void gui_edit_matrix (gretl_matrix *m,
+			     const char *name,
+			     SheetCtx ctx)
 {
     Spreadsheet *sheet = NULL;
     int err = 0;
@@ -3652,7 +3680,7 @@ static void gui_edit_matrix (gretl_matrix *m, const char *name)
 	return;
     }
 
-    sheet = spreadsheet_new(SHEET_EDIT_MATRIX, 0);
+    sheet = spreadsheet_new(ctx, 0);
     if (sheet == NULL) {
 	return;
     }
@@ -3673,7 +3701,7 @@ static void gui_edit_matrix (gretl_matrix *m, const char *name)
 	sheet->rownames = gretl_matrix_get_rownames(m);
 	sheet->n_rows = gretl_matrix_rows(sheet->matrix);
 	sheet->datacols = gretl_matrix_cols(sheet->matrix);
-	real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, 0);
+	real_show_spreadsheet(&sheet, sheet->ctx, 0);
     }
 
     if (sheet != NULL) {
@@ -3694,7 +3722,7 @@ static void edit_new_arg_matrix (gretl_matrix *m, const char *name)
 	return;
     }
 
-    sheet = spreadsheet_new(SHEET_EDIT_MATRIX, 0);
+    sheet = spreadsheet_new(SHEET_NEW_MATRIX, 0);
     if (sheet == NULL) {
 	return;
     }
@@ -3714,11 +3742,19 @@ static void edit_new_arg_matrix (gretl_matrix *m, const char *name)
     sheet->rownames = NULL;
     sheet->n_rows = gretl_matrix_rows(sheet->matrix);
     sheet->datacols = gretl_matrix_cols(sheet->matrix);
-    real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, 1);
+    real_show_spreadsheet(&sheet, sheet->ctx, 1);
 }
 
-/* note that both @m and @name may be NULL depending on how
-   we are called */
+/* Here we first offer three choices for how to specify the content of a
+   new matrix: (1) from a list of series; (2) via a "genr" expression,
+   or (3) by specifying the elements in spreadsheet mode.  If the user
+   doesn't cancel out of that choice, we go ahead and either generate
+   the matrix or, if option (3) is selected, open a spreadheet window to
+   complete the job.
+
+   Note that both @m and @name may be NULL depending on how we are
+   called.
+*/
 
 static void real_gui_new_matrix (gretl_matrix *m, const char *name,
 				 GtkWidget *parent, int fncall)
@@ -3727,7 +3763,6 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name,
     int resp;
 
     gui_matrix_spec_init(&spec, m, name);
-
     resp = new_matrix_dialog(&spec, parent, fncall);
     if (canceled(resp)) {
 	return;
@@ -3750,14 +3785,14 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name,
 	    if (fncall) {
 		edit_new_arg_matrix(spec.m, spec.name);
 	    } else {
-		gui_edit_matrix(spec.m, spec.name);
+		gui_edit_matrix(spec.m, spec.name, SHEET_NEW_MATRIX);
 	    }
 	}
     }
 }
 
 /* callback for "Define matrix..." in main window, and
-   also "+" to add matrix arg in fncall.c
+   also for "+" to add matrix argument in fncall.c
 */
 
 void gui_new_matrix (GtkWidget *parent)
@@ -3876,6 +3911,12 @@ static void display_real_submatrix (gretl_matrix *m,
     gretl_matrix_free(tmp);
 }
 
+/* The "or view" part here is activated by complex matrices, for which
+   we don't have an editing apparatus, or matrices that are big enough
+   to seriously bog down the GtkTreeView GUI. In most cases an editor
+   window should be produced.
+*/
+
 void edit_or_view_matrix (const char *name, GtkWidget *parent)
 {
     user_var *u = get_user_var_by_name(name);
@@ -3886,8 +3927,6 @@ void edit_or_view_matrix (const char *name, GtkWidget *parent)
 	errbox_printf(_("Couldn't open '%s'"), name);
 	return;
     }
-
-    /* do we already have a window open for this matrix? */
 
     if (m->is_complex) {
 	windata_t *vwin = get_viewer_for_data(m);
@@ -3908,6 +3947,7 @@ void edit_or_view_matrix (const char *name, GtkWidget *parent)
 	/* we'll just display it for now */
 	display_complex_matrix(m, name);
     } else if (gretl_is_null_matrix(m)) {
+	/* "can't happen" */
 	real_gui_new_matrix(m, name, parent, 0);
     } else {
 	int n = m->rows * m->cols;
@@ -3915,7 +3955,7 @@ void edit_or_view_matrix (const char *name, GtkWidget *parent)
 	if (n > 36000) {
 	    display_real_submatrix(m, name);
 	} else {
-	    gui_edit_matrix(m, name);
+	    gui_edit_matrix(m, name, SHEET_EDIT_MATRIX);
 	}
     }
 }
