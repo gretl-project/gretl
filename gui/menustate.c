@@ -667,7 +667,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	display_string_table(v);
 	break;
     case MNU_EDIT:
-        show_spreadsheet(SHEET_EDIT_VARLIST);
+        show_worksheet(SHEET_EDIT_VARLIST);
         break;
     case MNU_CLIPB:
         selected_series_to_clipboard();
@@ -828,7 +828,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     } else if (i == MNU_MSAVE) {
 	map_save_callback();
     } else if (i == MNU_EDIT)  {
-        show_spreadsheet(SHEET_EDIT_VARLIST);
+        show_worksheet(SHEET_EDIT_VARLIST);
     } else if (i == MNU_CLIPB) {
         selected_series_to_clipboard();
     } else if (i == MNU_DELET)  {
@@ -912,7 +912,7 @@ static gint midas_popup_click (GtkWidget *w, gpointer p)
     } else if (i == MDS_CPLOT) {
         plot_from_selection(GR_PLOT);
     } else if (i == MDS_CEDIT) {
-        show_spreadsheet(SHEET_EDIT_VARLIST);
+        show_worksheet(SHEET_EDIT_VARLIST);
     } else if (i == MDS_CDEL) {
         delete_selected_vars();
     } else if (i == MDS_LIST) {

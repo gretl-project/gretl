@@ -526,7 +526,7 @@ void series_view_edit (GtkWidget *w, windata_t *vwin)
     series_view *sview = (series_view *) vwin->data;
 
     if (sview != NULL && sview->varnum > 0 && sview->varnum < dataset->v) {
-	show_spreadsheet_for_series(sview->varnum);
+	show_worksheet_for_series(sview->varnum);
     }
 }
 

@@ -30,9 +30,9 @@ typedef enum {
     SHEET_EDIT_SCALARS
 } SheetCtx;
 
-void show_spreadsheet (SheetCtx ctx);
+void show_worksheet (SheetCtx ctx);
 
-void show_spreadsheet_for_series (int varnum);
+void show_worksheet_for_series (int varnum);
 
 void edit_scalars (void);
 

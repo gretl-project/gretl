@@ -228,9 +228,9 @@ int should_ignore_rc (void)
     return ignore_rc;
 }
 
-static void spreadsheet_edit (void)
+static void worksheet_edit (void)
 {
-    show_spreadsheet(SHEET_EDIT_VARLIST);
+    show_worksheet(SHEET_EDIT_VARLIST);
 }
 
 static void varinfo_callback (void)
@@ -1941,7 +1941,7 @@ GtkActionEntry main_entries[] = {
     { "DefineList", NULL, N_("Define or edit _list..."), NULL, NULL, G_CALLBACK(gui_define_list) },
     { "SelectList", NULL, N_("_Set selection from list..."), NULL, NULL, G_CALLBACK(mdata_select_list) },
     { "DisplayValues", NULL, N_("_Display values"), NULL, NULL, G_CALLBACK(display_selected) },
-    { "EditValues", NULL, N_("_Edit values"), NULL, NULL, G_CALLBACK(spreadsheet_edit) },
+    { "EditValues", NULL, N_("_Edit values"), NULL, NULL, G_CALLBACK(worksheet_edit) },
     { "AddObs", NULL, N_("_Add observations..."), NULL, NULL, G_CALLBACK(do_add_obs) },
     { "RemoveObs", NULL, N_("_Remove extra observations"), NULL, NULL, G_CALLBACK(do_remove_obs) },
     { "DataInfo", NULL, N_("_Dataset info"), NULL, NULL, G_CALLBACK(dataset_info) },

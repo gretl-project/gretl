@@ -218,7 +218,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg)
     }
     series_set_label(dataset, 1, "");
 
-    show_spreadsheet(SHEET_NEW_DATASET);
+    show_worksheet(SHEET_NEW_DATASET);
 }
 
 static void maybe_start_editing (void)

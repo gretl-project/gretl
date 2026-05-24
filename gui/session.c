@@ -3400,7 +3400,7 @@ static gboolean session_icon_click (GtkWidget *icon,
 	    open_gui_text(obj);
 	    break;
 	case GRETL_OBJ_DSET:
-	    show_spreadsheet(SHEET_EDIT_DATASET);
+	    show_worksheet(SHEET_EDIT_DATASET);
 	    break;
 	case GRETL_OBJ_SCALARS:
 	    edit_scalars();
@@ -3555,7 +3555,7 @@ static void data_popup_callback (GtkWidget *widget, gpointer data)
     gchar *item = (gchar *) data;
 
     if (!strcmp(item, _("Edit"))) {
-	show_spreadsheet(SHEET_EDIT_DATASET);
+	show_worksheet(SHEET_EDIT_DATASET);
     } else if (!strcmp(item, _("Export as CSV..."))) {
 	file_save(mdata, EXPORT_CSV);
     } else if (!strcmp(item, _("Copy as CSV..."))) {

@@ -5107,7 +5107,7 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
 
     if (edit && !err) {
         mdata_select_last_var();
-        show_spreadsheet(SHEET_EDIT_NEWVAR);
+        show_worksheet(SHEET_EDIT_NEWVAR);
     }
 }
 
