@@ -38,8 +38,8 @@
 #include <ctype.h>
 #include <float.h>
 
-#define SSDEBUG 1
-#define CELLDEBUG 1
+#define SSDEBUG 0
+#define CELLDEBUG 01
 
 typedef enum {
     SHEET_SUBSAMPLED    = 1 << 0,
