@@ -2028,7 +2028,7 @@ static void maybe_update_scalars_sheet (Spreadsheet *sheet)
     }
 }
 
-static int add_data_to_sheet (Spreadsheet *sheet, SheetCtx ctx)
+static int add_series_to_sheet (Spreadsheet *sheet, SheetCtx ctx)
 {
     gchar rowlabel[OBSLEN];
     GtkTreeView *view = sheet->tv;
@@ -2037,7 +2037,7 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCtx ctx)
     int i, t;
 
 #if SSDEBUG
-    fprintf(stderr, "Doing add_data_to_sheet\n");
+    fprintf(stderr, "Doing add_series_to_sheet\n");
 #endif
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
@@ -2796,7 +2796,7 @@ static void size_scalars_window (Spreadsheet *sheet)
     gtk_window_resize(GTK_WINDOW(sheet->win), w, h);
 }
 
-static void size_data_window (Spreadsheet *sheet, int hscroll)
+static void size_series_window (Spreadsheet *sheet, int hscroll)
 {
     int w, h = 400;
 
@@ -2969,11 +2969,11 @@ static void sheet_add_matrix_locator (Spreadsheet *sheet, GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(status_box), sheet->locator, FALSE, FALSE, 0);
 }
 
-static void add_matrix_button_box (Spreadsheet *sheet,
-				   GtkWidget *main_vbox)
+static void add_matrix_controls (Spreadsheet *sheet,
+				 GtkWidget *main_vbox)
 {
     GtkWidget *button_box;
-    GtkWidget *tmp;
+    GtkWidget *btn;
 
     /* common setup */
     button_box = gtk_hbutton_box_new();
@@ -2984,52 +2984,43 @@ static void add_matrix_button_box (Spreadsheet *sheet,
     gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(button_box), 0);
 
-    if (sheet->ctx == SHEET_NEW_MATRIX) {
-	/* specifying a new matrix: just "Save" and "Close" */
-	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE);
-	gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
+    if (sheet->ctx == SHEET_EDIT_MATRIX) {
+	/* Save As button: not for SHEET_NEW_MATRIX */
+	btn = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
+	gtk_container_add(GTK_CONTAINER(button_box), btn);
+	g_signal_connect(G_OBJECT(btn), "enter-notify-event",
 			 G_CALLBACK(on_button_entered), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(get_data_from_sheet), sheet);
-	gtk_widget_show(tmp);
-	sheet->save = tmp;
-
-	tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-	gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			 G_CALLBACK(on_button_entered), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(simple_exit_sheet), sheet);
-	gtk_widget_show(tmp);
-    } else {
-	/* editing a pre-existing matrix */
-	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
-	gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			 G_CALLBACK(on_button_entered), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
+	g_signal_connect(G_OBJECT(btn), "clicked",
 			 G_CALLBACK(matrix_save_as), sheet);
-	gtk_widget_show(tmp);
-
-	tmp = gtk_button_new_from_stock(GTK_STOCK_SAVE);
-	gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			 G_CALLBACK(on_button_entered), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(get_data_from_sheet), sheet);
-	gtk_widget_show(tmp);
-	sheet->save = tmp;
-	gtk_widget_set_sensitive(sheet->save, FALSE);
-
-	tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-	gtk_container_add(GTK_CONTAINER(button_box), tmp);
-	g_signal_connect(G_OBJECT(tmp), "enter-notify-event",
-			 G_CALLBACK(on_button_entered), sheet);
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(maybe_exit_sheet), sheet);
-	gtk_widget_show(tmp);
+	gtk_widget_show(btn);
     }
+
+    /* Save button */
+    btn = gtk_button_new_from_stock(GTK_STOCK_SAVE);
+    gtk_container_add(GTK_CONTAINER(button_box), btn);
+    g_signal_connect(G_OBJECT(btn), "enter-notify-event",
+		     G_CALLBACK(on_button_entered), sheet);
+    g_signal_connect(G_OBJECT(btn), "clicked",
+		     G_CALLBACK(get_data_from_sheet), sheet);
+    gtk_widget_show(btn);
+    if (sheet->ctx == SHEET_EDIT_MATRIX) {
+	gtk_widget_set_sensitive(sheet->save, FALSE);
+	sheet->save = btn;
+    }
+    /* Close button */
+    btn = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+    gtk_container_add(GTK_CONTAINER(button_box), btn);
+    g_signal_connect(G_OBJECT(btn), "enter-notify-event",
+		     G_CALLBACK(on_button_entered), sheet);
+    if (sheet->ctx == SHEET_EDIT_MATRIX) {
+	/* do we need this distinction? */
+	g_signal_connect(G_OBJECT(btn), "clicked",
+			 G_CALLBACK(maybe_exit_sheet), sheet);
+    } else {
+	g_signal_connect(G_OBJECT(btn), "clicked",
+			 G_CALLBACK(simple_exit_sheet), sheet);
+    }
+    gtk_widget_show(btn);
 }
 
 static void process_sheet_varlist (Spreadsheet *sheet)
@@ -3049,9 +3040,9 @@ static void process_sheet_varlist (Spreadsheet *sheet)
     }
 }
 
-/* This has to block when the user is defining a matrix in the course of
-   responding to the function call dialog; otherwise it should not
-   block.
+/* This function has to block when the user is defining a matrix in
+   the course of responding to the function call dialog; otherwise it
+   should not block.
 */
 
 static void real_show_spreadsheet (Spreadsheet **psheet,
@@ -3065,7 +3056,7 @@ static void real_show_spreadsheet (Spreadsheet **psheet,
 
     sheet->win = gretl_gtk_window();
 
-    if (sheet->matrix != NULL) {
+    if (editing_matrix(sheet)) {
 	if (sheet->mname[0] != '\0') {
 	    gchar *tmp = g_strdup_printf("gretl: %s", sheet->mname);
 
@@ -3074,23 +3065,18 @@ static void real_show_spreadsheet (Spreadsheet **psheet,
 	} else {
 	    gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit matrix"));
 	}
-    } else if (ctx == SHEET_EDIT_SCALARS) {
-	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: scalars"));
-    } else {
-	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit data"));
-    }
-
-    if (sheet->matrix != NULL) {
 	size_matrix_window(sheet);
-    } else if (ctx == SHEET_EDIT_SCALARS) {
+    } else if (editing_scalars(sheet)) {
+	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: scalars"));
 	size_scalars_window(sheet);
 	hscroll = 0;
     } else {
+	gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit data"));
 	if (sheet->varlist != NULL && sheet->varlist[0] < 3) {
 	    /* make columns full "natural" width */
 	    hscroll = 0;
 	}
-	size_data_window(sheet, hscroll);
+	size_series_window(sheet, hscroll);
     }
 
     if (block) {
@@ -3135,21 +3121,16 @@ static void real_show_spreadsheet (Spreadsheet **psheet,
     if (editing_matrix(sheet)) {
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(free_matrix_sheet), sheet);
+	add_matrix_controls(sheet, main_vbox);
+	err = add_matrix_data_to_sheet(sheet);
     } else {
 	g_signal_connect(G_OBJECT(sheet->win), "destroy",
 			 G_CALLBACK(free_spreadsheet), psheet);
-    }
-
-    if (sheet->matrix != NULL) {
-	add_matrix_button_box(sheet, main_vbox);
-    }
-
-    if (editing_matrix(sheet)) {
-	err = add_matrix_data_to_sheet(sheet);
-    } else if (ctx == SHEET_EDIT_SCALARS) {
-	err = add_scalars_to_sheet(sheet);
-    } else {
-	err = add_data_to_sheet(sheet, ctx);
+	if (editing_scalars(sheet)) {
+	    err = add_scalars_to_sheet(sheet);
+	} else {
+	    err = add_series_to_sheet(sheet, ctx);
+	}
     }
 
     if (err) {
@@ -3169,8 +3150,8 @@ static void real_show_spreadsheet (Spreadsheet **psheet,
     select_first_editable_cell(sheet);
 
     if (editing_series(sheet)) {
-	/* we can't have the user making confounding changes elsewhere,
-	   while editing the dataset here
+	/* We can't have the user making confounding changes elsewhere,
+	   while editing the dataset here.
 	*/
 	set_dataset_locked(TRUE);
     }
