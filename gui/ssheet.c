@@ -39,7 +39,7 @@
 #include <float.h>
 
 #define SSDEBUG 0
-#define CELLDEBUG 01
+#define CELLDEBUG 0
 
 typedef enum {
     SHEET_SUBSAMPLED    = 1 << 0,
@@ -126,9 +126,6 @@ static void name_var_dialog (GtkWidget *w, worksheet *sheet);
 static void update_scalars_from_sheet (worksheet *sheet);
 static void scalars_changed_callback (void);
 
-static void
-worksheet_scroll_to_foot (worksheet *sheet, int row, int col);
-
 enum {
     SHEET_ADD_BTN,
     SHEET_APPLY_BTN
@@ -211,8 +208,9 @@ static void sheet_set_modified (worksheet *sheet, gboolean s)
     }
 }
 
-/* record the fact that the value at @col and @row as been
-   changed */
+/* Record the fact that the value at @col and @row as been
+   changed.
+*/
 
 static int sheet_push_edit (worksheet *sheet, int col, int row)
 {
@@ -233,8 +231,9 @@ static int sheet_push_edit (worksheet *sheet, int col, int row)
     }
 }
 
-/* record the fact that a new row (observation) has been inserted
-   at @row */
+/* Record the fact that a new row (observation) has been inserted
+   at @row.
+*/
 
 static int sheet_push_insert (worksheet *sheet, int row)
 {
@@ -491,8 +490,8 @@ static void maybe_update_column_names (worksheet *sheet)
     }
 }
 
-/* In case we're editing a pre-existing matrix, carry the modifications
-   back.
+/* In case we're editing a pre-existing matrix, carry back the
+   modifications.
 */
 
 static void update_saved_matrix (worksheet *sheet)
@@ -521,7 +520,7 @@ static void update_saved_matrix (worksheet *sheet)
 
 	maybe_update_column_names(sheet);
 
-	/* record the fact that a matrix has been changed */
+	/* Record the fact that a matrix has been changed. */
 	mark_session_changed();
     }
 }
@@ -547,9 +546,9 @@ static void update_sheet_matrix_element (worksheet *sheet,
     gretl_matrix_set(sheet->matrix, i, j, x);
 }
 
-static void
-maybe_update_store (worksheet *sheet, const gchar *new_text,
-		    const gchar *path_string)
+static void maybe_update_store (worksheet *sheet,
+				const gchar *new_text,
+				const gchar *path_string)
 {
     GtkTreeView *view = sheet->tv;
     GtkTreeModel *model = gtk_tree_view_get_model(view);
@@ -673,8 +672,8 @@ static void on_value_edited (GtkCellRendererText *cell,
     }
 }
 
-static void
-worksheet_scroll_to_new_col (worksheet *sheet, GtkTreeViewColumn *column)
+static void worksheet_scroll_to_new_col (worksheet *sheet,
+					 GtkTreeViewColumn *column)
 {
     GtkTreeView *view = sheet->tv;
     GtkTreePath *path;
@@ -775,8 +774,8 @@ static void add_scalar_callback (worksheet *sheet,
     }
 }
 
-static void
-worksheet_scroll_to_foot (worksheet *sheet, int row, int col)
+static void worksheet_scroll_to_foot (worksheet *sheet,
+				      int row, int col)
 {
     GtkTreeView *view = sheet->tv;
     GtkTreePath *path;
@@ -798,8 +797,9 @@ worksheet_scroll_to_foot (worksheet *sheet, int row, int col)
     g_free(pstr);
 }
 
-static void
-real_add_new_obs (worksheet *sheet, const char *obsname, int n)
+static void real_add_new_obs (worksheet *sheet,
+			      const char *obsname,
+			      int n)
 {
     GtkTreeView *view = sheet->tv;
     gint rownum = 0;
@@ -1012,7 +1012,6 @@ static void name_matrix_col (GtkWidget *widget, dialog_t *dlg)
     edit_dialog_close(dlg);
 
     old = gtk_tree_view_column_get_title(col);
-
     if (strcmp(old, colname)) {
 	worksheet *sheet = g_object_get_data(G_OBJECT(col), "sheet");
 
@@ -1310,8 +1309,9 @@ static void update_cell_position (GtkTreeView *view,
     }
 }
 
-/* put modified values from the worksheet into the attached
-   matrix */
+/* Put modified values from the worksheet into the attached
+   matrix.
+*/
 
 static void update_matrix_from_sheet_full (worksheet *sheet)
 {
@@ -2181,6 +2181,8 @@ set_up_sheet_column (GtkTreeViewColumn *column, gint width, gboolean expand)
     gtk_tree_view_column_set_expand(column, expand);
 }
 
+#define basic_motion(k) (k >= GDK_Left && k <= GDK_Down)
+
 static gboolean on_edit_keypress (GtkCellEditable *ed,
 				  GdkEventKey *key,
 				  worksheet *sheet)
@@ -2188,42 +2190,29 @@ static gboolean on_edit_keypress (GtkCellEditable *ed,
     gint row, col;
 
 #if CELLDEBUG
-    printf("on_edit_keypress (ed %p)\n", (void *) ed);
+    printf("on_edit_keypress (key 0x%x ed %p)\n",
+	   key->keyval, (void *) ed);
 #endif
 
     get_current_location(sheet->tv, &row, &col);
     if (row < 0) {
-	printf(" returning FALSE\n");
 	return FALSE;
     }
 
-    if (key->keyval == GDK_Up) {
-#if CELLDEBUG
-	fprintf(stderr, " GDK_Up\n");
-#endif
+    if (basic_motion(key->keyval)) {
 	gtk_cell_editable_editing_done(ed);
-	move_row_focus(sheet, row, col, -1);
-	return TRUE;
-    } else if (key->keyval == GDK_Down) {
-#if CELLDEBUG
-	fprintf(stderr, " GDK_Down\n");
-#endif
-	gtk_cell_editable_editing_done(ed);
-	move_row_focus(sheet, row, col, +1);
-	return TRUE;
-    } else if (key->keyval == GDK_Right) {
-#if CELLDEBUG
-	fprintf(stderr, " GDK_Right\n");
-#endif
-	gtk_cell_editable_editing_done(ed);
-	move_column_focus(sheet, row, col, +1);
-	return TRUE;
-    } else if (key->keyval == GDK_Left) {
-#if CELLDEBUG
-	fprintf(stderr, " GDK_Left\n");
-#endif
-	gtk_cell_editable_editing_done(ed);
-	move_column_focus(sheet, row, col, -1);
+	if (key->keyval == GDK_Left) {
+	    move_column_focus(sheet, row, col, -1);
+	}
+	if (key->keyval == GDK_Up) {
+	    move_row_focus(sheet, row, col, -1);
+	}
+	if (key->keyval == GDK_Right) {
+	    move_column_focus(sheet, row, col, +1);
+	}
+	if (key->keyval == GDK_Down) {
+	    move_row_focus(sheet, row, col, +1);
+	}
 	return TRUE;
     }
 
@@ -2232,22 +2221,26 @@ static gboolean on_edit_keypress (GtkCellEditable *ed,
 
 static void nullify_sheet_entry (gpointer p, worksheet *sheet)
 {
-    fprintf(stderr, "editing entry destroyed\n");
+#if CELLDEBUG
+    fprintf(stderr, "nullify_sheet_entry\n");
+#endif
     sheet->ed = NULL;
 }
+
+#if CELLDEBUG
 
 static void cell_editing_done (GtkCellEditable *ed,
 			       worksheet *sheet)
 {
     fprintf(stderr, "*** got editing-done (ed %p)\n", (void *) ed);
-#if 0
     if (ed != NULL) {
 	const char *s = gtk_entry_get_text(GTK_ENTRY(ed));
 	fprintf(stderr, "user_text = '%s'\n", s);
-	//process_cell_value();
+	//process_cell_value(XXX);
     }
-#endif
 }
+
+#endif
 
 static void on_editing_started (GtkCellRenderer *r,
 				GtkCellEditable *ed,
@@ -2261,8 +2254,10 @@ static void on_editing_started (GtkCellRenderer *r,
 	sheet->ed = ed;
 	g_signal_connect(G_OBJECT(ed), "key-press-event",
 			 G_CALLBACK(on_edit_keypress), sheet);
+#if CELLDEBUG
 	g_signal_connect(G_OBJECT(ed), "editing-done",
 			 G_CALLBACK(cell_editing_done), sheet);
+#endif
 	g_signal_connect(G_OBJECT(ed), "remove-widget",
 			 G_CALLBACK(nullify_sheet_entry), sheet);
     }
@@ -2302,7 +2297,7 @@ static gboolean on_sheet_keypress (GtkWidget *widget,
     gint row, col;
 
 #if CELLDEBUG
-    fprintf(stderr, "on_sheet_keypress...\n");
+    fprintf(stderr, "on_sheet_keypress (key 0x%x)\n", event->keyval);
 #endif
 
     get_current_location(sheet->tv, &row, &col);
@@ -2311,34 +2306,23 @@ static gboolean on_sheet_keypress (GtkWidget *widget,
         return FALSE;
     }
 
-    switch (event->keyval) {
-    case GDK_Up:
-#if CELLDEBUG
-	fprintf(stderr, " move focus up\n");
-#endif
-        move_row_focus(sheet, row, col, -1);
-        return TRUE; /* swallow : don't let GTK move focus */
-    case GDK_KEY_Down:
-#if CELLDEBUG
-	fprintf(stderr, " move focus down\n");
-#endif
-        move_row_focus(sheet, row, col, +1);
-        return TRUE;
-    case GDK_Left:
-#if CELLDEBUG
-	fprintf(stderr, " move focus left\n");
-#endif
-        move_column_focus(sheet, row, col, -1);
-        return TRUE;
-    case GDK_Right:
-#if CELLDEBUG
-	fprintf(stderr, " move focus right\n");
-#endif
-        move_column_focus(sheet, row, col, +1);
-        return TRUE;
-    default:
-        return FALSE;
+    if (basic_motion(event->keyval)) {
+	if (event->keyval == GDK_Left) {
+	    move_column_focus(sheet, row, col, -1);
+	}
+	if (event->keyval == GDK_Up) {
+	    move_row_focus(sheet, row, col, -1);
+	}
+	if (event->keyval == GDK_Right) {
+	    move_column_focus(sheet, row, col, +1);
+	}
+	if (event->keyval == GDK_Down) {
+	    move_row_focus(sheet, row, col, +1);
+	}
+	return TRUE;
     }
+
+    return FALSE;
 }
 
 static gint on_sheet_click (GtkWidget *view,
@@ -3582,7 +3566,6 @@ static int gui_matrix_from_list (selector *sr)
     s->m = gretl_matrix_data_subset(list, dataset,
 				    dataset->t1, dataset->t2,
 				    M_MISSING_SKIP, &err);
-
     if (!err) {
 	err = user_var_add_or_replace(s->name,
 				      GRETL_TYPE_MATRIX,
@@ -3768,7 +3751,7 @@ static void edit_new_arg_matrix (gretl_matrix *m, const char *name)
    new matrix: (1) from a list of series; (2) via a "genr" expression,
    or (3) by specifying the elements in worksheet mode.  If the user
    doesn't cancel out of that choice, we go ahead and either generate
-   the matrix or, if option (3) is selected, open a spreadheet window to
+   the matrix or, if option (3) is selected, open a worksheet window to
    complete the job.
 
    Note that both @m and @name may be NULL depending on how we are
@@ -3810,14 +3793,16 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name,
     }
 }
 
-/* callback for "Define matrix..." in main window, and
-   also for "+" to add matrix argument in fncall.c
+/* Callback for "Define matrix..." in main window, and "Add matrix..."
+   in the iconview popup menu.
 */
 
 void gui_new_matrix (GtkWidget *parent)
 {
     real_gui_new_matrix(NULL, NULL, parent, 0);
 }
+
+/* Callback for "+" to add a matrix argument in fncall.c. */
 
 void fncall_add_matrix (GtkWidget *parent)
 {
