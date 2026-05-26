@@ -6510,6 +6510,10 @@ static void plain_print_package_info (const fnpkg *pkg,
         pprintf(prn, "Provider: %s\n", pkg->provider);
     }
 
+    if (pkg->mpath != NULL) {
+	pprintf(prn, "Menu attachment: %s\n", pkg->mpath);
+    }
+
     has_examples = pkg_has_examples(pkg);
 
     if (has_examples || pkg_has_datafiles(pkg)) {
@@ -6580,6 +6584,10 @@ static void real_bundle_package_info (const fnpkg *pkg,
     }
     if (pkg->provider != NULL) {
         gretl_bundle_set_string(b, "provider", pkg->provider);
+    }
+
+    if (pkg->mpath != NULL) {
+        gretl_bundle_set_string(b, "menu_path", pkg->mpath);
     }
 
     has_examples = pkg_has_examples(pkg);
