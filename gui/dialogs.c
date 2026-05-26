@@ -793,7 +793,8 @@ copy_item_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 
 #define can_do_csv(v) ((v->role == PRINT && v->data != NULL) || \
                         v->role == VIEW_SERIES || \
-                        v->role == VIEW_MODEL)
+                        v->role == VIEW_MODEL || \
+		        v->role == FCAST)
 
 /* This dialog allows for selection of a format option when saving
    material to file or copying to the clipboard. The range of formats

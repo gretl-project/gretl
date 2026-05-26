@@ -147,15 +147,15 @@ int win32_print_graph (char *emfname)
 
 #define GRETL_PNG_TMP "gretltmp.png"
 
-void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
+void rtf_print_obs_marker (int t, const DATASET *dset, PRN *prn)
 {
     char tmp[OBSLEN] = {0};
     const char *obs;
 
-    if (pdinfo->markers) {
-	obs = pdinfo->S[t];
+    if (dset->markers) {
+	obs = dset->S[t];
     } else {
-	ntolabel(tmp, t, pdinfo);
+	ntolabel(tmp, t, dset);
 	obs = tmp;
     }
 
@@ -205,14 +205,14 @@ static void printk_rtf (int k, PRN *prn, int endrow)
     "\\cellx6400\\cellx7200\n"
 
 static void
-rtfprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
+rtfprint_simple_summary (const Summary *summ, const DATASET *dset, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN];
     int save_digits = get_gretl_digits();
     int i, vi;
 
-    ntolabel(date1, pdinfo->t1, pdinfo);
-    ntolabel(date2, pdinfo->t2, pdinfo);
+    ntolabel(date1, dset->t1, dset);
+    ntolabel(date2, dset->t2, dset);
 
     pputs(prn, "{\\rtf1\\par\n\\qc ");
     pprintf(prn, _("Summary Statistics, using the observations %s - %s"),
@@ -238,7 +238,7 @@ rtfprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
-	pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[vi]);
+	pprintf(prn, "\\intbl \\qc %s\\cell ", dset->varname[vi]);
 	printf_rtf(summ->mean[i], prn, 0);
 	printf_rtf(summ->median[i], prn, 0);
 	printf_rtf(summ->sd[i], prn, 0);
@@ -252,14 +252,14 @@ rtfprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 }
 
 static void
-rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
+rtfprint_summary_full (const Summary *summ, const DATASET *dset, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN];
     int save_digits = get_gretl_digits();
     int i, vi;
 
-    ntolabel(date1, pdinfo->t1, pdinfo);
-    ntolabel(date2, pdinfo->t2, pdinfo);
+    ntolabel(date1, dset->t1, dset);
+    ntolabel(date2, dset->t2, dset);
 
     pputs(prn, "{\\rtf1\\par\n\\qc ");
     pprintf(prn, _("Summary Statistics, using the observations %s - %s"),
@@ -268,7 +268,7 @@ rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 
     if (summ->list[0] == 1) {
 	pprintf(prn, _("for the variable %s (%d valid observations)"),
-		pdinfo->varname[summ->list[1]], summ->n);
+		dset->varname[summ->list[1]], summ->n);
 	pputs(prn, "\\par\n\n");
 	pputs(prn, "{" VAR_SUMM_ROW "\\intbl ");
     } else {
@@ -295,7 +295,7 @@ rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
 	if (summ->list[0] > 1) {
-	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[vi]);
+	    pprintf(prn, "\\intbl \\qc %s\\cell ", dset->varname[vi]);
 	}
 	printf_rtf(summ->mean[i], prn, 0);
 	printf_rtf(summ->median[i], prn, 0);
@@ -317,7 +317,7 @@ rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
 	if (summ->list[0] > 1) {
-	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[vi]);
+	    pprintf(prn, "\\intbl \\qc %s\\cell ", dset->varname[vi]);
 	}
 	printf_rtf(summ->sd[i], prn, 0);
 	printf_rtf(summ->cv[i], prn, 0);
@@ -339,7 +339,7 @@ rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
 	if (summ->list[0] > 1) {
-	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[vi]);
+	    pprintf(prn, "\\intbl \\qc %s\\cell ", dset->varname[vi]);
 	}
 	printf_rtf(summ->perc05[i], prn, 0);
 	printf_rtf(summ->perc95[i], prn, 0);
@@ -379,7 +379,7 @@ static char *eqn_numstr (double x, char *s)
     return gretl_fix_exponent(s);
 }
 
-int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
+int text_print_equation (const MODEL *pmod, const DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
     double x;
@@ -391,7 +391,7 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
 
     /* dependent variable */
     pputc(prn, '\n');
-    c = pprintf(prn, "^%s = ", gretl_model_get_depvar_name(pmod, pdinfo));
+    c = pprintf(prn, "^%s = ", gretl_model_get_depvar_name(pmod, dset));
 
     /* how many lines are needed, at @maxper coeffs per line? */
     n_lines = totk / maxper + (totk % maxper ? 1 : 0);
@@ -417,7 +417,7 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
 		eqn_numstr(fabs(pmod->coeff[ii]), xstr);
 		c += pprintf(prn, " %c %s", (pmod->coeff[ii] < 0.0)? '-' : '+',
 			     xstr);
-		gretl_model_get_param_name(pmod, pdinfo, ii, vname);
+		gretl_model_get_param_name(pmod, dset, ii, vname);
 		c += pprintf(prn, "*%s", vname);
 	    }
 	    ii++;
@@ -471,7 +471,7 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
 
     pputs(prn, "\n\n");
 
-    if (dataset_is_time_series(pdinfo)) {
+    if (dataset_is_time_series(dset)) {
 	pprintf(prn, "T = %d", pmod->nobs);
     } else {
 	pprintf(prn, "n = %d", pmod->nobs);
@@ -619,15 +619,15 @@ static void printk_tex (int k, PRN *prn, int endrow)
 }
 
 static void
-texprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
+texprint_simple_summary (const Summary *summ, const DATASET *dset, PRN *prn)
 {
     char pt = get_local_decpoint();
     char date1[OBSLEN], date2[OBSLEN], vname[2*VNAMELEN];
     int save_digits = get_gretl_digits();
     int i, vi;
 
-    ntolabel(date1, pdinfo->t1, pdinfo);
-    ntolabel(date2, pdinfo->t2, pdinfo);
+    ntolabel(date1, dset->t1, dset);
+    ntolabel(date2, dset->t2, dset);
 
     pputs(prn, "\\begin{center}\n");
     pprintf(prn, _("Summary Statistics, using the observations %s--%s"),
@@ -654,7 +654,7 @@ texprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
-	tex_escape(vname, pdinfo->varname[vi]);
+	tex_escape(vname, dset->varname[vi]);
 	pprintf(prn, "%s & ", vname);
 	printf_tex(summ->mean[i], prn, 0);
 	printf_tex(summ->median[i], prn, 0);
@@ -670,7 +670,7 @@ texprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 }
 
 static void
-texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
+texprint_summary_full (const Summary *summ, const DATASET *dset, PRN *prn)
 {
     char pt = get_local_decpoint();
     char date1[OBSLEN], date2[OBSLEN];
@@ -678,8 +678,8 @@ texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     int save_digits = get_gretl_digits();
     int i, vi;
 
-    ntolabel(date1, pdinfo->t1, pdinfo);
-    ntolabel(date2, pdinfo->t2, pdinfo);
+    ntolabel(date1, dset->t1, dset);
+    ntolabel(date2, dset->t2, dset);
 
     pputs(prn, "\\begin{center}\n");
     pprintf(prn, _("Summary Statistics, using the observations %s--%s"),
@@ -687,7 +687,7 @@ texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     pputs(prn, "\\\\\n");
 
     if (summ->list[0] == 1) {
-	tex_escape(vname, pdinfo->varname[summ->list[1]]);
+	tex_escape(vname, dset->varname[summ->list[1]]);
 	pprintf(prn, _("for the variable %s (%d valid observations)"),
 		vname, summ->n);
 	pputs(prn, "\\\\[8pt]\n\n");
@@ -717,7 +717,7 @@ texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
 	if (summ->list[0] > 1) {
-	    tex_escape(vname, pdinfo->varname[vi]);
+	    tex_escape(vname, dset->varname[vi]);
 	    pprintf(prn, "%s & ", vname);
 	}
 	printf_tex(summ->mean[i], prn, 0);
@@ -744,7 +744,7 @@ texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
 	if (summ->list[0] > 1) {
-	    tex_escape(vname, pdinfo->varname[vi]);
+	    tex_escape(vname, dset->varname[vi]);
 	    pprintf(prn, "%s & ", vname);
 	}
 	printf_tex(summ->sd[i], prn, 0);
@@ -776,7 +776,7 @@ texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
 	if (summ->list[0] > 1) {
-	    tex_escape(vname, pdinfo->varname[vi]);
+	    tex_escape(vname, dset->varname[vi]);
 	    pprintf(prn, "%s & ", vname);
 	}
 	printf_tex(summ->perc05[i], prn, 0);
@@ -791,20 +791,20 @@ texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     pputs(prn, "\\end{tabular}\n\\end{center}\n");
 }
 
-void special_print_summary (const Summary *summ, const DATASET *pdinfo,
+void special_print_summary (const Summary *summ, const DATASET *dset,
 			    PRN *prn)
 {
     if (tex_format(prn)) {
 	if (summ->opt & OPT_S) {
-	    texprint_simple_summary(summ, pdinfo, prn);
+	    texprint_simple_summary(summ, dset, prn);
 	} else {
-	    texprint_summary_full(summ, pdinfo, prn);
+	    texprint_summary_full(summ, dset, prn);
 	}
     } else if (rtf_format(prn)) {
 	if (summ->opt & OPT_S) {
-	    rtfprint_simple_summary(summ, pdinfo, prn);
+	    rtfprint_simple_summary(summ, dset, prn);
 	} else {
-	    rtfprint_summary_full(summ, pdinfo, prn);
+	    rtfprint_summary_full(summ, dset, prn);
 	}
     }
 }
@@ -856,7 +856,7 @@ static void rtf_vmat_blank_row (int lo, int n, PRN *prn)
 #define FIELDS 5
 
 static void
-rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
+rtfprint_vmatrix (const VMatrix *vmat, const DATASET *dset, PRN *prn)
 {
     register int i, j;
     int n = vmat->t2 - vmat->t1 + 1;
@@ -866,8 +866,8 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
     if (vmat->ci == CORR) {
 	char date1[OBSLEN], date2[OBSLEN];
 
-	ntolabel(date1, vmat->t1, pdinfo);
-	ntolabel(date2, vmat->t2, pdinfo);
+	ntolabel(date1, vmat->t1, dset);
+	ntolabel(date2, vmat->t2, dset);
 
 	pputs(prn, "{\\rtf1\\par\n\\qc ");
 	pprintf(prn, _("Correlation coefficients, using the observations "
@@ -944,7 +944,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 }
 
 static void
-texprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
+texprint_vmatrix (const VMatrix *vmat, const DATASET *dset, PRN *prn)
 {
     register int i, j;
     int n = vmat->t2 - vmat->t1 + 1;
@@ -957,8 +957,8 @@ texprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
     if (vmat->ci == CORR) {
 	char date1[OBSLEN], date2[OBSLEN];
 
-	ntolabel(date1, vmat->t1, pdinfo);
-	ntolabel(date2, vmat->t2, pdinfo);
+	ntolabel(date1, vmat->t1, dset);
+	ntolabel(date2, vmat->t2, dset);
 
 	pputs(prn, "\\begin{center}\n");
 	pprintf(prn, _("Correlation coefficients, using the observations "
@@ -1041,13 +1041,13 @@ texprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
     pputs(prn, "\\end{center}\n");
 }
 
-void special_print_vmatrix (const VMatrix *vmat, const DATASET *pdinfo,
+void special_print_vmatrix (const VMatrix *vmat, const DATASET *dset,
 			    PRN *prn)
 {
     if (tex_format(prn)) {
-	texprint_vmatrix(vmat, pdinfo, prn);
+	texprint_vmatrix(vmat, dset, prn);
     } else if (rtf_format(prn)) {
-	rtfprint_vmatrix(vmat, pdinfo, prn);
+	rtfprint_vmatrix(vmat, dset, prn);
     }
 }
 
@@ -1120,13 +1120,13 @@ static int texprint_fcast_stats (const FITRESID *fr,
 }
 
 static
-void tex_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo,
+void tex_fit_resid_head (const FITRESID *fr, const DATASET *dset,
 			 PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN];
 
-    ntolabel(date1, fr->t1, pdinfo);
-    ntolabel(date2, fr->t2, pdinfo);
+    ntolabel(date1, fr->t1, dset);
+    ntolabel(date2, fr->t2, dset);
 
     pputs(prn, "\\begin{raggedright}\n");
     pputs(prn, _("Model estimation range:"));
@@ -1137,13 +1137,13 @@ void tex_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo,
 }
 
 static
-void rtf_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo,
+void rtf_fit_resid_head (const FITRESID *fr, const DATASET *dset,
 			 PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN];
 
-    ntolabel(date1, fr->t1, pdinfo);
-    ntolabel(date2, fr->t2, pdinfo);
+    ntolabel(date1, fr->t1, dset);
+    ntolabel(date2, fr->t2, dset);
 
     pputs(prn, "{\\rtf1\\par\n\\qc ");
     pputs(prn, _("Model estimation range:"));
@@ -1236,14 +1236,14 @@ static void texprint_fit_resid (const FITRESID *fr,
     "\\cellx6100\n"
 
 static void rtfprint_fit_resid (const FITRESID *fr,
-				const DATASET *pdinfo,
+				const DATASET *dset,
 				PRN *prn)
 {
     double xx;
     int anyast = 0;
     int t;
 
-    rtf_fit_resid_head(fr, pdinfo, prn);
+    rtf_fit_resid_head(fr, dset, prn);
 
     pputs(prn, "{" FR_ROW "\\intbl ");
     pprintf(prn,
@@ -1256,7 +1256,7 @@ static void rtfprint_fit_resid (const FITRESID *fr,
 	    fr->depvar, _("fitted"), _("residual"));
 
     for (t=fr->t1; t<=fr->t2; t++) {
-	rtf_print_obs_marker(t, pdinfo, prn);
+	rtf_print_obs_marker(t, dset, prn);
 	if (na(fr->actual[t])) {
 	    pputs(prn, "\\qc \\cell \\qc \\cell \\qc \\cell \\ql \\cell"
 		  " \\intbl \\row\n");
@@ -1289,13 +1289,13 @@ static void rtfprint_fit_resid (const FITRESID *fr,
 }
 
 void special_print_fit_resid (const FITRESID *fr,
-			      const DATASET *pdinfo,
+			      const DATASET *dset,
 			      PRN *prn)
 {
     if (tex_format(prn)) {
-	texprint_fit_resid(fr, pdinfo, prn);
+	texprint_fit_resid(fr, dset, prn);
     } else if (rtf_format(prn)) {
-	rtfprint_fit_resid(fr, pdinfo, prn);
+	rtfprint_fit_resid(fr, dset, prn);
     }
 }
 
@@ -1309,7 +1309,7 @@ static void texprint_fcast_x (double x, int places, char *str)
 }
 
 static void texprint_fcast_without_errs (const FITRESID *fr,
-					 const DATASET *pdinfo,
+					 const DATASET *dset,
 					 PRN *prn)
 {
     char actual[32], fitted[32];
@@ -1334,7 +1334,7 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     for (t=fr->t1; t<=fr->t2; t++) {
 	texprint_fcast_x(fr->actual[t], fr->pmax, actual);
 	texprint_fcast_x(fr->fitted[t], fr->pmax, fitted);
-	tex_print_obs_marker(t, pdinfo, prn);
+	tex_print_obs_marker(t, dset, prn);
 	pprintf(prn, " & %s & %s \\\\\n",
 		actual, fitted);
     }
@@ -1345,7 +1345,7 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
 }
 
 static void texprint_fcast_with_errs (const FITRESID *fr,
-				      const DATASET *pdinfo,
+				      const DATASET *dset,
 				      PRN *prn)
 {
     double maxerr, tval = 0;
@@ -1416,7 +1416,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	texprint_fcast_x(fr->sderr[t], errpmax, sderr);
 	texprint_fcast_x(xlo, pmax, lo);
 	texprint_fcast_x(xhi, pmax, hi);
-	tex_print_obs_marker(t, pdinfo, prn);
+	tex_print_obs_marker(t, dset, prn);
 	pprintf(prn, " & %s & %s & %s & %s & %s \\\\\n",
 		actual, fitted, sderr, lo, hi);
     }
@@ -1435,7 +1435,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     "\\cellx7800\n"
 
 static void rtfprint_fcast_without_errs (const FITRESID *fr,
-					 const DATASET *pdinfo,
+					 const DATASET *dset,
 					 PRN *prn)
 {
     int t;
@@ -1452,7 +1452,7 @@ static void rtfprint_fcast_without_errs (const FITRESID *fr,
 	    _("Obs"), fr->depvar, _("prediction"));
 
     for (t=fr->t1; t<=fr->t2; t++) {
-	rtf_print_obs_marker(t, pdinfo, prn);
+	rtf_print_obs_marker(t, dset, prn);
 	printf_rtf(fr->actual[t], prn, 0);
 	printf_rtf(fr->fitted[t], prn, 0);
     }
@@ -1461,7 +1461,7 @@ static void rtfprint_fcast_without_errs (const FITRESID *fr,
 }
 
 static void rtfprint_fcast_with_errs (const FITRESID *fr,
-				      const DATASET *pdinfo,
+				      const DATASET *dset,
 				      PRN *prn)
 {
     double maxerr, tval = 0;
@@ -1499,7 +1499,7 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
     d = get_gretl_digits();
 
     for (t=fr->t1; t<=fr->t2; t++) {
-	rtf_print_obs_marker(t, pdinfo, prn);
+	rtf_print_obs_marker(t, dset, prn);
 	maxerr = tval * fr->sderr[t];
 	printf_rtf(fr->actual[t], prn, 0);
 	printf_rtf(fr->fitted[t], prn, 0);
@@ -1518,21 +1518,23 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 }
 
 void special_print_forecast (const FITRESID *fr,
-			     const DATASET *pdinfo,
+			     const DATASET *dset,
 			     PRN *prn)
 {
     if (tex_format(prn)) {
 	if (fr->sderr != NULL) {
-	    texprint_fcast_with_errs(fr, pdinfo, prn);
+	    texprint_fcast_with_errs(fr, dset, prn);
 	} else {
-	    texprint_fcast_without_errs(fr, pdinfo, prn);
+	    texprint_fcast_without_errs(fr, dset, prn);
 	}
     } else if (rtf_format(prn)) {
 	if (fr->sderr != NULL) {
-	    rtfprint_fcast_with_errs(fr, pdinfo, prn);
+	    rtfprint_fcast_with_errs(fr, dset, prn);
 	} else {
-	    rtfprint_fcast_without_errs(fr, pdinfo, prn);
+	    rtfprint_fcast_without_errs(fr, dset, prn);
 	}
+    } else if (csv_format(prn)) {
+	csv_print_forecast(fr, dset, prn);
     }
 }
 

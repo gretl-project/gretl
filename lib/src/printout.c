@@ -1956,12 +1956,16 @@ static void real_print_obs_marker (int t, const DATASET *dset,
 
     if (dataset_has_markers(dset)) {
 	strcpy(tmp, dset->S[t]);
-	thislen = get_utf_width(tmp, len);
+	if (len > 0) {
+	    thislen = get_utf_width(tmp, len);
+	}
     } else {
 	ntolabel(tmp, t, dset);
     }
 
-    if (pad) {
+    if (len == 0) {
+	pprintf(prn, "\"%s\",", tmp);
+    } else if (pad) {
 	pprintf(prn, "%*s ", thislen, tmp);
     } else {
 	pprintf(prn, "%*s", thislen, tmp);
@@ -3273,6 +3277,65 @@ int text_print_fit_resid (const FITRESID *fr,
 
     if (kstep && fr->nobs > 0 && gretl_in_gui_mode()) {
 	err = plot_fcast_errs(fr, NULL, dset, OPT_NONE);
+    }
+
+    return err;
+}
+
+int csv_print_forecast (const FITRESID *fr, const DATASET *dset,
+			PRN *prn)
+{
+    int do_errs = (fr->sderr != NULL);
+    double conf = 100 * (1 - fr->alpha);
+    double cval = 0;
+    char label[32];
+    char d = ',';
+    int t, err = 0;
+
+    if (get_local_decpoint() == ',') {
+	d = ';';
+    }
+
+    if (do_errs) {
+	double a2 = fr->alpha / 2;
+
+	cval = (fr->asymp)? normal_critval(a2) : student_critval(fr->df, a2);
+	if (fr->asymp) {
+	    pprintf(prn, "\"z(%g)\"%c%g\n", a2, d, cval);
+	} else {
+	    pprintf(prn, "\"t(%d, %g)\"%c%g\n", fr->df, a2, d, cval);
+	}
+    }
+
+    pputs(prn, "\"obs\",");
+    maybe_trim_varname(label, fr->depvar);
+    pprintf(prn, "\"%s\"", label);
+    pprintf(prn, "%c\"%s\"", d, _("prediction"));
+    if (do_errs) {
+	pprintf(prn, "%c\"%s\"", d, _("std. error"));
+	pprintf(prn, "%c\"%g%% lo\"", d, conf);
+	pprintf(prn, "%c\"%g%% hi\"\n", d, conf);
+    } else {
+	pputc(prn, '\n');
+    }
+
+    for (t=fr->t0; t<=fr->t2; t++) {
+	double maxerr;
+
+	print_obs_marker(t, dset, 0, prn);
+	pprintf(prn, "%g", fr->actual[t]);
+	if (na(fr->fitted[t])) {
+	    pputc(prn, '\n');
+	    continue;
+	}
+	pprintf(prn, "%c%g", d, fr->fitted[t]);
+	if (do_errs && !na(fr->sderr[t])) {
+	    pprintf(prn, "%c%g", d, fr->sderr[t]);
+	    maxerr = cval * fr->sderr[t];
+	    pprintf(prn, "%c%g", d, fr->fitted[t] - maxerr);
+	    pprintf(prn, "%c%g", d, fr->fitted[t] + maxerr);
+	}
+	pputc(prn, '\n');
     }
 
     return err;

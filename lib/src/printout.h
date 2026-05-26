@@ -84,6 +84,9 @@ int print_fit_resid (const MODEL *pmod,
 int text_print_forecast (const FITRESID *fr, DATASET *dset, 
 			 gretlopt opt, PRN *prn);
 
+int csv_print_forecast (const FITRESID *fr, const DATASET *dset,
+			PRN *prn);
+
 int print_fcast_stats_matrix (const gretl_matrix *m, int T,
 			      gretlopt opt, PRN *prn);
 

@@ -732,6 +732,8 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 #else
     if (vwin->role == VIEW_MODEL && fmt == GRETL_FORMAT_CSV) {
 	special_text_handler(vwin, fmt, action);
+    } else if (vwin->role == FCAST && fmt == GRETL_FORMAT_CSV) {
+	special_text_handler(vwin, fmt, action);
     } else if (multiple_formats_ok(vwin) && SPECIAL_FORMAT(fmt)) {
 	special_text_handler(vwin, fmt, action);
     } else if (fmt == GRETL_FORMAT_CSV || fmt == GRETL_FORMAT_TAB ||
