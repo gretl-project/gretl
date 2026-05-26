@@ -1,4 +1,6 @@
 version 2026c, in progress
+- GUI: forecast from single-equation model, support write
+  to CSV and copy as CSV
 - GUI: fix for call to function package with no arguments
 - fix bug: GUI plot editor breaks factorized plots
 - fix bug: crash in GUI data editor on Windows
