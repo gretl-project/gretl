@@ -2900,6 +2900,9 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
     pprintf(prn, "<bundled-item key=\"%s\" type=\"%s\"", key,
             gretl_type_get_name(item->type));
 
+    if (item->is_virtual) {
+	pprintf(prn, " is_virtual=\"1\"");
+    }
     if (item->note != NULL) {
         pprintf(prn, " note=\"%s\"", item->note);
     }
@@ -2997,7 +3000,7 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 	    size = 0;
             key = (char *) xmlGetProp(cur, (XUC) "key");
             type = gretl_xml_get_type_property(cur);
-	    is_virtual = gretl_xml_get_prop_as_bool(cur, "virtual");
+	    is_virtual = gretl_xml_get_prop_as_bool(cur, "is_virtual");
 	    gretl_xml_get_prop_as_int(cur, "size", &size); /* legacy */
             if (key == NULL || type == 0) {
                 err = E_DATA;
@@ -3008,7 +3011,7 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
                     if (!gretl_xml_node_get_trimmed_string(cur, doc, &s)) {
                         err = E_DATA;
                     } else {
-                        err = gretl_bundle_donate_data(b, key, s, type);
+                        err = gretl_bundle_donate_data(b, key, s, GRETL_TYPE_STRING);
                     }
                 } else if (type == GRETL_TYPE_DOUBLE) {
                     double x;
