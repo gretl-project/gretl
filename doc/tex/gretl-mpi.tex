@@ -878,24 +878,26 @@ which is available as a free download; see
 
 \url{https://learn.microsoft.com/en-us/message-passing-interface/microsoft-mpi}
 
-and gretl builds for Windows have supported this since
-2017.\footnote{In principle you could install \textsf{Open MPI} or
-  \textsf{MPICH} on Windows---though you'd have to build them
-  yourself---but at present gretl on Windows only supports
-  \textsf{MS-MPI} (which is based on \textsf{MPICH}.}
-
-When you run the \textsf{MS-MPI} installer this automatically adds the
-relevant directory to your path, and you should be good to go. Note,
-however that if you're running MPI on multiple machines (or even if
-you're just running on a single machine but are using a hosts file)
-you may have to start the ``daemon'' program \texttt{smpd.exe}
-first. You can do that by going to the Windows Start menu, selecting
-\textsf{Run\dots{}} and typing
+and gretl builds for Windows have supported this since 2017. When you
+run the \textsf{MS-MPI} installer this automatically adds the relevant
+directory to your path, and you should be good to go.  Note, however
+that if you're running MPI on multiple machines (or even if you're just
+running on a single machine but are using a hosts file) you may have to
+start the ``daemon'' program \texttt{smpd.exe} first. You can do that by
+going to the Windows Start menu, selecting \textsf{Run\dots{}} and
+typing
 \begin{code}
 smpd -d
 \end{code}
 (This opens a console window, which you can just minimize to get it
 out of the way.)
+
+The situation with Windows on Arm is a little different. In this case
+basic \textsf{MS-MPI} kit, as ported to ARM64 by Anthony Roberts, is
+included with the gretl installer. That's sufficient to run multiple
+processes on a single multi-core machine. If you need more then that,
+you can create a Feature Request at
+\url{https://sourceforge.net/projects/gretl/}.
 
 \subsection{macOS}
 
