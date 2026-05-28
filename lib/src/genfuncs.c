@@ -3940,8 +3940,8 @@ const double *gretl_plotx (const DATASET *dset, gretlopt opt)
         return NULL;
     }
 
-    if (dataset_is_panel(dset) && ((opt & OPT_P) ||
-                                   sample_size(dset) == dset->pd)) {
+    if (dataset_is_panel(dset) &&
+	((opt & OPT_P) || sample_size(dset) == dset->pd)) {
         /* we're plotting a single time-series from a panel */
         new_ptype = panel_plotvar_code(dset);
         if (new_ptype != 0) {
