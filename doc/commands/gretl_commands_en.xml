@@ -5925,8 +5925,8 @@
 	green, and the last two the amount of blue. So for example
 	<lit>0xff0080</lit> has maximum red, no green and some blue
 	(it's a reddish purple). With gnuplot 5.2 onwards, you can use
-	four digits instead of three: in this case, the first two
-	digits indicate transparency, ranging from 0 (opaque) to 255
+	eight digits instead of six: in this case, the first two
+	indicate transparency, ranging from 0 (opaque) to 255
 	(transparent). For example, <lit>0xc0ff0080</lit> would give
 	the color a value of 192 (c0 in hex) for transparency.
 	You can check your gnuplot version by inspecting the <fncref
