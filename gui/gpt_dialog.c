@@ -996,16 +996,17 @@ static void try_adding_plotbars (GPT_SPEC *spec, plot_editor *ed)
 	    if (ed->axis_range[1].isauto != NULL &&
 		!button_is_active(ed->axis_range[1].isauto)) {
 		/* we have a manual y-axis setting that may override the
-		   current (ymin, ymax) as read from the plot */
+		   current (ymin, ymax) as read from the plot
+		*/
 		ymin = spec->range[1][0];
 		ymax = spec->range[1][1];
 	    } else {
 		/* freeze the current (ymin, ymax) so that the addition
-		   of bars doesn't disturb the range */
+		   of bars doesn't disturb the range
+		*/
 		spec->range[1][0] = ymin;
 		spec->range[1][1] = ymax;
 	    }
-
 	    err = plotspec_add_bars_info(spec, xmin, xmax,
 					 ymin, ymax, fname);
 	}
@@ -1588,10 +1589,9 @@ void set_plotbars_filename (const char *fname, gpointer data)
     combo_set_ignore_changed(box, FALSE);
 }
 
-/* "changed" callback from the combo box listing the default
-   plotbars file and possibly a user-specified file: the point
-   of this callback is to allow the user to add a new
-   plotbars file.
+/* "changed" callback from the combo box listing the default plotbars
+   file and possibly a user-specified file: the point of this callback
+   is to allow the user to add a new plotbars file.
 */
 
 static void plot_bars_changed (GtkComboBox *box, plot_editor *ed)
@@ -1636,7 +1636,7 @@ static void plot_bars_changed (GtkComboBox *box, plot_editor *ed)
 	}
 
 	if (ret == 1) {
-	    /* open */
+	    /* open the file */
 	    file_selector_with_parent(OPEN_BARS, FSEL_DATA_MISC,
 				      ed, ed->dialog);
 	} else if (ret == 2) {
@@ -1735,7 +1735,10 @@ static int show_bars_check (GPT_SPEC *spec)
 
     return (spec->pd == 1 ||
 	    spec->pd == 4 ||
-	    spec->pd == 12);
+	    spec->pd == 12 ||
+	    spec->pd == 5 ||
+	    spec->pd == 6 ||
+	    spec->pd == 7);
 }
 
 #define plot_has_tics(s) (strcmp(s->xtics, "none") || strcmp(s->ytics, "none"))
@@ -1949,7 +1952,8 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	userbars = maybe_append_user_bars_file(GTK_COMBO_BOX(combo), ed);
 	combo_box_append_text(combo, _("other..."));
 	/* if we got a user-specific plotbars filename, make it
-	   the selected value, otherwise use the NBER file */
+	   the selected value, otherwise use the NBER file
+	*/
 	ed->active_bars = userbars ? 1 : 0;
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), ed->active_bars);
 	gtk_widget_set_sensitive(combo, spec->nbars > 0);

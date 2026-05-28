@@ -1443,7 +1443,6 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
        sort of graph, so that it will be recognized by type when
        it is redisplayed.
     */
-
     write_plot_type_string(spec->code, spec->flags, fp);
 
     if (spec->n_literal > 0) {
@@ -2029,22 +2028,36 @@ static plotbars *plotbars_new (int n)
     return bars;
 }
 
-/* Read and check a plain text "plotbars" file.  Such a file may
-   contain comment lines starting with '#'; other than comments, each
-   line should contain a pair of space-separated date strings in gretl
+/* Heuristic for detecting the case where the x-axis of a time-series
+   plot has unix time as its unit.
+*/
+
+static int use_unix_time (double xmin, double xmax)
+{
+    if (xmax > 1.0e7 && xmax == floor(xmax) && xmin == floor(xmin)) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+/* Read and check a plain text "plotbars" file.  Such a file may contain
+   comment lines starting with '#'; other than comments, each line
+   should contain a pair of space-separated date strings in gretl
    monthly date format (YYYY:MM).  These strings represent,
-   respectively, the start and end of an episode of some kind
-   (paradigm case: peak and trough of business cycle).  Each pair may
-   be used to draw a vertical bar on a time-series plot. The file can
-   contain any number of such pairs.  An example is provided in
+   respectively, the start and end of an episode of some kind (paradigm
+   case: peak and trough of business cycle).  Each pair may be used to
+   define a vertical bar on a time-series plot. The file can contain any
+   number of such pairs.  An example is provided in
    <prefix>/share/data/plotbars/nber.txt.
 
-   The dates are converted internally into the format, year plus
-   decimal fraction of year, and may be used when plotting
-   annual, quarterly or monthly time series.
+   The dates are converted internally into the format, year plus decimal
+   fraction of year, and may be used when plotting annual, quarterly or
+   monthly time series.
 */
 
 static plotbars *parse_bars_file (const char *fname,
+				  double xmin, double xmax,
 				  int *err)
 {
     FILE *fp;
@@ -2055,7 +2068,8 @@ static plotbars *parse_bars_file (const char *fname,
     int nyrs = 0;
     int nother = 0;
     int ntypes = 0;
-    int d1, d2, d3, d4;
+    int y1, y2;
+    int m1, m2;
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
@@ -2068,15 +2082,14 @@ static plotbars *parse_bars_file (const char *fname,
 #endif
 
     /* first count the data lines */
-
     while (fgets(line, sizeof line, fp)) {
 	if (*line == '#' || string_is_blank(line)) {
 	    continue;
-	} else if (sscanf(line, "%d:%d %d:%d", &d1, &d2, &d3, &d4) == 4) {
+	} else if (sscanf(line, "%d:%d %d:%d", &y1, &m1, &y2, &m2) == 4) {
 	    ncolon++;
-	} else if (sscanf(line, "%d-%d %d-%d", &d1, &d2, &d3, &d4) == 4) {
+	} else if (sscanf(line, "%d-%d %d-%d", &y1, &m1, &y2, &m2) == 4) {
 	    ndash++;
-	} else if (sscanf(line, "%d %d", &d1, &d3) == 2) {
+	} else if (sscanf(line, "%d %d", &y1, &y2) == 2) {
 	    nyrs++;
 	} else {
 	    nother++;
@@ -2086,7 +2099,6 @@ static plotbars *parse_bars_file (const char *fname,
     ntypes = (ncolon > 0) + (ndash > 0) + (nyrs > 0);
 
     /* initial check and allocation */
-
     if (nother > 0) {
 	/* non-comment, non-blank, non-parseable cruft found */
 	*err = E_DATA;
@@ -2102,27 +2114,39 @@ static plotbars *parse_bars_file (const char *fname,
 
     if (*err == 0) {
 	double x0, x1;
+	int unix_time;
 	int i = 0;
 
 	rewind(fp);
+	unix_time = use_unix_time(xmin, xmax);
 
 	/* now read, check, convert and record the date pairs */
-
 	while (fgets(line, sizeof line, fp) && !*err) {
 	    if (*line == '#' || string_is_blank(line)) {
 		continue;
 	    }
 	    if (nyrs) {
-		sscanf(line, "%d %d", &d1, &d3);
-		d2 = 1;
-		d4 = 12;
+		sscanf(line, "%d %d", &y1, &y2);
+		m1 = 1;
+		m2 = 12;
 	    } else if (ncolon) {
-		sscanf(line, "%d:%d %d:%d", &d1, &d2, &d3, &d4);
+		sscanf(line, "%d:%d %d:%d", &y1, &m1, &y2, &m2);
 	    } else {
-		sscanf(line, "%d-%d %d-%d", &d1, &d2, &d3, &d4);
+		sscanf(line, "%d-%d %d-%d", &y1, &m1, &y2, &m2);
 	    }
-	    x0 = d1 + (d2 - 1.0) / 12;
-	    x1 = d3 + (nyrs ? d4 / 12.0 : (d4 - 1.0) / 12);
+	    if (unix_time) {
+		const char *prtfmt = "%d-%02d-%02d";
+		const char *argfmt = "%Y-%m-%d";
+		char buf[12];
+
+		sprintf(buf, prtfmt, y1, m1, 1);
+		gretl_strptime(buf, argfmt, &x0);
+		sprintf(buf, prtfmt, y2, m2, 28);
+		gretl_strptime(buf, argfmt, &x1);
+	    } else {
+		x0 = y1 + (m1 - 1.0) / 12;
+		x1 = y2 + (nyrs ? m2 / 12.0 : (m2 - 1.0) / 12);
+	    }
 #if BDEBUG > 1
 	    fprintf(stderr, "%.4f %.4f\n", x0, x1);
 #endif
@@ -2150,8 +2174,9 @@ static plotbars *parse_bars_file (const char *fname,
     return bars;
 }
 
-/* output data representing vertical shaded bars: each
-   bar is represented by a pair of rows */
+/* Output data representing vertical shaded bars: each bar is
+   represented by a pair of rows.
+*/
 
 static void print_plotbars (GPT_SPEC *spec, FILE *fp)
 {
@@ -2238,9 +2263,9 @@ static void print_filledcurve_color (FILE *fp)
     fprintf(fp, "lc rgb \"%s\" ", cstr);
 }
 
-/* given the info in @bars, calculate how many of its start-stop
-   pairs fall (at least partially) within the current x-axis
-   range */
+/* Given the info in @bars, calculate how many of its start-stop pairs
+   fall (at least partially) within the current x-axis range.
+*/
 
 static int n_bars_shown (double xmin, double xmax, plotbars *bars)
 {
@@ -2267,13 +2292,12 @@ static int n_bars_shown (double xmin, double xmax, plotbars *bars)
     return n;
 }
 
-/* Given the limits of the data area of a plot, @xmin et al,
-   and the name of a plain text file containing "bars"
-   information in the form of a set of start-stop pairs,
-   try attaching this information to @spec. We fail if
-   there's something wrong with the info in the file, or
-   if none of the bars defined therein would be visible
-   in the current range, @xmin to @xmax.
+/* Given the limits of the data area of a plot, @xmin et al, and the
+   name of a plain text file containing "bars" information in the form
+   of a set of start-stop pairs, try attaching this information to
+   @spec. We fail if there's something wrong with the info in the file,
+   or if none of the bars defined therein would be visible in the
+   current range, @xmin to @xmax.
 */
 
 int plotspec_add_bars_info (GPT_SPEC *spec,
@@ -2291,7 +2315,7 @@ int plotspec_add_bars_info (GPT_SPEC *spec,
 	spec->nbars = 0;
     }
 
-    bars = parse_bars_file(fname, &err);
+    bars = parse_bars_file(fname, xmin, xmax, &err);
 
     if (!err) {
 	int n = n_bars_shown(xmin, xmax, bars);
@@ -2307,16 +2331,17 @@ int plotspec_add_bars_info (GPT_SPEC *spec,
 	    bars->ymax = ymax;
 	    spec->nbars = n;
 	} else {
+	    gretl_errmsg_set(_("No bars fall within the plot range"));
 	    plotbars_free(bars);
+	    err = 1;
 	}
     }
 
     return err;
 }
 
-/* the following is a public interface because it's also
-   used when reconstituting @spec from a gnuplot command
-   file.
+/* The following is a public interface because it's also used when
+   reconstituting @spec from a gnuplot command file.
 */
 
 int plotspec_allocate_bars (GPT_SPEC *spec)
