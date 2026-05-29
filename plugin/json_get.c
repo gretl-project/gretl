@@ -634,7 +634,7 @@ static int jb_add_matrix (JsonReader *reader,
     int i, err = 0;
 
     if (type == GRETL_TYPE_SERIES && a != NULL) {
-	/* your can't add a series to a gretl array */
+	/* you can't add a series to a gretl array */
 	err = E_TYPES;
     } else {
 	const char *key[2] = {"rows", "cols"};
