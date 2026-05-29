@@ -179,6 +179,7 @@ static GretlType virtual_type (const char *s)
 
 static int bundled_item_copy_in_data (bundled_item *item, void *ptr)
 {
+    gretl_matrix *m = NULL;
     int err = 0;
 
     if (item->is_virtual) {
@@ -224,7 +225,14 @@ static int bundled_item_copy_in_data (bundled_item *item, void *ptr)
         break;
     case GRETL_TYPE_MATRIX:
     case GRETL_TYPE_SERIES:
-        item->data = gretl_matrix_copy((gretl_matrix *) ptr);
+	m = (gretl_matrix *) ptr;
+	if (m->rows > 0 && m->cols > 0 && m->val == NULL) {
+	    gretl_errmsg_sprintf("matrix for bundling is %d x %d but has no values",
+				 m->rows, m->cols);
+	    err = E_DATA;
+	} else {
+	    item->data = gretl_matrix_copy((gretl_matrix *) ptr);
+	}
         break;
     case GRETL_TYPE_LIST:
         item->data = gretl_list_copy((const int *) ptr);
@@ -1504,7 +1512,6 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
         }
 
         item = bundled_item_new(type, ptr, copy, note, &err);
-
         if (!err) {
             item->key = g_strdup(key);
             if (replace) {
@@ -1699,9 +1706,9 @@ int gretl_bundle_set_series (gretl_bundle *bundle,
     gretl_matrix *m;
     int len = dset->n;
 
-    /* FIXME: do we want to make this vector the full
-       length of the dataset, or restrict it to the
-       current sample length and set t1, t2 on it?
+    /* FIXME: do we want to make this vector the full length of the
+       dataset, or restrict it to the current sample length and set t1,
+       t2 on it?
     */
     m = gretl_matrix_alloc(len, 1);
     memcpy(m->val, x, len * sizeof *x);
@@ -1734,9 +1741,7 @@ int gretl_bundle_donate_series (gretl_bundle *bundle,
     gretl_matrix *m = malloc(sizeof *m);
     int len = dset->n;
 
-    /* FIXME: see the comment above about
-       gretl_bundle_set_series()
-    */
+    /* See the comment above about gretl_bundle_set_series() */
     gretl_matrix_init_full(m, len, 1, x);
 
     return real_bundle_set_data(bundle, key, m,

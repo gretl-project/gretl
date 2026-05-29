@@ -11780,8 +11780,7 @@ static NODE *bundled_series_node (NODE *l,
 	return ret;
     }
 
-    if (n == p->dset->n ||
-	n == sample_size(p->dset) ||
+    if (n == p->dset->n || n == sample_size(p->dset) ||
 	(mt1 >= 0 && mt2 >= mt1)) {
 	ret = aux_series_node(p);
 	if (!p->err) {
@@ -16004,9 +16003,9 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
 		if (gtype == GRETL_TYPE_SERIES) {
 		    ptr = node_get_ptr(e, t->t, p, &donate);
 		    if (donate) {
-			gretl_bundle_donate_series(b, key, e->v.xvec, p->dset);
+			gretl_bundle_donate_series(b, key, ptr, p->dset);
 		    } else {
-			gretl_bundle_set_series(b, key, e->v.xvec, p->dset);
+			gretl_bundle_set_series(b, key, ptr, p->dset);
 		    }
 		} else if (type_can_be_bundled(gtype)) {
                     ptr = node_get_ptr(e, t->t, p, &donate);
