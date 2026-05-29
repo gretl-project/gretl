@@ -1,7 +1,11 @@
 version 2026c, in progress
 - GUI: forecast from single-equation model, support write
-  to CSV and copy as CSV
+  and copy in CSV format
 - GUI: fix for call to function package with no arguments
+- use of "to" in a range-of-lags expression: support this
+  in a wider range of contexts
+- recession bars in time-series plots: extend support of
+  this feature to daily data
 - fix bug: GUI plot editor breaks factorized plots
 - fix bug: crash in GUI data editor on Windows
 - fix bug: correlation matrix heatmap broken if the
