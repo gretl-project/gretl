@@ -917,13 +917,6 @@ static GList *add_list_names (GList *list, int no_single, int no_const)
 	tail = tail->next;
     }
 
-    if (mdata_selection_count() > 1) {
-	/* add the (unnamed) 'list' of series selected in the
-	   main gretl window?
-        */
-        list = g_list_append(list, SELNAME);
-    }
-
     g_list_free(tlist);
 
     return list;
@@ -995,7 +988,8 @@ static const char *list_exclude_other (gretl_bundle *ui)
 }
 
 /* Note that we're returning a list in the GList sense here, not a gretl
-   list */
+   list.
+*/
 
 static GList *get_selection_list (GretlType type, gretl_bundle *ui)
 {
@@ -1010,11 +1004,6 @@ static GList *get_selection_list (GretlType type, gretl_bundle *ui)
         int no_const = list_exclude_const(ui);
 
 	list = add_list_names(list, no_single, no_const);
-#if 0 /* suppressed 2025-10-16 */
-	if (!no_single) {
-	    list = add_series_names(list, no_const);
-	}
-#endif
     } else if (matrix_arg(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_MATRIX);
     } else if (bundle_arg(type)) {
@@ -1904,18 +1893,31 @@ static int already_set_as_default (call_info *cinfo,
     return ret;
 }
 
-static int has_single_arg_of_type (call_info *cinfo,
-				   GretlType type)
+static int n_params_of_type (call_info *cinfo,
+			     GretlType t)
 {
     int i, n = 0;
 
     for (i=0; i<cinfo->n_params; i++) {
-	if (fn_param_type(cinfo->func, i) == type) {
+	if (fn_param_type(cinfo->func, i) == t) {
 	    n++;
 	}
     }
 
-    return n == 1;
+    return n;
+}
+
+static void maybe_add_mainwin_list (call_info *cinfo,
+				    GList *list)
+{
+    if (mdata_selection_count() < 2) {
+	return;
+    }
+    if (n_params_of_type(cinfo, GRETL_TYPE_LIST) > 1) {
+	return;
+    }
+
+    list = g_list_prepend(list, SELNAME);
 }
 
 /* Try to be somewhat clever in selecting the default values to show
@@ -1936,27 +1938,22 @@ static int has_single_arg_of_type (call_info *cinfo,
 static void arg_combo_set_default (call_info *cinfo,
 				   GtkComboBox *combo,
 				   GList *list,
-				   GretlType ptype)
+				   GretlType ptype,
+				   int null_OK)
 {
-    const char *targname = NULL;
-    int null_OK;
-    int i, v, k = 0;
+    const char *vname = NULL;
+    int sel = -1;
+    int i, v;
 
-    null_OK = widget_get_int(combo, "null_OK");
-
-    if (ptype == GRETL_TYPE_SERIES) {
-	if (has_single_arg_of_type(cinfo, ptype)) {
-	    v = mdata_active_var();
-	    if (v > 0 && probably_stochastic(v)) {
-		targname = dataset->varname[v];
-	    }
-	}
-    } else if (ptype == GRETL_TYPE_LIST) {
-	if (has_single_arg_of_type(cinfo, ptype) &&
-	    mdata_selection_count() > 1) {
-	    targname = SELNAME;
-	    /* FIXME does this work? */
-	    list = g_list_prepend(list, SELNAME);
+    if (ptype == GRETL_TYPE_SERIES &&
+	n_params_of_type(cinfo, ptype) == 1) {
+	v = mdata_active_var();
+	if (v > 0 && (v == 1 || probably_stochastic(v))) {
+	    /* Give the benefit of the doubt to the first
+	       genuine series in the dataset; otherwise
+	       seek a stochastic series.
+	    */
+	    vname = dataset->varname[v];
 	}
     }
 
@@ -1965,8 +1962,8 @@ static void arg_combo_set_default (call_info *cinfo,
 	int argnum = widget_get_int(combo, "argnum");
 	int ok = 0;
 
-	if (targname != NULL) {
-	    ok = !strcmp(name, targname);
+	if (vname != NULL) {
+	    ok = !strcmp(name, vname);
 	} else if (series_arg(ptype)) {
 	    v = current_series_index(dataset, name);
 	    if (v > 0 && probably_stochastic(v)) {
@@ -1974,19 +1971,21 @@ static void arg_combo_set_default (call_info *cinfo,
 	    }
 	} else if (null_OK && is_nullarg_label(name)) {
 	    ok = 1;
+	} else if (!strcmp(name, SELNAME)) {
+	    ok = 1;
 	} else {
 	    ok = !already_set_as_default(cinfo, argnum, name, ptype);
 	}
 
 	if (ok) {
-	    k = i;
+	    sel = i;
 	    break;
 	} else {
 	    list = g_list_next(list);
 	}
     }
 
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), sel);
 }
 
 static void maybe_attach_min_max (GtkWidget *w, double *mmd)
@@ -2046,6 +2045,9 @@ static GtkWidget *combo_arg_selector (call_info *cinfo,
 
     list = get_selection_list(ptype, ui);
     if (list != NULL) {
+	if (ptype == GRETL_TYPE_LIST) {
+	    maybe_add_mainwin_list(cinfo, list);
+	}
 	if (null_OK) {
 	    const char *s = nullarg_label(null_OK);
 
@@ -2053,7 +2055,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo,
 	}
 	set_combo_box_strings_from_list(combo, list);
 	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo),
-			      list, ptype);
+			      list, ptype, null_OK);
 	g_list_free(list);
     }
 
