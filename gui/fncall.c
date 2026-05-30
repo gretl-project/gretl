@@ -590,6 +590,7 @@ static int is_nullarg_label (const char *s)
     } else {
 	return strcmp(s, "[auto]") == 0 ||
 	    strcmp(s, "automatic") == 0 ||
+	    strcmp(s, "null") == 0 ||
 	    strcmp(s, "[null]") == 0;
     }
 }
@@ -1935,11 +1936,13 @@ static int has_single_arg_of_type (call_info *cinfo,
 static void arg_combo_set_default (call_info *cinfo,
 				   GtkComboBox *combo,
 				   GList *list,
-				   int ptype)
+				   GretlType ptype)
 {
-    GList *tmp = g_list_first(list);
     const char *targname = NULL;
+    int null_OK;
     int i, v, k = 0;
+
+    null_OK = widget_get_int(combo, "null_OK");
 
     if (ptype == GRETL_TYPE_SERIES) {
 	if (has_single_arg_of_type(cinfo, ptype)) {
@@ -1952,23 +1955,25 @@ static void arg_combo_set_default (call_info *cinfo,
 	if (has_single_arg_of_type(cinfo, ptype) &&
 	    mdata_selection_count() > 1) {
 	    targname = SELNAME;
-	    tmp = g_list_prepend(tmp, SELNAME);
+	    /* FIXME does this work? */
+	    list = g_list_prepend(list, SELNAME);
 	}
     }
 
-
-    for (i=0; tmp != NULL; i++) {
-	gchar *name = tmp->data;
+    for (i=0; list != NULL; i++) {
+	gchar *name = list->data;
 	int argnum = widget_get_int(combo, "argnum");
 	int ok = 0;
 
 	if (targname != NULL) {
-	    ok = strcmp(name, targname) == 0;
+	    ok = !strcmp(name, targname);
 	} else if (series_arg(ptype)) {
 	    v = current_series_index(dataset, name);
 	    if (v > 0 && probably_stochastic(v)) {
 		ok = !already_set_as_default(cinfo, argnum, name, ptype);
 	    }
+	} else if (null_OK && is_nullarg_label(name)) {
+	    ok = 1;
 	} else {
 	    ok = !already_set_as_default(cinfo, argnum, name, ptype);
 	}
@@ -1977,7 +1982,7 @@ static void arg_combo_set_default (call_info *cinfo,
 	    k = i;
 	    break;
 	} else {
-	    tmp = g_list_next(tmp);
+	    list = g_list_next(list);
 	}
     }
 
@@ -2041,17 +2046,24 @@ static GtkWidget *combo_arg_selector (call_info *cinfo,
 
     list = get_selection_list(ptype, ui);
     if (list != NULL) {
+	if (null_OK) {
+	    const char *s = nullarg_label(null_OK);
+
+	    list = g_list_prepend(list, (gpointer) s);
+	}
 	set_combo_box_strings_from_list(combo, list);
 	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo),
 			      list, ptype);
 	g_list_free(list);
     }
 
+    /* Note 2026-05-30: removed a clause added 2026-02-06 to
+       set placeholder text in case of null_OK:
+       set_placeholder_text(entry, nullarg_label(null_OK));
+    */
+
     if (prior_val != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(entry), prior_val);
-    } else if (null_OK) {
-	/* added 2026-02-06 */
-	set_placeholder_text(entry, nullarg_label(null_OK));
     } else if (ptype == GRETL_TYPE_DOUBLE &&
 	       fn_param_has_default(cinfo->func, i)) {
 	double dflt = mmd[2];
