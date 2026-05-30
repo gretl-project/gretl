@@ -15999,16 +15999,15 @@ static NODE *object_def_node (NODE *t, NODE *n, parser *p)
                 }
             } else {
                 /* we need some valid content */
+		ptr = node_get_ptr(e, t->t, p, &donate);
                 gtype = gretl_type_from_gen_type(e->t);
 		if (gtype == GRETL_TYPE_SERIES) {
-		    ptr = node_get_ptr(e, t->t, p, &donate);
 		    if (donate) {
 			gretl_bundle_donate_series(b, key, ptr, p->dset);
 		    } else {
 			gretl_bundle_set_series(b, key, ptr, p->dset);
 		    }
 		} else if (type_can_be_bundled(gtype)) {
-                    ptr = node_get_ptr(e, t->t, p, &donate);
                     if (donate) {
                         gretl_bundle_donate_data(b, key, ptr, gtype);
                     } else {
