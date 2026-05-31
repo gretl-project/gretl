@@ -466,6 +466,7 @@ struct str_table funcs[] = {
     { F_IMHOF,    "imhof" },
     { F_TOEPSOLV, "toepsolv" },
     { F_TSOLVEPD, "tsolvepd" },
+    { F_KMEANS,   "kmeans" },
     { F_RGBMIX,   "rgbmix" },
     { F_DSUM,     "diagcat" },
     { F_CORRGM,   "corrgm" },
@@ -644,7 +645,6 @@ struct str_table hidden_funcs[] = {
     { HF_FDEPTH,   "_fdepth" },
     { HF_GLASSO,   "_glasso" },
     { HF_VCNORM,   "_vcnorm" },
-    { HF_KMEANS,   "_kmeans" },
     { 0,           NULL }
 };
 

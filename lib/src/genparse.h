@@ -480,8 +480,8 @@ enum {
     F_THRESHOLD,
     F_JSONGETB,
     F_TSOLVEPD,
+    F_KMEANS,
     HF_REGLS,
-    HF_KMEANS,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_URCPVAL,
     F_RANDGEN,

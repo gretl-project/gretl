@@ -14226,7 +14226,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		}
 	    }
 	}
-    } else if (f == HF_KMEANS) {
+    } else if (f == F_KMEANS) {
 	post_process = 0;
         if (l->t != MAT) {
             /* matrix a, required */
@@ -19622,8 +19622,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_SDC:
     case F_CDEMEAN:
     case F_TSOLVEPD:
+    case F_KMEANS:
     case HF_REGLS:
-    case HF_KMEANS:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
             ret = replace_value(l, m, r, p);
