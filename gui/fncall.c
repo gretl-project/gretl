@@ -922,22 +922,36 @@ static GList *add_list_names (GList *list, int no_single, int no_const)
     return list;
 }
 
-static GList *add_series_names (GList *list, int no_const)
+static GList *add_series_names (GList *list, gretl_bundle *ui)
 {
-    int i, imin = no_const ? 1 : 0;
+    int require_binary = 0;
+    int i, imin = 0;
     int vmin = 1;
+
+    if (ui != NULL && gretl_bundle_get_bool(ui, "binary", 0)) {
+	require_binary = 1;
+    }
 
     if (!strcmp(dataset->varname[1], "index")) {
 	/* don't show this first */
 	vmin = 2;
     }
     for (i=vmin; i<dataset->v; i++) {
-	if (!series_is_hidden(dataset, i)) {
+	if (series_is_hidden(dataset, i)) {
+	    continue;
+	} else if (require_binary &&
+		   !gretl_isdummy(dataset->t1,
+				  dataset->t2,
+				  dataset->Z[i])) {
+	    continue;
+	} else {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
 	}
     }
-    for (i=imin; i<vmin; i++) {
-	list = g_list_append(list, (gpointer) dataset->varname[i]);
+    if (!require_binary) {
+	for (i=imin; i<vmin; i++) {
+	    list = g_list_append(list, (gpointer) dataset->varname[i]);
+	}
     }
 
     return list;
@@ -996,7 +1010,7 @@ static GList *get_selection_list (GretlType type, gretl_bundle *ui)
     GList *list = NULL;
 
     if (series_arg(type)) {
-	list = add_series_names(list, 0); /* fixme? */
+	list = add_series_names(list, ui);
     } else if (scalar_arg(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_DOUBLE);
     } else if (type == GRETL_TYPE_LIST) {
@@ -2060,8 +2074,9 @@ static GtkWidget *combo_arg_selector (call_info *cinfo,
     }
 
     /* Note 2026-05-30: removed a clause added 2026-02-06 to
-       set placeholder text in case of null_OK:
+       insert placeholder text in case of null_OK:
        set_placeholder_text(entry, nullarg_label(null_OK));
+       This broke (e.g.) the ui for the ParMA package.
     */
 
     if (prior_val != NULL) {
