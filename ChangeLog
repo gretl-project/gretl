@@ -10,6 +10,8 @@ version 2026c, in progress
 - fix bug: crash in GUI data editor on Windows
 - fix bug: correlation matrix heatmap broken if the
   graph-name of an included series contains '%'
+- fix bug: crash in adf test on panel data when the
+  --difference option is given
 - gretl_edit: support loading of function definitions
 
 2026-04-30 version 2026b
