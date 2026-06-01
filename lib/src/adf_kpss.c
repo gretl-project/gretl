@@ -82,6 +82,7 @@ typedef struct kpss_info_ kpss_info;
 
 struct adf_info_ {
     int v;           /* ID number of series to test (in/out) */
+    int v0;          /* ID of series given in command */
     int order;       /* lag order for ADF (in/out) */
     int kmax;        /* max. order (for testing down) */
     int altv;        /* ID of modified series (detrended) */
@@ -1445,7 +1446,12 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	int t1 = dset->t1;
 
 	dset->t1 = 0;
-	ainfo->v = diffgenr(ainfo->v, DIFF, dset);
+	if (ainfo->flags & ADF_PANEL) {
+	    /* don't difference recursively! */
+	    ainfo->v = diffgenr(ainfo->v0, DIFF, dset);
+	} else {
+	    ainfo->v = diffgenr(ainfo->v, DIFF, dset);
+	}
 	dset->t1 = t1;
 	if (ainfo->v < 0) {
 	    return E_DATA;
@@ -1891,7 +1897,7 @@ static int panel_DF_test (int v, int order, DATASET *dset,
     n = uN - u0 + 1;
 
     /* initialize @ainfo */
-    ainfo.v = v;
+    ainfo.v0 = ainfo.v = v;
     ainfo.niv = 1;
     ainfo.flags = ADF_PANEL;
 
