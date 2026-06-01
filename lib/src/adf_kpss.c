@@ -82,7 +82,6 @@ typedef struct kpss_info_ kpss_info;
 
 struct adf_info_ {
     int v;           /* ID number of series to test (in/out) */
-    int v0;          /* ID of series given in command */
     int order;       /* lag order for ADF (in/out) */
     int kmax;        /* max. order (for testing down) */
     int altv;        /* ID of modified series (detrended) */
@@ -1441,24 +1440,6 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	}
     }
 
-    if (opt & OPT_F) {
-	/* difference the target series before testing */
-	int t1 = dset->t1;
-
-	dset->t1 = 0;
-	if (ainfo->flags & ADF_PANEL) {
-	    /* don't difference recursively! */
-	    ainfo->v = diffgenr(ainfo->v0, DIFF, dset);
-	} else {
-	    ainfo->v = diffgenr(ainfo->v, DIFF, dset);
-	}
-	dset->t1 = t1;
-	if (ainfo->v < 0) {
-	    return E_DATA;
-	}
-	ainfo->vname = dset->varname[ainfo->v];
-    }
-
     if ((opt & OPT_D) && dset->pd > 1) {
 	/* arrange to add seasonal dummies */
 	ainfo->nseas = dset->pd - 1;
@@ -1897,7 +1878,7 @@ static int panel_DF_test (int v, int order, DATASET *dset,
     n = uN - u0 + 1;
 
     /* initialize @ainfo */
-    ainfo.v0 = ainfo.v = v;
+    ainfo.v = v;
     ainfo.niv = 1;
     ainfo.flags = ADF_PANEL;
 
@@ -1916,7 +1897,6 @@ static int panel_DF_test (int v, int order, DATASET *dset,
 		panel_unit_DF_print(&ainfo, i+1, prn);
 	    }
 	}
-
 	if (!err) {
 	    if (Ti != NULL) {
 		Ti[i-u0+1] = ainfo.T;
@@ -2017,6 +1997,30 @@ int levin_lin_test (int vnum, const int *plist,
     return err;
 }
 
+/* Get the ID number of the series to be tested, allowing for the
+   possibility that the --difference option (OPT_F) has been specified.
+*/
+
+static int get_real_v (int v0, DATASET *dset,
+		       gretlopt opt, int *err)
+{
+    int v = v0;
+
+    if (opt & OPT_F) {
+	/* --difference */
+	int save_t1 = dset->t1;
+
+	dset->t1 = 0;
+	v = diffgenr(v0, DIFF, dset);
+	dset->t1 = save_t1;
+	if (v < 0) {
+	    *err = E_DATA; /* ? */
+	}
+    }
+
+    return v;
+}
+
 /**
  * adf_test:
  * @order: lag order for the (augmented) test.
@@ -2051,6 +2055,7 @@ int adf_test (int order, const int *list, DATASET *dset,
 {
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
+    int orig_v = dset->v;
     int panelmode;
     int err = 0;
 
@@ -2068,10 +2073,14 @@ int adf_test (int order, const int *list, DATASET *dset,
     panelmode = multi_unit_panel_sample(dset);
 
     if (panelmode) {
-	err = panel_DF_test(list[1], order, dset, opt, prn);
+	int v = get_real_v(list[1], dset, opt, &err);
+
+	if (!err) {
+	    err = panel_DF_test(v, order, dset, opt, prn);
+	}
     } else {
-	/* regular time series case */
-	int i, v, vlist[2] = {1, 0};
+	/* the regular time series case */
+	int i, vlist[2] = {1, 0};
 	adf_info ainfo = {0};
 
 	ainfo.niv = 1;
@@ -2088,9 +2097,11 @@ int adf_test (int order, const int *list, DATASET *dset,
 	}
 
 	for (i=1; i<=list[0] && !err; i++) {
-	    ainfo.v = vlist[1] = list[i];
+	    ainfo.v = vlist[1] = get_real_v(list[i], dset, opt, &err);
+	    if (err) {
+		break;
+	    }
 	    ainfo.order = order;
-	    vlist[1] = v = list[i];
 	    err = list_adjust_sample(vlist, &dset->t1, &dset->t2, dset, NULL);
 	    if (!err && order == -1) {
 		/* default to L_{12}: see G. W. Schwert, "Tests for Unit Roots:
@@ -2113,6 +2124,10 @@ int adf_test (int order, const int *list, DATASET *dset,
 
     dset->t1 = save_t1;
     dset->t2 = save_t2;
+
+    if (dset->v > orig_v) {
+	dataset_drop_last_variables(dset, dset->v - orig_v);
+    }
 
     return err;
 }
@@ -2236,14 +2251,8 @@ real_kpss_test (int order, int varno, DATASET *dset,
 	}
     }
 
-    if (opt & OPT_T) {
-	hastrend = 1;
-    }
-
-    if (opt & OPT_D) {
-	hasseas = 1;
-    }
-
+    hastrend = (opt & OPT_T) ? 1 : 0;
+    hasseas = (opt & OPT_D) ? 1 : 0;
     ndum = hasseas ? (dset->pd - 1) : 0;
     nreg = 1 + hastrend + ndum;
 
