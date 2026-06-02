@@ -587,9 +587,12 @@ static int get_IPS_limits (int N, int *N1, int *N2,
 {
     int i;
 
-    if (N < IPS_N[0] || T < IPS_T[0]) {
-	/* sample too small in one or other dimension */
-	return E_DATA;
+    if (N < IPS_N[0]) {
+	gretl_errmsg_set("IPS test: too few groups");
+	return E_TOOFEW;
+    } else if (T < IPS_T[0]) {
+	gretl_errmsg_set("IPS test: time series too short");
+	return E_TOOFEW;
     }
 
     if (N >= IPS_N[IPS_N_MAX] && T >= IPS_T[IPS_T_MAX]) {
@@ -771,11 +774,13 @@ int IPS_tbar_moments (int T, double *Etbar, double *Vtbar)
     return err;
 }
 
-/* IPS (2003) Table 3: expected values and variances of the
-   t_T(\rho, 0) statistic, both without and with time trend.
+/* IPS (2003) Table 3: expected values and variances of the t_T(\rho, 0)
+   statistic, both without and with time trend.
 
    Rows represent T, from 10 to 100.
    Columns represent the lag order, p, from 0 to 8.
+   Zeros in the top-right corner correspond to unhandled cases, for
+   which an error will be flagged.
 */
 
 /* IPS Table 3, without time trend, expected values */
@@ -856,7 +861,7 @@ int IPS_tbar_rho_moments (int p, int T, int trend, double *Etbar, double *Vtbar)
 
     if (T < 10 || p > 8) {
 	*Etbar = *Vtbar = NADBL;
-	err = E_DATA;
+	err = E_TOOFEW;
     } else if (T >= 100) {
 	*Etbar = Etab[9*9+p];
 	*Vtbar = Vtab[9*9+p];
@@ -869,7 +874,7 @@ int IPS_tbar_rho_moments (int p, int T, int trend, double *Etbar, double *Vtbar)
 	    if (T == tbar_rho_T[i]) {
 		if (Etab[j+p] == 0.0) {
 		    *Etbar = *Vtbar = NADBL;
-		    err = E_DATA;
+		    err = E_TOOFEW;
 		} else {
 		    *Etbar = Etab[j+p];
 		    *Vtbar = Vtab[j+p];
@@ -879,7 +884,7 @@ int IPS_tbar_rho_moments (int p, int T, int trend, double *Etbar, double *Vtbar)
 		E1 = Etab[j+p];
 		if (E1 == 0.0) {
 		    *Etbar = *Vtbar = NADBL;
-		    err = E_DATA;
+		    err = E_TOOFEW;
 		} else {
 		    w1 = 1.0 / (T - tbar_rho_T[i]);
 		    w2 = 1.0 / (tbar_rho_T[i+1] - T);
@@ -897,13 +902,11 @@ int IPS_tbar_rho_moments (int p, int T, int trend, double *Etbar, double *Vtbar)
     return err;
 }
 
-/* 
-   Below: Bruce Hansen's algorithm for approximate asymptotic
-   p-values for the sup-Wald (QLR) test. See 
-   "Approximate Asymptotic P Values for Structural-Change Tests",
-   Journal of Business & Economic Statistics, 15, pp. 60-67, 1997.
-   The code here is based on Hansen's Matlab code, from
-   http://www.ssc.wisc.edu/~bhansen/progs/progs_stchange.html
+/* Below: Bruce Hansen's algorithm for approximate asymptotic p-values
+   for the sup-Wald (QLR) test. See "Approximate Asymptotic P Values for
+   Structural-Change Tests", Journal of Business & Economic Statistics,
+   15, pp. 60-67, 1997.  The code here is based on Hansen's Matlab code,
+   from http://www.ssc.wisc.edu/~bhansen/progs/progs_stchange.html
 */
 
 #define bidx(i,j) (j+3*i)

@@ -1827,6 +1827,17 @@ static void panel_unit_DF_print (adf_info *ainfo, int i, PRN *prn)
     }
 }
 
+/* When the test order is given as -1 we default to L_{12}: see
+   G. W. Schwert, "Tests for Unit Roots: A Monte Carlo Investigation",
+   Journal of Business and Economic Statistics, 7(2), 1989,
+   pp. 5-17.
+*/
+
+static int L_12 (int T)
+{
+    return (int) floor(12.0 * pow(T/100.0, 0.25));
+}
+
 static int panel_DF_test (int v, int order, DATASET *dset,
 			  gretlopt opt, PRN *prn)
 {
@@ -1838,6 +1849,7 @@ static int panel_DF_test (int v, int order, DATASET *dset,
     double ppv = 0.0, zpv = 0.0, lpv = 0.0;
     double pval, tbar = 0.0;
     int *Ti = NULL, *Oi = NULL;
+    int use_L12 = 0;
     int i, n, err;
 
     err = panel_adjust_ADF_opt(&opt);
@@ -1882,6 +1894,11 @@ static int panel_DF_test (int v, int order, DATASET *dset,
     ainfo.niv = 1;
     ainfo.flags = ADF_PANEL;
 
+    if (order == -1) {
+	/* automatic order selection */
+	use_L12 = 1;
+    }
+
     /* run a Dickey-Fuller test for each unit and record the
        results */
 
@@ -1892,6 +1909,9 @@ static int panel_DF_test (int v, int order, DATASET *dset,
 	err = series_adjust_sample(dset->Z[v], &dset->t1, &dset->t2);
 
 	if (!err) {
+	    if (use_L12) {
+		ainfo.order = L_12(sample_size(dset));
+	    }
 	    err = real_adf_test(&ainfo, dset, opt, prn);
 	    if (!err && verbose) {
 		panel_unit_DF_print(&ainfo, i+1, prn);
@@ -2104,15 +2124,7 @@ int adf_test (int order, const int *list, DATASET *dset,
 	    ainfo.order = order;
 	    err = list_adjust_sample(vlist, &dset->t1, &dset->t2, dset, NULL);
 	    if (!err && order == -1) {
-		/* default to L_{12}: see G. W. Schwert, "Tests for Unit Roots:
-		   A Monte Carlo Investigation", Journal of Business and
-		   Economic Statistics, 7(2), 1989, pp. 5-17. Note that at
-		   some points Ng uses floor(T/100.0) in the following
-		   expression, which can give a lower max order.
-		*/
-		int T = sample_size(dset);
-
-		ainfo.order = 12.0 * pow(T/100.0, 0.25);
+		ainfo.order = L_12(sample_size(dset));
 	    }
 	    if (!err) {
 		err = real_adf_test(&ainfo, dset, opt, prn);
