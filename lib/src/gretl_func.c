@@ -218,6 +218,7 @@ struct fnpkg_ {
     char **datafiles; /* names of packaged data files */
     char **depends;   /* names of dependencies */
     char *provider;   /* name of "provider" package, if applicable */
+    char *conflict;   /* name of comflicting package, if any */
     int n_files;      /* number of data files */
     int n_depends;    /* number of dependencies */
     void *editor;     /* for GUI use */
@@ -912,6 +913,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->depends = NULL;
     pkg->n_depends = 0;
     pkg->provider = NULL;
+    pkg->conflict = NULL;
     pkg->editor = NULL;
 
     return pkg;
@@ -3582,6 +3584,9 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn, int mpi)
     if (pkg->provider != NULL) {
         gretl_xml_put_tagged_string("provider", pkg->provider, prn);
     }
+    if (pkg->conflict != NULL) {
+        gretl_xml_put_tagged_string("conflict", pkg->conflict, prn);
+    }
     if (pkg->Rdeps != NULL) {
         gretl_xml_put_tagged_string("R-depends", pkg->Rdeps, prn);
     }
@@ -4289,6 +4294,11 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
                     pprintf(prn, "Recording provider %s\n", p);
                 }
                 err = function_package_set_properties(pkg, "provider", p, NULL);
+            } else if (!strncmp(line, "conflict", 8)) {
+                if (!quiet) {
+                    pprintf(prn, "Recording conflict %s\n", p);
+                }
+                err = function_package_set_properties(pkg, "conflict", p, NULL);
             } else if (!strncmp(line, "help", 4)) {
                 gchar *hstr = NULL;
                 int pdfdoc;
@@ -4992,6 +5002,8 @@ static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
         return &pkg->sample_fname;
     } else if (!strcmp(key, "provider")) {
         return &pkg->provider;
+    } else if (!strcmp(key, "conflict")) {
+	return &pkg->conflict;
     }
 
     return NULL;
@@ -5259,6 +5271,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
         } else if (!strcmp(key, "provider")) {
             ps = (char **) ptr;
             *ps = g_strdup(pkg->provider);
+	} else if (!strcmp(key, "conflict")) {
+            ps = (char **) ptr;
+            *ps = g_strdup(pkg->conflict);
         } else if (!strcmp(key, "data-requirement")) {
             pi = (int *) ptr;
             *pi = pkg->dreq;
@@ -5596,6 +5611,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
         free(pkg->label);
         free(pkg->mpath);
         free(pkg->provider);
+	free(pkg->conflict);
         free(pkg);
     }
 }
@@ -6181,6 +6197,9 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
     if (pkg->provider != NULL) {
         pprintf(prn, "<@itl=\"Provider\">: %s\n", pkg->provider);
     }
+    if (pkg->conflict != NULL) {
+        pprintf(prn, "<@itl=\"Conflict\">: %s\n", pkg->conflict);
+    }
 
     if (pdfdoc) {
         const char *s = strrchr(pkg->help, ':');
@@ -6509,7 +6528,9 @@ static void plain_print_package_info (const fnpkg *pkg,
     if (pkg->provider != NULL) {
         pprintf(prn, "Provider: %s\n", pkg->provider);
     }
-
+    if (pkg->conflict != NULL) {
+        pprintf(prn, "Conflict: %s\n", pkg->conflict);
+    }
     if (pkg->mpath != NULL) {
 	pprintf(prn, "Menu attachment: %s\n", pkg->mpath);
     }
@@ -6585,7 +6606,9 @@ static void real_bundle_package_info (const fnpkg *pkg,
     if (pkg->provider != NULL) {
         gretl_bundle_set_string(b, "provider", pkg->provider);
     }
-
+    if (pkg->conflict != NULL) {
+        gretl_bundle_set_string(b, "conflict", pkg->conflict);
+    }
     if (pkg->mpath != NULL) {
         gretl_bundle_set_string(b, "menu_path", pkg->mpath);
     }
@@ -6792,6 +6815,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node,
             gretl_xml_node_get_trimmed_string(cur, doc, &pkg->mpath);
         } else if (!xmlStrcmp(cur->name, (XUC) "provider")) {
             gretl_xml_node_get_trimmed_string(cur, doc, &pkg->provider);
+        } else if (!xmlStrcmp(cur->name, (XUC) "conflict")) {
+            gretl_xml_node_get_trimmed_string(cur, doc, &pkg->conflict);
         } else if (!xmlStrcmp(cur->name, (XUC) "data-files")) {
             pkg->datafiles =
                 gretl_xml_get_strings_array(cur, doc, &pkg->n_files,

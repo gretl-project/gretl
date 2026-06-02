@@ -31,6 +31,7 @@
         <xs:element minOccurs="0" ref="depends"/>
         <xs:element minOccurs="0" ref="provider"/>
         <xs:element minOccurs="0" ref="R-depends"/>
+        <xs:element minOccurs="0" ref="conflict"/>
         <xs:element maxOccurs="unbounded" ref="gretl-function"/>
         <xs:element ref="sample-script"/>
       </xs:sequence>
@@ -113,6 +114,7 @@
   <xs:element name="menu-attachment" type="xs:string"/>
   <xs:element name="provider" type="xs:string"/>
   <xs:element name="R-depends" type="xs:string"/>
+  <xs:element name="conflict" type="xs:string"/>
   <xs:element name="gretl-function">
     <xs:complexType>
       <xs:sequence>

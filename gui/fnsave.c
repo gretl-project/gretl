@@ -79,6 +79,7 @@ struct function_info_ {
     GtkWidget *dep_entries[N_DEP_ENTRIES];   /* dependencies */
     GtkWidget *prov_check; /* "provider" selected? */
     GtkWidget *Rdep_entry; /* for R-dependent packages */
+    GtkWidget *conflict_entry; /* for a conflicting package */
     GtkWidget *codesel;    /* code-editing selector */
     GtkWidget *popup;      /* popup menu */
     GtkWidget *extra;      /* extra properties child dialog */
@@ -120,12 +121,13 @@ struct function_info_ {
     char **datafiles;      /* names of included data files */
     char **depends;        /* names of dependencies */
     char *R_depends;       /* R dependency info */
+    char *conflict;       /* name of conflicting package, if any */
     int n_pub;             /* number of public functions */
     int n_priv;            /* number of private functions */
     int n_assn;            /* number of "must assign" functions */
     int n_files;           /* number of included data files */
     int n_depends;         /* number of dependencies */
-    gchar *provider;       /* name of "provider" package */
+    gchar *provider;       /* name of "provider" package, if any */
     gboolean uses_subdir;  /* the package has its own subdir (0/1) */
     gboolean data_access;  /* the package wants access to full data range */
     gboolean pdfdoc;       /* the package has PDF documentation */
@@ -237,6 +239,7 @@ function_info *finfo_new (void)
     finfo->datafiles = NULL;
     finfo->depends = NULL;
     finfo->R_depends = NULL;
+    finfo->conflict = NULL;
 
     finfo->n_pub = 0;
     finfo->n_priv = 0;
@@ -317,6 +320,9 @@ static void finfo_free (function_info *finfo)
     }
     if (finfo->R_depends != NULL) {
 	g_free(finfo->R_depends);
+    }
+    if (finfo->conflict != NULL) {
+	g_free(finfo->conflict);
     }
     if (finfo->provider != NULL) {
 	g_free(finfo->provider);
@@ -2713,14 +2719,17 @@ static void adjust_prov_check (GtkEditable *w, GtkWidget *b)
 static void add_dependency_entries (GtkWidget *holder,
 				    function_info *finfo)
 {
-    const char *msg = N_("You may add or delete names of packages "
-			 "to be recorded as dependencies.\nLeave off the "
-			 ".gfn or .zip suffix.");
-    const char *ms2 = N_("You can also record a dependency on R.");
+    const char *msgs[3] = {
+	N_("You may add or delete names of packages "
+	   "to be recorded as dependencies.\nLeave off the "
+	   ".gfn or .zip suffix."),
+	N_("You can also record a dependency on R."),
+	N_("You can record the name of a conflicting package.")
+    };
     GtkWidget *w, *hbox, *entry;
     int i;
 
-    w = gtk_label_new(_(msg));
+    w = gtk_label_new(_(msgs[0]));
     gtk_label_set_line_wrap(GTK_LABEL(w), TRUE);
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
@@ -2744,19 +2753,30 @@ static void add_dependency_entries (GtkWidget *holder,
 	gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
     }
 
-    w = gtk_label_new(_(ms2));
-    hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
-
-    hbox = gtk_hbox_new(FALSE, 5);
-    finfo->Rdep_entry = entry = gtk_entry_new();
-    gtk_entry_set_width_chars(GTK_ENTRY(entry), 48);
-    if (finfo->R_depends != NULL) {
-	gtk_entry_set_text(GTK_ENTRY(entry), finfo->R_depends);
+    for (i=1; i<3; i++) {
+	/* label */
+	w = gtk_label_new(_(msgs[i]));
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+	/* entry */
+	hbox = gtk_hbox_new(FALSE, 5);
+	entry = gtk_entry_new();
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 48);
+	if (i == 1) {
+	    finfo->Rdep_entry = entry;
+	    if (finfo->R_depends != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(entry), finfo->R_depends);
+	    }
+	} else {
+	    finfo->conflict_entry = entry;
+	    if (finfo->conflict != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(entry), finfo->conflict);
+	    }
+	}
+	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
     }
-    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
 }
 
 static void add_must_assign_widgets (GtkWidget *holder,
@@ -3430,14 +3450,25 @@ static int process_provider_name (function_info *finfo,
     return changed;
 }
 
-static int process_R_dependency (function_info *finfo,
-				 gboolean make_changes)
+/* We use this for both R-dependency and a package conflict */
+
+static int process_aux_string (function_info *finfo,
+			       GtkWidget *entry,
+			       gboolean make_changes)
 {
-    gchar *s, *prev = finfo->R_depends;
+    char **targ = NULL;
+    gchar *s, *prev;
     int changed = 0;
     int blank;
 
-    s = entry_box_get_trimmed_text(finfo->Rdep_entry);
+    if (entry == finfo->Rdep_entry) {
+	targ = &finfo->R_depends;
+    } else {
+	targ = &finfo->conflict;
+    }
+
+    prev = *targ;
+    s = entry_box_get_trimmed_text(entry);
     blank = s == NULL || *s == '\0';
 
     if (!blank) {
@@ -3449,11 +3480,11 @@ static int process_R_dependency (function_info *finfo,
     }
 
     if (changed && make_changes) {
-	g_free(finfo->R_depends);
+	g_free(*targ);
 	if (blank) {
-	    finfo->R_depends = NULL;
+	    *targ = NULL;
 	} else {
-	    finfo->R_depends = g_strdup(s);
+	    *targ = g_strdup(s);
 	}
     }
 
@@ -3480,7 +3511,8 @@ static int process_extra_properties (function_info *finfo,
     changed += process_data_file_names(finfo, make_changes);
     changed += process_dependency_names(finfo, make_changes);
     changed += process_provider_name(finfo, make_changes);
-    changed += process_R_dependency(finfo, make_changes);
+    changed += process_aux_string(finfo, finfo->Rdep_entry, make_changes);
+    changed += process_aux_string(finfo, finfo->conflict_entry, make_changes);
     changed += process_must_assign(finfo, make_changes);
 
     if (changed && make_changes) {
@@ -5172,7 +5204,10 @@ int save_function_package_spec (const char *fname, gpointer p)
     if (finfo->R_depends != NULL) {
 	pprintf(prn, "R-depends = %s\n", finfo->R_depends);
     }
-
+    /* write out R conflict string? */
+    if (finfo->conflict != NULL) {
+	pprintf(prn, "conflict = %s\n", finfo->conflict);
+    }
     /* write out provider name? */
     if (finfo->provider != NULL) {
 	pprintf(prn, "provider = %s\n", finfo->provider);
@@ -5432,6 +5467,7 @@ void edit_function_package (const char *fname)
 					  "gui-attrs", finfo->gui_attrs,
 					  "provider", &finfo->provider,
 					  "R-depends", &finfo->R_depends,
+					  "conflict", &finfo->conflict,
 					  NULL);
     if (!err && publist == NULL) {
 	err = E_DATA;
