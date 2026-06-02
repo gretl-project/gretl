@@ -940,13 +940,13 @@ int maybe_stack_var (GRETL_VAR *var, CMD *cmd)
 }
 
 /* Called from interact.c, after sucessful estimation of a
-   (single-equation) model.  We automatically put the model in place
-   as the "last model" for reference purposes (e.g. in genr).  In
-   addition, if the model has been assigned a "savename" (via
-   something like "mymod <- ols 1 0 2"), we make a copy and add it to
-   the stack of saved objects.  We need to do the copying so that
-   if/when the original model pointer is reassigned to, via a further
-   estimation command, we do not lose the saved (named) model content.
+   single-equation model.  We automatically put the model in place as
+   the "last model" for reference purposes (e.g. in genr).  In addition,
+   if the model has been assigned a "savename" (via something like
+   "mymod <- ols 1 0 2"), we make a copy and add it to the stack of
+   saved objects.  We need to do the copying so that if/when the
+   original model pointer is reassigned to, via a further estimation
+   command, we do not lose the saved (named) model content.
 
    Reference counting: the model that is passed in should have its
    refcount raised by 1 on account of set_as_last_model.  The refcount of

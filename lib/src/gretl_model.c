@@ -5228,45 +5228,36 @@ static int copy_model (MODEL *targ, MODEL *src)
 	(targ->coeff = copyvec(src->coeff, src->ncoeff)) == NULL) {
 	return 1;
     }
-
     if (src->sderr != NULL &&
 	(targ->sderr = copyvec(src->sderr, src->ncoeff)) == NULL) {
 	return 1;
     }
-
     if (src->uhat != NULL &&
 	(targ->uhat = copyvec(src->uhat, src->full_n)) == NULL) {
 	return 1;
     }
-
     if (src->yhat != NULL &&
 	(targ->yhat = copyvec(src->yhat, src->full_n)) == NULL) {
 	return 1;
     }
-
     if (src->submask != NULL &&
 	(targ->submask = copy_subsample_mask(src->submask, &err)) == NULL) {
 	return 1;
     }
-
     if (src->missmask != NULL &&
 	(targ->missmask = gretl_strdup(src->missmask)) == NULL) {
 	return 1;
     }
-
     if (src->xpx != NULL && (targ->xpx = copyvec(src->xpx, m)) == NULL) {
 	return 1;
     }
-
     if (src->vcv != NULL && (targ->vcv = copyvec(src->vcv, m)) == NULL) {
 	return 1;
     }
-
     if (src->arinfo != NULL &&
 	(targ->arinfo = copy_ar_info(src->arinfo)) == NULL) {
 	return 1;
     }
-
     if (src->ntests > 0 && src->tests != NULL) {
 	copy_model_tests(targ, src);
 	if (targ->tests == NULL) {
@@ -5274,28 +5265,24 @@ static int copy_model (MODEL *targ, MODEL *src)
 	}
 	targ->ntests = src->ntests;
     }
-
     if (src->name != NULL) {
 	targ->name = gretl_strdup(src->name);
 	if (targ->name == NULL) {
 	    return 1;
 	}
     }
-
     if (src->depvar != NULL) {
 	targ->depvar = gretl_strdup(src->depvar);
 	if (targ->depvar == NULL) {
 	    return 1;
 	}
     }
-
     if (src->nparams > 0 && src->params != NULL) {
 	err = copy_model_params(targ, src);
 	if (err) {
 	    return err;
 	}
     }
-
     if (src->n_data_items > 0) {
 	copy_model_data_items(targ, src);
 	if (targ->data_items == NULL) {
@@ -5303,12 +5290,14 @@ static int copy_model (MODEL *targ, MODEL *src)
 	}
 	targ->n_data_items = src->n_data_items;
     }
-
     if (src->list != NULL &&
 	(targ->list = gretl_list_copy(src->list)) == NULL) {
 	return 1;
     }
-
+     if (src->xlist != NULL &&
+	(targ->xlist = gretl_list_copy(src->xlist)) == NULL) {
+	return 1;
+    }
     if (gretl_is_between_model(src) && src->dataset != NULL) {
 	/* special for "between" panel model: transfer the
 	   group-means dataset to @targ
