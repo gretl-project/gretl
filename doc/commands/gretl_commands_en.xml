@@ -215,7 +215,8 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>print regression results</effect>
+	  <optparm optional="true">level</optparm>
+	  <effect>print more information</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
@@ -451,10 +452,6 @@
 	exclusive: you must choose between no-constant, constant only,
 	and constant plus trend; the default is constant only. In
 	addition, the <opt>seasonals</opt> option is not available.
-	Third, the <opt>verbose</opt> option has a different meaning:
-	it produces a brief account of the test for each individual
-	time series (the default being to show only the overall
-	result).
       </para>
       <para context="cli">
 	The overall test (null hypothesis: the series in question has
@@ -472,6 +469,26 @@
 	individual, their <math>Z</math> statistic; otherwise their
 	<math>t</math>-bar statistic. See also the <cmdref
 	targ="levinlin"/> command.
+      </para>
+
+      <subhead context="cli">Printed output</subhead>
+
+      <para>
+	By default basic information regarding the test is printed. If
+	the <opt>quiet</opt> is given nothing is printed but the <fncref
+	targ="$test"/> and <fncref targ="$pvalue"/> accessors can be
+	used to obtain the results. Note, however, that if you give more
+	than one series for testing, or supply more than one of the
+	options regarding deterministic terms, these accessors only
+	record the last test performed. Also, when the <opt>quiet</opt>
+	is given in the panel-data case, only the Choi meta-tests are
+	recorded: each of <lit>$test</lit> and <lit>$pvalue</lit> is
+	then a 3-vector holding results from the three test variants.
+      </para>
+      <para>
+	To obtain somewhat more detailed output you can give the
+	<opt>verbose</opt> option, without a parameter, or to get
+	maximal output specify <opt>verbose</opt><lit>=max</lit>.
       </para>
 
     </description>
@@ -5273,7 +5290,7 @@
         <argument>burnin</argument>
         <argument>N</argument>
         <argument>output</argument>
-      </arguments>  
+      </arguments>
       <options>
 	<option>
 	  <flag>--keep</flag>
@@ -5293,7 +5310,7 @@
 	  <demo>casella_ex1.inp</demo>
 	</demos>
       </examples>
-    </usage>  
+    </usage>
 
     <description>
       <para>
@@ -12815,7 +12832,7 @@
 	  <flag>--tail</flag>
 	  <optparm optional="true">lines</optparm>
 	  <effect>see below</effect>
-	</option>   
+	</option>
 	<option>
 	  <flag>--midas</flag>
 	  <effect>see below</effect>

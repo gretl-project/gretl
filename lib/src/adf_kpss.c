@@ -54,7 +54,8 @@ typedef enum {
     ADF_EG_RESIDS = 1 << 1, /* final stage of the above */
     ADF_PANEL     = 1 << 2, /* working on panel data */
     ADF_GLS       = 1 << 3, /* GLS: Elliott, Rothenberg, Stock */
-    ADF_PQ        = 1 << 4  /* Perron-Qu, 2007 */
+    ADF_PQ        = 1 << 4, /* Perron-Qu, 2007 */
+    ADF_TEST_DOWN = 1 << 5  /* Testing down for lag order */
 } AdfFlags;
 
 /* automatic lag selection methods */
@@ -997,7 +998,8 @@ static int ic_adjust_order (adf_info *ainfo, int kmethod,
 		tag = (kmethod == k_BIC) ? "BIC" : "AIC";
 	    }
 
-	    if (k == kmax && test_num == 1) {
+	    if (0 && k == kmax && test_num == 1) {
+		/* FIXME */
 		pputc(prn, '\n');
 	    }
 	    pprintf(prn, "  k = %2d: %s = %#g\n", k, tag, IC);
@@ -1006,7 +1008,7 @@ static int ic_adjust_order (adf_info *ainfo, int kmethod,
 	gretl_list_delete_at_pos(tmplist, k + 2);
     }
 
-    if ((opt & OPT_V) && test_num > 1) {
+    if (ainfo->verbosity && test_num > 1) {
 	pputc(prn, '\n');
     }
 
@@ -1334,6 +1336,10 @@ static int handle_test_down_option (adf_info *ainfo,
 	}
     }
 
+    if (kmethod > 0) {
+	ainfo->flags |= ADF_TEST_DOWN;
+    }
+
     return kmethod;
 }
 
@@ -1349,6 +1355,10 @@ static int check_adf_options (adf_info *ainfo, gretlopt opt)
 	*/
 	if (!err && (opt & (OPT_N | OPT_D | OPT_R))) {
 	    err = E_BADOPT;
+	}
+	if (!err) {
+	    /* --quiet and --verbose are icompatible */
+	    err = incompatible_options(opt, OPT_Q | OPT_V);
 	}
 	if (!err) {
 	    ainfo->flags |= ADF_GLS;
@@ -1801,19 +1811,24 @@ static void do_choi_test (double ppv, double zpv, double lpv,
     choi_test[2] = sqrt(k) * lpv;
     choi_pval[2] = student_pvalue_1(tdf, -choi_test[2]);
 
-    pprintf(prn, "%s\n", _("Choi meta-tests:"));
-    pprintf(prn, "   %s(%d) = %g [%.4f]\n", _("Inverse chi-square"),
-	    2*n, choi_test[0], choi_pval[0]);
-    pprintf(prn, "   %s = %g [%.4f]\n", _("Inverse normal test"),
-	    choi_test[1], choi_pval[1]);
-    pprintf(prn, "   %s: t(%d) = %g [%.4f]\n", _("Logit test"),
-	    tdf, choi_test[2], choi_pval[2]);
+    if (prn != NULL) {
+	pprintf(prn, "%s\n", _("Choi meta-tests:"));
+	pprintf(prn, "   %s(%d) = %g [%.4f]\n", _("Inverse chi-square"),
+		2*n, choi_test[0], choi_pval[0]);
+	pprintf(prn, "   %s = %g [%.4f]\n", _("Inverse normal test"),
+		choi_test[1], choi_pval[1]);
+	pprintf(prn, "   %s: t(%d) = %g [%.4f]\n", _("Logit test"),
+		tdf, choi_test[2], choi_pval[2]);
+    }
 
     record_choi_test(choi_test, choi_pval);
 }
 
 static void panel_unit_DF_print (adf_info *ainfo, int i, PRN *prn)
 {
+    if (ainfo->flags & ADF_TEST_DOWN) {
+	pputc(prn, '\n');
+    }
     pprintf(prn, "%s %d, T = %d, %s = %d\n", _("Unit"), i,
 	    ainfo->T, _("lag order"), ainfo->order);
     pprintf(prn, "   %s: %g\n"
@@ -1830,12 +1845,38 @@ static void panel_unit_DF_print (adf_info *ainfo, int i, PRN *prn)
 /* When the test order is given as -1 we default to L_{12}: see
    G. W. Schwert, "Tests for Unit Roots: A Monte Carlo Investigation",
    Journal of Business and Economic Statistics, 7(2), 1989,
-   pp. 5-17.
+   pp. 5-17. However, in the case of panel data with a short time-series
+   dimension we somewhat arbitrarily cap the lag order at 4 in an effort
+   to enable the Im-Pesaran-Shinn test.
 */
 
-static int L_12 (int T)
+static int auto_lag_order (const DATASET *dset)
 {
-    return (int) floor(12.0 * pow(T/100.0, 0.25));
+    int T = sample_size(dset);
+    int ret;
+
+    ret = (int) floor(12.0 * pow(T/100.0, 0.25));
+    if (dataset_is_panel(dset) && T < 24) {
+	ret = MIN(ret, 4);
+    }
+
+    return ret;
+}
+
+static void set_ainfo_verbosity (adf_info *ainfo,
+				 gretlopt opt)
+{
+    ainfo->verbosity = 0;
+
+    if (opt & OPT_V) {
+	const char *s = get_optval_string(ADF, OPT_V);
+
+	if (s != NULL && !strcmp(s, "max")) {
+	    ainfo->verbosity = 2;
+	} else {
+	    ainfo->verbosity = 1;
+	}
+    }
 }
 
 static int panel_DF_test (int v, int order, DATASET *dset,
@@ -1849,7 +1890,7 @@ static int panel_DF_test (int v, int order, DATASET *dset,
     double ppv = 0.0, zpv = 0.0, lpv = 0.0;
     double pval, tbar = 0.0;
     int *Ti = NULL, *Oi = NULL;
-    int use_L12 = 0;
+    int autolag = 0;
     int i, n, err;
 
     err = panel_adjust_ADF_opt(&opt);
@@ -1893,10 +1934,11 @@ static int panel_DF_test (int v, int order, DATASET *dset,
     ainfo.v = v;
     ainfo.niv = 1;
     ainfo.flags = ADF_PANEL;
+    set_ainfo_verbosity(&ainfo, opt);
 
     if (order == -1) {
 	/* automatic order selection */
-	use_L12 = 1;
+	autolag = 1;
     }
 
     /* run a Dickey-Fuller test for each unit and record the
@@ -1907,10 +1949,9 @@ static int panel_DF_test (int v, int order, DATASET *dset,
 	dset->t1 = i * dset->pd;
 	dset->t2 = dset->t1 + dset->pd - 1;
 	err = series_adjust_sample(dset->Z[v], &dset->t1, &dset->t2);
-
 	if (!err) {
-	    if (use_L12) {
-		ainfo.order = L_12(sample_size(dset));
+	    if (autolag) {
+		ainfo.order = auto_lag_order(dset);
 	    }
 	    err = real_adf_test(&ainfo, dset, opt, prn);
 	    if (!err && verbose) {
@@ -1941,16 +1982,24 @@ static int panel_DF_test (int v, int order, DATASET *dset,
     /* process the results as per Im-Pesaran-Shin and/or Choi */
 
     if (!err) {
-	pprintf(prn, "%s\n\n", _("H0: all groups have unit root"));
-	if (!na(tbar)) {
+	if (!quiet) {
+	    pprintf(prn, "%s\n\n", _("H0: all groups have unit root"));
+	}
+	if (!quiet && !na(tbar)) {
 	    tbar /= n;
 	    do_IPS_test(tbar, n, Ti, order, Oi, opt, prn);
 	}
 	if (!na(ppv)) {
-	    pputc(prn, '\n');
-	    do_choi_test(ppv, zpv, lpv, n, prn);
+	    if (quiet) {
+		do_choi_test(ppv, zpv, lpv, n, NULL);
+	    } else {
+		pputc(prn, '\n');
+		do_choi_test(ppv, zpv, lpv, n, prn);
+	    }
 	}
-	pputc(prn, '\n');
+	if (!quiet) {
+	    pputc(prn, '\n');
+	}
     }
 
     free(Ti);
@@ -2081,8 +2130,7 @@ int adf_test (int order, const int *list, DATASET *dset,
 
     if (opt & OPT_G) {
 	/* GLS is incompatible with no const (OPT_N), quadratic
-	   trend (OPT_R) and seasonals (OPT_D)
-	*/
+	   trend (OPT_R) and seasonals (OPT_D) */
 	err = options_incompatible_with(opt, OPT_G, OPT_N | OPT_R | OPT_D);
 	if (!err) {
 	    /* and you have to choose between OPT_C nd OPT_T */
@@ -2104,17 +2152,7 @@ int adf_test (int order, const int *list, DATASET *dset,
 	adf_info ainfo = {0};
 
 	ainfo.niv = 1;
-	if (opt & OPT_V) {
-	    int vlevel = get_optval_int(ADF, OPT_V, &err);
-
-	    if (vlevel > 1) {
-		ainfo.verbosity = vlevel;
-	    } else {
-		ainfo.verbosity = 1;
-	    }
-	    /* don't let this check flag an error */
-	    err = 0;
-	}
+	set_ainfo_verbosity(&ainfo, opt);
 
 	for (i=1; i<=list[0] && !err; i++) {
 	    ainfo.v = vlist[1] = get_real_v(list[i], dset, opt, &err);
@@ -2124,7 +2162,7 @@ int adf_test (int order, const int *list, DATASET *dset,
 	    ainfo.order = order;
 	    err = list_adjust_sample(vlist, &dset->t1, &dset->t2, dset, NULL);
 	    if (!err && order == -1) {
-		ainfo.order = L_12(sample_size(dset));
+		ainfo.order = auto_lag_order(dset);
 	    }
 	    if (!err) {
 		err = real_adf_test(&ainfo, dset, opt, prn);
