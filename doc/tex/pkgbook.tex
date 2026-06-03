@@ -3129,6 +3129,21 @@ under the tabs \textsf{Data files}, \textsf{Dependencies}, and
 
   \ttusage{provider = extra}
 
+\item \texttt{conflict}: When a new version of an existing function
+  package is made available the name of the package usually remains
+  unchanged, in which case installing the new version automatically
+  overwrites the old one. But in some cases---for example, if the new
+  version generalizes the functionality of the package---a change of
+  name may be desirable. In that case installation of the new version
+  should imply deletion of the prior version (if present). That can be
+  arranged by specifying a conflict with the old name of the package,
+  using this syntax:
+
+  \ttusage{conflict = oldname}
+
+  where \texttt{oldname} should of course be replaced by the prior name
+  of the package.
+
 \item \texttt{wants-data-access}: In some cases your package may need
   to read data outside of the active sample range. This could be
   pre-sample initial values in a dynamic model, or it could be
