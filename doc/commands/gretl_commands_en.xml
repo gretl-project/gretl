@@ -12378,21 +12378,20 @@
 	data file packages is described below.
       </para>
       <para>
-	<lit>install</lit>: In the most basic form, with no option
-	flag and the <repl>pkgname</repl> argument given as the
-	<quote>plain</quote> name of a gretl function package (as in
-	the first example above), the effect is to download the
-	specified package from the gretl server (unless
-	<repl>pkgname</repl> starts with <lit>http://</lit>) and
-	install it on the local machine. In this case it is not
+	<lit>install</lit>: In the most basic form, with no option flag
+	and the <repl>pkgname</repl> argument given as the
+	<quote>plain</quote> name of a gretl function package (as in the
+	first example above), the effect is to download the specified
+	package from the gretl server (unless <repl>pkgname</repl> is a
+	URL) and install it on the local machine. In this case it is not
 	necessary to supply a filename extension. If the
-	<opt>local</opt> option is given, however,
-	<repl>pkgname</repl> should be the path to an uninstalled
-	package file on the local machine, with the correct extension
-	(<lit>.gfn</lit> or <lit>.zip</lit>). In this case the effect
-	is to copy the file into place (<lit>gfn</lit>), or unzip it
-	into place (<lit>zip</lit>), <quote>into place</quote> meaning
-	where the <cmdref targ="include"/> command will find it.
+	<opt>local</opt> option is given, however, <repl>pkgname</repl>
+	should be the path to an uninstalled package file on the local
+	machine, with the correct extension (<lit>.gfn</lit> or
+	<lit>.zip</lit>). In this case the effect is to copy the file
+	into place (<lit>gfn</lit>), or unzip it into place
+	(<lit>zip</lit>), <quote>into place</quote> meaning where the
+	<cmdref targ="include"/> command will find it.
       </para>
       <para>
 	<lit>query</lit>: The default effect is to print basic
@@ -12454,12 +12453,11 @@
       <para>
 	The <opt>staging</opt> option is a convenience item for
 	developers and is available only in conjunction with the
-	<lit>install</lit> action as applied to a function
-	package. Its effect is that the package in question is
-	downloaded from the <lit>staging</lit> area at sourceforge
-	rather than the public area. Packages in staging are not yet
-	approved for general use, so ignore this option unless you
-	know what you're doing.
+	<lit>install</lit>.  Its effect is that the function package in
+	question is downloaded from the <lit>staging</lit> area at
+	sourceforge rather than the public area. Packages in staging are
+	not yet approved for general use, so ignore this option unless
+	you know what you're doing.
       </para>
     </description>
 
