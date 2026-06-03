@@ -6050,12 +6050,10 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
                     }
                 }
                 for (l=0; l<k; l++) {
-                    if (B[j*br+l] != 0.0) {
-                        x = alpha * B[j*br+l];
-                        for (i=0; i<m; i++) {
-                            C[j*cr+i] += x * A[l*ar+i];
-                        }
-                    }
+		    x = alpha * B[j*br+l];
+		    for (i=0; i<m; i++) {
+			C[j*cr+i] += x * A[l*ar+i];
+		    }
                 }
             }
         } else {
@@ -6084,12 +6082,10 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
                     }
                 }
                 for (l=0; l<k; l++) {
-                    if (B[l*br+j] != 0.0) {
-                        x = alpha * B[l*br+j];
-                        for (i=0; i<m; i++) {
-                            C[j*cr+i] += x * A[l*ar+i];
-                        }
-                    }
+		    x = alpha * B[l*br+j];
+		    for (i=0; i<m; i++) {
+			C[j*cr+i] += x * A[l*ar+i];
+		    }
                 }
             }
         } else {
