@@ -213,7 +213,8 @@
         </option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>mostra i risultati della regressione</effect>
+          <optparm optional="true">level</optparm>
+          <effect>stampa più informazioni</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
@@ -487,7 +488,28 @@
 	<math>t</math> barrato se è uguale per tutte le unità. Vedi
 	anche il comando <cmdref targ="levinlin"/>.
       </para>
+      <subhead context="cli">Output stampato</subhead>
 
+      <para>
+	Per default, vengono stampate le informazioni di base relative
+	al test. Se si specifica <opt>quiet</opt>, non viene stampato
+	nulla, ma è possibile utilizzare gli accessori <fncref
+	targ="$test"/> e <fncref targ="$pvalue"/> per ottenere i
+	risultati. Si noti, tuttavia, che se si specificano più serie
+	da testare o più opzioni relative ai termini deterministici,
+	questi metodi di accesso registrano solo l'ultimo test
+	eseguito. Inoltre, quando si specifica <opt>quiet</opt> nel
+	caso di dati panel, vengono registrati solo i meta-test di
+	Choi: ciascuno degli accessori <lit>$test</lit> e
+	<lit>$pvalue</lit> è pertanto un vettore a 3 elementi contenente
+	i risultati delle tre varianti del test.
+      </para>
+      <para>
+	Per ottenere un output più dettagliato, è possibile utilizzare
+	l'opzione <opt>verbose</opt>, senza parametri, oppure, per
+	ottenere il massimo output, specificare
+	<opt>verbose</opt><lit>=max</lit>.
+      </para>
     </description>
 
     <gui-access>
