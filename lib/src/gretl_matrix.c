@@ -5581,7 +5581,7 @@ static int
 matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
                                 gretl_matrix *c, GretlMatrixMod cmod)
 {
-    register int i, j, k;
+    int i, j, k;
     int nc = (atr)? a->cols : a->rows;
     int nr = (atr)? a->rows : a->cols;
     int idx1, idx2;
