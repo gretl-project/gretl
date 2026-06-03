@@ -6958,15 +6958,21 @@ static fnpkg *read_package_file (const char *fname,
     return pkg;
 }
 
-static char **read_package_strings_array (const char *fname,
-                                          const char *tag,
-                                          int *ns)
+/* If @ps is non-NULL, we retrieve a single string from the package;
+   otherwise if @pss is non-NULL we retrieve an array of strings and
+   also write the length of this array into @ns.
+*/
+
+static void package_peek_attribute (const char *fname,
+				    const char *tag,
+				    char **ps,
+				    char ***pss,
+				    int *ns)
 {
-    char **S = NULL;
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
     xmlNodePtr cur;
-    int err;
+    int err = 0;
 
     node = gretl_xml_get_gfn(fname, &doc, &err);
 
@@ -6974,7 +6980,11 @@ static char **read_package_strings_array (const char *fname,
         cur = node->xmlChildrenNode;
         while (cur != NULL) {
             if (!xmlStrcmp(cur->name, (XUC) tag)) {
-                S = gretl_xml_get_strings_array(cur, doc, ns, 0, &err);
+		if (pss != NULL) {
+		    *pss = gretl_xml_get_strings_array(cur, doc, ns, 0, &err);
+		} else {
+		    *ps = gretl_xml_get_string(cur, doc);
+		}
                 break;
             }
             cur = cur->next;
@@ -6984,13 +6994,22 @@ static char **read_package_strings_array (const char *fname,
     if (doc != NULL) {
         xmlFreeDoc(doc);
     }
-
-    return S;
 }
 
 char **package_peek_dependencies (const char *fname, int *ndeps)
 {
-    return read_package_strings_array(fname, "depends", ndeps);
+    char **ss = NULL;
+
+    package_peek_attribute(fname, "depends", NULL, &ss, ndeps);
+    return ss;
+}
+
+char *package_peek_conflict (const char *fname)
+{
+    char *s = NULL;
+
+    package_peek_attribute(fname, "conflict", &s, NULL, NULL);
+    return s;
 }
 
 /**
@@ -11475,7 +11494,6 @@ int delete_function_package (const char *gfnpath)
     } else {
         /* just delete the .gfn file itself */
         err = gretl_remove(gfnpath);
-
         if (err) {
             gretl_errmsg_sprintf(_("Couldn't delete %s"), gfnpath);
         }

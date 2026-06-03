@@ -4451,9 +4451,8 @@ static int gpi_strings_differ (const char *s1, const char *s2)
     }
 }
 
-/* This is called when creating a new entry in the
-   gui package registry, and also when updating
-   the entry for a previously registered package.
+/* This is called when creating a new entry in the gui package registry,
+   and also when updating the entry for a previously registered package.
 */
 
 static int update_gui_package_info (const char *pkgname,
@@ -4889,8 +4888,8 @@ static int pkg_attach_query (const gchar *name,
     return resp;
 }
 
-/* Called from fnsave.c, when edits to a function package
-   are being saved.
+/* Called from fnsave.c, when edits to a function package are being
+   saved.
 */
 
 int gui_function_pkg_revise_status (const gchar *pkgname,
@@ -5011,8 +5010,9 @@ static int in_own_subdir (const char *pkgname, const char *path)
     return ret;
 }
 
-/* Actually do the business of registering a function package
-   to appear in a menu */
+/* Actually do the business of registering a function package to appear
+   in a menu.
+*/
 
 static int gui_function_pkg_register (const char *fname,
 				      const char *pkgname,

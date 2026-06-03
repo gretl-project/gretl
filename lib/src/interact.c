@@ -2785,6 +2785,39 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
     return err;
 }
 
+static gchar *gfnname_from_zip (const char *fname)
+{
+    gchar *tmp, *gfnname;
+    const char *p;
+
+    tmp = g_strndup(fname, strlen(fname) - 4);
+    p = path_last_element(tmp);
+    gfnname = g_strdup_printf("%s%c%s.gfn", tmp, SLASH, p);
+    g_free(tmp);
+
+    return gfnname;
+}
+
+static char *package_get_conflict (const char *fname)
+{
+    char *conflict = NULL;
+
+    if (has_suffix(fname, ".zip")) {
+        gchar *gfnname = gfnname_from_zip(fname);
+
+	conflict = package_peek_conflict(gfnname);
+	g_free(gfnname);
+    } else {
+        conflict = package_peek_conflict(fname);
+    }
+
+    if (conflict != NULL) {
+	fprintf(stderr, "%s: conflicts with %s\n", fname, conflict);
+    }
+
+    return conflict;
+}
+
 #if USE_CURL
 
 static int package_check_dependencies (const char *fname,
@@ -2796,15 +2829,9 @@ static int package_check_dependencies (const char *fname,
     int err = 0;
 
     if (has_suffix(fname, ".zip")) {
-        /* we need to map from @fname to the gfn name */
-        gchar *tmp, *gfnname;
-        const char *p;
+	gchar *gfnname = gfnname_from_zip(fname);
 
-        tmp = g_strndup(fname, strlen(fname) - 4);
-        p = path_last_element(tmp);
-        gfnname = g_strdup_printf("%s%c%s.gfn", tmp, SLASH, p);
         depends = package_peek_dependencies(gfnname, &ndeps);
-        g_free(tmp);
         g_free(gfnname);
     } else {
         depends = package_peek_dependencies(fname, &ndeps);
@@ -2951,6 +2978,7 @@ static int really_local (const char *pkgname)
 static void pkg_install_invoke_callback (ExecState *s,
 					 const char *basename,
 					 const char *fullname,
+					 const char *conflict,
 					 int filetype)
 {
     gretl_bundle *b = gretl_bundle_new();
@@ -2973,6 +3001,9 @@ static void pkg_install_invoke_callback (ExecState *s,
 	}
 	gretl_bundle_set_string(b, "pkgname", nosfx);
 	gretl_bundle_set_int(b, "zipfile", filetype == 2);
+	if (conflict != NULL) {
+	    gretl_bundle_set_string(b, "conflict", conflict);
+	}
 	g_free(nosfx);
     }
 
@@ -3073,7 +3104,8 @@ static int install_package (const char *pkgname,
 	    if (!err && addons) {
 		update_addons_index(NULL);
 	    } else if (!err && state != NULL && gui_callback != NULL) {
-		pkg_install_invoke_callback(state, pkgname, dlpath, filetype);
+		pkg_install_invoke_callback(state, pkgname, dlpath,
+					    NULL, filetype);
 	    }
 	    g_free(dlpath);
 	    return err;
@@ -3100,6 +3132,7 @@ static int install_package (const char *pkgname,
     if (!err && filetype) {
         const char *basename = fname != NULL ? fname : pkgname;
         const char *instpath;
+	char *conflict = NULL;
         gchar *fullname;
 
         instpath = gretl_package_install_path(scripts ? "scripts" : "functions");
@@ -3119,7 +3152,6 @@ static int install_package (const char *pkgname,
 						   fullname,
 						   staging);
         }
-
         if (!err && filetype == 2) {
             err = gretl_unzip_into(fullname, instpath);
             if (!err) {
@@ -3127,11 +3159,12 @@ static int install_package (const char *pkgname,
                 gretl_remove(fullname);
             }
         }
-
+        if (!err && !scripts) {
+	    conflict = package_get_conflict(fullname);
+        }
         if (!err && !scripts) {
 	    err = package_check_dependencies(fullname, state, prn);
         }
-
         if (!err && gretl_messages_on()) {
             if (opt & OPT_D) {
                 pprintf(prn, _("Installed dependency %s\n"), basename);
@@ -3139,13 +3172,14 @@ static int install_package (const char *pkgname,
                 pprintf(prn, _("Installed %s\n"), basename);
             }
         }
-
         if (!err && state != NULL && gui_callback != NULL && !(opt & OPT_D)) {
             /* FIXME: handling of OPT_D (dependency) here? */
-	    pkg_install_invoke_callback(state, basename, fullname, filetype);
+	    pkg_install_invoke_callback(state, basename, fullname,
+					conflict, filetype);
         }
 
         g_free(fullname);
+	free(conflict);
     }
 
     free(fname);

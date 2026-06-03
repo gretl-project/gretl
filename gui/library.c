@@ -94,7 +94,11 @@ static char libline[MAXLINE];
 static int original_n;
 static int gui_main_exec;
 
+/* forward declarations */
 static int script_open_session_file (CMD *cmd);
+static int script_delete_function_package (const char *action,
+                                           const char *param,
+                                           PRN *prn);
 
 char *get_lib_cmdline (void)
 {
@@ -9667,7 +9671,12 @@ static void handle_gui_pkg_install (gretl_bundle *b)
             /* installed a script-file collection: ditto */
             destroy_file_collections();
         } else if (!err) {
-	    /* installed a function package */
+	    /* installing a function package */
+	    const char *conflict = gretl_bundle_get_string(b, "conflict", NULL);
+
+	    if (conflict != NULL) {
+		script_delete_function_package("remove", conflict, NULL);
+	    }
             maybe_update_pkgview(filename, pkgname, zipfile,
                                  pkgview_parent);
         }
@@ -9960,12 +9969,14 @@ static int script_delete_function_package (const char *action,
         }
     }
 
-    if (err) {
-        errmsg(err, prn);
-    } else if (delfile) {
-        pprintf(prn, _("Removed %s\n"), pkgname);
-    } else {
-        pprintf(prn, _("Unloaded %s\n"), pkgname);
+    if (prn != NULL) {
+	if (err) {
+	    errmsg(err, prn);
+	} else if (delfile) {
+	    pprintf(prn, _("Removed %s\n"), pkgname);
+	} else {
+	    pprintf(prn, _("Unloaded %s\n"), pkgname);
+	}
     }
 
     g_free(gfnname);
