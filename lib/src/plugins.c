@@ -35,7 +35,7 @@
  * modules that are loaded on demand. Here we have functions for
  * opening and closing plugins, and for obtaining a pointer to
  * a symbol from a gretl plugin. These functions should work on
- * both unix-type systems (including Mac OS X) and MS Windows.
+ * both unix-type systems (including macOS) and MS Windows.
  *
  * Note that if you wish to make use of gretl plugins in your own
  * program, you will have to build and install the plugins (of
@@ -399,7 +399,7 @@ static int plugin_index_lookup (const char *name)
  * RTLD_NOW, else we use RTLD_LAZY.
  *
  * Cross-platform wrapper for opening a shared code object
- * on MS Windows or unix-type systems (including OS X).
+ * on MS Windows or unix-type systems (including macOS).
  *
  * Returns: handle to the shared object.
  */

@@ -275,8 +275,7 @@ static void update_dialogs_from_varclick (int active_var)
 
 #ifdef __APPLE__
 
-/* Support for command-click as replacement for Ctrl-click
-   on OS X */
+/* Support for command-click as replacement for Ctrl-click on macOS */
 
 static gboolean maybe_do_meta_click (GdkEventButton *event,
                                      GtkTreeView *view,

@@ -457,7 +457,7 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-#else /* end OS X specific code */
+#else /* end macOS-specific code */
 
 /* regular *nix treatment of NLS -- also applies
    for non-package MSYS2 build on Windows */
