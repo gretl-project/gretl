@@ -117,6 +117,15 @@ gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
     return TRUE;
 }
 
+#ifdef GRETL_EDIT
+
+void vwin_go_back_callback (GtkWidget *w, windata_t *vwin)
+{
+    textbuf_go_back(vwin);
+}
+
+#endif
+
 void mark_vwin_content_changed (windata_t *vwin)
 {
     if (vwin->active_var == 0) {
@@ -1853,6 +1862,10 @@ static void find_function_def (GtkWidget *w, gpointer data)
     if (found) {
 	GtkTextMark *targ;
 
+	/* first set a mark for going back */
+	textbuf_set_back_target(tbuf);
+
+	/* then move to the function definition */
 	gtk_text_buffer_place_cursor(tbuf, &match);
 	targ = gtk_text_buffer_create_mark(tbuf, "targ", &match, FALSE);
 	gtk_text_view_scroll_to_mark(tview, targ, 0.05, FALSE, 0, 0);

@@ -58,6 +58,8 @@ void vwin_save_callback (GtkWidget *w, windata_t *vwin);
 
 gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin);
 
+void vwin_go_back_callback (GtkWidget *w, windata_t *vwin);
+
 void vwin_add_child (windata_t *parent, windata_t *child);
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize,

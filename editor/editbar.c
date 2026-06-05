@@ -510,7 +510,11 @@ static GretlToolItem editbar_items[] = {
     { N_("Toggle split pane"), GRETL_STOCK_SPLIT_V, G_CALLBACK(split_pane_callback), SPLIT_V_ITEM },
     { N_("Help on command"), GRETL_STOCK_QUERY, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help..."), GTK_STOCK_HELP, GNULL, HELP_ITEM },
-    { N_("Show stderr"), GTK_STOCK_INFO, G_CALLBACK(show_stderr), STDERR_ITEM },
+    { N_("Show stderr"), GTK_STOCK_INFO, G_CALLBACK(show_stderr), STDERR_ITEM }
+};
+
+static GretlToolItem go_back_item = {
+    N_("Back"), GTK_STOCK_GO_BACK, G_CALLBACK(vwin_go_back_callback), 0
 };
 
 static int n_editbar_items = G_N_ELEMENTS(editbar_items);
@@ -856,6 +860,14 @@ GtkWidget *build_text_popup (windata_t *vwin)
     GCallback func;
     GtkWidget *w;
     int i;
+
+    if (textbuf_has_target(vwin)) {
+	item = &go_back_item;
+	w = gtk_menu_item_new_with_label(_(item->tip));
+	g_signal_connect(G_OBJECT(w), "activate", item->func, vwin);
+	gtk_widget_show(w);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), w);
+    }
 
     for (i=0; i<n_editbar_items; i++) {
         item = &editbar_items[i];
