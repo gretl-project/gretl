@@ -525,7 +525,15 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     int editing = vwin_is_editing(vwin);
     int console = vwin->role == CONSOLE;
 
-#ifndef GRETL_EDIT
+#ifdef GRETL_EDIT
+    if (Alt) {
+	if (key == GDK_period) {
+	    fprintf(stderr, "Got Alt.\n"); /* FIXME */
+	} else if (key == GDK_comma) {
+	    textbuf_go_back(vwin);
+	}
+    }
+#else
     if (vwin_is_busy(vwin)) {
 	return TRUE;
     }
@@ -1844,10 +1852,8 @@ static void revert_cursor (GtkWidget *w, gpointer p)
     }
 }
 
-static void find_function_def (GtkWidget *w, gpointer data)
+static void real_find_function_def (windata_t *vwin, gchar *sigstart)
 {
-    gchar *needle = g_object_get_data(G_OBJECT(w), "needle");
-    windata_t *vwin = g_object_get_data(G_OBJECT(w), "searchwin");
     GtkTextView *tview;
     GtkTextBuffer *tbuf;
     GtkTextIter start, match;
@@ -1856,7 +1862,7 @@ static void find_function_def (GtkWidget *w, gpointer data)
     tview = GTK_TEXT_VIEW(vwin->text);
     tbuf = gtk_text_view_get_buffer(tview);
     gtk_text_buffer_get_start_iter(tbuf, &start);
-    found = gtk_text_iter_forward_search(&start, needle,
+    found = gtk_text_iter_forward_search(&start, sigstart,
 					 GTK_TEXT_SEARCH_TEXT_ONLY,
 					 &match, NULL, NULL);
     if (found) {
@@ -1870,7 +1876,14 @@ static void find_function_def (GtkWidget *w, gpointer data)
 	targ = gtk_text_buffer_create_mark(tbuf, "targ", &match, FALSE);
 	gtk_text_view_scroll_to_mark(tview, targ, 0.05, FALSE, 0, 0);
     }
+}
 
+static void find_funcdef_callback (GtkWidget *w, gpointer data)
+{
+    gchar *needle = g_object_get_data(G_OBJECT(w), "needle");
+    windata_t *vwin = g_object_get_data(G_OBJECT(w), "searchwin");
+
+    real_find_function_def(vwin, needle);
     gtk_widget_destroy(gtk_widget_get_toplevel(w));
 }
 
@@ -1935,7 +1948,7 @@ windata_t *view_function_signature (const char *sig,
 	g_object_set_data_full(G_OBJECT(ebox), "needle", needle, g_free);
 	g_object_set_data(G_OBJECT(ebox), "searchwin", vwin);
 	g_signal_connect(ebox, "button-release-event",
-			 G_CALLBACK(find_function_def), NULL);
+			 G_CALLBACK(find_funcdef_callback), NULL);
 	g_signal_connect(ebox, "enter-notify-event",
 			 G_CALLBACK(show_link_cursor), NULL);
 	g_signal_connect(ebox, "leave-notify-event",

@@ -299,6 +299,8 @@ int textbuf_get_n_lines (windata_t *vwin)
     return gtk_text_iter_get_line(&end) + 1;
 }
 
+#ifdef GRETL_EDIT
+
 /* Apparatus for dealing with a "go back" marker */
 
 void textbuf_set_back_target (GtkTextBuffer *buf)
@@ -343,6 +345,10 @@ int textbuf_has_target (windata_t *vwin)
 
     return gtk_text_buffer_get_mark(buf, "back-target") != NULL;
 }
+
+#endif /* GRETL_EDIT */
+
+/* End of apparatus for dealing with a "go back" marker */
 
 static void get_char_width_and_height (GtkWidget *widget,
 				       int *width,

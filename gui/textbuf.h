@@ -174,11 +174,15 @@ gchar *unctrlr (const char *buf);
 gchar *get_identifier_at_cursor (GtkTextBuffer *tbuf,
 				 int *role);
 
+#ifdef GRETL_EDIT
+
 void textbuf_set_back_target (GtkTextBuffer *buf);
 
 int textbuf_has_target (windata_t *vwin);
 
 void textbuf_go_back (windata_t *vwin);
+
+#endif
 
 #ifdef HAVE_GTKSV_COMPLETION
 

@@ -58,8 +58,6 @@ void vwin_save_callback (GtkWidget *w, windata_t *vwin);
 
 gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin);
 
-void vwin_go_back_callback (GtkWidget *w, windata_t *vwin);
-
 void vwin_add_child (windata_t *parent, windata_t *child);
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize,
@@ -123,10 +121,14 @@ gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event,
 
 void connect_text_sizer (windata_t *vwin);
 
-#ifndef GRETL_EDIT
+#ifdef GRETL_EDIT
+
+void vwin_go_back_callback (GtkWidget *w, windata_t *vwin);
+
+#else
 
 void set_model_save_state (windata_t *vwin, gboolean s);
 
-#endif
+#endif /* GRETL_EDIT or not */
 
 #endif /* VIEWERS_H */

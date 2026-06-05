@@ -1523,6 +1523,19 @@ static void function_info_popup (const char *sig,
     gtk_widget_show(poptop);
 }
 
+static char *user_func_get_sig (ufunc *uf)
+{
+    char *buf;
+    PRN *prn;
+
+    bufopen(&prn);
+    print_function_signature(uf, prn);
+    buf = gretl_print_steal_buffer(prn);
+    gretl_print_destroy(prn);
+
+    return buf;
+}
+
 /* try getting the signature of a hansl function */
 
 static int hansl_func_help (const gchar *id, windata_t *vwin)
@@ -1533,18 +1546,16 @@ static int hansl_func_help (const gchar *id, windata_t *vwin)
     if (uf != NULL) {
 	const char *docstr = user_func_get_docstr(uf);
 	fnpkg *pkg = gretl_function_get_package(uf);
-	char *buf1 = NULL;
-	char *buf2 = NULL;
-	PRN *prn = NULL;
+	char *sig = user_func_get_sig(uf);
+	char *extra = NULL;
 
 	/* signature (highlighting to be applied) */
-	bufopen(&prn);
-	print_function_signature(uf, prn);
-	buf1 = gretl_print_steal_buffer(prn);
-	gretl_print_destroy(prn);
+	sig = user_func_get_sig(uf);
 
 	if (docstr != NULL || pkg != NULL) {
 	    /* plain text portion of output */
+	    PRN *prn = NULL;
+
 	    bufopen(&prn);
 	    if (docstr != NULL) {
 		pputc(prn, '\n');
@@ -1559,13 +1570,13 @@ static int hansl_func_help (const gchar *id, windata_t *vwin)
 			function_package_get_name(pkg));
 		pputs(prn, "\n\n");
 	    }
-	    buf2 = gretl_print_steal_buffer(prn);
+	    extra = gretl_print_steal_buffer(prn);
 	    gretl_print_destroy(prn);
 	}
 
-	function_info_popup(buf1, buf2, vwin);
-	free(buf1);
-	free(buf2);
+	function_info_popup(sig, extra, vwin);
+	free(sig);
+	free(extra);
 	ret = 1;
     }
 
