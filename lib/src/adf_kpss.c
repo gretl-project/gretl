@@ -1846,7 +1846,7 @@ static void panel_unit_DF_print (adf_info *ainfo, int i, PRN *prn)
    G. W. Schwert, "Tests for Unit Roots: A Monte Carlo Investigation",
    Journal of Business and Economic Statistics, 7(2), 1989,
    pp. 5-17. However, in the case of panel data with a short time-series
-   dimension we somewhat arbitrarily cap the lag order at 4 in an effort
+   dimension we somewhat arbitrarily cap the lag order at 5 in an effort
    to enable the Im-Pesaran-Shinn test.
 */
 
@@ -1857,7 +1857,7 @@ static int auto_lag_order (const DATASET *dset)
 
     ret = (int) floor(12.0 * pow(T/100.0, 0.25));
     if (dataset_is_panel(dset) && T < 24) {
-	ret = MIN(ret, 4);
+	ret = MIN(ret, 5);
     }
 
     return ret;
