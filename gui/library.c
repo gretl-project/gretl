@@ -6770,13 +6770,13 @@ int save_fit_resid (windata_t *vwin, int code)
     return err;
 }
 
-int save_bundled_series (const double *x,
-                         int t1, int t2,
+int save_bundled_series (gretl_matrix *m,
                          const char *key,
                          const char *note,
                          windata_t *vwin)
 {
     char vname[VNAMELEN];
+    double *x = m->val;
     gchar *descrip = NULL;
     int cancel = 0;
     int err = 0;
@@ -6790,13 +6790,20 @@ int save_bundled_series (const double *x,
         return 0;
     }
 
-    if (t1 == 0 && t2 == dataset->n - 1) {
-        err = add_or_replace_series((double *) x, vname,
-                                    descrip, DS_COPY_VALUES);
+    if (m->rows == dataset->n) {
+	err = add_or_replace_series(x, vname, descrip, DS_COPY_VALUES);
+    } else if (m->rows == sample_size(dataset)) {
+        err = add_or_replace_series_data(x, dataset->t1, dataset->t2,
+					 vname, descrip);
     } else {
-        err = add_or_replace_series_data(x, t1, t2, vname,
-                                         descrip);
+	/* align using mt1? */
+	int mt1 = gretl_matrix_get_t1(m);
+	int mt2 = mt1 + m->rows - 1;
+	int t2min = MIN(mt2, dataset->t2);
+
+	err = add_or_replace_series_data(x, mt1, t2min, vname, descrip);
     }
+
     g_free(descrip);
 
     if (!err) {

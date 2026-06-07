@@ -269,8 +269,7 @@ void add_system_resid (GtkAction *action, gpointer p);
 
 int save_fit_resid (windata_t *vwin, int code);
 
-int save_bundled_series (const double *x,
-			 int t1, int t2,
+int save_bundled_series (gretl_matrix *m,
 			 const char *key,
 			 const char *note,
 			 windata_t *vwin);
