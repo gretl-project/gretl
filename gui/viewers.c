@@ -528,9 +528,11 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 #ifdef GRETL_EDIT
     if (Alt) {
 	if (key == GDK_period) {
-	    fprintf(stderr, "Got Alt.\n"); /* FIXME */
+	    alt_dot_find(vwin);
+	    return TRUE;
 	} else if (key == GDK_comma) {
 	    textbuf_go_back(vwin);
+	    return TRUE;
 	}
     }
 #else
@@ -1852,42 +1854,16 @@ static void revert_cursor (GtkWidget *w, gpointer p)
     }
 }
 
-static void real_find_function_def (windata_t *vwin, gchar *sigstart)
-{
-    GtkTextView *tview;
-    GtkTextBuffer *tbuf;
-    GtkTextIter start, match;
-    gboolean found;
-
-    tview = GTK_TEXT_VIEW(vwin->text);
-    tbuf = gtk_text_view_get_buffer(tview);
-    gtk_text_buffer_get_start_iter(tbuf, &start);
-    found = gtk_text_iter_forward_search(&start, sigstart,
-					 GTK_TEXT_SEARCH_TEXT_ONLY,
-					 &match, NULL, NULL);
-    if (found) {
-	GtkTextMark *targ;
-
-	/* first set a mark for going back */
-	textbuf_set_back_target(tbuf);
-
-	/* then move to the function definition */
-	gtk_text_buffer_place_cursor(tbuf, &match);
-	targ = gtk_text_buffer_create_mark(tbuf, "targ", &match, FALSE);
-	gtk_text_view_scroll_to_mark(tview, targ, 0.05, FALSE, 0, 0);
-    }
-}
-
 static void find_funcdef_callback (GtkWidget *w, gpointer data)
 {
     gchar *needle = g_object_get_data(G_OBJECT(w), "needle");
     windata_t *vwin = g_object_get_data(G_OBJECT(w), "searchwin");
 
-    real_find_function_def(vwin, needle);
+    find_function_def(vwin, needle);
     gtk_widget_destroy(gtk_widget_get_toplevel(w));
 }
 
-#endif /* GRETL_EDIT */
+#endif /* GRETL_EDIT defined */
 
 /* A text viewer window specialized to the case of showing the signature
    (plus doc string if available) for a hansl function. The window will

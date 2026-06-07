@@ -796,7 +796,6 @@ static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *event,
 	    } else if (funcref_role(vwin->role)) {
 		comp = gretl_function_complete(s);
 	    }
-
 	    if (comp != NULL) {
 		gtk_entry_set_text(entry, comp);
 		gtk_editable_set_position(GTK_EDITABLE(entry), -1);
@@ -1116,25 +1115,41 @@ static void add_footer_close_button (GtkWidget *hbox)
 }
 
 static gint catch_footer_key (GtkWidget *w, GdkEventKey *event,
-			      GtkWidget *targ)
+			      windata_t *vwin)
 {
     if (event->keyval == GDK_Escape) {
-	gtk_widget_hide(targ);
+	/* Get out of the search box and hide it */
+	gtk_widget_hide(gtk_widget_get_parent(w));
+	gtk_widget_grab_focus(vwin->text);
 	return TRUE;
-    } else {
-	return FALSE;
     }
+
+    if ((event->state & GDK_CONTROL_MASK) &&
+	(event->keyval == GDK_Home ||
+	 event->keyval == GDK_End)) {
+	/* Such keystrokes must be meant not for the search box,
+	   but for the text widget to which it pertains, so we
+	   try to jump back there.
+	*/
+	GtkWidget *target = GTK_WIDGET(vwin->text);
+
+	gtk_widget_event(target, (GdkEvent *) event);
+	gtk_widget_grab_focus(target);
+	return TRUE;
+    }
+
+    return FALSE;
 }
 
 /* Callback from "hide" signal on the footer finder: we
    want to turn the focus back onto the associated
-   text widget
+   text widget.
 */
 
 static void vwin_refocus_text (GtkWidget *w, windata_t *vwin)
 {
-    /* in case the prior string was not found, cancel the
-       error indicator
+    /* In case the prior string was not found, cancel the
+       error indicator.
     */
 #if GTK_MAJOR_VERSION == 2
     normalize_base(vwin->finder, NULL);
@@ -1163,15 +1178,13 @@ static void vwin_add_footer_finder (windata_t *vwin)
     gtk_box_pack_end(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 2);
 
     g_signal_connect(G_OBJECT(entry), "key-press-event",
-		     G_CALLBACK(catch_footer_key), hbox);
+		     G_CALLBACK(catch_footer_key), vwin);
     g_signal_connect(G_OBJECT(entry), "key-press-event",
 		     G_CALLBACK(finder_key_handler), vwin);
     g_signal_connect(G_OBJECT(entry), "activate",
-		     G_CALLBACK(vwin_finder_callback),
-		     vwin);
+		     G_CALLBACK(vwin_finder_callback), vwin);
     g_signal_connect(G_OBJECT(hbox), "hide",
-		     G_CALLBACK(vwin_refocus_text),
-		     vwin);
+		     G_CALLBACK(vwin_refocus_text), vwin);
 
     gtk_widget_show_all(hbox);
     gtk_widget_grab_focus(entry);
@@ -2686,3 +2699,64 @@ void display_x12a_help (void)
 	gretl_show_pdf(fname, NULL);
     }
 }
+
+#ifdef GRETL_EDIT
+
+void find_function_def (windata_t *vwin, gchar *sigstart)
+{
+    GtkTextView *tview;
+    GtkTextBuffer *tbuf;
+    GtkTextIter start, match;
+    gboolean found;
+
+    tview = GTK_TEXT_VIEW(vwin->text);
+    tbuf = gtk_text_view_get_buffer(tview);
+    gtk_text_buffer_get_start_iter(tbuf, &start);
+    found = gtk_text_iter_forward_search(&start, sigstart,
+					 GTK_TEXT_SEARCH_TEXT_ONLY,
+					 &match, NULL, NULL);
+    if (found) {
+	GtkTextMark *targ;
+
+	/* first set a mark for going back */
+	textbuf_set_back_target(tbuf);
+
+	/* then move to the function definition */
+	gtk_text_buffer_place_cursor(tbuf, &match);
+	targ = gtk_text_buffer_create_mark(tbuf, "targ", &match, FALSE);
+	gtk_text_view_scroll_to_mark(tview, targ, 0.05, FALSE, 0, 0);
+    }
+}
+
+void alt_dot_find (windata_t *vwin)
+{
+    GtkTextBuffer *tbuf;
+    int role = FUNC_HELP;
+    gchar *id = NULL;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    id = get_identifier_at_cursor(tbuf, &role);
+
+    if (id != NULL && *id != '\0') {
+	ufunc *uf = get_user_function_by_name(id);
+
+	if (uf == NULL) {
+	    warnbox(_("Function was not found"));
+	} else {
+	    char *sig = NULL;
+	    gchar *needle = NULL;
+	    const gchar *p;
+
+	    sig = user_func_get_sig(uf); // helpfiles.c
+	    p = strchr(sig, '(');
+	    needle = g_strndup(sig, p - sig);
+	    find_function_def(vwin, needle); // viewers.c
+	    g_free(needle);
+	    free(sig);
+	}
+    }
+
+    g_free(id);
+}
+
+#endif

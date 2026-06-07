@@ -76,4 +76,12 @@ void notify_string_not_found (GtkWidget *entry);
 
 void context_help (GtkWidget *widget, gpointer data);
 
+#ifdef GRETL_EDIT
+
+void find_function_def (windata_t *vwin, gchar *sigstart);
+
+void alt_dot_find (windata_t *vwin);
+
+#endif
+
 #endif /* HELPFILES_H */

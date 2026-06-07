@@ -28,19 +28,6 @@
 #include "fncall.h"
 #include "bundle_menus.h"
 
-static int vector_suitable_for_series (const gretl_matrix *m)
-{
-    if (m->cols == 1 && gretl_matrix_is_dated(m)) {
-	int t2 = gretl_matrix_get_t2(m);
-
-	/* the column vector can be "cast" to series
-	   without data loss */
-	return t2 < dataset->n;
-    } else {
-	return 0;
-    }
-}
-
 static void save_bundled_item_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -105,8 +92,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 		*xp = *(double *) val;
 	    }
 	    err = user_var_add_or_replace(vname, GRETL_TYPE_DOUBLE, xp);
-	} else if (type == GRETL_TYPE_MATRIX ||
-		   type == GRETL_TYPE_SERIES) {
+	} else if (type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *orig = (gretl_matrix *) val;
 	    gretl_matrix *m = gretl_matrix_copy(orig);
 
