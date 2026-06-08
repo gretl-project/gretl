@@ -1,4 +1,6 @@
 version 2026c, in progress
+- new function kmeans(): algorithm ASA136 for the k-means
+  problem
 - GUI: forecast from single-equation model, support write
   and copy in CSV format
 - GUI: fix for call to function package with no arguments
