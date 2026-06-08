@@ -15,19 +15,19 @@ but the latter are not linearly separable from each other.
 See also https://archive.ics.uci.edu/dataset/53/iris
 </description>
 <variables count="5">
-<variable name="sepallength"
+<variable name="sepallen"
  label="sepal length in cm"
 />
-<variable name="sepalwidth"
+<variable name="sepalwid"
  label="sepal width in cm"
 />
-<variable name="petallength"
+<variable name="petallen"
  label="petal length in cm"
 />
-<variable name="petalwidth"
+<variable name="petalwid"
  label="petal width in cm"
 />
-<variable name="variety"
+<variable name="species"
  label="class of iris plant: Setosa, Versicolour, or Virginica"
  discrete="true"
 />
