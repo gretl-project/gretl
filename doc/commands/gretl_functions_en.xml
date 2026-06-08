@@ -7808,6 +7808,108 @@
       </description>
     </function>
 
+    <function name="kmeans" section="stats" output="bundle">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="scalar-or-matrix">centers</fnarg>
+	<fnarg optional="true" type="bundle">opts</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs algorithm ASA136 (<cite
+	  key="hartigan-wong79">Hartigan and Wong, 1979</cite>) to find
+	  <math>k</math> clusters to which <math>m</math> points can be
+	  allocated, with the objective of minimizing the total
+	  Euclidean distance between the points and the centroids of the
+	  clusters to which they belong.
+	</para>
+	<para>
+	  The parameters are specified as follows.
+	</para>
+	<para>
+	  <argname>X</argname>: an <by r="m" c="n"/> matrix holding the
+	  <quote>points</quote>, namely <math>m</math> observations on
+	  each of <math>n</math> features. An error is flagged if this
+	  matrix contains any missing values.
+	</para>
+	<para>
+	  <argname>centers</argname>: can take either of two forms: (a)
+	  a scalar (integer) giving <math>k</math>, the number of
+	  clusters, or (b) a <by r="k" c="n"/> matrix holding
+	  <math>k</math> initial centroids, to be taken as the starting
+	  point of the algorithm. If <argname>centers</argname> is a
+	  scalar the initializer is set automatically using the method
+	  decribed by Hartigan and Wong: the data points are sorted by
+	  Euclidean distance from the global centroid, then
+	  <math>k</math> evenly spaced points are selected from the
+	  sorted array. You can request a quick-and-dirty initializer by
+	  passing as <argname>centers</argname> the first <math>k</math>
+	  rows of <argname>X</argname>.
+	</para>
+	<para>
+	  <argname>opts</argname>: provides a means of passing options
+	  to inflect the procedure. At present two options are
+	  supported.
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Under the key <lit>rand_starts</lit> you can give an
+	      integer specifying a number of randomly selected starting
+	      points from which the algorithm will be rerun (by default,
+	      0).  The <math>k</math>-means problem typically features
+	      multiple local optima and ASA136 is not guaranteed to find
+	      the global optimum; the chance of getting to, or close to,
+	      the global optimum is enhanced by specifying a number of
+	      randomized restarts.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Under the key <lit>verbosity</lit> you can give a value
+	      from 0 and 3 to control the amount of printed output
+	      from the function. The default value of 0 gives silent
+	      operation and the levels 1 to 3 give progressively greater
+	      detail on the procedure.
+	    </para>
+	  </li>
+	</ilist>
+	<subhead>Return value</subhead>
+	<para>
+	  The return value from <lit>kmeans</lit> is a bundle containing
+	  three members:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>clustid</lit>: an <math>m</math>-vector holding the
+	      1-based index of the cluster to which each point is
+	      assigned.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>clustinfo</lit>: a matrix with <math>k</math> rows
+	      and <math>n</math>+2 columns. The first column holds the
+	      count of points included in each cluster; the next
+	      <math>n</math> columns hold the cluster centroid; and the
+	      last column holds the sum of squared deviations of the
+	      included points from the centroid.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>global_SST</lit>: the sum of squared deviations of
+	      the points from the global centroid. This can be compared
+	      with the sum of the last column of <lit>clustinfo</lit>,
+	      which will be a good deal smaller if the clustering is
+	      effective.
+	    </para>
+	  </li>
+	</ilist>
+      </description>
+    </function>
+
     <function name="kmeier" section="nonparam" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">d</fnarg>
