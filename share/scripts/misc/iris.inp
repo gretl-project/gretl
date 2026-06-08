@@ -1,0 +1,14 @@
+###
+### kmeans example on R.A. Fisher's iris data set
+###
+
+set verbose off
+open iris.gdt
+
+list L = sepallen sepalwid petallen petalwid
+bundle opts = _(verbosity = 1)
+
+b = kmeans({L}, 3, opts)
+
+series sp_hat = b.clustid
+xtab species sp_hat
