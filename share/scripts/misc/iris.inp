@@ -5,7 +5,7 @@
 set verbose off
 open iris.gdt
 
-list L = sepallen sepalwid petallen petalwid
+list L = sepallength sepalwidth petallength petalwidth
 bundle opts = _(verbosity = 1)
 
 b = kmeans({L}, 3, opts)

@@ -16,19 +16,19 @@ See also https://archive.ics.uci.edu/dataset/53/iris
 </description>
 <variables count="5">
 <variable name="sepallength"
- label="sepal length, cm."
+ label="sepal length in cm"
 />
 <variable name="sepalwidth"
- label="sepal width, cm."
+ label="sepal width in cm"
 />
 <variable name="petallength"
- label="petal length, cm."
+ label="petal length in cm"
 />
 <variable name="petalwidth"
- label="petal width, cm."
+ label="petal width in cm"
 />
 <variable name="variety"
- label="class of iris plant: Iris Setosa, Iris Versicolour, or Iris Virginica"
+ label="class of iris plant: Setosa, Versicolour, or Virginica"
  discrete="true"
 />
 </variables>
