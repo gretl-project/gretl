@@ -185,6 +185,6 @@ See also https://archive.ics.uci.edu/dataset/53/iris
 <obs>5.9 3 5.1 1.8 3 </obs>
 </observations>
 <string-tables count="1">
-<valstrings owner="variety" count="3">"Setosa" "Versicolor" "Virginica" </valstrings>
+<valstrings owner="species" count="3">"Setosa" "Versicolor" "Virginica" </valstrings>
 </string-tables>
 </gretldata>
