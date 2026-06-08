@@ -28,6 +28,7 @@
 "hall","Consumption and asset returns, US","time series, T=467"
 "hamilton","Prices and exchange rate, US and Italy","time series, T=202"
 "hendry_jae","David Hendry, JAE 2001, UK macro data","time series, T=119"
+"iris","RA Fisher's iris data","cross-section, n=150"
 "jgm-data","Interest rates and inflation, Canada","time series, T=43"
 "keane","Keane and Wolpin career choice data","cross section, n=12723"
 "kennan","Duration of contract strikes, US","cross section, n=62"

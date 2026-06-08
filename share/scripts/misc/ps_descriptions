@@ -20,6 +20,7 @@
 "heckit","Heckman selection bias","wages"
 "hall_cbapm","Nonlinear GMM estimation","Consumption and asset returns"
 "hamilton","VECM with tests on cointegrating vector","US and Italian prices"
+"iris","kmeans on Fisher's iris data","Iris data"
 "jgm-1996","Unit root tests (MacKinnon, 1996)","interest & inflation"
 "keane","Multinomial logit","career choice data"
 "klein","System estimation","US macro data"
