@@ -11,4 +11,4 @@ bundle opts = _(verbosity = 1)
 b = kmeans({L}, 3, opts)
 
 series sp_hat = b.clustid
-xtab species sp_hat
+xtab variety sp_hat
