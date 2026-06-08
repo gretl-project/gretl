@@ -7955,6 +7955,112 @@
       </description>
     </function>
 
+    <function name="kmeans" section="stats" output="bundle">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="scalar-or-matrix">c</fnarg>
+	<fnarg optional="true" type="bundle">opts</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esegue l'algoritmo ASA136 (<cite
+	  key="hartigan-wong79">Hartigan e Wong, 1979</cite>) per
+	  individuare <math>k</math> cluster ai quali possono essere
+	  assegnati <math>m</math> punti, con l’obiettivo di
+	  minimizzare la distanza euclidea totale tra i punti e i
+	  centroidi dei cluster di appartenenza.
+	</para>
+	<para>
+	I parametri sono
+	  specificati come segue.
+	</para>
+	<para>
+	  <argname>X</argname>: una matrice <by r="m" c="n"/>
+	  contenente i <quote>punti</quote>, cioè <math>m</math>
+	  osservazioni per ciascuna delle <math>n</math>
+	  variabili. Viene generato un errore se la matrice contiene
+	  valori mancanti.
+	</para>
+	<para>
+	  <argname>c</argname>: può assumere una delle due forme
+	  seguenti: (a) un intero <math>k</math>, il numero di
+	  clusters, oppure (b) una matrice <by r="k" c="n"/> con
+	  <math>k</math> centroidi iniziali, da utilizzare come punto
+	  di partenza dell’algoritmo. Se <argname>c</argname> s è uno
+	  scalare, l’inizializzazione viene impostata automaticamente
+	  secondo il metodo descritto da Hartigan e Wong: i punti
+	  vengono ordinati in base alla loro distanza euclidea dal
+	  centroide globale e quindi vengono selezionati
+	  <math>k</math> punti equidistanti. È possibile richiedere
+	  un’inizializzazione rapida ma approssimativa passando come
+	  <argname>c</argname> le prime <math>k</math> righe di
+	  <argname>X</argname>.
+	</para>
+	<para>
+	  <argname>opts</argname>: consente di passare opzioni che
+	  modificano il comportamento della funzione. Al momento ce ne
+	  sono due possibili. 
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Con la chiave <lit>rand_starts</lit> è possibile
+	      specificare un intero che indica il numero di punti
+	      iniziali scelti casualmente dai quali l’algoritmo verrà
+	      rieseguito (default: 0). Il problema
+	      <math>k</math>-means presenta tipicamente ottimi locali
+	      multipli e l’algoritmo ASA136 non garantisce il
+	      raggiungimento dell’ottimo globale; l’uso di più riavvii
+	      casuali aumenta la probabilità di trovare l’ottimo
+	      globale, o qualcosa che gli va vicino.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Con la chiave <lit>verbosity</lit> è possibile
+	      specificare un valore da 0 a 3 per controllare la
+	      quantità di informazioni stampate dalla funzione. Il
+	      default è 0, che corrisponde all’esecuzione silenziosa;
+	      i livelli da 1 a 3 forniscono dettagli progressivamente
+	      più approfonditi.
+	    </para>
+	  </li>
+	</ilist>
+	<subhead>Risultato</subhead>
+	<para>
+	  La funzione <lit>kmeans</lit> restituisce un bundle con tre elementi:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>clustid</lit>: un vettore di lunghezza
+	      <math>m</math> che contiene, per ciascun punto, l’indice
+	      (a partire da 1) del cluster al quale è stato assegnato.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>clustinfo</lit>: una matrice con <math>k</math> righe e <math>n</math>+2
+	      colonne. La prima colonna contiene il numero di punti
+	      inclusi in ciascun cluster; le successive n colonne
+	      contengono il centroide del cluster; l’ultima colonna
+	      contiene la somma dei quadrati degli scarti dei punti
+	      appartenenti al cluster rispetto al suo centroide.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>global_SST</lit>: : la somma dei quadrati degli
+	      scarti dei punti rispetto al centroide globale. Questo
+	      valore può essere confrontato con la somma dell’ultima
+	      colonna di <lit>clustinfo</lit>, che risulterà tanto più
+	      piccola quanto più la classificazione è efficace.
+	    </para>
+	  </li>
+	</ilist>
+      </description>
+    </function>
+    
     <function name="kmeier" section="nonparam" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">d</fnarg>
