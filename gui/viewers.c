@@ -30,6 +30,7 @@
 #ifdef GRETL_EDIT
 #include "gretl_edit.h"
 #include "editbar.h"
+#include "backrefs.h"
 #else
 #include "library.h"
 #include "gui_utils.h"
@@ -1831,39 +1832,6 @@ static void drag_to_move (GtkWidget *src, GdkEventButton *event,
 			       event->y_root,
 			       event->time);
 }
-
-#ifdef GRETL_EDIT
-
-static void show_link_cursor (GtkWidget *w, gpointer p)
-{
-    GdkWindow *window = gtk_widget_get_window(w);
-    GdkCursor *c = gdk_cursor_new(GDK_HAND2);
-
-    if (c != NULL) {
-        gdk_window_set_cursor(window, c);
-        gdk_cursor_unref(c);
-    }
-}
-
-static void revert_cursor (GtkWidget *w, gpointer p)
-{
-    GdkWindow *window = gtk_widget_get_window(w);
-
-    if (window != NULL) {
-        gdk_window_set_cursor(window, NULL);
-    }
-}
-
-static void find_funcdef_callback (GtkWidget *w, gpointer data)
-{
-    gchar *needle = g_object_get_data(G_OBJECT(w), "needle");
-    windata_t *vwin = g_object_get_data(G_OBJECT(w), "searchwin");
-
-    find_function_def(vwin, needle);
-    gtk_widget_destroy(gtk_widget_get_toplevel(w));
-}
-
-#endif /* GRETL_EDIT defined */
 
 /* A text viewer window specialized to the case of showing the signature
    (plus doc string if available) for a hansl function. The window will

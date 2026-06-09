@@ -1536,19 +1536,6 @@ static void function_info_popup (const char *sig,
     gtk_widget_show(poptop);
 }
 
-static char *user_func_get_sig (ufunc *uf)
-{
-    char *buf;
-    PRN *prn;
-
-    bufopen(&prn);
-    print_function_signature(uf, prn);
-    buf = gretl_print_steal_buffer(prn);
-    gretl_print_destroy(prn);
-
-    return buf;
-}
-
 /* try getting the signature of a hansl function */
 
 static int hansl_func_help (const gchar *id, windata_t *vwin)
@@ -1557,13 +1544,10 @@ static int hansl_func_help (const gchar *id, windata_t *vwin)
     int ret = 0;
 
     if (uf != NULL) {
+	char *sig = gretl_function_get_signature(uf);
 	const char *docstr = user_func_get_docstr(uf);
 	fnpkg *pkg = gretl_function_get_package(uf);
-	char *sig = user_func_get_sig(uf);
 	char *extra = NULL;
-
-	/* signature (highlighting to be applied) */
-	sig = user_func_get_sig(uf);
 
 	if (docstr != NULL || pkg != NULL) {
 	    /* plain text portion of output */
@@ -2700,63 +2684,3 @@ void display_x12a_help (void)
     }
 }
 
-#ifdef GRETL_EDIT
-
-void find_function_def (windata_t *vwin, gchar *sigstart)
-{
-    GtkTextView *tview;
-    GtkTextBuffer *tbuf;
-    GtkTextIter start, match;
-    gboolean found;
-
-    tview = GTK_TEXT_VIEW(vwin->text);
-    tbuf = gtk_text_view_get_buffer(tview);
-    gtk_text_buffer_get_start_iter(tbuf, &start);
-    found = gtk_text_iter_forward_search(&start, sigstart,
-					 GTK_TEXT_SEARCH_TEXT_ONLY,
-					 &match, NULL, NULL);
-    if (found) {
-	GtkTextMark *targ;
-
-	/* first set a mark for going back */
-	textbuf_set_back_target(tbuf);
-
-	/* then move to the function definition */
-	gtk_text_buffer_place_cursor(tbuf, &match);
-	targ = gtk_text_buffer_create_mark(tbuf, "targ", &match, FALSE);
-	gtk_text_view_scroll_to_mark(tview, targ, 0.05, FALSE, 0, 0);
-    }
-}
-
-void alt_dot_find (windata_t *vwin)
-{
-    GtkTextBuffer *tbuf;
-    int role = FUNC_HELP;
-    gchar *id = NULL;
-
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-    id = get_identifier_at_cursor(tbuf, &role);
-
-    if (id != NULL && *id != '\0') {
-	ufunc *uf = get_user_function_by_name(id);
-
-	if (uf == NULL) {
-	    warnbox(_("Function was not found"));
-	} else {
-	    char *sig = NULL;
-	    gchar *needle = NULL;
-	    const gchar *p;
-
-	    sig = user_func_get_sig(uf); // helpfiles.c
-	    p = strchr(sig, '(');
-	    needle = g_strndup(sig, p - sig);
-	    find_function_def(vwin, needle); // viewers.c
-	    g_free(needle);
-	    free(sig);
-	}
-    }
-
-    g_free(id);
-}
-
-#endif

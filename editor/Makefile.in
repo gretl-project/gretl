@@ -135,6 +135,7 @@ vpath %.h $(topsrc)/gui $(topsrc)/editor
 
 SRCS = gretl_edit.c \
 	about.c \
+	backrefs.c \
 	base_utils.c \
 	dialogs.c \
 	dlgutils.c \

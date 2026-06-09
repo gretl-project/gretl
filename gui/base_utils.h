@@ -40,6 +40,10 @@ void set_wait_cursor (GdkWindow **pcwin);
 
 void unset_wait_cursor (GdkWindow *cwin);
 
+void show_link_cursor (GtkWidget *w, gpointer p);
+
+void revert_cursor (GtkWidget *w, gpointer p);
+
 void gretl_set_window_modal (GtkWidget *w);
 
 void gretl_set_window_quasi_modal (GtkWidget *w);

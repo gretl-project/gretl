@@ -299,55 +299,6 @@ int textbuf_get_n_lines (windata_t *vwin)
     return gtk_text_iter_get_line(&end) + 1;
 }
 
-#ifdef GRETL_EDIT
-
-/* Apparatus for dealing with a "go back" marker */
-
-void textbuf_set_back_target (GtkTextBuffer *buf)
-{
-    GtkTextIter point;
-    GtkTextMark *target;
-
-    /* get the current insertion point */
-    gtk_text_buffer_get_iter_at_mark(buf, &point,
-				     gtk_text_buffer_get_insert(buf));
-
-    /* do we already have a "back-target" mark? */
-    target = gtk_text_buffer_get_mark(buf, "back-target");
-    if (target == NULL) {
-	/* no: so create one now */
-	target = gtk_text_buffer_create_mark(buf, "back-target",
-					     &point, TRUE);
-    } else {
-	/* yes: so move it to @point */
-	gtk_text_buffer_move_mark(buf, target, &point);
-    }
-}
-
-void textbuf_go_back (windata_t *vwin)
-{
-    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
-    GtkTextMark *target;
-
-    target = gtk_text_buffer_get_mark(buf, "back-target");
-
-    if (target != NULL) {
-	cursor_to_mark(vwin, target);
-	gtk_text_buffer_delete_mark(buf, target);
-    }
-}
-
-int textbuf_has_target (windata_t *vwin)
-{
-    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
-
-    return gtk_text_buffer_get_mark(buf, "back-target") != NULL;
-}
-
-#endif /* GRETL_EDIT */
-
 /* End of apparatus for dealing with a "go back" marker */
 
 static void get_char_width_and_height (GtkWidget *widget,

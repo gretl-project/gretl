@@ -29,6 +29,7 @@
 #include "tabwin.h"
 #include "gretl_www.h"
 #include "load_functions.h"
+#include "backrefs.h"
 #include "editbar.h"
 
 #ifdef G_OS_WIN32
@@ -861,7 +862,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
     GtkWidget *w;
     int i;
 
-    if (textbuf_has_target(vwin)) {
+    if (textbuf_has_backref(vwin)) {
 	item = &go_back_item;
 	w = gtk_menu_item_new_with_label(_(item->tip));
 	g_signal_connect(G_OBJECT(w), "activate", item->func, vwin);

@@ -2947,6 +2947,19 @@ void print_function_signature (ufunc *fun, PRN *prn)
     gretl_pop_c_numeric_locale();
 }
 
+char *gretl_function_get_signature (ufunc *u)
+{
+    PRN *prn = NULL;
+    char *buf = NULL;
+
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+    print_function_signature(u, prn);
+    buf = gretl_print_steal_buffer(prn);
+    gretl_print_destroy(prn);
+
+    return buf;
+}
+
 /* The following is an attempt at generic indentation based
    on occurrences of '{' and '}', which should probably
    work for R code.

@@ -217,6 +217,8 @@ int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn);
 
 char **gretl_function_retrieve_code (ufunc *u, int *nlines);
 
+char *gretl_function_get_signature (ufunc *u);
+
 int print_function_package_sample (const char *fname, int tabwidth,
 				   PRN *prn);
 

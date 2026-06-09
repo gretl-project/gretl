@@ -90,20 +90,7 @@ static void license_callback (GtkWidget *w, gpointer p)
     g_free(fname);
 }
 
-#ifdef GRETL_EDIT
-
-static void show_link_cursor (GtkWidget *w, gpointer p)
-{
-    GdkWindow *window = gtk_widget_get_window(w);
-    GdkCursor *c = gdk_cursor_new(GDK_HAND2);
-
-    if (c != NULL) {
-        gdk_window_set_cursor(window, c);
-        gdk_cursor_unref(c);
-    }
-}
-
-#else
+#ifndef GRETL_EDIT
 
 static void relnotes_callback (GtkWidget *w, gpointer p)
 {
@@ -120,15 +107,6 @@ static void show_website (GtkWidget *w, gpointer p)
 {
     if (browser_open(website)) {
         errbox("Failed to open URL");
-    }
-}
-
-static void revert_cursor (GtkWidget *w, gpointer p)
-{
-    GdkWindow *window = gtk_widget_get_window(w);
-
-    if (window != NULL) {
-        gdk_window_set_cursor(window, NULL);
     }
 }
 

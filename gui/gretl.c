@@ -1615,17 +1615,6 @@ static void set_main_window_scale (void)
     }
 }
 
-void show_link_cursor (GtkWidget *w, gpointer p)
-{
-    GdkWindow *window = gtk_widget_get_window(w);
-    GdkCursor *c = gdk_cursor_new(GDK_HAND2);
-
-    if (c != NULL) {
-	gdk_window_set_cursor(window, c);
-	gdk_cursor_unref(c);
-    }
-}
-
 int mainwin_get_vwin_insertion (void)
 {
     int ins = -1;

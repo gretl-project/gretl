@@ -159,6 +159,26 @@ void unset_wait_cursor (GdkWindow *cwin)
     }
 }
 
+void show_link_cursor (GtkWidget *w, gpointer p)
+{
+    GdkWindow *window = gtk_widget_get_window(w);
+    GdkCursor *c = gdk_cursor_new(GDK_HAND2);
+
+    if (c != NULL) {
+	gdk_window_set_cursor(window, c);
+	gdk_cursor_unref(c);
+    }
+}
+
+void revert_cursor (GtkWidget *w, gpointer p)
+{
+    GdkWindow *window = gtk_widget_get_window(w);
+
+    if (window != NULL) {
+        gdk_window_set_cursor(window, NULL);
+    }
+}
+
 /* by using gretl_set_window_modal() we make the main
    window visibly insensitive */
 

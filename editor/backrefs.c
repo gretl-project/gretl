@@ -18,6 +18,9 @@
  */
 
 #include "gretl.h"
+#include "textbuf.h"
+#include "gretl_func.h"
+#include "backrefs.h"
 
 /* Apparatus to support multi-level "Go back" references in a
    GtkTextView object
@@ -31,9 +34,9 @@ typedef struct backrefs_ {
 
 /* Allocate a new backrefs struct. */
 
-backrefs *backrefs_new (void)
+static backrefs *backrefs_new (void)
 {
-    backrefs *refs = malloc(sizeof *backrefs);
+    backrefs *refs = malloc(sizeof *refs);
 
     fprintf(stderr, "backrefs_new() was called\n");
 
@@ -46,9 +49,11 @@ backrefs *backrefs_new (void)
 
 /* Free a backrefs struct when its parent widget is destroyed. */
 
-void backrefs_destroy (backrefs *refs)
+static void backrefs_destroy (gpointer data)
 {
-    if (refs != NULL) {
+    if (data != NULL) {
+	backrefs *refs = (backrefs *) data;
+
 	fprintf(stderr, "backrefs_destroy() was called\n");
 	free(refs->marks);
 	free(refs);
@@ -57,15 +62,17 @@ void backrefs_destroy (backrefs *refs)
 
 /* Push @mark onto a stack of backward references for @w. */
 
-void push_backref (GtkWidget *w, GtkTextMark *mark)
+static void push_backref (GtkTextBuffer *buf, GtkTextMark *mark)
 {
-    backrefs *refs = g_object_get_data(G_OBJECT(w), "backrefs");
+    backrefs *refs = g_object_get_data(G_OBJECT(buf), "backrefs");
 
     fprintf(stderr, "push_backref() was called (refs %p)\n",
 	    (void *) refs);
 
     if (refs == NULL) {
 	refs = backrefs_new();
+	g_object_set_data_full(G_OBJECT(buf), "backrefs", refs,
+			       backrefs_destroy);
     }
 
     if (refs->n_marks == refs->n_slots) {
@@ -85,9 +92,9 @@ void push_backref (GtkWidget *w, GtkTextMark *mark)
    such a stack exists and is not empty.
 */
 
-GtkTextMark *pop_backref (GtkWidget *w)
+static GtkTextMark *pop_backref (GtkTextBuffer *buf)
 {
-    backrefs *refs = g_object_get_data(G_OBJECT(w), "backrefs");
+    backrefs *refs = g_object_get_data(G_OBJECT(buf), "backrefs");
     GtkTextMark *ret = NULL;
 
     fprintf(stderr, "pop_backref() was called (refs %p)\n",
@@ -95,12 +102,114 @@ GtkTextMark *pop_backref (GtkWidget *w)
 
     if (refs != NULL && refs->n_marks > 0) {
 	int n = refs->n_marks - 1;
-	
-	ret = ref->marks[n];
+
+	ret = refs->marks[n];
 	refs->n_marks = n;
     }
 
     fprintf(stderr, "  refs->nmarks is now %d\n", refs->n_marks);
 
     return ret;
+}
+
+static void textbuf_set_backref (GtkTextBuffer *buf)
+{
+    GtkTextIter point;
+    GtkTextMark *mark;
+
+    /* add a mark at the current insertion point and
+       push it onto the stack
+    */
+    gtk_text_buffer_get_iter_at_mark(buf, &point,
+				     gtk_text_buffer_get_insert(buf));
+    mark = gtk_text_mark_new(NULL, FALSE);
+    gtk_text_buffer_add_mark(buf, mark, &point);
+    push_backref(buf, mark);
+}
+
+void textbuf_go_back (windata_t *vwin)
+{
+    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
+    GtkTextMark *mark = pop_backref(buf);
+
+    if (mark != NULL) {
+	cursor_to_mark(vwin, target);
+	gtk_text_buffer_delete_mark(buf, target);
+    }
+}
+
+int textbuf_has_backref (windata_t *vwin)
+{
+    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
+    backrefs *refs = g_object_get_data(G_OBJECT(buf), "backrefs");
+
+    return (refs != NULL && refs->n_marks > 0);
+}
+
+static void find_function_def (windata_t *vwin, gchar *sigstart)
+{
+    GtkTextView *tview;
+    GtkTextBuffer *tbuf;
+    GtkTextIter start, match;
+    gboolean found;
+
+    tview = GTK_TEXT_VIEW(vwin->text);
+    tbuf = gtk_text_view_get_buffer(tview);
+    gtk_text_buffer_get_start_iter(tbuf, &start);
+    found = gtk_text_iter_forward_search(&start, sigstart,
+					 GTK_TEXT_SEARCH_TEXT_ONLY,
+					 &match, NULL, NULL);
+    if (found) {
+	GtkTextMark *targ;
+
+	/* first set a mark for going back */
+	textbuf_set_backref(tbuf);
+
+	/* then move to the function definition */
+	gtk_text_buffer_place_cursor(tbuf, &match);
+	targ = gtk_text_buffer_create_mark(tbuf, "targ", &match, FALSE);
+	gtk_text_view_scroll_to_mark(tview, targ, 0.05, FALSE, 0, 0);
+    }
+}
+
+void alt_dot_find (windata_t *vwin)
+{
+    GtkTextBuffer *tbuf;
+    int role = FUNC_HELP;
+    gchar *id = NULL;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    id = get_identifier_at_cursor(tbuf, &role);
+
+    if (id != NULL && *id != '\0') {
+	ufunc *uf = get_user_function_by_name(id);
+
+	if (uf == NULL) {
+	    warnbox(_("Function was not found"));
+	} else {
+	    char *sig = NULL;
+	    gchar *needle = NULL;
+	    const gchar *p;
+
+	    sig = gretl_function_get_signature(uf);
+	    p = strchr(sig, '(');
+	    needle = g_strndup(sig, p - sig);
+	    find_function_def(vwin, needle);
+	    g_free(needle);
+	    free(sig);
+	}
+    }
+
+    g_free(id);
+}
+
+void find_funcdef_callback (GtkWidget *w, gpointer data)
+{
+    gchar *needle = g_object_get_data(G_OBJECT(w), "needle");
+    windata_t *vwin = g_object_get_data(G_OBJECT(w), "searchwin");
+
+    find_function_def(vwin, needle);
+    gtk_widget_destroy(gtk_widget_get_toplevel(w));
 }
