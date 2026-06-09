@@ -1868,7 +1868,7 @@ windata_t *view_function_signature (const char *sig,
     }
 
 #ifdef GRETL_EDIT
-    if (1) {
+    {
 	/* enable search for function definition */
 	const gchar *p = strchr(sig, '(');
 	gchar *needle = g_strndup(sig, p - sig);

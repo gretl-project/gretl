@@ -20,6 +20,7 @@
 #include "gretl.h"
 #include "textbuf.h"
 #include "gretl_func.h"
+#include "gretl_typemap.h"
 #include "backrefs.h"
 
 /* Apparatus to support multi-level "Go back" references in a
@@ -38,11 +39,9 @@ static backrefs *backrefs_new (void)
 {
     backrefs *refs = malloc(sizeof *refs);
 
-    fprintf(stderr, "backrefs_new() was called\n");
-
-    refs->marks = NULL;
+    refs->marks = malloc(sizeof *refs->marks);
     refs->n_marks = 0;
-    refs->n_slots = 0;
+    refs->n_slots = 1;
 
     return refs;
 }
@@ -54,7 +53,6 @@ static void backrefs_destroy (gpointer data)
     if (data != NULL) {
 	backrefs *refs = (backrefs *) data;
 
-	fprintf(stderr, "backrefs_destroy() was called\n");
 	free(refs->marks);
 	free(refs);
     }
@@ -65,9 +63,6 @@ static void backrefs_destroy (gpointer data)
 static void push_backref (GtkTextBuffer *buf, GtkTextMark *mark)
 {
     backrefs *refs = g_object_get_data(G_OBJECT(buf), "backrefs");
-
-    fprintf(stderr, "push_backref() was called (refs %p)\n",
-	    (void *) refs);
 
     if (refs == NULL) {
 	refs = backrefs_new();
@@ -85,7 +80,6 @@ static void push_backref (GtkTextBuffer *buf, GtkTextMark *mark)
 
     refs->marks[refs->n_marks] = mark;
     refs->n_marks += 1;
-    fprintf(stderr, "  refs->nmarks is now %d\n", refs->n_marks);
 }
 
 /* Pop a GtkTextMark off the stack of backward references for @w, if
@@ -97,17 +91,13 @@ static GtkTextMark *pop_backref (GtkTextBuffer *buf)
     backrefs *refs = g_object_get_data(G_OBJECT(buf), "backrefs");
     GtkTextMark *ret = NULL;
 
-    fprintf(stderr, "pop_backref() was called (refs %p)\n",
-	    (void *) refs);
-
     if (refs != NULL && refs->n_marks > 0) {
 	int n = refs->n_marks - 1;
 
 	ret = refs->marks[n];
+	refs->marks[n] = NULL;
 	refs->n_marks = n;
     }
-
-    fprintf(stderr, "  refs->nmarks is now %d\n", refs->n_marks);
 
     return ret;
 }
@@ -134,8 +124,8 @@ void textbuf_go_back (windata_t *vwin)
     GtkTextMark *mark = pop_backref(buf);
 
     if (mark != NULL) {
-	cursor_to_mark(vwin, target);
-	gtk_text_buffer_delete_mark(buf, target);
+	cursor_to_mark(vwin, mark);
+	gtk_text_buffer_delete_mark(buf, mark);
     }
 }
 
@@ -189,16 +179,13 @@ void alt_dot_find (windata_t *vwin)
 	if (uf == NULL) {
 	    warnbox(_("Function was not found"));
 	} else {
-	    char *sig = NULL;
-	    gchar *needle = NULL;
-	    const gchar *p;
+	    GretlType t = user_func_get_return_type(uf);
+	    const char *tstr = gretl_type_get_name(t);
+	    gchar *needle;
 
-	    sig = gretl_function_get_signature(uf);
-	    p = strchr(sig, '(');
-	    needle = g_strndup(sig, p - sig);
+	    needle = g_strdup_printf("function %s %s", tstr, id);
 	    find_function_def(vwin, needle);
 	    g_free(needle);
-	    free(sig);
 	}
     }
 
