@@ -215,7 +215,8 @@
 	</option>
 	<option>
 	  <flag>--verbose</flag>
-	  <effect>Muestra los resultados de la regresión</effect>
+	  <optparm optional="true">nivel</optparm>
+	  <effect>Presenta más información</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
@@ -450,11 +451,7 @@
 	que manejan la inclusión de términos determinísticos pasan a ser
 	mutuamente excluyentes: debes escoger una entre sin constante,
 	con constante, y con constante más tendencia; por defecto es con
-	constante. Además, la opción <opt>seasonals</opt> no está
-	disponible. Tercero, la opción <opt>verbose</opt> aquí tiene un
-	significado diferente: produce un breve informe del contraste para cada
-	serie temporal individual (siendo este por defecto una presentación
-	solo del resultado global).
+	constante. Además, la opción <opt>seasonals</opt> no está disponible.
       </para>
       <para context="cli">
 	Se calcula el contraste global (Hipótesis nula: La serie en cuestión
@@ -472,6 +469,26 @@
 	de tiempo difieren de un individuo a otro, se muestra su estadístico
 	<math>Z</math>; en otro caso, se muestra su estadístico <math>t</math>-barra.
 	Consulta también la instrucción <cmdref targ="levinlin"/>.
+      </para>
+
+      <subhead context="cli">Resultados presentados</subhead>
+
+      <para>
+	Por defecto, se presenta información básica relacionada con el contraste.
+	Si se indica la opción <opt>quiet</opt> no se presenta nada, pero los
+	accesores <fncref targ="$test"/> y <fncref targ="$pvalue"/> se pueden
+	usar para obtener resultados. Sin embargo, observa que si facilitas más de
+	una serie a contrastar, o indicas más de una de las opciones relacionadas
+	con términos determinísticos, estos accesores solo guardan el último
+	contraste realizado. Además, si se indica la opción <opt>quiet</opt> en
+	caso de datos de panel, solo se guardan los metacontrastes de Choi:
+	entonces cada <lit>$test</lit> y <lit>$pvalue</lit> resulta ser un vector
+	de orden 3 que contiene los resultados de las tres variantes del contraste.
+      </para>
+      <para>
+	Para obtener un resultado algo más detallado, puedes indicar la opción
+	<opt>verbose</opt>, sin ningún parámetro; u obtener el máximo
+	resultado especificando <opt>verbose</opt><lit>=max</lit>.
       </para>
 
     </description>
@@ -5925,8 +5942,8 @@
 	indican la cantidad de verde, y los dos últimos indican la cantidad de
 	azul. Así, por ejemplo, <lit>0xff0080</lit> tiene el máximo de rojo, no
 	tiene verde, y un poco de azul (es un morado rojizo). Con gnuplot 5.2
-	en adelante, puedes utilizar cuatro pares de dígitos en lugar de tres:
-	en ese caso, los dos primeros dígitos indican la transparencia, variando
+	en adelante, puedes utilizar ocho pares de dígitos en lugar de seis:
+	en ese caso, los dos primeros indican la transparencia, variando
 	de 0 (opaco) a 255 (transparente). Por ejemplo, <lit>0xc0ff0080</lit>
 	proporcionaría al color un valor de 192 (c0 en hexadecimal) para la
 	transparencia. Puedes comprobar tu versión de gnuplot revisando
@@ -12363,18 +12380,17 @@
       <para>
 	<lit>install</lit>: En su forma más elemental, sin ningún indicador de
 	opción y con el argumento <repl>nombrepaquete</repl> expresado como
-	el nombre <quote>plano</quote> de un paquete de funciones de GRETL (como
-	en el primer ejemplo de arriba), el efecto de esta opción consiste
-	en descargar el paquete que se especifica del servidor de GRETL,
-	(excepto que <repl>nombrepaquete</repl> comience con <lit>http://</lit>),
-	e instalarlo en la máquina local. En este caso, no es necesario expresar
-	una extensión en el nombre del archivo. Sin embargo, cuando indicas
-	la opción <opt>local</opt>, el argumento <repl>nombrepaquete</repl>
-	debe ser la ruta a un archivo de paquete en la máquina local, que
-	todavía no esté instalado, y expresado con una extensión correcta
-	(<lit>.gfn</lit> o <lit>.zip</lit>). En este caso, el efecto consiste
-	en copiar el archivo en su sitio (<lit>gfn</lit>), o descomprimirlo
-	en su sitio (<lit>zip</lit>), significando <quote>en su sitio</quote>
+	nombre <quote>plano</quote> de un paquete de funciones de GRETL (como en
+	el primer ejemplo de arriba), el efecto de esta opción consiste en
+	descargar el paquete que se especifica del servidor de GRETL, (excepto que
+	<repl>nombrepaquete</repl> sea una URL), e instalarlo en la máquina
+	local. En este caso, no es necesario expresar una extensión en el nombre
+	del archivo. Sin embargo, cuando indicas la opción <opt>local</opt>,
+	el argumento <repl>nombrepaquete</repl> debe ser la ruta a un archivo de
+	paquete en la máquina local, que todavía no esté instalado, y expresado
+	con una extensión correcta (<lit>.gfn</lit> o <lit>.zip</lit>). En este
+	caso, el efecto consiste en copiar el archivo en su sitio (<lit>gfn</lit>),
+	o descomprimirlo en su sitio (<lit>zip</lit>), significando <quote>en su sitio</quote>
 	allí donde lo va a encontrar la instrucción <cmdref targ="include"/>	.
       </para>
       <para>
@@ -12436,13 +12452,12 @@
   <subhead>Montaje</subhead>
       <para>
 	La opción <opt>staging</opt> es un elemento de conveniencia para los
-	desarrolladores y está disponible únicamente en conjunción con la
-	acción <lit>install</lit> cuando se aplica a un paquete de función.
-	Su efecto consiste en que se descarga el paquete en cuestión del
-	área de montaje (<lit>staging</lit>) de Sourceforge en lugar de
-	hacerlo de un área pública. Los paquetes en montaje todavía no están
-	aprobados para uso general; por eso, ignora esta opción a no ser que
-	sepas lo que estás haciendo.
+	desarrolladores y está disponible únicamente en conjunción con
+	<lit>install</lit>. Su efecto consiste en que se descarga el paquete en
+	cuestión del área de montaje (<lit>staging</lit>) de Sourceforge en
+	lugar de hacerlo de un área pública. Los paquetes en montaje todavía
+	no están aprobados para uso general; por eso, ignora esta opción
+	a no ser que sepas lo que estás haciendo.
       </para>
     </description>
 

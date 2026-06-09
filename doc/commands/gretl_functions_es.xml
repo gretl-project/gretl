@@ -7808,6 +7808,108 @@
       </description>
     </function>
 
+    <function name="kmeans" section="stats" output="bundle">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="scalar-or-matrix">centros</fnarg>
+	<fnarg optional="true" type="bundle">opcs</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Aplica el algoritmo ASA136
+	  (<cite key="hartigan-wong79">Hartigan y Wong, 1979</cite>) para encontrar
+	  <math>k</math> conglomerados en los que pueden situarse <math>m</math>
+	  puntos, con el objetivo de minimizar la distancia Euclídea total
+	  entre los puntos y los centroides de los conglomerados a los que
+	  pertenecen.
+	</para>
+	<para>
+	  Los parámetros se especifican del siguiente modo.
+	</para>
+	<para>
+	  <argname>X</argname>: Una matriz <by r="m" c="n"/> que contiene los
+	  <quote>puntos</quote>, en concreto <math>m</math> observaciones
+	  sobre cada una de las <math>n</math> características. Se presenta un
+	  error cuando esta matriz contiene algún valor ausente.
+	</para>
+	<para>
+	  <argname>centros</argname>: Puede tomar una de dos formas:
+	  (a) un escalar (entero) que proporciona <math>k</math>, el número
+	  de conglomerados; o (b) una matriz <by r="k" c="n"/> que contiene
+	  <math>k</math> centroides iniciales, que se toman como punto de
+	  comienzo del algoritmo. Si <argname>centros</argname> es un escalar,
+	  el iniciador se establece automáticamente utilizando el método descrito
+	  por Hartigan y Wong: los puntos de datos se ordenan según sea la
+	  distancia Euclídea desde el centroide global, por lo que se seleccionan
+	  <math>k</math> puntos separados regularmente del 'array' ordenado.
+	  Puedes solicitar un iniciador rápido e informal proporcionando como
+	  <argname>centros</argname> las <math>k</math> primeras filas de
+	  <argname>X</argname>.
+	</para>
+	<para>
+	  <argname>opcs</argname>: Proporciona un modo de proveer opciones
+	  para declinar el procedimiento. En este momento, se admiten dos
+	  opciones.
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      Bajo la clave <lit>rand_starts</lit> puedes indicar un entero
+	      que especifique un número de puntos de inicio seleccionados
+	      aleatoriamente de los que el algoritmo se va a volver a ejecutar
+	      (por defecto, 0). La problemática de las <math>k</math>-medias
+	      ofrece típicamente múltiples óptimos locales y ASA136 no está
+	      garantizado que encuentre el óptimo global; la posibilidad de
+	      alcanzar, o de aproximarse, al óptimo global mejora especificando
+	      un número de reinicios aleatorios.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Bajo la clave <lit>verbosity</lit> puedes indicar un valor de
+	      0 a 3 para controlar la cantidad de resultados de la función que
+	      se presentan. El valor predeterminado 0 indica un funcionamiento
+	      silencioso, y los niveles de 1 a 3 indican un detalle progresivamente
+	      mayor en el procedimiento.
+	    </para>
+	  </li>
+	</ilist>
+	<subhead>Valor que se devuelve</subhead>
+	<para>
+	  El valor que se devuelve de <lit>kmeans</lit> es un 'bundle' que
+	  contiene tres elementos:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>clustid</lit>: Un vector de dimensión <math>m</math> que
+	      contiene el índice en base 1 del conglomerado al que se asigna
+	      cada punto.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>clustinfo</lit>: Una matriz con <math>k</math> filas y
+	      <math>n</math>+2 columnas. La primera columna contiene el número
+	      de puntos incluidos en cada conglomerado; las <math>n</math>
+	      columnas siguientes contienen el centroide del conglomerado; y
+	      la última columna contiene la suma de las desviaciones típicas de
+	      los puntos incluidos, desde el centroide.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>global_SST</lit>: La suma de las desviaciones típicas de
+	      los puntos, desde el centroide global. Esto se puede comparar
+	      con la suma total de la última columna de <lit>clustinfo</lit>, e
+	      indicará una buena propuesta al ser menor cuando la conglomeración
+	      sea efectiva.
+	    </para>
+	  </li>
+	</ilist>
+      </description>
+    </function>
+
     <function name="kmeier" section="nonparam" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">d</fnarg>
@@ -14353,9 +14455,9 @@
 	  de ecuaciones lineales, es decir <math>Tx = b</math>
 	  donde <math>T</math> es una matriz cuadrada cuyo elemento
 	  <math>T</math><sub>i,j</sub> es
-	  igual a <math>c</math><sub>i-j</sub>
+	  igual a <math>c</math><sub>i-j+1</sub>
 	  cuando <equation status="inline" ascii="i&gt;=j" tex="$i\ge j$"/>, e
-	  igual a <math>r</math><sub>j-i</sub>
+	  igual a <math>r</math><sub>j-i+1</sub>
 	  cuando <equation status="inline" ascii="i&lt;=j" tex="$i\le j$"/>.
 	  Ten en cuenta que los primeros elementos de los dos vectores
 	  <math>c</math> y <math>r</math> deben ser iguales, pues
@@ -14374,6 +14476,12 @@
 	  positiva.
 	</para>
 	<para>
+	  Si se sabe que la matriz <math>T</math> es simétrica y definida positiva
+	  (como, por ejemplo, en el caso de una matriz de varianzas-covarianzas),
+	  la función <fncref targ="tsolvepd"/> proporciona una alternativa
+	  más eficiente.
+	</para>
+	<para>
 	  Cuando se indica el argumento opcional <argname>det</argname> (en
 	  forma de puntero), al finalizar, este va a contener el determinante de
 	  <math>T</math>. Por ejemplo, el código:
@@ -14386,7 +14494,7 @@
 	  eval det(A)                  # Presenta el determinante
 	  a = A[1,]
 	  d = 0
-	  eval toepsolv(a, a, x, &amp;d)   # Utiliza la función específica
+	  eval toepsolv(a, a, x, &amp;d) # Utiliza la función específica
 	  print d
 	</code>
 	<para>
@@ -14417,6 +14525,11 @@ x (3 x 1)
 
 d =  8,0000000
 	</code>
+	<para>
+	  <seelist>
+            <fncref targ="tsolvepd"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -14533,6 +14646,36 @@ d =  8,0000000
 	<para>
 	  <seelist>
             <fncref targ="selifr"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="tsolvepd" section="linalg" output="cvec">
+      <fnargs>
+	<fnarg type="vector">a</fnarg>
+	<fnarg type="vector">b</fnarg>
+	<fnarg optional="true" type="scalarref">&amp;logdet</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta es una versión especializada de la función <fncref targ="toepsolv"/>
+	  para resolver un sistema simétrico de Toeplitz de ecuaciones lineales,
+	  es decir <math>Tx = b</math> donde <math>T</math><sub>i,j</sub>
+	  se iguala con <math>a</math><sub>|i-j+1|</sub>. También se asume
+	  que la matriz <math>T</math> es definida
+	  positiva.
+	</para>
+	<para>
+	  Cuando se indica el argumento opcional <argname>logdet</argname>
+	  (en forma de puntero), al acabar este va a contener el log determinante
+	  de <math>T</math>. Ten en cuenta que esto es diferente de
+	  <fncref targ="toepsolv"/>, que devuelve el determinante (que podría
+	  ser justificadamente negativo en el caso general).
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="toepsolv"/>
 	  </seelist>
 	</para>
       </description>
