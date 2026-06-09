@@ -24,7 +24,7 @@
 #include "backrefs.h"
 
 /* Apparatus to support multi-level "Go back" references in a
-   GtkTextView object
+   GtkTextView object.
 */
 
 typedef struct backrefs_ {
@@ -58,7 +58,7 @@ static void backrefs_destroy (gpointer data)
     }
 }
 
-/* Push @mark onto a stack of backward references for @w. */
+/* Push @mark onto a stack of backward references for @buf. */
 
 static void push_backref (GtkTextBuffer *buf, GtkTextMark *mark)
 {
@@ -82,7 +82,7 @@ static void push_backref (GtkTextBuffer *buf, GtkTextMark *mark)
     refs->n_marks += 1;
 }
 
-/* Pop a GtkTextMark off the stack of backward references for @w, if
+/* Pop a GtkTextMark off the stack of backward references for @buf, if
    such a stack exists and is not empty.
 */
 
@@ -102,14 +102,15 @@ static GtkTextMark *pop_backref (GtkTextBuffer *buf)
     return ret;
 }
 
+/* Add a mark at the current insertion point and push it
+   onto the stack.
+*/
+
 static void textbuf_set_backref (GtkTextBuffer *buf)
 {
     GtkTextIter point;
     GtkTextMark *mark;
 
-    /* add a mark at the current insertion point and
-       push it onto the stack
-    */
     gtk_text_buffer_get_iter_at_mark(buf, &point,
 				     gtk_text_buffer_get_insert(buf));
     mark = gtk_text_mark_new(NULL, FALSE);
@@ -117,35 +118,42 @@ static void textbuf_set_backref (GtkTextBuffer *buf)
     push_backref(buf, mark);
 }
 
-void textbuf_go_back (windata_t *vwin)
+/* Respond to Alt-, in gretl_edit */
+
+void textview_go_back (GtkTextView *tview)
 {
-    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(tview);
     GtkTextMark *mark = pop_backref(buf);
 
     if (mark != NULL) {
-	cursor_to_mark(vwin, mark);
+	GtkTextIter iter;
+
+	gtk_text_buffer_get_iter_at_mark(buf, &iter, mark);
+	gtk_text_buffer_place_cursor(buf, &iter);
+	gtk_text_view_scroll_to_mark(tview, mark, 0.0, TRUE, 0, 0.1);
 	gtk_text_buffer_delete_mark(buf, mark);
     }
 }
 
-int textbuf_has_backref (windata_t *vwin)
+/* Determine whether the GtkTextBuffer in @vwin has mark to
+   which "Go back"
+*/
+
+int textview_has_backref (GtkTextView *tview)
 {
-    GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(tview);
     backrefs *refs = g_object_get_data(G_OBJECT(buf), "backrefs");
 
     return (refs != NULL && refs->n_marks > 0);
 }
 
-static void find_function_def (windata_t *vwin, gchar *sigstart)
+static void find_function_def (GtkTextView *tview,
+			       gchar *sigstart)
 {
-    GtkTextView *tview;
     GtkTextBuffer *tbuf;
     GtkTextIter start, match;
     gboolean found;
 
-    tview = GTK_TEXT_VIEW(vwin->text);
     tbuf = gtk_text_view_get_buffer(tview);
     gtk_text_buffer_get_start_iter(tbuf, &start);
     found = gtk_text_iter_forward_search(&start, sigstart,
@@ -164,13 +172,12 @@ static void find_function_def (windata_t *vwin, gchar *sigstart)
     }
 }
 
-void alt_dot_find (windata_t *vwin)
+void alt_dot_find (GtkTextView *tview)
 {
-    GtkTextBuffer *tbuf;
+    GtkTextBuffer *tbuf = gtk_text_view_get_buffer(tview);
     int role = FUNC_HELP;
     gchar *id = NULL;
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     id = get_identifier_at_cursor(tbuf, &role);
 
     if (id != NULL && *id != '\0') {
@@ -184,7 +191,7 @@ void alt_dot_find (windata_t *vwin)
 	    gchar *needle;
 
 	    needle = g_strdup_printf("function %s %s", tstr, id);
-	    find_function_def(vwin, needle);
+	    find_function_def(tview, needle);
 	    g_free(needle);
 	}
     }
@@ -197,6 +204,6 @@ void find_funcdef_callback (GtkWidget *w, gpointer data)
     gchar *needle = g_object_get_data(G_OBJECT(w), "needle");
     windata_t *vwin = g_object_get_data(G_OBJECT(w), "searchwin");
 
-    find_function_def(vwin, needle);
+    find_function_def(GTK_TEXT_VIEW(vwin->text), needle);
     gtk_widget_destroy(gtk_widget_get_toplevel(w));
 }

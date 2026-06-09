@@ -20,11 +20,11 @@
 #ifndef BACKREFS_H
 #define BACKREFS_H
 
-void textbuf_go_back (windata_t *vwin);
+void textview_go_back (GtkTextView *tview);
 
-int textbuf_has_backref (windata_t *vwin);
+int textview_has_backref (GtkTextView *tview);
 
-void alt_dot_find (windata_t *vwin);
+void alt_dot_find (GtkTextView *tview);
 
 void find_funcdef_callback (GtkWidget *w, gpointer data);
 

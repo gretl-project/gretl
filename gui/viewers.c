@@ -122,7 +122,7 @@ gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
 
 void vwin_go_back_callback (GtkWidget *w, windata_t *vwin)
 {
-    textbuf_go_back(vwin);
+    textview_go_back(GTK_TEXT_VIEW(vwin->text));
 }
 
 #endif
@@ -529,10 +529,10 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 #ifdef GRETL_EDIT
     if (Alt) {
 	if (key == GDK_period) {
-	    alt_dot_find(vwin);
+	    alt_dot_find(GTK_TEXT_VIEW(vwin->text));
 	    return TRUE;
 	} else if (key == GDK_comma) {
-	    textbuf_go_back(vwin);
+	    textview_go_back(GTK_TEXT_VIEW(vwin->text));
 	    return TRUE;
 	}
     }

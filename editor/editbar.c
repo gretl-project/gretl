@@ -862,7 +862,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
     GtkWidget *w;
     int i;
 
-    if (textbuf_has_backref(vwin)) {
+    if (textview_has_backref(GTK_TEXT_VIEW(vwin->text))) {
 	item = &go_back_item;
 	w = gtk_menu_item_new_with_label(_(item->tip));
 	g_signal_connect(G_OBJECT(w), "activate", item->func, vwin);
