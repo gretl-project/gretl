@@ -219,14 +219,13 @@ static int wspace_fail (integer info, double w0)
 static void *lapack_mem_chunk;
 static size_t lapack_mem_sz;
 
-/* Note: we haven't yet figured out how to support TLS on macOS.
-   That means that we have to be careful _not_ to call any
-   functions that make use of lapack_malloc() in a threaded
-   context, on macOS.
+/* We have to be careful _not_ to call any functions that make use of
+   lapack_malloc() in a threaded context, on macOS prior to version 11.
+   And in context we take that to mean, use TLS on macOS only in the
+   aarch64 case.
 */
-
-#if defined(_OPENMP) && !defined(__APPLE__)
-#pragma omp threadprivate(lapack_mem_chunk, lapack_mem_sz)
+#if defined(_OPENMP) && (!defined(__APPLE__) || defined(__aarch64__))
+# pragma omp threadprivate(lapack_mem_chunk, lapack_mem_sz)
 #endif
 
 static void *lapack_malloc (size_t sz)

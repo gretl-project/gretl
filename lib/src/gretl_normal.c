@@ -560,7 +560,7 @@ static double GHK_1 (const gretl_matrix *C,
    what's the threshold problem size that makes use of
    OMP worthwhile?
 */
-#if defined(_OPENMP) && !defined(__APPLE__)
+#if defined(_OPENMP) && (!defined(__APPLE__) || defined(__aarch64__))
 # define GHK_OMP 1
 # define OMP_GHK_MIN 59
 #endif

@@ -40,7 +40,7 @@
 
 static int gretl_omp_threads;
 
-#if defined(_OPENMP) && !defined(__APPLE__)
+#if defined(_OPENMP) && (!defined(__APPLE__) || defined(__aarch64__))
 static int omp_mnk_min = 80000;
 #else
 static int omp_mnk_min = -1; /* ? */
