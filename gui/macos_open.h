@@ -17,14 +17,14 @@
  *
  */
 
-#ifndef OSX_OPEN_H
-#define OSX_OPEN_H
+#ifndef MACOS_OPEN_H
+#define MACOS_OPEN_H
 
-int osx_open_file (const char *path);
+int macos_open_file (const char *path);
 
-int osx_open_url (const char *url);
+int macos_open_url (const char *url);
 
-int osx_open_pdf (const char *path, const char *dest);
+int macos_open_pdf (const char *path, const char *dest);
 
-#endif /* OSX_OPEN_H */
+#endif /* MACOS_OPEN_H */
 	  

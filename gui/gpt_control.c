@@ -42,7 +42,7 @@
 #endif
 
 #ifdef __APPLE__
-# include "osx_open.h"
+# include "macos_open.h"
 #endif
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
@@ -964,7 +964,7 @@ static void graph_display_pdf (png_plot *plot)
 #if defined(G_OS_WIN32)
     win32_open_file(pdfname);
 #elif defined(__APPLE__)
-    osx_open_file(pdfname);
+    macos_open_file(pdfname);
 #else
     gretl_fork("viewpdf", pdfname, NULL);
 #endif
@@ -1000,7 +1000,7 @@ void saver_preview_graph (GPT_SPEC *spec, char *termstr)
 #if defined(G_OS_WIN32)
     win32_open_file(grfname);
 #elif defined(__APPLE__)
-    osx_open_file(grfname);
+    macos_open_file(grfname);
 #else
     if (spec->termtype == GP_TERM_EPS) {
         gretl_fork("viewps", grfname, NULL);

@@ -47,7 +47,7 @@
 #endif
 
 #ifdef __APPLE__
-# include "osx_open.h"
+# include "macos_open.h"
 #endif
 
 #define EXPORT_OTHER(a) (a == EXPORT_OCTAVE ||	\
@@ -639,7 +639,7 @@ static void os_open_other (const char *fname)
 #if defined(G_OS_WIN32)
     win32_open_file(fname);
 #elif defined(__APPLE__)
-    osx_open_file(fname);
+    macos_open_file(fname);
 #else
     gretl_fork("xdg-open", fname, NULL);
 #endif

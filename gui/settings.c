@@ -67,7 +67,7 @@
 #endif
 
 #ifdef __APPLE__
-# include "osx_open.h"
+# include "macos_open.h"
 #endif
 
 #if HAVE_GTK_FONT_CHOOSER
@@ -844,7 +844,7 @@ void set_gretl_startdir (void)
 
 	if (estr != NULL) {
             /* this check is specific to the macOS package:
-               see osx_env.c
+               see macos_env.c
             */
 	    startdir = g_strdup(estr);
 	} else {
@@ -3367,7 +3367,7 @@ static void open_wdir (GtkButton *b, gpointer p)
 #if defined(G_OS_WIN32)
     win32_open_file(gretl_workdir());
 #elif defined(__APPLE__)
-    osx_open_file(gretl_workdir());
+    macos_open_file(gretl_workdir());
 #else
     gretl_fork("xdg-open", gretl_workdir(), NULL);
 #endif

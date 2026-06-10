@@ -43,7 +43,7 @@
 #endif
 
 #ifdef __APPLE__
-# include "osx_open.h"
+# include "macos_open.h"
 #endif
 
 #define PAGE_LINES 47
@@ -2210,7 +2210,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	win32_open_file(tmp);
 #elif defined(__APPLE__)
 	sprintf(tmp, "%s.pdf", texbase);
-	if (osx_open_file(tmp)) {
+	if (macos_open_file(tmp)) {
 	    file_read_errbox(tmp);
 	}
 #else

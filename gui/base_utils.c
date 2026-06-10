@@ -35,7 +35,7 @@
 #endif
 
 #ifdef __APPLE__
-# include "osx_open.h"
+# include "macos_open.h"
 #endif
 
 gchar *gretl_window_title (const char *s)
@@ -771,7 +771,7 @@ int gretl_fork (const char *progvar, const char *arg,
 int browser_open (const char *url)
 {
 # if defined(__APPLE__)
-    return osx_open_url(url);
+    return macos_open_url(url);
 # else
     return gretl_fork("Browser", url, NULL);
 # endif

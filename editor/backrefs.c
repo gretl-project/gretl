@@ -135,8 +135,8 @@ void textview_go_back (GtkTextView *tview)
     }
 }
 
-/* Determine whether the GtkTextBuffer in @vwin has mark to
-   which "Go back"
+/* Determine whether a GtkTextBuffer has a mark to which
+   we can "go back".
 */
 
 int textview_has_backref (GtkTextView *tview)

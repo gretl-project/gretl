@@ -252,9 +252,9 @@ else
 endif
 
 ifneq ($(MACLIB),)
-  MAC_SRC = osx_open.c
-  MAC_HDR = osx_open.h
-  MAC_OBJ = osx_open.o
+  MAC_SRC = macos_open.c
+  MAC_HDR = macos_open.h
+  MAC_OBJ = macos_open.o
 endif
 
 ifeq ($(gtksv_completion),yes)

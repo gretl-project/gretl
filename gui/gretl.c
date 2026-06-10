@@ -770,7 +770,7 @@ static void alt_gtk_init (int *pargc,
 
 #ifdef ALT_MAC_STARTUP
 
-#include "osx_env.c"
+#include "macos_env.c"
 
 #endif /* specific to Mac package */
 
@@ -789,7 +789,7 @@ int main (int argc, char **argv)
     /* this must come before NLS initialization */
     win32_set_gretldir();
 #elif defined(ALT_MAC_STARTUP)
-    osx_setup_paths();
+    macos_setup_paths();
 #elif !defined(__APPLE__)
     /* Linux-specific */
     protect_against_ubuntu();

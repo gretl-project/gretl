@@ -47,7 +47,7 @@
 #endif
 
 #ifdef __APPLE__
-# include "osx_open.h"
+# include "macos_open.h"
 #endif
 
 #define HDEBUG 0
@@ -2579,9 +2579,9 @@ void gretl_show_pdf (const char *fname, const char *option)
     }
 #elif defined(__APPLE__)
     if (option != NULL) {
-	osx_open_pdf(fname, option);
+	macos_open_pdf(fname, option);
     } else {
-	osx_open_file(fname);
+	macos_open_file(fname);
     }
 #else
     gretl_fork("viewpdf", fname, option);

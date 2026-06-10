@@ -33,7 +33,7 @@
 #endif
 
 #ifdef __APPLE__
-# include "osx_open.h"
+# include "macos_open.h"
 #endif
 
 #define GRAPHS_MAX 8
@@ -639,7 +639,7 @@ static int real_display_gpage (void)
 #if defined(G_OS_WIN32)
     err = win32_open_file(fname);
 #elif defined(__APPLE__)
-    err = osx_open_file(fname);
+    err = macos_open_file(fname);
 #else
     if (gpage.term == GP_TERM_PDF) {
 	err = gretl_fork("viewpdf", fname, NULL);

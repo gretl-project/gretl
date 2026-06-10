@@ -6,7 +6,7 @@
    get the environment set up correctly via C code.
 */
 
-void osx_setup_paths (void)
+void macos_setup_paths (void)
 {
     char userpath[MAXPATHLEN + 1];
     char execpath[MAXPATHLEN + 1];

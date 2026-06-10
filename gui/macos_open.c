@@ -17,10 +17,10 @@
  *
  */
 
-/* osx_open.c for gretl -- open various sorts of files */
+/* macos_open.c for gretl -- open various sorts of files */
 
 #include "gretl.h"
-#include "osx_open.h"
+#include "macos_open.h"
 
 #ifdef USE_CARBON
 
@@ -28,7 +28,7 @@
 
 /* deprecated in macOS >= 10.10, removed in macOS 11 */
 
-int osx_open_file (const char *path)
+int macos_open_file (const char *path)
 {
     FSRef ref;
     int err;
@@ -41,7 +41,7 @@ int osx_open_file (const char *path)
     return err;
 }
 
-int osx_open_pdf (const char *path, const char *dest)
+int macos_open_pdf (const char *path, const char *dest)
 {
     FSRef ref;
     int done = 0;
@@ -122,7 +122,7 @@ int osx_open_pdf (const char *path, const char *dest)
 # include <CoreFoundation/CoreFoundation.h>
 # include <CoreServices/CoreServices.h>
 
-int osx_open_file (const char *path)
+int macos_open_file (const char *path)
 {
     CFURLRef ref;
     int err = 0;
@@ -141,7 +141,7 @@ int osx_open_file (const char *path)
     return err;
 }
 
-int osx_open_pdf (const char *path, const char *dest)
+int macos_open_pdf (const char *path, const char *dest)
 {
     CFURLRef ref;
     CFURLRef appref;
@@ -243,7 +243,7 @@ int osx_open_pdf (const char *path, const char *dest)
 
 # endif /* Carbon-free variant */
 
-int osx_open_url (const char *url)
+int macos_open_url (const char *url)
 {
     CFStringRef s;
     CFURLRef u;
