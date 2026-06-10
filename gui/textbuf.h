@@ -69,7 +69,7 @@ void gretl_viewer_insert_formatted_buffer (windata_t *vwin,
 
 gchar *textview_get_text (GtkWidget *view);
 
-gchar *textview_get_hansl (GtkWidget *view, int save);
+gchar *textview_get_hansl (GtkTextView *tview, int save);
 
 gchar *textview_get_trimmed_text (GtkWidget *view);
 

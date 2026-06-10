@@ -473,7 +473,7 @@ static void exec_callback (GtkWidget *w, windata_t *vwin)
     if (widget_get_int(vwin->mbar, "exec_is_kill")) {
         cancel_run_script();
     } else if (vwin->role == EDIT_HANSL) {
-	gchar *buf = textview_get_hansl(vwin->text, 0);
+	gchar *buf = textview_get_hansl(GTK_TEXT_VIEW(vwin->text), 0);
 
 	if (have_functions(buf) > 1) {
 	    exec_choice_popup(vwin, buf);

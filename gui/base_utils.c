@@ -954,7 +954,7 @@ static void real_run_script (windata_t *vwin, int silent)
 
 #ifdef GRETL_EDIT
     if (vwin->role == EDIT_HANSL) {
-	buf = textview_get_hansl(vwin->text, 0);
+	buf = textview_get_hansl(GTK_TEXT_VIEW(vwin->text), 0);
     } else {
 	buf = textview_get_text(vwin->text);
     }

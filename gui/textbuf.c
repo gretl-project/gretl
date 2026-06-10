@@ -382,7 +382,7 @@ static gchar *strip_hidden_placeholders (gchar *content)
    both cases we need to exclude any hidden region placeholders.
 */
 
-gchar *textview_get_hansl (GtkWidget *view, int save)
+gchar *textview_get_hansl (GtkTextView *tview, int save)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter start, end;
@@ -390,9 +390,7 @@ gchar *textview_get_hansl (GtkWidget *view, int save)
     int n_hidden;
     gchar *content;
 
-    g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), NULL);
-
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    tbuf = gtk_text_view_get_buffer(tview);
     gtk_text_buffer_get_start_iter(tbuf, &start);
     gtk_text_buffer_get_end_iter(tbuf, &end);
 

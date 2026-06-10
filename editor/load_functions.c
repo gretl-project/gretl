@@ -20,6 +20,7 @@
 /* load_functions.c for gretl_edit */
 
 #include "gretl.h"
+#include "textbuf.h"
 #include "libset.h"
 #include "cmd_private.h"
 #include "load_functions.h"
@@ -133,4 +134,33 @@ int load_functions (const char *buf)
     bufgets_finalize(buf);
 
     return exec_err;
+}
+
+/* If the user starts an action associated with look-up of user
+   functions, we check if any are currently loaded. If not, and if
+   @tview contains an instance of a line-start that indicates definition
+   of a function, we'll automatically load any function definitions in
+   the current buffer.
+*/
+
+void maybe_load_functions (GtkTextView *tview)
+{
+    if (n_user_functions() == 0) {
+	GtkTextBuffer *tbuf = gtk_text_view_get_buffer(tview);
+	GtkTextIter start, match;
+	gboolean found;
+
+	gtk_text_buffer_get_start_iter(tbuf, &start);
+	found = gtk_text_iter_forward_search(&start, "function ",
+					     GTK_TEXT_SEARCH_TEXT_ONLY,
+					     &match, NULL, NULL);
+	if (found && gtk_text_iter_starts_line(&match)) {
+	    gchar *buf = textview_get_hansl(tview, 0);
+
+	    if (buf != NULL) {
+		load_functions(buf);
+		g_free(buf);
+	    }
+	}
+    }
 }

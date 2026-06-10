@@ -22,4 +22,6 @@
 
 int load_functions (const char *buf);
 
+void maybe_load_functions (GtkTextView *tview);
+
 #endif /* LOAD_FUNCS_H */

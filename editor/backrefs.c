@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "textbuf.h"
+#include "load_functions.h"
 #include "gretl_func.h"
 #include "gretl_typemap.h"
 #include "backrefs.h"
@@ -150,6 +151,7 @@ static void find_function_def (GtkTextView *tview,
     GtkTextIter start, match;
     gboolean found;
 
+    maybe_load_functions(tview);
     tbuf = gtk_text_view_get_buffer(tview);
     gtk_text_buffer_get_start_iter(tbuf, &start);
     found = gtk_text_iter_forward_search(&start, sigstart,
@@ -183,6 +185,7 @@ void alt_dot_find (GtkTextView *tview)
     int role = FUNC_HELP;
     gchar *id = NULL;
 
+    maybe_load_functions(tview);
     id = get_identifier_at_cursor(tbuf, &role);
 
     if (id != NULL && *id != '\0') {

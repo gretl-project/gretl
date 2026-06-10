@@ -322,7 +322,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
     FILE *fp;
 
     if (editing_hansl(vwin->role)) {
-        buf = textview_get_hansl(vwin->text, 1);
+        buf = textview_get_hansl(GTK_TEXT_VIEW(vwin->text), 1);
     } else {
         buf = textview_get_text(vwin->text);
     }
