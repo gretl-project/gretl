@@ -33,7 +33,7 @@ typedef struct backrefs_ {
     int n_slots;
 } backrefs;
 
-/* Allocate a new backrefs struct. */
+/* Allocate a new backrefs struct, with space for one reference. */
 
 static backrefs *backrefs_new (void)
 {
@@ -102,9 +102,7 @@ static GtkTextMark *pop_backref (GtkTextBuffer *buf)
     return ret;
 }
 
-/* Add a mark at the current insertion point and push it
-   onto the stack.
-*/
+/* Add a GtkTextMark at the current insertion point and push it. */
 
 static void textbuf_set_backref (GtkTextBuffer *buf)
 {
@@ -135,9 +133,7 @@ void textview_go_back (GtkTextView *tview)
     }
 }
 
-/* Determine whether a GtkTextBuffer has a mark to which
-   we can "go back".
-*/
+/* Check whether @tview has a mark to which we can return */
 
 int textview_has_backref (GtkTextView *tview)
 {
@@ -172,6 +168,15 @@ static void find_function_def (GtkTextView *tview,
     }
 }
 
+static void find_funcdef_callback (GtkWidget *w, gpointer data)
+{
+    gchar *needle = g_object_get_data(G_OBJECT(w), "needle");
+    windata_t *vwin = g_object_get_data(G_OBJECT(w), "searchwin");
+
+    find_function_def(GTK_TEXT_VIEW(vwin->text), needle);
+    gtk_widget_destroy(gtk_widget_get_toplevel(w));
+}
+
 void alt_dot_find (GtkTextView *tview)
 {
     GtkTextBuffer *tbuf = gtk_text_view_get_buffer(tview);
@@ -199,11 +204,42 @@ void alt_dot_find (GtkTextView *tview)
     g_free(id);
 }
 
-void find_funcdef_callback (GtkWidget *w, gpointer data)
-{
-    gchar *needle = g_object_get_data(G_OBJECT(w), "needle");
-    windata_t *vwin = g_object_get_data(G_OBJECT(w), "searchwin");
+/* Called from viewers.c, appending to a pop-up window showing the
+   signature of a function.
+*/
 
-    find_function_def(GTK_TEXT_VIEW(vwin->text), needle);
-    gtk_widget_destroy(gtk_widget_get_toplevel(w));
+void add_funcdef_finder (const char *sig,
+			 windata_t *popwin,
+			 windata_t *vwin)
+{
+    const gchar *p = strchr(sig, '(');
+    gchar *needle = g_strndup(sig, p - sig);
+    GtkWidget *ebox = gtk_event_box_new();
+    GtkWidget *label;
+    gchar *fmt = NULL;
+    gchar *buf = NULL;
+
+    /* create an event box with a label inside */
+    gtk_event_box_set_visible_window(GTK_EVENT_BOX(ebox), FALSE);
+    gtk_widget_set_can_default(ebox, FALSE);
+    fmt = g_strdup_printf("<span color=\"%s\">%%s</span>", blue_for_text());
+    buf = g_markup_printf_escaped(fmt, _("Find definition"));
+    label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(label), buf);
+    gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
+    // set_popup_bg(label);
+    gtk_container_add(GTK_CONTAINER(ebox), label);
+    g_free(buf);
+    g_free(fmt);
+
+    /* pack the event box into @popwin and connect signals */
+    gtk_box_pack_start(GTK_BOX(popwin->vbox), ebox, FALSE, FALSE, 0);
+    g_object_set_data_full(G_OBJECT(ebox), "needle", needle, g_free);
+    g_object_set_data(G_OBJECT(ebox), "searchwin", vwin);
+    g_signal_connect(ebox, "button-release-event",
+		     G_CALLBACK(find_funcdef_callback), NULL);
+    g_signal_connect(ebox, "enter-notify-event",
+		     G_CALLBACK(show_link_cursor), NULL);
+    g_signal_connect(ebox, "leave-notify-event",
+		     G_CALLBACK(revert_cursor), NULL);
 }

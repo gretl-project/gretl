@@ -26,6 +26,8 @@ int textview_has_backref (GtkTextView *tview);
 
 void alt_dot_find (GtkTextView *tview);
 
-void find_funcdef_callback (GtkWidget *w, gpointer data);
+void add_funcdef_finder (const char *sig,
+			 windata_t *popwin,
+			 windata_t *vwin);
 
 #endif /* BACKREFS_H */

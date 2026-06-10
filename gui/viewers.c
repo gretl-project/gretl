@@ -1868,36 +1868,8 @@ windata_t *view_function_signature (const char *sig,
     }
 
 #ifdef GRETL_EDIT
-    {
-	/* enable search for function definition */
-	const gchar *p = strchr(sig, '(');
-	gchar *needle = g_strndup(sig, p - sig);
-	GtkWidget *ebox = gtk_event_box_new();
-	GtkWidget *label;
-	gchar *fmt = NULL;
-	gchar *buf = NULL;
-
-	gtk_event_box_set_visible_window(GTK_EVENT_BOX(ebox), FALSE);
-	gtk_widget_set_can_default(ebox, FALSE);
-	fmt = g_strdup_printf("<span color=\"%s\">%%s</span>", blue_for_text());
-	buf = g_markup_printf_escaped(fmt, _("Find definition"));
-	label = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(label), buf);
-	g_free(buf);
-	g_free(fmt);
-	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
-	set_popup_bg(label);
-	gtk_container_add(GTK_CONTAINER(ebox), label);
-	gtk_box_pack_start(GTK_BOX(popwin->vbox), ebox, FALSE, FALSE, 0);
-	g_object_set_data_full(G_OBJECT(ebox), "needle", needle, g_free);
-	g_object_set_data(G_OBJECT(ebox), "searchwin", vwin);
-	g_signal_connect(ebox, "button-release-event",
-			 G_CALLBACK(find_funcdef_callback), NULL);
-	g_signal_connect(ebox, "enter-notify-event",
-			 G_CALLBACK(show_link_cursor), NULL);
-	g_signal_connect(ebox, "leave-notify-event",
-			 G_CALLBACK(revert_cursor), NULL);
-    }
+    /* Add clickable "Find definition" */
+    add_funcdef_finder(sig, popwin, vwin);
 #endif
 
     add_text_closer(popwin);
