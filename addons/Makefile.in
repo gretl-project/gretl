@@ -20,7 +20,8 @@ else
   funcsdir = $(datarootdir)/gretl/functions
 endif
 
-SUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls logging KFgui
+SUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls logging \
+	KFgui PairPlot
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-private
 
@@ -65,6 +66,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/logging
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/KFgui
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/KFgui/examples
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/PairPlot
 
 install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done

@@ -1,0 +1,65 @@
+topsrc = @top_srcdir@
+prefix = @prefix@
+datarootdir = @datarootdir@
+win32pkg = @win32pkg@
+tooldir = $(topsrc)/tools
+
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+
+ifeq ($(win32pkg),yes)
+  GFNDIR = $(prefix)/functions
+else
+  GFNDIR = $(datarootdir)/gretl/functions
+endif
+
+GRETLCLI = ../../cli/gretlcli
+
+PKG = PairPlot
+PKGSRC = $(topsrc)/addons/$(PKG)
+
+vpath %.inp $(PKGSRC)
+vpath %.spec $(PKGSRC)
+
+INP = $(PKG).inp
+SPEC = $(PKG).spec
+SMPL = $(PKG)_sample.inp
+HELP = $(PKG)_help.md
+
+all: $(PKG).gfn
+
+$(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL)
+	$(GRETLCLI) -t pkg.inp
+
+$(PKG).zip: $(PKG).gfn
+	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
+
+.PHONY : symlinks check install installdirs clean
+
+symlinks:
+	@if [ ! -f $(SPEC) ] || [ $(PKGSRC)/$(SPEC) -nt $(SPEC) ] ; then ln -sf $(PKGSRC)/$(SPEC) . ; fi
+	@if [ ! -f $(SMPL) ] || [ $(PKGSRC)/$(SMPL) -nt $(SMPL) ] ; then ln -sf $(PKGSRC)/$(SMPL) . ; fi
+	@if [ ! -f $(HELP) ] || [ $(PKGSRC)/$(HELP) -nt $(HELP) ] ; then ln -sf $(PKGSRC)/$(HELP) . ; fi
+	@if [ ! -d examples ] || [ $(PKGSRC)/examples -nt examples ] ; then ln -sf $(PKGSRC)/examples . ; fi
+
+check: $(PKG).gfn
+	$(tooldir)/test_addon $(GRETLCLI)
+
+install: $(PKG).gfn installdirs
+	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+	for f in examples/* ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
+
+installdirs:
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
+
+clean: 
+	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip
+	@rm -f test.out
+
+

@@ -1,0 +1,69 @@
+clear --all
+set verbose off
+
+include PairPlot.gfn
+
+scalar SAMPLE = 1  # Select an example, 1 to 6
+
+if SAMPLE == 1  # simple plot of the iris data
+    open iris.gdt --frompkg=PairPlot --quiet
+    list y = 1..4
+    PairPlot(y)
+
+elif SAMPLE == 2  # fancier plot of the iris data
+    open iris.gdt --frompkg=PairPlot --quiet
+    list y = 1..4
+    bundle opts = _(transparency_level = 120,
+                    title = "Iris characteristics by variety")
+    PairPlot(y, variety, opts)
+
+elif SAMPLE == 3  # factorized scatterplots + centroids
+    open credscore.gdt --quiet
+    list y = 1..3
+    series factor = OwnRent + 1
+    stringify(factor, defarray("renter", "owner"))
+    bundle opts = _(transparency_level = 100,
+                    title = "Credit data by home-ownership status",
+                    centroid = "mean",
+                    grid = TRUE)
+    PairPlot(y, factor, opts)
+
+elif SAMPLE == 4  # factorized plus some tweaking
+    open abdata --quiet
+    list y = n k
+    series factor = IND
+    setinfo factor --discrete
+
+    bundle opts = _(transparency_level = 175,
+                    centroid = "median",
+                    tics = FALSE,
+                    pointsize = 1.5,
+                    centroid_pointsize = 3,
+                    centroid_linewidth = 3,
+                    height = 600,
+                    width = 600)
+    PairPlot(y, factor, opts)
+
+elif SAMPLE == 5  # factorized scatter + string-valued factor series
+    open mrw --quiet
+    list y = gdp60 gdp85 i_y
+    series factor =  1 + OECD
+    stringify(factor, defarray("non-oecd", "oecd"))
+    # cut out some extreme outliers
+    smpl nonoil --dummy
+    bundle opts = _(centroid = "mean",
+                    transparency_level = 150,
+                    type = "matrix",
+                    grid = TRUE,
+                    height = 800,
+                    width = 900,
+                    fontsize = 16,
+                    key_fontsize = 11,
+                    ylabel_offset_horizontal = 1.5)
+    PairPlot(y, factor, opts)
+
+elif SAMPLE == 6  # string-valued factor series, using defaults
+    open data4-10.gdt --quiet
+    list y = ENROLL CATHOL
+    PairPlot(y, REGION)
+endif
