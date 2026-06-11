@@ -1,0 +1,83 @@
+set verbose off
+clear
+set assert stop
+
+include ../PairPlot.inp
+
+bundles Params = null
+Params = Params + _(pointtype = {1, 2}', n_factors = 1, expected = TRUE)
+Params = Params + _(pointtype = {1, 2}', n_factors = 2, expected = TRUE)
+Params = Params + _(pointtype = {1, 2}', n_factors = 3, expected = FALSE)
+function void test_isok_length_pointtype_vec (const bundles P)
+    print "Start testing isok_length_pointtype_vector()."
+
+    loop foreach i P
+        # Given + When
+        actual = isok_length_pointtype_vector(P[i])
+
+        # Then
+        assert(actual == P[i].expected)
+    endloop
+end function
+test_isok_length_pointtype_vec(Params)
+
+
+bundles Params = null
+Params = Params + _(pointtype = {1, 2}', n_factors = 1, expected = TRUE)
+Params = Params + _(pointtype = {1, 2}', n_factors = 2, expected = TRUE)
+Params = Params + _(pointtype = {1, 2}', n_factors = 3, expected = FALSE)
+function void test_isok_length_pointtype_vec (const bundles P)
+    print "Start testing isok_length_pointtype_vector()."
+
+    loop foreach i P
+        # Given + When
+        actual = isok_length_pointtype_vector(P[i])
+
+        # Then
+        assert(actual == P[i].expected)
+    endloop
+end function
+test_isok_length_pointtype_vec(Params)
+
+
+print "Start running and test examples"
+nulldata 128
+loop i=1..5
+    if i == 1
+        open iris.gdt --quiet
+        list y = 1..4           # list of series to plot
+        string filename = sprintf("%s/foo.png", $dotdir)
+        err = PairPlot(y, null, _(filename))
+    elif i == 2
+        open credscore.gdt --quiet
+        list y = 1..4
+        rename Acc eee        # just test that variables beginning with 'e' work
+        string filename = sprintf("%s/foo.png", $dotdir)
+        err = PairPlot(y, null, _(filename))
+    elif i == 3
+        open abdata --quiet
+        list y = n k ys
+        series factor = IND
+        string filename = sprintf("%s/foo.png", $dotdir)
+        err = PairPlot(y, factor, _(filename))
+    elif i == 4
+        open mroz87 --quiet
+        list y = KL6 K618 WA WE RPWG HHRS HA HE HW FAMINC
+        string filename = sprintf("%s/foo.png", $dotdir)
+        err = PairPlot(y, null, _(filename))
+
+    elif i == 5
+        series x = log(normal()) # note: this has NAs by construction
+        series z = uniform()
+        list X = x z
+        series fac = ok(x)
+        string filename = sprintf("%s/foo.png", $dotdir)
+        err = PairPlot(X, fac, _(filename))
+    endif
+
+    assert(err == FALSE)
+endloop
+
+
+print "Successfully finished all tests."
+quit
