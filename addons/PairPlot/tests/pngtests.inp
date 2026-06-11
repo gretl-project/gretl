@@ -1,0 +1,66 @@
+# test script that can be run via gretlcli to produce PNG output
+# for all the cases in PairPlot_sample.inp
+
+clear
+set verbose off
+
+include ../PairPlot.inp
+
+open iris.gdt --quiet
+list y = 1..4
+eval PairPlot(y, null, _(filename = "sample1.png"))
+
+list y = 1..4
+bundle opts = _(transparency_level = 120,
+  filename = "sample2.png",
+  title = "Iris characteristics by variety")
+eval PairPlot(y, species, opts)
+
+open credscore.gdt --quiet
+list y = MDR..Age
+series factor = OwnRent + 1
+stringify(factor, defarray("renter", "owner"))
+bundle opts = _(transparency_level = 100,
+  filename = "sample3.png",
+  title = "Credit data by home-ownership status",
+  centroid = "mean",
+  grid = TRUE)
+PairPlot(y, factor, opts)
+
+open abdata --quiet
+list y = n k
+series factor = IND
+bundle opts = _(transparency_level = 175,
+  filename = "sample4.png",
+  centroid = "median",
+  tics = FALSE,
+  pointsize = 1.5,
+  centroid_pointsize = 3,
+  centroid_linewidth = 3,
+  height = 600,
+  width = 600)
+PairPlot(y, factor, opts)
+
+open mrw --quiet
+list y = gdp60 gdp85 i_y
+series factor =  1 + OECD
+strings svalues = defarray("non-oecd", "oecd")
+stringify(factor, svalues)
+# cut out some extreme outliers
+smpl nonoil --dummy
+bundle opts = _(centroid = "mean",
+  filename = "sample5.png",
+  transparency_level = 150,
+  type = "matrix",
+  grid = TRUE,
+  height = 800,
+  width = 900)
+PairPlot(y, factor, opts)
+
+open data4-10.gdt --quiet
+list y = ENROLL CATHOL
+PairPlot(y, REGION, _(filename = "sample6.png"))
+
+
+print "Successfully finished all tests."
+quit
