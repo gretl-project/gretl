@@ -6,16 +6,16 @@ include PairPlot.gfn
 scalar SAMPLE = 1  # Select an example, 1 to 6
 
 if SAMPLE == 1  # simple plot of the iris data
-    open iris.gdt --frompkg=PairPlot --quiet
+    open iris.gdt --quiet
     list y = 1..4
     PairPlot(y)
 
 elif SAMPLE == 2  # fancier plot of the iris data
-    open iris.gdt --frompkg=PairPlot --quiet
+    open iris.gdt --quiet
     list y = 1..4
     bundle opts = _(transparency_level = 120,
                     title = "Iris characteristics by variety")
-    PairPlot(y, variety, opts)
+    PairPlot(y, species, opts)
 
 elif SAMPLE == 3  # factorized scatterplots + centroids
     open credscore.gdt --quiet

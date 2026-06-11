@@ -7,4 +7,4 @@ string pkgdir = topsrc ~ "/addons/PairPlot"
 
 include @pkgdir/PairPlot.inp
 
-makepkg PairPLot.gfn --index --translations --quiet --dtd="@dtd"
+makepkg PairPlot.gfn --index --translations --quiet --dtd="@dtd"

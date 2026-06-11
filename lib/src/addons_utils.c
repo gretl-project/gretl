@@ -33,7 +33,7 @@
 static const char *addon_names[] = {
     "SVAR", "gig", "HIP", "ivpanel",
     "dbnomics", "extra", "geoplot",
-    "regls", "logging", "KFgui", NULL
+    "regls", "logging", "KFgui", "PairPlot", NULL
 };
 
 static int n_addons = (G_N_ELEMENTS(addon_names)) - 1;
