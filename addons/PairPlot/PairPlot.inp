@@ -331,7 +331,7 @@ function void factorized_centroids (const list xy, bundle self)
     This function calculates and writes the centroids for each factor of a
     given list of variables. The function loops over the factors, restricts
     the sample to the observations where the factor series equals the current
-    factor value, and then calls the 'write_centroids' function to calculate
+    factor value, and then calls the 'write_centroid' function to calculate
     and write the centroids.
 
     Parameters:
@@ -350,40 +350,34 @@ function void factorized_centroids (const list xy, bundle self)
     in the same scope.
     */
 
-    strings colors = get_color_definitions()
-
     loop i=1..self.n_factors
         smpl full
         if self.n_factors > 1
             smpl self.factor_series == self.factor_values[i] --restrict
         endif
         smpl --no-missing xy
-
-        scalar self.ith_factor = i
-        write_centroids(xy, self, colors)
+        write_centroid(xy, self, i)
     endloop
 end function
 
-
-function void write_centroids (const list xy, const bundle self,
-                               const strings colors)
+function void write_centroid (const list xy, const bundle self, int i)
     /*
-    This function calculates and writes the centroids for a given list of
-    variables. The type of centroid (mean or median) is determined by the
+    This function calculates and writes the centroid for a given pair of
+    series. The type of centroid (mean or median) is determined by the
     'centroid' field in the 'self' bundle. If the 'centroid' field is set
     to 'none', the function does nothing.
 
     Parameters:
-    xy: A list of variables for which the centroids are to be calculated.
+    xy: the pair of series for which a centroid i to be shown.
     self: A bundle containing various options for the function.
     It should have the following fields:
-       - 'centroid': A string that determines the type of centroid to calculate.
+       - 'centroid': A string specifying the type of centroid.
           It can be 'mean', 'median', or 'none'.
-       - 'centroid_label': A boolean that determines whether to label the centroids.
+       - 'centroid_label': A boolean specifying whether to label the centroids.
           If true, the centroids are labeled with their type ('Mean' or 'Median').
           If false, no label is added.
-       - 'centroid_pointsize': An integer that determines the point size of the
-          centroids in the plot.
+       - 'centroid_pointsize': An integer, the point size of the centroids.
+     i: the 1-based index of the current factor value.
    */
 
     matrix cxy = zeros(1, 2)
@@ -401,19 +395,15 @@ function void write_centroids (const list xy, const bundle self,
         endif
     endif
 
-    if self.n_factors == 1 # no factors
-        string color = "FF0000"
+    if self.n_factors == 1 # no factorization
+        printf "set label %d \"%s\" at %g,%g point ps %g pt 1 lw %g front\n",
+          i, label, cxy[1], cxy[2], self.centroid_pointsize,
+          self.centroid_linewidth
     else
-        string color = colors[self.ith_factor]
+        printf "set label %d \"%s\" at %g,%g point ps %g pt 7 lt %d lw %g front\n",
+          i, label, cxy[1], cxy[2], self.centroid_pointsize, i,
+          self.centroid_linewidth
     endif
-
-    # Draw a symbol (optionally with a label) for the i-th centroid
-    printf "set label %d \"%s\" at %g,%g point ps %g pt %d lw %g",
-      self.ith_factor, label, cxy[1], cxy[2], self.centroid_pointsize,
-      self.pointtype[self.ith_factor], self.centroid_linewidth
-
-    # Color of centroid equals the color of the i-th factor
-    printf " lc rgb '#%s' front\n", color
 end function
 
 function void write_ylabel (const string vname, const bundle self)
@@ -584,32 +574,6 @@ function void write_options (const bundle self, const list xy,
        printf "set logscale x %d\n", self.x_logscale
        endif
     */
-end function
-
-function strings get_color_definitions (void)
-    /* FIXME can we pick up the user's choice of theme colors instead
-    of hard-wiring dark2?
-    */
-    # "dark2" palette
-    return defarray(\
-                    "1B9E77",\
-                    "D95F02",\
-                    "7570B3",\
-                    "E7298A",\
-                    "66A61E",\
-                    "E6AB02",\
-                    "A6761D",\
-                    "666666",\
-                    "C41E3A",\
-                    "4682B4",\
-                    "FFBF00",\
-                    "FF0000",\
-                    "00CC00",\
-                    "8FAAB3",\
-                    "0000FF",\
-                    "BF25B2",\
-                    "FFA500"\
-                    )
 end function
 
 function scalar calculate_pointsize (const scalar default_pointsize,
