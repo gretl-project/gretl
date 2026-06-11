@@ -360,6 +360,8 @@ void set_shadecolor (gretlRGB color);
 
 gretlRGB numeric_color_from_string (const char *s, int *err);
 
+gretl_array *get_user_colors (double f, int *err);
+
 int gnuplot_test_command (const char *cmd);
 
 void set_default_png_scale (double s);

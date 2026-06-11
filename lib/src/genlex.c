@@ -611,6 +611,7 @@ struct str_table funcs[] = {
     { F_THRESHOLD, "thresh" },
     { F_LNMGAMMA,  "lnmgamma"},
     { F_WHICH,     "which"},
+    { F_GPCOLORS,  "gpcolors"},
     { 0,           NULL }
 };
 

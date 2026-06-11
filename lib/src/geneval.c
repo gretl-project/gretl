@@ -12031,6 +12031,27 @@ static NODE *function_depth_node (NODE *n, parser *p)
     return ret;
 }
 
+static NODE *plot_colors_node (NODE *n, parser *p)
+{
+    NODE *ret = NULL;
+    double f = 0.0;
+
+    if (!null_node(n)) {
+	f = node_get_scalar(n, p);
+	if (na(f) || f < -1.0 || f > 1.0) {
+	    p->err = E_INVARG;
+	}
+    }
+    if (!p->err) {
+	ret = aux_array_node(p);
+    }
+    if (ret != NULL) {
+        ret->v.a = get_user_colors(f, &p->err);
+    }
+
+    return ret;
+}
+
 static NODE *lpsolve_bundle_node (NODE *n, parser *p)
 {
     NODE *ret = aux_bundle_node(p);
@@ -19022,6 +19043,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_CURL:
         ret = curl_bundle_node(l, p);
         break;
+    case F_GPCOLORS:
+	ret = plot_colors_node(l, p);
+	break;
     case F_LPSOLVE:
         if (l->t == BUNDLE) {
             ret = lpsolve_bundle_node(l, p);

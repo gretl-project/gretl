@@ -349,6 +349,7 @@ function void factorized_centroids (const list xy, bundle self)
     Note: This function assumes that the 'write_centroids' function is defined
     in the same scope.
     */
+    strings colors = gpcolors(0.2)
 
     loop i=1..self.n_factors
         smpl full
@@ -356,11 +357,12 @@ function void factorized_centroids (const list xy, bundle self)
             smpl self.factor_series == self.factor_values[i] --restrict
         endif
         smpl --no-missing xy
-        write_centroid(xy, self, i)
+        write_centroid(xy, self, i, colors[i])
     endloop
 end function
 
-function void write_centroid (const list xy, const bundle self, int i)
+function void write_centroid (const list xy, const bundle self,
+                              int i, const string color)
     /*
     This function calculates and writes the centroid for a given pair of
     series. The type of centroid (mean or median) is determined by the
@@ -400,9 +402,9 @@ function void write_centroid (const list xy, const bundle self, int i)
           i, label, cxy[1], cxy[2], self.centroid_pointsize,
           self.centroid_linewidth
     else
-        printf "set label %d \"%s\" at %g,%g point ps %g pt 7 lt %d lw %g front\n",
+        printf "set label %d \"%s\" at %g,%g point ps %g pt 7 lt %d lc '%s' lw %g front\n",
           i, label, cxy[1], cxy[2], self.centroid_pointsize, i,
-          self.centroid_linewidth
+          color, self.centroid_linewidth
     endif
 end function
 

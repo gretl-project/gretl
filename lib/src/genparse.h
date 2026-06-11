@@ -262,6 +262,7 @@ enum {
     F_POLROOTS,
     F_RANDSTR,
     F_WHICH,
+    F_GPCOLORS,
     HF_JBTERMS,
     HF_FDEPTH,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */

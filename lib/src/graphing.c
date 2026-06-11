@@ -38,6 +38,7 @@
 #include "gretl_func.h"
 #include "gretl_plot.h"
 #include "plot_priv.h"
+#include "gretl_color.h"
 
 #ifdef WIN32
 # include "gretl_win32.h"
@@ -977,6 +978,48 @@ static gretlRGB user_color[N_GP_LINETYPES] = {
     0x000000
 };
 
+/* By default, returns an array of strings holding the string-valued
+   specifications of the gnuplot line colors currently selected by the
+   user.  However, if @f is non-missing non-zero each color returned is
+   shifted lighter (> 0, towards white) or darker (< 0, towards black)
+   relative to the original.
+*/
+
+gretl_array *get_user_colors (double f, int *err)
+{
+    gretl_array *ret;
+
+    ret = gretl_array_new(GRETL_TYPE_STRINGS, N_GP_LINETYPES, err);
+
+    if (ret != NULL) {
+	guint32 c0, c1 = 0;
+	char s[10];
+	int i;
+
+	if (f != 0) {
+	    if (f < 0.0) {
+		/* move towards white */
+		c1 = 0xFFFFFF;
+	    }
+	    f = fabs(f);
+	}
+	for (i=0; i<N_GP_LINETYPES; i++) {
+	    c0 = user_color[i];
+	    if (f != 0.0) {
+		gretl_array *mix = colormix_array(c0, c1, &f, 1, 0, err);
+
+		sprintf(s, "%s", (char *) gretl_array_get_data(mix, 0));
+		gretl_array_destroy(mix);
+	    } else {
+		sprintf(s, "#%06x", c0);
+	    }
+	    gretl_array_set_element(ret, i, s, GRETL_TYPE_STRING, 1);
+	}
+    }
+
+    return ret;
+}
+
 /* apparatus for handling plot "extra" colors */
 
 static gretlRGB extra_color[3] = {
@@ -1293,7 +1336,7 @@ static const char *classic_sty =
     "set linetype 8 pt 8 lc rgb \"#000000\"\n"; /* black */
 
 /* Read 8 line colors out of @s and transcribe to the
-   @user_colors array. Fail if we can't get all 8.
+   @user_color array. Fail if we can't get all 8.
 */
 
 static int transcribe_style (const char *s)
