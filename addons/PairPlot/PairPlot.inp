@@ -1,34 +1,26 @@
 function scalar has_min_two_series (const list L)
     if nelem(L) < 2
-        printf "\nError: List of variables must be comprise at least two series.\n"
+        printf "\nError: List of variables must contain at least two series.\n"
         return FALSE
     endif
-
     return TRUE
 end function
 
-
-function void add_information_of_factor (const series factor, bundle *self)
-    /*  Gather information of factor series. */
+function void add_information_on_factor (const series factor, bundle *self)
+    /*  Gather information on factor series. */
 
     series self.factor_series = factor
     matrix self.factor_values = values(factor)
     scalar self.n_factors = nelem(self.factor_values)
-    # strings self.factor_strings = strvals(factor)
-
-    bundle b = getinfo(factor)
-    if b.has_string_table
-        strings self.factor_str_values = strvals(factor)
+    strings svals = strvals(factor)
+    if nelem(svals) > 0
+        strings self.factor_str_values = svals
     endif
 end function
 
-
 function string get_plot_type (const bundle self)
     /* Retrieve plot type. */
-
-    string type = (self.use_circles == TRUE) ? "circles" : "points"
-
-    return type
+    return self.use_circles ? "circles" : "points"
 end function
 
 function scalar is_valid_filename (const string filename)
@@ -39,9 +31,8 @@ function scalar is_valid_filename (const string filename)
     return TRUE
 end function
 
-
 function scalar PairPlot (const list L "List of variables to plot",
-                          const series factor[null] "Discrete series for factorization",
+                          const series factor[null] "Discrete factor series",
                           bundle opts[null] "Set options through bundle")
     /* Main public function.
     return: TRUE on error, otherwise FALSE. */
@@ -76,8 +67,8 @@ function scalar PairPlot (const list L "List of variables to plot",
         self.height = calculate_plot_height(self.height, self.n_variables)
     endif
 
-    # Handle eventual missing values
-    list  ALL = L
+    # Exclude missing values
+    list ALL = L
     if exists(factor)
         ALL += factor
     endif
@@ -91,7 +82,7 @@ function scalar PairPlot (const list L "List of variables to plot",
         #errorif(!isdiscrete(factor),
         # "Factor series must be discrete. Mark series as discrete using the 'setinfo' command.")
         errorif(nelem(values(factor)) > 16, "Factor series must have at most 16 distinct values.")
-        add_information_of_factor(factor, &self)
+        add_information_on_factor(factor, &self)
     else
         scalar self.n_factors = 1
         matrix self.factor_values = {1}
@@ -107,7 +98,6 @@ function scalar PairPlot (const list L "List of variables to plot",
         return call_gnuplot(L, self)
     endif
 end function
-
 
 function string get_gridplot_opts (const bundle self)
     /* construct an options string for the "gridplot" command */
@@ -157,7 +147,6 @@ function string get_gp_opts (const bundle self)
     return opts
 end function
 
-
 function scalar call_gridplot (const list L, const bundle self)
     /* Called if there's more than one component plot. */
 
@@ -183,7 +172,6 @@ function scalar call_gridplot (const list L, const bundle self)
     return err
 end function
 
-
 function scalar get_n_plots (const string type, int nvars)
     /* Figure the total number of plots required. */
 
@@ -200,12 +188,10 @@ end function
 
 function bundle PP_ui_maker (void)
     /* set a specification for the first argument for GUI_PairPlot */
-
     bundle b
     b.L = _(no_singleton=1, n_const=1)
     return b
 end function
-
 
 function void GUI_PairPlot (const list L "List of series to plot",
                             const series factor[null] "Discrete series for factorization",
@@ -224,7 +210,6 @@ function void GUI_PairPlot (const list L "List of series to plot",
     PairPlot(L, factor, opts)
 end function
 
-
 function scalar isok_length_pointtype_vector (const bundle self)
     /* Make sure the 'pointtype' vector has at least as many elements as
        there are distinct factor values. Return TRUE if so, FALSE otherwise
@@ -238,7 +223,6 @@ function scalar isok_length_pointtype_vector (const bundle self)
 
     return TRUE
 end function
-
 
 function bundle default_options (void)
     /* Default parameter values. */
@@ -258,8 +242,8 @@ function bundle default_options (void)
     scalar self.tics_fontsize = 12
     scalar self.transparency_level = 90
     string self.type = "triangle"
-    scalar self.tics = TRUE		 # print no x/y tics
-    scalar self.grid = FALSE     # add grid (works only if self.tics=1) - not supported!
+    scalar self.tics = TRUE  # print no x/y tics
+    scalar self.grid = FALSE # add grid (works only if self.tics=1) - not supported!
     string self.centroid = "none"
     scalar self.centroid_label = FALSE
     scalar self.centroid_pointsize = 2
@@ -267,14 +251,13 @@ function bundle default_options (void)
     string self.filename = "display"
     scalar self.y_logscale = NA
     scalar self.x_logscale = NA
-    scalar self.xlabel_offset_horizontal = 0
-    scalar self.xlabel_offset_vertical = 0
-    scalar self.ylabel_offset_horizontal = 0
-    scalar self.ylabel_offset_vertical = 0
+    scalar self.xlabel_hoffset = 0
+    scalar self.xlabel_voffset = 0
+    scalar self.ylabel_hoffset = 0
+    scalar self.ylabel_voffset = 0
 
     return self
 end function
-
 
 function string write_pp_plots (const list L,
                                 const bundle self,
@@ -313,20 +296,15 @@ function string write_pp_plots (const list L,
                 write_options(self, xy, k)
                 if tri == TRUE
                     if j == 1
-                        write_ylabel(vnames[2], self.fontsize,
-                                     self.ylabel_offset_vertical, self.ylabel_offset_horizontal)
+                        write_ylabel(vnames[2], self)
                     endif
                     if i == n
-                        write_xlabel(vnames[1], self.fontsize,
-                                     self.xlabel_offset_horizontal, self.xlabel_offset_vertical)
+                        write_xlabel(vnames[1], self)
                     endif
                 else
-                    write_ylabel(vnames[2], self.fontsize,
-                                 self.ylabel_offset_vertical, self.ylabel_offset_horizontal)
-                    write_xlabel(vnames[1], self.fontsize,
-                                 self.xlabel_offset_horizontal, self.xlabel_offset_vertical)
+                    write_ylabel(vnames[2], self)
+                    write_xlabel(vnames[1], self)
                 endif
-
                 if self.centroid != "none"
                     factorized_centroids(xy, self)
                 endif
@@ -348,23 +326,29 @@ function string write_pp_plots (const list L,
     return buffer
 end function
 
-
 function void factorized_centroids (const list xy, bundle self)
     /*
-    This function calculates and writes the centroids for each factor of a given list of variables. The function loops over the factors, restricts the sample to the observations where the factor series equals the current factor value, and then calls the 'write_centroids' function to calculate and write the centroids.
+    This function calculates and writes the centroids for each factor of a
+    given list of variables. The function loops over the factors, restricts
+    the sample to the observations where the factor series equals the current
+    factor value, and then calls the 'write_centroids' function to calculate
+    and write the centroids.
 
     Parameters:
     xy: A list of variables for which the centroids are to be calculated.
-    self: A bundle containing various options for the function. It should have the following fields:
+    self: A bundle containing various options for the function. It should
+    have the following fields:
         - 'n_factors': The number of factors.
         - 'factor_series': The series of factors.
         - 'factor_values': The values of the factors.
         - 'ith_factor': The current factor in the loop.
 
-    The function does not return anything. It modifies the 'self' bundle by setting the 'ith_factor' field to the current factor in the loop.
+    The function does not return anything. It modifies the 'self' bundle by
+    setting the 'ith_factor' field to the current factor in the loop.
 
-    Note: This function assumes that the 'write_centroids' function is defined in the same scope.
-*/
+    Note: This function assumes that the 'write_centroids' function is defined
+    in the same scope.
+    */
 
     strings colors = get_color_definitions()
 
@@ -384,15 +368,23 @@ end function
 function void write_centroids (const list xy, const bundle self,
                                const strings colors)
     /*
-    This function calculates and writes the centroids for a given list of variables. The type of centroid (mean or median) is determined by the 'centroid' field in the 'self' bundle. If the 'centroid' field is set to 'none', the function does nothing.
+    This function calculates and writes the centroids for a given list of
+    variables. The type of centroid (mean or median) is determined by the
+    'centroid' field in the 'self' bundle. If the 'centroid' field is set
+    to 'none', the function does nothing.
 
     Parameters:
     xy: A list of variables for which the centroids are to be calculated.
-    self: A bundle containing various options for the function. It should have the following fields:
-        - 'centroid': A string that determines the type of centroid to calculate. It can be 'mean', 'median', or 'none'.
-        - 'centroid_label': A boolean that determines whether to label the centroids. If true, the centroids are labeled with their type ('Mean' or 'Median'). If false, no label is added.
-        - 'centroid_pointsize': An integer that determines the point size of the centroids in the plot.
-*/
+    self: A bundle containing various options for the function.
+    It should have the following fields:
+       - 'centroid': A string that determines the type of centroid to calculate.
+          It can be 'mean', 'median', or 'none'.
+       - 'centroid_label': A boolean that determines whether to label the centroids.
+          If true, the centroids are labeled with their type ('Mean' or 'Median').
+          If false, no label is added.
+       - 'centroid_pointsize': An integer that determines the point size of the
+          centroids in the plot.
+   */
 
     matrix cxy = zeros(1, 2)
     string label = ""
@@ -424,19 +416,14 @@ function void write_centroids (const list xy, const bundle self,
     printf " lc rgb '#%s' front\n", color
 end function
 
-
-function void write_ylabel (const string vname, const int fontsize,
-                            const scalar ylabel_offset_vertical,
-                            const scalar ylabel_offset_horizontal)
-    printf "set ylabel '%s' font ',%d' offset %f,%f\n", vname, fontsize,
-        ylabel_offset_horizontal, ylabel_offset_vertical
+function void write_ylabel (const string vname, const bundle self)
+   printf "set ylabel '%s' font ',%d' offset %f,%f\n", vname,
+     self.fontsize, self.ylabel_hoffset, self.ylabel_voffset
 end function
 
-function void write_xlabel (const string vname, const int fontsize,
-                            const scalar xlabel_offset_vertical,
-                            const scalar xlabel_offset_horizontal)
-    printf "set xlabel '%s' font ',%d' offset %f,%f\n", vname, fontsize,
-        xlabel_offset_vertical, xlabel_offset_horizontal
+function void write_xlabel (const string vname, const bundle self)
+   printf "set xlabel '%s' font ',%d' offset %f,%f\n", vname,
+     self.fontsize, self.xlabel_voffset, self.xlabel_hoffset
 end function
 
 function void write_plot_data (const list xy, const bundle self)
@@ -456,7 +443,6 @@ function void write_plot_data (const list xy, const bundle self)
     endloop
 end function
 
-
 function void print_using_cmd (const bundle self, const int idx)
     /* Print gnuplot data details. */
 
@@ -466,7 +452,6 @@ function void print_using_cmd (const bundle self, const int idx)
         printf " pt %d", self.pointtype[idx]
     endif
 end function
-
 
 function void print_factor_title (const bundle self, const int idx)
     /* Print title string for a factor. */
@@ -515,7 +500,6 @@ function void write_plot_cmd (const bundle self)
     endloop
 end function
 
-
 function void write_offsets (const scalar offset_level)
     /* Write settings for offsets */
 
@@ -527,11 +511,9 @@ function void write_offsets (const scalar offset_level)
     printf "\n"
 end function
 
-
 function void write_key_spec (const bundle self, const list xy,
                               const scalar k)
     /* TBA */
-
     string pos = self.key_position
     scalar do_font = 1
 
@@ -569,7 +551,6 @@ function void write_key_spec (const bundle self, const list xy,
     endif
 end function
 
-
 function void write_options (const bundle self, const list xy,
                              scalar k)
     /* Write gnuplot options. */
@@ -605,24 +586,10 @@ function void write_options (const bundle self, const list xy,
     */
 end function
 
-
 function strings get_color_definitions (void)
-    /* Put your own definitions here. */
-
-    /*
-    return defarray(\
-                    "C41E3A", \
-                    "4682B4", \
-                    "FFBF00", \
-                    "ff0000", \
-                    "00cc00", \
-                    "8faab3", \
-                    "0000ff", \
-                    "bf25b2", \
-                    "ffa500"\
-                    )
+    /* FIXME can we pick up the user's choice of theme colors instead
+    of hard-wiring dark2?
     */
-
     # "dark2" palette
     return defarray(\
                     "1B9E77",\
@@ -645,14 +612,12 @@ function strings get_color_definitions (void)
                     )
 end function
 
-
 function scalar calculate_pointsize (const scalar default_pointsize,
                                      const int n_variables)
     /* Compute optimal pointsize as a function of the number
      of variables to plot. */
 
     scalar pointsize = xmin(5, default_pointsize / sqrt(n_variables))
-
     return pointsize
 end function
 
@@ -662,10 +627,8 @@ function scalar calculate_fontsize (const scalar default_fontsize,
      of variables to plot. */
 
     scalar fontsize = xmin(20, default_fontsize / sqrt(n_variables))
-
     return ceil(fontsize)
 end function
-
 
 function scalar calculate_plot_width (const scalar default_width,
                                       const int n_variables)
@@ -673,7 +636,6 @@ function scalar calculate_plot_width (const scalar default_width,
      of variables to plot. */
 
     scalar width = xmin(2800, default_width * (1 + sqrt(n_variables)/20))
-
     return width
 end function
 
@@ -683,10 +645,8 @@ function scalar calculate_plot_height (const scalar default_height,
      of variables to plot. */
 
     scalar height = xmin(2800, default_height * (1 + sqrt(n_variables)/20))
-
     return height
 end function
-
 
 function matrix get_layout_matrix (int n)
     /* construct a suitable triangular layout matrix */
@@ -700,7 +660,6 @@ function matrix get_layout_matrix (int n)
     endloop
     return ret
 end function
-
 
 function scalar call_gnuplot (const list L, const bundle self)
     /* Called if just a single plot is to be produced. */
