@@ -577,10 +577,9 @@ function matrix get_layout_matrix (int n)
 
     matrix ret = zeros(n, n)
     scalar k = 1
-    loop i=1..n
-        loop j=1..i
-            ret[i,j] = k++
-        endloop
+    loop i = 1 .. n
+        ret[i, 1:i] = seq(k, k+i-1)
+        k += i
     endloop
     return ret
 end function
