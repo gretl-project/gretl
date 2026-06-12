@@ -3876,25 +3876,32 @@ int gretl_matrix_unvectorize_h_diag (gretl_matrix *targ,
  * @src: source matrix.
  * @row: row offset for insertion (0-based).
  * @col: column offset for insertion.
- * @mod: either %GRETL_MOD_TRANSPOSE or %GRETL_MOD_NONE.
+ * @mod: %GRETL_MOD_NONE, %GRETL_MOD_TRANSPOSE or
+ * %GRETL_MOD_CUMULATE.
  *
  * Writes @src into @targ, starting at offset @row, @col.
  * The @targ matrix must be large enough to sustain the
  * inscription of @src at the specified point.  If @mod
  * is %GRETL_MOD_TRANSPOSE it is in fact the transpose of
- * @src that is written into @targ.
+ * @src that is written into @targ. Or if @mod is
+ * %GRETL_MOD_CUMULATE the incoming values from @src are
+ * added to those already present in @targ, rather than
+ * replacing them.
  *
  * Returns: 0 on success, %E_NONCONF if the matrices are
  * not conformable for the operation.
  */
 
 int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
-                                  const gretl_matrix *src,
-                                  int row, int col,
-                                  GretlMatrixMod mod)
+				  const gretl_matrix *src,
+				  int row, int col,
+				  GretlMatrixMod mod)
 {
     int m = (mod == GRETL_MOD_TRANSPOSE)? src->cols : src->rows;
     int n = (mod == GRETL_MOD_TRANSPOSE)? src->rows : src->cols;
+    double *tval = NULL;
+    double *sval = NULL;
+    size_t sz = 0;
     double complex z;
     double x;
     int i, j, ri, cj;
@@ -3903,18 +3910,31 @@ int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
         return E_NONCONF;
     } else if (targ->is_complex + src->is_complex == 1) {
         return E_MIXED;
-    }
-
-    if (row + m > targ->rows ||
+    } else if (row + m > targ->rows ||
         col + n > targ->cols) {
         fprintf(stderr, "gretl_matrix_inscribe_matrix: out of bounds\n");
         return E_NONCONF;
     }
 
-    for (i=0; i<m; i++) {
-        ri = row + i;
-        for (j=0; j<n; j++) {
-            cj = col + j;
+    if (!targ->is_complex && mod == GRETL_MOD_NONE) {
+	/* we'll use memcpy below */
+	tval = targ->val + col * targ->rows + row;
+	sval = src->val;
+	sz = src->rows * sizeof *sval;
+    }
+
+    for (j=0; j<n; j++) {
+	cj = col + j;
+	if (tval != NULL) {
+	    /* do the column in one go */
+	    memcpy(tval, sval, sz);
+	    tval += targ->rows;
+	    sval += src->rows;
+	    continue;
+	}
+	for (i=0; i<m; i++) {
+	    /* proceed row by row */
+	    ri = row + i;
             if (src->is_complex) {
                 if (mod == GRETL_MOD_TRANSPOSE) {
                     z = cmatrix_transp_get(src, i, j);
@@ -3929,10 +3949,9 @@ int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
                 if (mod == GRETL_MOD_TRANSPOSE) {
                     x = matrix_transp_get(src, i, j);
                 } else {
-                    x = gretl_matrix_get(src, i, j);
-                    if (mod == GRETL_MOD_CUMULATE) {
-                        x += gretl_matrix_get(targ, ri, cj);
-                    }
+		    /* we must be cumulating */
+		    x = gretl_matrix_get(targ, ri, cj) +
+			gretl_matrix_get(src, i, j);
                 }
                 gretl_matrix_set(targ, ri, cj, x);
             }
