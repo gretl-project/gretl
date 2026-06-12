@@ -328,85 +328,42 @@ end function
 
 function void factorized_centroids (const list xy, bundle self)
     /*
-    This function calculates and writes the centroids for each factor of a
-    given list of variables. The function loops over the factors, restricts
-    the sample to the observations where the factor series equals the current
-    factor value, and then calls the 'write_centroid' function to calculate
-    and write the centroids.
+       This function calculates and writes the centroids for each factor of a
+       given list of variables, using the aggregate() function.
 
-    Parameters:
-    xy: A list of variables for which the centroids are to be calculated.
-    self: A bundle containing various options for the function. It should
-    have the following fields:
-        - 'n_factors': The number of factors.
-        - 'factor_series': The series of factors.
-        - 'factor_values': The values of the factors.
-        - 'ith_factor': The current factor in the loop.
+       Parameters:
+       xy: A list of variables for which the centroids are to be calculated.
+       self: A bundle containing various options for the function. It should
+       have the following fields:
+       - 'n_factors': The number of factors.
+       - 'factor_series': The series of factors.
+       - 'factor_values': The values of the factors.
+       */
 
-    The function does not return anything. It modifies the 'self' bundle by
-    setting the 'ith_factor' field to the current factor in the loop.
-
-    Note: This function assumes that the 'write_centroids' function is defined
-    in the same scope.
-    */
     strings colors = gpcolors(0.2)
-
-    loop i=1..self.n_factors
-        smpl full
-        if self.n_factors > 1
-            smpl self.factor_series == self.factor_values[i] --restrict
-        endif
-        smpl --no-missing xy
-        j = ((i-1) % 8) + 1
-        write_centroid(xy, self, i, colors[j])
-    endloop
-end function
-
-function void write_centroid (const list xy, const bundle self,
-                              int i, const string color)
-    /*
-    This function calculates and writes the centroid for a given pair of
-    series. The type of centroid (mean or median) is determined by the
-    'centroid' field in the 'self' bundle. If the 'centroid' field is set
-    to 'none', the function does nothing.
-
-    Parameters:
-    xy: the pair of series for which a centroid i to be shown.
-    self: A bundle containing various options for the function.
-    It should have the following fields:
-       - 'centroid': A string specifying the type of centroid.
-          It can be 'mean', 'median', or 'none'.
-       - 'centroid_label': A boolean specifying whether to label the centroids.
-          If true, the centroids are labeled with their type ('Mean' or 'Median').
-          If false, no label is added.
-       - 'centroid_pointsize': An integer, the point size of the centroids.
-     i: the 1-based index of the current factor value.
-   */
-
-    matrix cxy = zeros(1, 2)
+    scalar is_factorized = (self.n_factors > 1)
+    series f = is_factorized ? self.factor_series : const
     string label = ""
 
-    if self.centroid == "mean"
-        cxy = {mean(xy[1]), mean(xy[2])}
-        if self.centroid_label
-            label = "Mean"
-        endif
-    else
-        cxy = {median(xy[1]), median(xy[2])}
-        if self.centroid_label
-            label = "Median"
-        endif
+    if self.centroid_label
+        label = toupper(self.centroid[1]) ~ self.centroid[2:]
     endif
 
-    if self.n_factors == 1 # no factorization
-        printf "set label %d \"%s\" at %g,%g point ps %g pt 1 lw %g front\n",
-          i, label, cxy[1], cxy[2], self.centroid_pointsize,
-          self.centroid_linewidth
-    else
-        printf "set label %d \"%s\" at %g,%g point ps %g pt 7 lt %d lc '%s' lw %g front\n",
-          i, label, cxy[1], cxy[2], self.centroid_pointsize, i,
-          color, self.centroid_linewidth
-    endif
+    smpl --no-missing xy
+
+    M = aggregate(xy, f, self.centroid)
+    loop i = 1 .. rows(M)
+        printf "set label %d \"%s\" at %g,%g point ps %g ",
+          i, label, M[i,3], M[i,4], self.centroid_pointsize
+
+        if is_factorized
+            j = ((i-1) % 8) + 1
+            printf "pt 7 lt %d lc '%s' lw %g front\n", i, colors[j], self.centroid_linewidth
+        else
+            printf "pt 1 lw %g front\n", self.centroid_linewidth
+        endif
+    endloop
+
 end function
 
 function void write_ylabel (const string vname, const bundle self)
