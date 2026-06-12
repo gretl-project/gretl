@@ -1,0 +1,19 @@
+clear --all
+set verbose off
+
+include PairPlot.gfn
+
+open abdata --quiet
+list y = n k
+series factor = IND
+setinfo factor --discrete
+
+bundle opts = _(transparency_level = 175,
+                centroid = "median",
+                tics = FALSE,
+                pointsize = 1.5,
+                centroid_pointsize = 3,
+                centroid_linewidth = 3,
+                height = 600,
+                width = 600)
+PairPlot(y, factor, opts)

@@ -1,0 +1,8 @@
+clear --all
+set verbose off
+
+include PairPlot.gfn
+
+open iris.gdt --quiet
+list y = 1..4
+PairPlot(y)

@@ -1,0 +1,21 @@
+clear --all
+set verbose off
+
+include PairPlot.gfn
+
+open mrw --quiet
+list y = gdp60 gdp85 i_y
+series factor =  1 + OECD
+stringify(factor, defarray("non-oecd", "oecd"))
+# cut out some extreme outliers
+smpl nonoil --dummy
+bundle opts = _(centroid = "mean",
+                transparency_level = 150,
+                type = "matrix",
+                grid = TRUE,
+                height = 800,
+                width = 900,
+                fontsize = 16,
+                key_fontsize = 11,
+                ylabel_offset_horizontal = 1.5)
+PairPlot(y, factor, opts)

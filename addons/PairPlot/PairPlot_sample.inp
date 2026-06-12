@@ -3,7 +3,7 @@ set verbose off
 
 include PairPlot.gfn
 
-scalar SAMPLE = 1  # Select an example, 1 to 6
+scalar SAMPLE = 3  # Select an example, 1 to 6
 
 if SAMPLE == 1  # simple plot of the iris data
     open iris.gdt --quiet

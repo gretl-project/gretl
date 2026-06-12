@@ -1,0 +1,8 @@
+clear --all
+set verbose off
+
+include PairPlot.gfn
+
+open data4-10.gdt --quiet
+list y = ENROLL CATHOL
+PairPlot(y, REGION)

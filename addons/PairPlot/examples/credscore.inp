@@ -1,0 +1,14 @@
+clear --all
+set verbose off
+
+include PairPlot.gfn
+
+open credscore.gdt --quiet
+list y = 1..3
+series factor = OwnRent + 1
+stringify(factor, defarray("renter", "owner"))
+bundle opts = _(transparency_level = 100,
+                title = "Credit data by home-ownership status",
+                centroid = "mean",
+                grid = TRUE)
+PairPlot(y, factor, opts)
