@@ -357,7 +357,8 @@ function void factorized_centroids (const list xy, bundle self)
             smpl self.factor_series == self.factor_values[i] --restrict
         endif
         smpl --no-missing xy
-        write_centroid(xy, self, i, colors[i])
+        j = ((i-1) % 8) + 1
+        write_centroid(xy, self, i, colors[j])
     endloop
 end function
 
