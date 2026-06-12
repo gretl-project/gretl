@@ -338,7 +338,7 @@ function void factorized_centroids (const list xy, bundle self)
        - 'n_factors': The number of factors.
        - 'factor_series': The series of factors.
        - 'factor_values': The values of the factors.
-       */
+    */
 
     strings colors = gpcolors(0.2)
     scalar is_factorized = (self.n_factors > 1)
