@@ -980,9 +980,9 @@ static gretlRGB user_color[N_GP_LINETYPES] = {
 
 /* By default, returns an array of strings holding the string-valued
    specifications of the gnuplot line colors currently selected by the
-   user.  However, if @f is non-missing non-zero each color returned is
-   shifted lighter (> 0, towards white) or darker (< 0, towards black)
-   relative to the original.
+   user.  However, if @f is non-missing, non-zero and in (-1.0, 1.0)
+   each color returned is shifted lighter (> 0, towards white) or darker
+   (< 0, towards black) relative to the original.
 */
 
 gretl_array *get_user_colors (double f, int *err)
