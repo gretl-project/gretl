@@ -51,9 +51,13 @@ check: $(PKG).gfn
 
 install: $(PKG).gfn installdirs
 	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+	for f in examples/* ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
 
 installdirs:
+	rm -rf $(DESTDIR)$(GFNDIR)/$(PKG)/examples/*
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
 
 clean: 
 	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip
