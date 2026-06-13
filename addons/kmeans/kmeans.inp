@@ -1,0 +1,593 @@
+function bundle set_bundle_and_get_defaults (const list xlist,
+                                             bundle opts[null])
+    /* Compile self bundle by merging eventual information
+    from 'opts' bundle. */
+
+    if !exists(opts)
+        bundle opts = defbundle()
+    endif
+
+    bundle self = default_values(xlist)
+    self = opts + self          # override defaults
+
+    return self
+end function
+
+
+function bundle default_values (const list xlist)
+    /* Set default values. */
+
+    bundle self = defbundle()
+    scalar self.error = FALSE
+    scalar self.verbose = 1
+    string self.initializer = "random"
+    scalar self.n_draws = 10
+    scalar self.max_iter = 300
+    scalar self.tolerance = 1e-4
+    string self.algorithm = "full"
+    string self.distance_type = "euclidean"
+    scalar self.nobs = $nobs
+
+    # For kmeans_plot() and kmeans_screeplot()
+    scalar self.use_circles = FALSE
+    scalar self.linewidth = 1.5
+    scalar self.fontsize = 10
+
+    return self
+end function
+
+
+function matrix initialize_clusters (const matrix features,
+                                     const bundle self)
+    /* Initialize clusters. */
+
+    string initializer = tolower(self.initializer)
+    # "pca" is only supported for n_clusters > 1
+    initializer = self.n_clusters == 1 ? "random" : initializer
+
+    if initializer == "random"
+        return mrandgen(i, 1, self.n_clusters, $nobs, 1)
+    elif initializer == "pca"
+        bundle B = self
+        matrix B.centroids = init_centroids_by_pca(features, B.n_clusters)
+        list xlist = mat2list(features)
+        matrix initial_cluster_id = kmeans_predict(xlist, B)
+        return initial_cluster_id
+    else
+        funcerr "Initializer is not supported."
+    endif
+end function
+
+
+function matrix init_centroids_by_pca (const matrix features,
+                                       scalar n_clusters)
+    /* Try to pick data points that are as far apart as possible by means of PCA.
+    Idea borrowed from Jack Lucchetti.
+    return: Matrix of centroids for each cluster (rows) and each feature (columns). */
+
+    errorif(n_clusters < 2, "At least two clusters are required.")
+
+    scalar n_obs = rows(features)
+    matrix mask = 1 + seq(0, (n_clusters - 1)) \
+                  * floor((n_obs - 1) / (n_clusters - 1))
+    matrix pca_matrix = princomp(features, 1, 1) ~ seq(1, n_obs)'
+    pca_matrix = msortby(pca_matrix, 1)
+    mask = pca_matrix[mask, 2]
+
+    return features[mask,]
+end function
+
+
+function matrix compute_distance (const matrix features,
+                                  const string distance_type,
+                                  const matrix centroids)
+    /* Compute distance between two matrices.
+    return: Matrix of distances.*/
+
+    if $version < 20252 && distance_type == "mahalanobis"
+        /* Before version 20252, the distance() function did not treat the
+           3rd argument consistently with the other metrics for the "mahalanobis" case.*/
+        scalar m = rows(features)
+        scalar p = rows(centroids)
+        matrix ret = zeros(m, p)
+        matrix C = cholesky(mcov(features))'
+        matrix z1n = zeros(1, cols(features))
+        loop j=1..p
+            ret[,j] = distance((features .- centroids[j,]) / C, "euclidean", z1n)
+        endloop
+    else
+        matrix ret = distance(features, distance_type, centroids)
+    endif
+
+    return ret
+end function
+
+
+function series kmeans_predict (const list xlist "Features",
+                                const bundle self)
+    /* Predict cluster belonging for a given model.
+    return: Series with predicted cluster belongings. */
+
+    errorif(sum(missing(xlist)), "Some features have missing values. Please drop these first.")
+
+    matrix distances = compute_distance({xlist}, self.distance_type, self.centroids)
+    series cluster_id = iminr(distances)
+
+    return cluster_id
+end function
+
+
+function void check_required_pkg_version (void)
+    /* Check if installed dependencies fulfill version requirements. */
+
+    pkg query PairPlot --quiet
+    errorif($result.version < 0.8,\
+            sprintf("Please update the 'PairPlot' package to at least version 0.8.\n\ The hansl command is 'pkg install PairPlot'")\
+            )
+end function
+
+
+function bundle kmeans_fit (const list xlist "Features",
+                            const int n_clusters[1::2] "No. of clusters",
+                            bundle opts[null] "Parameter bundle")
+    /* Estimate clusters. */
+
+    check_required_pkg_version()
+
+    if !exists(opts)
+        bundle opts = defbundle()
+    endif
+
+    errorif(sum(missing(xlist)),\
+            "Some features have missing values. Please drop these first.")
+
+    bundle self = set_bundle_and_get_defaults(xlist, opts)
+    self.distance_type = tolower(self.distance_type)
+    self.initializer = tolower(self.initializer)
+    self.algorithm = tolower(self.algorithm)
+    scalar self.n_clusters = n_clusters
+    matrix features = {xlist}
+    scalar self.within_variation_total = $huge
+    scalar draw_id = 1
+    matrix self.cluster_id = mshape(NA, $nobs, 1)
+    matrix self.distances = mshape(NA, $nobs, 1)
+    scalar counter_errors = 0
+
+    loop self.n_draws  # evaluate several initial random draws of clusters
+        if self.verbose == 2
+            Info(sprintf("\nStart random draw: %d", draw_id))
+            flush
+        endif
+        bundle Tmp = compute_kmeans(self, features)
+        counter_errors += Tmp.error
+
+        # select minimizing draw
+        if Tmp.within_variation_total < self.within_variation_total
+            scalar self.within_variation_total = Tmp.within_variation_total
+            matrix self.centroids = Tmp.centroids
+            matrix cluster_id = Tmp.cluster_id
+            matrix distances = Tmp.distances
+        endif
+
+        if self.verbose == 2 && Tmp.error == FALSE
+            Info(sprintf("\nFinished the %d-th random draw.", draw_id))
+            flush
+        endif
+
+        draw_id++
+    endloop
+
+    if counter_errors == self.n_draws
+        string msg = "All initializations failed. Please check your data OR use a different initializer."
+        funcerr "@msg"
+    endif
+
+    cnameset(self.centroids, varnames(xlist))
+
+    matrix self.cluster_id = cluster_id
+    matrix self.distances = distances
+    add_variations(features, &self)
+
+    return self
+end function
+
+
+function void add_variations (const matrix features, bundle *self)
+    /* Add various variation statistics.
+    return: void */
+
+    matrix distances_from_mean = compute_distance(features, self.distance_type, meanc(features))
+    self.total_ssq = sumc(distances_from_mean.^2)
+
+    bundle B = within_cluster_variation(self.distances, self.cluster_id)
+    scalar self.within_variation_avg = B["sum_of_avg_variation"]
+    scalar self.within_variation_total = B["sum_of_total_variation"]
+    scalar self.between_variation = self.total_ssq - self.within_variation_total
+    scalar self.between_to_total_variation = self.between_variation / self.total_ssq
+end function
+
+
+function void kmeans_summary (const bundle self)
+    /* Print summary after fitting. */
+
+    print "************************************************"
+    print "*** K-means unsupervised learning clustering ***"
+
+    printf "\nParameters\n"
+    printf "  No. of clusters: %d\n", self.n_clusters
+    printf "  Distance type: '%s'\n", self.distance_type
+    printf "  Algorithm: '%s'\n", self.algorithm
+    printf "  Initializer: '%s'\n", self.initializer
+    printf "  Max. iterations: %d\n", self.max_iter
+    #printf "  Actual iterations: %d\n", self.actual_iter
+    printf "  No. of random draws: %d\n", self.n_draws
+    printf "  Tolerance: %f\n", self.tolerance
+
+    printf "\nEstimation results:\n"
+    printf "  Total sum of squares: %e\n", self.total_ssq
+    printf "  Total within-cluster sum of squares: %e\n", self.within_variation_total
+    printf "  Weighted total within-cluster sum of squares: %e\n", self.within_variation_avg
+    printf "  Between cluster sum of squares: %e\n", self.between_variation
+    printf "  (Between / Total): %.3f pct.\n", (self.between_to_total_variation * 100)
+    print "************************************************"
+end function
+
+
+function void kmeans_plot (const list xlist, bundle self)
+    /* Plot clusters in 2-dimensions. */
+
+    string self.filename = inbundle(self, "filename") ? \
+                                    self.filename : "display"
+    series factor = self.cluster_id
+
+    PairPlot(xlist, factor, self)
+
+    Info("Finished plotting.")
+end function
+
+
+function bundle compute_kmeans (const bundle self, const matrix features)
+    /* Actual computation of kmeans. Identify clusters.
+    return: bundle, output for a given random draw of cluster association. */
+
+    bundle Model
+    matrix current_cluster_id = initialize_clusters(features, self)
+    scalar n_clusters = rows(values(current_cluster_id))
+    scalar iter = 1
+    matrix min_distances = mshape($huge, rows(features), n_clusters)
+    scalar current_inertia = $huge
+    scalar updated_inertia = current_inertia
+    scalar Model.error = FALSE
+
+    loop while iter <= self.max_iter
+        matrix centroids = compute_centroids(features, current_cluster_id)
+        matrix all_distances = compute_distance(features, self.distance_type, centroids)
+        matrix new_cluster_id = iminr(all_distances)
+
+        if rows(values(new_cluster_id)) == n_clusters  # check + update
+            matrix centroids = compute_centroids(features, new_cluster_id)
+            current_cluster_id = new_cluster_id
+            matrix min_distances = minr(all_distances)  # select minimum from all
+            iter++
+        else
+            Model.error = TRUE
+            break
+        endif
+
+        updated_inertia = within_cluster_variation(min_distances, current_cluster_id)["sum_of_total_variation"]
+        inertia_change = current_inertia - updated_inertia
+        current_inertia = updated_inertia
+
+        if inertia_change >= 0 && inertia_change < self.tolerance
+            if self.verbose == 2
+                Info(sprintf("Converged after %d out of %d iterations (within total variation = %.5f).",
+                             iter, self.max_iter, current_inertia))
+                flush
+            endif
+            break
+        endif
+    endloop
+
+    matrix Model.distances = min_distances
+    scalar Model.within_variation_total = current_inertia
+    matrix Model.cluster_id = current_cluster_id
+    matrix Model.centroids = centroids
+
+    return Model
+end function
+
+
+function bundle within_cluster_variation (const matrix distances,
+                                          const matrix cluster_id)
+    /* Compute the sum of the (average) squared distances across all clusters.
+
+    "distances" already refers to some computed distance from the centroid, for instance $(x_{ij} - xbar_{ij})^2$ in case of the Euclidean distance. But it could also be some other distance measure.
+    The following definition is equal to the within-cluster variation as defined in James et al. "An Introduction to Statistical Learning", p. 387. */
+
+    scalar n_clusters = max(cluster_id)
+    matrix squared_distances = distances.^2
+    bundle B = _(sum_of_avg_variation = 0,\
+                 sum_of_total_variation = sum(squared_distances))
+
+    loop i=1..n_clusters
+        matrix cluster_mask = (cluster_id .= $i)
+        scalar cluster_size = sum(cluster_mask)
+        if cluster_size == 0
+            B.sum_of_avg_variation += sum(squared_distances).^2 * (1/rows(squared_distances))
+        else
+            B.sum_of_avg_variation += sum(selifr(squared_distances, cluster_mask).^2) * (1 / cluster_size)
+        endif
+    endloop
+
+    return B
+end function
+
+
+function matrix compute_centroids (const matrix features,
+                                   const matrix cluster_id)
+    /* Compute centroids (means) for each cluster.
+    return: "n_clusters by 1+cols(features)" matrix, The i-th row corresponds to the i-th cluster; each column refers to the centroid (mean) value for each respective feature. */
+
+    scalar n_clusters = max(cluster_id)
+    matrix centroid_matrix = mshape(NA, n_clusters, cols(features))
+    strings row_labels = array(n_clusters)
+
+    loop i=1..n_clusters
+        matrix cluster_mask = (cluster_id .= $i)
+        if sum(cluster_mask) == 0  # no observations in cluster - may happen at the beginning
+            centroid_matrix[i,] = 0  # initialize with zeros
+        else
+            centroid_matrix[i,] = meanc(selifr(features, cluster_mask))
+        endif
+
+        row_labels[i] = sprintf("Centroid=%d", $i)
+    endloop
+
+    rnameset(centroid_matrix, row_labels)
+
+    return centroid_matrix
+end function
+
+
+function string get_distance_type (const int distance)
+    /* Only for kmeansGUI(). Maps the integer to the name of the respective distance measure. */
+
+    strings Distances = defarray("euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis")
+
+    return Distances[distance]
+end function
+
+
+function bundle kmeansGUI (const list X "Input",
+                           const int n_clusters[1::3] "No. of clusters (k)",
+                           const int distance[1:6:1] "Distance type" {"euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis"},
+                           const int plot_type[0:3:0] "Plot type" {"none", "Scree-Plot (1 to k)", "Cluster (Pair-Plot for k clusters)", "Silhouette Plot (k clusters)"})
+    /* Function for creating GUI dialog box. */
+
+    bundle self = defbundle()
+    self.distance_type = get_distance_type(distance)
+    self.verbose = 2   # in GUI mode, highest verbosity level is activated
+
+    if plot_type == 1
+        matrix results = kmeans_screeplot(X, n_clusters, null, self)
+        bundle Model = _(results )
+        return Model
+    endif
+
+
+    # Only for given k
+    bundle Model = kmeans_fit(X, n_clusters, self)
+    kmeans_summary(Model)
+    print Model.centroids
+
+    if plot_type == 2
+        kmeans_plot(X, Model)
+    endif
+    if plot_type == 3
+        kmeans_sil_plot(Model, X, self)
+        scalar sil_score = kmeans_sil_score(Model, X, TRUE)
+        matrix sil_score_local = kmeans_sil_score(Model, X, FALSE)
+        printf "\nSilhouette Analysis\n"
+        printf "Mean Silhouette Coefficient: %.3f\n\n", sil_score
+        printf "Per Cluster Silhouette Coefficients:\n%12.3f\n", sil_score_local
+    endif
+
+    return Model
+end function
+
+
+function matrix	kmeans_screeplot (const list xlist "Features",
+                                  const int maxCluster[1::3] "No. of clusters",
+                                  const string filename[null],
+                                  bundle opts[null] "Parameter bundle")
+    /* Create a scree plot. */
+
+    if !exists(opts)
+        bundle opts = _()
+    endif
+    bundle self = set_bundle_and_get_defaults(xlist, opts)
+
+    string fsize_cmd = inbundle(opts,"fontsize") ? sprintf("font=\",%d\"", opts.fontsize) : ""
+    string fname = exists(filename) ? filename : "display"
+    matrix k_values = transp(seq(1, maxCluster))
+    matrix results = k_values ~ mshape(NA, nelem(k_values), 1)
+    cnameset(results, defarray("# clusters", "inertia"))
+
+    loop i=1..nelem(k_values)
+        bundle model = kmeans_fit(xlist, k_values[i], opts)
+        if self.verbose == 2
+            kmeans_summary(model)
+        endif
+        if model.error
+            Error(sprintf("\nError: obtained an error when assuming %d clusters\n", k_values[i]))
+        endif
+        results[i,2] = model.within_variation_total
+    endloop
+
+    mplot = mreverse(results, TRUE)
+    print mplot
+
+    plot mplot
+        options with-lines fit=none @fsize_cmd
+        literal set ylabel "Total within variation (inertia)"
+        literal set xlabel "k clusters"
+        printf "set linetype 1 lw %d", self.linewidth
+        literal set grid
+        literal set xtics 1
+    end plot --output="@fname"
+
+    return results
+end function
+
+
+function series kmeans_sil_samples (const bundle Model, const list xlist)
+    /* Compute the silhouette samples for each observation. */
+
+    matrix features = {xlist}
+    matrix cluster_id = Model.cluster_id
+    series silhouette_samples = zeros(Model.nobs, 1)
+
+    loop i=1..Model.nobs
+        scalar own_cluster = cluster_id[i]
+        matrix own_cluster_mask = (cluster_id .= own_cluster)
+
+        # a(i): mean distance to own cluster (excluding self)
+        # can be interpreted as a measure of how well i is assigned to its
+        # cluster (the smaller the value, the better the assignment).
+        matrix own_points = selifr(features, own_cluster_mask)
+        if sum(own_cluster_mask) > 1
+            # 1st entry is the distance to self, so we skip it
+            matrix dists_own = compute_distance(features[i,], Model.distance_type, own_points)[2:]'
+            # The pairwise distance is the same as the this one:
+            /* matrix dat = features[i,] | own_points
+            matrix dists_own2 = unvech(distance(dat, Model.distance_type), 0)[2:,1]
+            out = dists_own' ~ dists_own2
+            print out */
+
+            scalar a_i = meanc(dists_own)  # mean distance to own cluster
+        else
+            scalar a_i = 0
+        endif
+
+        # b(i): minimum mean distance to other clusters
+        scalar b_i = $huge
+        loop k=1..Model.n_clusters
+            if k == own_cluster
+                continue  # skip own cluster
+            endif
+            matrix mask_k = (cluster_id .= k)
+            if sum(mask_k) > 0
+                matrix other_points = selifr(features, mask_k)
+                matrix dists_other = compute_distance(features[i,], Model.distance_type, other_points)
+                scalar mean_other_distance = sum(dists_other) / nelem(dists_other)
+                if mean_other_distance < b_i
+                    b_i = mean_other_distance  # update the "neigboring cluster"
+                endif
+            endif
+        endloop
+
+        silhouette_samples[i] = compute_sil_sample(a_i, b_i)
+    endloop
+
+    return silhouette_samples
+end function
+
+
+function scalar compute_sil_sample (const scalar a_i, const scalar b_i)
+    /* Compute the silhouette sample for a single observation.
+       URL: https://en.wikipedia.org/wiki/Silhouette_(clustering) */
+
+    if a_i == 0 && b_i == 0
+        return 0  # avoid division by zero
+    elif a_i == b_i
+        return 0  # equal distances to own and other clusters
+    elif a_i < b_i
+        return 1 - (a_i / b_i)  # well assigned to own cluster
+    else # a_i > b_i
+        return (b_i / a_i) - 1  # poorly assigned to own cluster
+    endif
+end function
+
+
+function numeric kmeans_sil_score (const bundle Model,
+                                   const list xlist,
+                                   const bool global [TRUE])
+    /* Compute the mean Silhouette Coefficient of all samples. */
+
+    series silhouette_samples = kmeans_sil_samples(Model, xlist)
+    if global == TRUE
+        score = mean(silhouette_samples)
+        return score
+    endif
+
+    series cluster_id = Model.cluster_id
+    matrix score = 0
+    matrix mean_per_cluster = aggregate(silhouette_samples, cluster_id, "mean")[,{1,3}]
+    cnameset(mean_per_cluster, defarray("Cluster", "mean(Score)"))
+
+    return mean_per_cluster
+end function
+
+
+function void kmeans_sil_plot (const bundle Model,
+                               const list xlist,
+                               const bundle opts[null])
+    /* Create a silhouette plot for the fitted kmeans model.
+       Each cluster is plotted separately. */
+
+    if !exists("opts")
+       bundle opts = _()
+    endif
+
+    matrix silhouette_samples = {kmeans_sil_samples(Model, xlist)}
+    scalar n_clusters = Model.n_clusters
+    scalar mean_sil_score = meanc(silhouette_samples)
+    matrix plot_data = silhouette_samples ~ Model.cluster_id
+    strings plotfiles = array(n_clusters)
+
+    # plot options
+    string filename = inbundle(opts, "filename") ? opts.filename : "display"
+    scalar width = inbundle(opts, "width") ? opts.width : 600
+    scalar height = inbundle(opts, "height") ? opts.height : 900
+    scalar columns = inbundle(opts, "columns") ? opts.columns : 1
+    scalar rows = ceil(n_clusters / columns)
+    scalar base_margin = inbundle(opts, "base_margin") ? opts.base_margin : 2.5
+    scalar pointsize = inbundle(opts, "pointsize") ? opts.pointsize : 0.75
+    scalar fontsize = inbundle(opts, "fontsize") ? opts.fontsize : 12
+    string fsize_cmd = sprintf("font=\",%d\"", fontsize)
+
+    # Calculate margins based on plot size and layout
+    scalar margin_scale = min(width, height) / (rows * 300)
+    scalar tmargin = base_margin * margin_scale
+    scalar bmargin = base_margin * margin_scale
+
+    # Prepare data for each cluster
+    scalar ymin = min(plot_data) * (min(plot_data) < 0 ? 1.1 : 0.9)
+    scalar ymax = max(plot_data) * (max(plot_data) < 0 ? 0.9 : 1.1)
+    ymax = ymax > 1 ? 1.01 : ymax  # limit to [0, 1] range
+    ymin = ymin < -1 ? -1.01 : ymin  # limit to [-1, 1] range
+
+    loop k=1..n_clusters
+        matrix cluster_mask = (plot_data[,2] .= k)
+        matrix cluster_sil_values = selifr(plot_data, cluster_mask)[,1]
+        matrix cluster_sil_values = mreverse(msortby(cluster_sil_values, 1))
+        cluster_sil_values ~= mean_sil_score
+
+
+        plot cluster_sil_values
+            options fit=none time-series single-yaxis with-lines=2 \
+                    @fsize_cmd
+            printf "set ylabel 'Cluster %d (n=%d)'", k, rows(cluster_sil_values)
+            literal set grid
+            literal set boxwidth 0.8
+            printf "set yrange[%f:%f]", ymin, ymax
+            printf "set tmargin %f", tmargin
+            printf "set bmargin %f", bmargin
+            printf "set linetype 1 ps %g pt 7", pointsize
+            printf "set linetype 2 lw 1.5 dt 2"
+            literal set nokey
+        end plot --outbuf=plotfiles[k]
+    endloop
+
+    gridplot plotfiles --cols=columns --width=width --height=height --output="@filename"
+end function

@@ -21,7 +21,7 @@ else
 endif
 
 SUBDIRS = gig ivpanel SVAR HIP dbnomics extra geoplot regls logging \
-	KFgui PairPlot
+	KFgui PairPlot kmeans
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-private
 
@@ -67,6 +67,9 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/KFgui
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/KFgui/examples
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/PairPlot
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/PairPlot/examples
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/kmeans
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/kmeans/examples
 
 install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done

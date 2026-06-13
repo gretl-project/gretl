@@ -1,0 +1,59 @@
+set verbose off
+
+open phoneme_small.gdtb -q
+list L = x1 .. x255
+matrix X = {L}
+k = nelem(values(g))
+n = nelem(L)
+scalar tm
+
+INIT = 2
+
+if INIT == 1
+   # quite expensive with m = 4509, n = 256
+   set stopwatch
+   bundle b = kmeans(X, k, _(rand_starts=1))
+   tm = $stopwatch
+elif INIT == 0
+   # first k points init
+   set stopwatch
+   bundle b = kmeans(X, X[1:k,])
+   tm = $stopwatch
+elif INIT == 2
+   # PC-based
+   set stopwatch
+   pc = {}
+   λ = svd(stdize(X), &pc)
+   pc = msortby(seq(1, $nobs)' ~ pc[,1], 2)
+   h = floor($nobs-1)/(k-1)
+   sel = 1 + floor(seq(0, k-1) * h)
+   sel = pc[sel, 1]
+   bundle b = kmeans(X, X[sel,])
+   tm = $stopwatch
+endif
+printf "gretl, elapsed: %gs\n", tm
+SST = sumc(b.clustinfo[,n+2])
+printf "gretl: global SST = %d\n", round(b.global_SST)
+printf "gretl: clusters SST = %d\n", round(SST)
+series phoneme_hat = b.clustid
+
+xtab g phoneme_hat
+
+foreign language=R --send-data=L
+	X <- gretldata
+	ptm <- proc.time()[3]
+	km <- kmeans(X, 5, nstart=2);
+	elapsed <- proc.time()[3] - ptm
+	cat(sprintf("R, elapsed: %gs\n", elapsed))
+	cat(sprintf("R: global SST = %.0f\n", km$totss))
+	cat(sprintf("R: clusters SST = %.0f\n", km$tot.withinss))
+	# km$withinss
+	# km$centers
+	hat <- as.matrix(km$cluster);
+	gretl.export(hat);
+end foreign
+
+series R_phhat = mread("hat.mat", 1)
+printf "corresp(species_hat, R_sphat): %d\n",
+  corresp(phoneme_hat, R_phhat)
+xtab phoneme_hat R_phhat

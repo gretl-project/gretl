@@ -1,0 +1,10 @@
+set echo off
+set messages off
+
+string topsrc = "@top_srcdir@"
+string dtd = topsrc ~ "/share/functions/gretlfunc.dtd"
+string pkgdir = topsrc ~ "/addons/kmeans"
+
+include @pkgdir/kmeans.inp
+
+makepkg kmeans.gfn --index --translations --quiet --dtd="@dtd"
