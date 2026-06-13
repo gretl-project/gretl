@@ -29,6 +29,9 @@ void macos_setup_paths (void)
         }
     }
 
+#ifdef GRETL_EDIT
+    respath = g_strdup("/Applications/Gretl.app/Contents/Resources");
+#else
     /* get the full path to the active executable */
     _NSGetExecutablePath(execpath, &pathsz);
 
@@ -38,6 +41,7 @@ void macos_setup_paths (void)
     c = strstr(execpath, "/Contents/MacOS");
     *c = '\0';
     respath = g_strdup_printf("%s/Contents/Resources", execpath);
+#endif
 
     tmp = g_strdup_printf("%s/share/gretl/", respath);
     setenv("GRETL_HOME", tmp, 1);
