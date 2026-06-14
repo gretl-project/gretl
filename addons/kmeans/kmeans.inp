@@ -322,32 +322,20 @@ function bundle within_cluster_variation (const matrix distances,
     return B
 end function
 
-
 function matrix compute_centroids (const matrix features,
                                    const matrix cluster_id)
     /* Compute centroids (means) for each cluster.
-    return: "n_clusters by 1+cols(features)" matrix, The i-th row corresponds to the i-th cluster; each column refers to the centroid (mean) value for each respective feature. */
+    return: "n_clusters by 1+cols(features)" matrix, The i-th row corresponds
+    to the i-th cluster; each column refers to the centroid (mean) value for
+    each respective feature. */
 
-    scalar n_clusters = max(cluster_id)
-    matrix centroid_matrix = mshape(NA, n_clusters, cols(features))
-    strings row_labels = array(n_clusters)
-
-    loop i=1..n_clusters
-        matrix cluster_mask = (cluster_id .= $i)
-        if sum(cluster_mask) == 0  # no observations in cluster - may happen at the beginning
-            centroid_matrix[i,] = 0  # initialize with zeros
-        else
-            centroid_matrix[i,] = meanc(selifr(features, cluster_mask))
-        endif
-
-        row_labels[i] = sprintf("Centroid=%d", $i)
-    endloop
-
+    matrix tmp = aggregate(features, cluster_id, mean)
+    strings row_labels = "Centroid=" ~ tmp[,1]
+    centroid_matrix = tmp[,3:]
     rnameset(centroid_matrix, row_labels)
 
     return centroid_matrix
 end function
-
 
 function string get_distance_type (const int distance)
     /* Only for kmeansGUI(). Maps the integer to the name of the respective distance measure. */
