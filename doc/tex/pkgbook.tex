@@ -2816,6 +2816,31 @@ since \texttt{\$datatype==2} means we have time-series data. If at run
 time the dataset is not time series, only the \texttt{ols} and
 \texttt{gls} options will be shown in the drop-down selection.
 
+\subsection{Restrictions on series arguments}
+
+A parameter calling for an individual series argument can be inflected
+in either of two ways, via the following keys.
+
+\begin{itemize}
+\item \texttt{binary} is a boolean switch; give a value of 1 to insist
+  that the series in question is a 0/1 dummy variable.
+\item \texttt{discrete} is also a boolean. Give a value of 1 to insist
+  that the argument is discrete. Note that the test in this case is
+  somewhat more liberal than gretl's \texttt{isdiscrete()} function; it
+  doesn't require that the series has been explicitly marked as
+  discrete, and if it is not so marked the test succeeds provided the
+  series has values that are divisible without remainder by 0.25 and
+  does not have ``too many'' distinct values relative to the length of
+  the series.
+\end{itemize}
+
+The following indicates that the series \texttt{y} must be binary and
+series \texttt{z} must be discrete:
+\begin{code}
+ret.y = _(binary=1)
+ret.z = _(discrete=1)
+\end{code}
+
 \subsection{Restrictions on list arguments}
 
 A parameter calling for a list of series can be inflected in any of

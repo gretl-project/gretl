@@ -481,16 +481,21 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
 {
     int t, n = 0, disc = 1;
     int allints = 1;
+    int isconst = 1;
+    double x0 = NADBL;
     double r = 0;
 
     for (t=t1; t<=t2; t++) {
         if (na(x[t])) {
             continue;
-        }
+        } else if (na(x0)) {
+	    x0 = x[t];
+	} else if (x[t] != x0) {
+	    isconst = 0;
+	}
         n++;
         if (!ok_int(x[t])) {
-            allints = disc = 0;
-            break;
+            allints = 0;
         }
         r = x[t] - floor(x[t]);
         if (allints && r != 0) {
@@ -502,7 +507,8 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
         }
     }
 
-    if (n == 0) {
+    if (n == 0 || isconst) {
+	/* we'll not treat a single-valued series as "discrete" */
         disc = 0;
     }
 

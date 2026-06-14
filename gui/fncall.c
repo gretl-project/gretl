@@ -92,11 +92,11 @@ struct call_info_ {
     gchar *errmsg;       /* error message */
 };
 
-#define scalar_arg(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_SCALAR_REF)
-#define series_arg(t) (t == GRETL_TYPE_SERIES || t == GRETL_TYPE_SERIES_REF)
-#define matrix_arg(t) (t == GRETL_TYPE_MATRIX || t == GRETL_TYPE_MATRIX_REF)
-#define bundle_arg(t) (t == GRETL_TYPE_BUNDLE || t == GRETL_TYPE_BUNDLE_REF)
-#define array_arg(t)  (t == GRETL_TYPE_ARRAY  || t == GRETL_TYPE_ARRAY_REF)
+#define scalar_param(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_SCALAR_REF)
+#define series_param(t) (t == GRETL_TYPE_SERIES || t == GRETL_TYPE_SERIES_REF)
+#define matrix_param(t) (t == GRETL_TYPE_MATRIX || t == GRETL_TYPE_MATRIX_REF)
+#define bundle_param(t) (t == GRETL_TYPE_BUNDLE || t == GRETL_TYPE_BUNDLE_REF)
+#define array_param(t)  (t == GRETL_TYPE_ARRAY  || t == GRETL_TYPE_ARRAY_REF)
 
 #define for_addon(c) (c->flags & FOR_ADDON)
 
@@ -922,14 +922,29 @@ static GList *add_list_names (GList *list, int no_single, int no_const)
     return list;
 }
 
+static void get_series_requirements (gretl_bundle *ui,
+				     int *binary,
+				     int *discrete)
+{
+    if (gretl_bundle_get_bool(ui, "binary", 0)) {
+	*binary = 1;
+    } else if (gretl_bundle_get_bool(ui, "discrete", 0)) {
+	*discrete = 1;
+    }
+}
+
 static GList *add_series_names (GList *list, gretl_bundle *ui)
 {
     int require_binary = 0;
+    int require_discrete = 0;
     int i, imin = 0;
     int vmin = 1;
 
-    if (ui != NULL && gretl_bundle_get_bool(ui, "binary", 0)) {
-	require_binary = 1;
+    if (ui != NULL) {
+	get_series_requirements(ui, &require_binary, &require_discrete);
+	if (require_binary || require_discrete) {
+	    imin = 1;
+	}
     }
 
     if (!strcmp(dataset->varname[1], "index")) {
@@ -940,18 +955,19 @@ static GList *add_series_names (GList *list, gretl_bundle *ui)
 	if (series_is_hidden(dataset, i)) {
 	    continue;
 	} else if (require_binary &&
-		   !gretl_isdummy(dataset->t1,
-				  dataset->t2,
+		   !gretl_isdummy(dataset->t1, dataset->t2,
 				  dataset->Z[i])) {
+	    continue;
+	} else if (require_discrete &&
+		   !gretl_isdiscrete(dataset->t1, dataset->t2,
+				     dataset->Z[i])) {
 	    continue;
 	} else {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
 	}
     }
-    if (!require_binary) {
-	for (i=imin; i<vmin; i++) {
-	    list = g_list_append(list, (gpointer) dataset->varname[i]);
-	}
+    for (i=imin; i<vmin; i++) {
+	list = g_list_append(list, (gpointer) dataset->varname[i]);
     }
 
     return list;
@@ -1009,20 +1025,20 @@ static GList *get_selection_list (GretlType type, gretl_bundle *ui)
 {
     GList *list = NULL;
 
-    if (series_arg(type)) {
+    if (series_param(type)) {
 	list = add_series_names(list, ui);
-    } else if (scalar_arg(type)) {
+    } else if (scalar_param(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_DOUBLE);
     } else if (type == GRETL_TYPE_LIST) {
         int no_single = list_exclude_singleton(ui);
         int no_const = list_exclude_const(ui);
 
 	list = add_list_names(list, no_single, no_const);
-    } else if (matrix_arg(type)) {
+    } else if (matrix_param(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_MATRIX);
-    } else if (bundle_arg(type)) {
+    } else if (bundle_param(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_BUNDLE);
-    } else if (array_arg(type)) {
+    } else if (array_param(type)) {
 	list = add_names_for_type(list, GRETL_TYPE_ARRAY);
     }
 
@@ -1203,7 +1219,7 @@ static void update_combo_selectors (call_info *cinfo,
 	    } else {
 		/* should be at the end, or thereabouts */
 		selpos = llen - 1;
-		if (series_arg(ptype)) {
+		if (series_param(ptype)) {
 		    selpos--; /* the const is always in last place */
 		}
 	    }
@@ -1934,6 +1950,28 @@ static void maybe_add_mainwin_list (call_info *cinfo,
     list = g_list_prepend(list, SELNAME);
 }
 
+static int series_arg_ok (const char *name,
+			  int require_binary,
+			  int require_discrete)
+{
+    int v = current_series_index(dataset, name);
+    int ok = 0;
+
+    fprintf(stderr, "series_arg_ok: looking at '%s'\n", name);
+
+    if (require_binary || require_discrete) {
+	/* series will already have been tested for this */
+	fprintf(stderr, " first branch\n");
+	ok = 1;
+    } else if (v > 0 && probably_stochastic(v)) {
+	fprintf(stderr, " second branch\n");
+	ok = 1;
+    }
+
+    fprintf(stderr, "series_arg_ok: ok = %d\n", ok);
+    return ok;
+}
+
 /* Try to be somewhat clever in selecting the default values to show
    in function-argument drop-down "combo" selectors.
 
@@ -1953,42 +1991,50 @@ static void arg_combo_set_default (call_info *cinfo,
 				   GtkComboBox *combo,
 				   GList *list,
 				   GretlType ptype,
-				   int null_OK)
+				   int null_OK,
+				   gretl_bundle *ui)
 {
-    const char *vname = NULL;
+    const char *mvname = NULL;
+    int require_binary = 0;
+    int require_discrete = 0;
+    int want_series;
+    int argnum;
     int sel = -1;
-    int i, v;
+    int i;
 
-    if (ptype == GRETL_TYPE_SERIES &&
-	n_params_of_type(cinfo, ptype) == 1) {
-	v = mdata_active_var();
-	if (v > 0 && (v == 1 || probably_stochastic(v))) {
-	    /* Give the benefit of the doubt to the first
-	       genuine series in the dataset; otherwise
-	       seek a stochastic series.
-	    */
-	    vname = dataset->varname[v];
+    argnum = widget_get_int(combo, "argnum");
+    want_series = series_param(ptype);
+
+    if (want_series) {
+	if (ui != NULL) {
+	    get_series_requirements(ui, &require_binary, &require_discrete);
+	}
+	if (n_params_of_type(cinfo, ptype) == 1) {
+	    /* there's only one series argument */
+	    int mv = mdata_active_var();
+
+	    if (mv > 0) {
+		mvname = dataset->varname[mv];
+	    }
 	}
     }
 
     for (i=0; list != NULL; i++) {
 	gchar *name = list->data;
-	int argnum = widget_get_int(combo, "argnum");
 	int ok = 0;
 
-	if (vname != NULL) {
-	    ok = !strcmp(name, vname);
-	} else if (series_arg(ptype)) {
-	    v = current_series_index(dataset, name);
-	    if (v > 0 && probably_stochastic(v)) {
-		ok = !already_set_as_default(cinfo, argnum, name, ptype);
-	    }
+	if (already_set_as_default(cinfo, argnum, name, ptype)) {
+	    continue;
+	}
+
+	if (mvname != NULL && !strcmp(name, mvname)) {
+	    ok = 1;
+	} else if (want_series && !is_nullarg_label(name)) {
+	    ok = series_arg_ok(name, require_binary, require_discrete);
 	} else if (null_OK && is_nullarg_label(name)) {
 	    ok = 1;
 	} else if (!strcmp(name, SELNAME)) {
 	    ok = 1;
-	} else {
-	    ok = !already_set_as_default(cinfo, argnum, name, ptype);
 	}
 
 	if (ok) {
@@ -2069,7 +2115,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo,
 	}
 	set_combo_box_strings_from_list(combo, list);
 	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo),
-			      list, ptype, null_OK);
+			      list, ptype, null_OK, ui);
 	g_list_free(list);
     }
 
@@ -2133,9 +2179,9 @@ static GtkWidget *add_new_object_button (int ptype, GtkWidget *combo,
 	g_object_set_data(G_OBJECT(button), "parname", (char *) parname);
     }
 
-    if (series_arg(ptype)) {
+    if (series_param(ptype)) {
 	gretl_tooltips_add(button, _("Define series"));
-    } else if (matrix_arg(ptype)) {
+    } else if (matrix_param(ptype)) {
 	gretl_tooltips_add(button, _("Define matrix"));
     } else if (ptype == GRETL_TYPE_LIST) {
 	gretl_tooltips_add(button, _("Define list"));
@@ -2354,13 +2400,13 @@ static int function_call_dialog (call_info *cinfo)
 	/* Hook up "+" define-variable buttons for the selectors for
 	   certain types of arguments.
 	*/
-	if (series_arg(ptype)) {
+	if (series_param(ptype)) {
 	    button = add_new_object_button(ptype, sel, parname);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked",
 			     G_CALLBACK(launch_series_maker),
 			     cinfo);
-	} else if (matrix_arg(ptype)) {
+	} else if (matrix_param(ptype)) {
 	    button = add_new_object_button(ptype, sel, parname);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked",

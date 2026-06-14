@@ -190,6 +190,7 @@ function bundle PP_ui_maker (void)
     /* set a specification for the first argument for GUI_PairPlot */
     bundle b
     b.L = _(no_singleton=1, n_const=1)
+    b.factor = _(discrete=1)
     return b
 end function
 
