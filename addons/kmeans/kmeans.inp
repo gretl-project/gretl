@@ -13,7 +13,6 @@ function bundle set_bundle_and_get_defaults (const list xlist,
     return self
 end function
 
-
 function bundle default_values (const list xlist)
     /* Set default values. */
 
@@ -36,7 +35,6 @@ function bundle default_values (const list xlist)
     return self
 end function
 
-
 function matrix initialize_clusters (const matrix features,
                                      const bundle self)
     /* Initialize clusters. */
@@ -58,7 +56,6 @@ function matrix initialize_clusters (const matrix features,
     endif
 end function
 
-
 function matrix init_centroids_by_pca (const matrix features,
                                        scalar n_clusters)
     /* Try to pick data points that are as far apart as possible by means of PCA.
@@ -76,7 +73,6 @@ function matrix init_centroids_by_pca (const matrix features,
 
     return features[mask,]
 end function
-
 
 function matrix compute_distance (const matrix features,
                                   const string distance_type,
@@ -102,7 +98,6 @@ function matrix compute_distance (const matrix features,
     return ret
 end function
 
-
 function series kmeans_predict (const list xlist "Features",
                                 const bundle self)
     /* Predict cluster belonging for a given model.
@@ -116,7 +111,6 @@ function series kmeans_predict (const list xlist "Features",
     return cluster_id
 end function
 
-
 function void check_required_pkg_version (void)
     /* Check if installed dependencies fulfill version requirements. */
 
@@ -125,7 +119,6 @@ function void check_required_pkg_version (void)
             sprintf("Please update the 'PairPlot' package to at least version 0.8.\n\ The hansl command is 'pkg install PairPlot'")\
             )
 end function
-
 
 function bundle kmeans_fit (const list xlist "Features",
                             const int n_clusters[1::2] "No. of clusters",
@@ -191,7 +184,6 @@ function bundle kmeans_fit (const list xlist "Features",
     return self
 end function
 
-
 function void add_variations (const matrix features, bundle *self)
     /* Add various variation statistics.
     return: void */
@@ -205,7 +197,6 @@ function void add_variations (const matrix features, bundle *self)
     scalar self.between_variation = self.total_ssq - self.within_variation_total
     scalar self.between_to_total_variation = self.between_variation / self.total_ssq
 end function
-
 
 function void kmeans_summary (const bundle self)
     /* Print summary after fitting. */
@@ -232,7 +223,6 @@ function void kmeans_summary (const bundle self)
     print "************************************************"
 end function
 
-
 function void kmeans_plot (const list xlist, bundle self)
     /* Plot clusters in 2-dimensions. */
 
@@ -244,7 +234,6 @@ function void kmeans_plot (const list xlist, bundle self)
 
     Info("Finished plotting.")
 end function
-
 
 function bundle compute_kmeans (const bundle self, const matrix features)
     /* Actual computation of kmeans. Identify clusters.
@@ -296,13 +285,17 @@ function bundle compute_kmeans (const bundle self, const matrix features)
     return Model
 end function
 
-
 function bundle within_cluster_variation (const matrix distances,
                                           const matrix cluster_id)
     /* Compute the sum of the (average) squared distances across all clusters.
 
-    "distances" already refers to some computed distance from the centroid, for instance $(x_{ij} - xbar_{ij})^2$ in case of the Euclidean distance. But it could also be some other distance measure.
-    The following definition is equal to the within-cluster variation as defined in James et al. "An Introduction to Statistical Learning", p. 387. */
+      "distances" already refers to some computed distance from the centroid,
+      for instance $(x_{ij} - xbar_{ij})^2$ in case of the Euclidean distance.
+      But it could also be some other distance measure.
+
+      The following definition is equal to the within-cluster variation as
+      defined in James et al. "An Introduction to Statistical Learning", p. 387.
+    */
 
     scalar n_clusters = max(cluster_id)
     matrix squared_distances = distances.^2
@@ -345,7 +338,6 @@ function string get_distance_type (const int distance)
     return Distances[distance]
 end function
 
-
 function bundle kmeansGUI (const list X "Input",
                            const int n_clusters[1::3] "No. of clusters (k)",
                            const int distance[1:6:1] "Distance type" {"euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis"},
@@ -361,7 +353,6 @@ function bundle kmeansGUI (const list X "Input",
         bundle Model = _(results )
         return Model
     endif
-
 
     # Only for given k
     bundle Model = kmeans_fit(X, n_clusters, self)
@@ -382,7 +373,6 @@ function bundle kmeansGUI (const list X "Input",
 
     return Model
 end function
-
 
 function matrix	kmeans_screeplot (const list xlist "Features",
                                   const int maxCluster[1::3] "No. of clusters",
@@ -426,7 +416,6 @@ function matrix	kmeans_screeplot (const list xlist "Features",
 
     return results
 end function
-
 
 function series kmeans_sil_samples (const bundle Model, const list xlist)
     /* Compute the silhouette samples for each observation. */
@@ -480,7 +469,6 @@ function series kmeans_sil_samples (const bundle Model, const list xlist)
     return silhouette_samples
 end function
 
-
 function scalar compute_sil_sample (const scalar a_i, const scalar b_i)
     /* Compute the silhouette sample for a single observation.
        URL: https://en.wikipedia.org/wiki/Silhouette_(clustering) */
@@ -495,7 +483,6 @@ function scalar compute_sil_sample (const scalar a_i, const scalar b_i)
         return (b_i / a_i) - 1  # poorly assigned to own cluster
     endif
 end function
-
 
 function numeric kmeans_sil_score (const bundle Model,
                                    const list xlist,
@@ -515,7 +502,6 @@ function numeric kmeans_sil_score (const bundle Model,
 
     return mean_per_cluster
 end function
-
 
 function void kmeans_sil_plot (const bundle Model,
                                const list xlist,
