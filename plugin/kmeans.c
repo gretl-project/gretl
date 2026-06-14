@@ -34,10 +34,10 @@
 #include "matrix_extra.h"
 
 typedef enum InitFlag_ {
-    INIT_AUTO,
-    INIT_USER,
-    INIT_RAND,
-    INIT_FIN
+    INIT_AUTO,   /* Hartigan and Wong initialization */
+    INIT_USER,   /* Initialize using input matrix */
+    INIT_RAND,   /* randomized intialization */
+    INIT_FINAL   /* Re-initialize using "best" clusters after random trials */
 } InitFlag;
 
 typedef struct hw_info_ {
@@ -216,10 +216,10 @@ static double compute_sst (hw_info *hw)
     return sst;
 }
 
-/* The initialization of @c suggested in the last paragraph of
-   Hartigan and Wong (1979): sort the data points by euclidean
-   distance from the global centroid, and select k evenly spaced
-   points from the sorted array.
+/* The initialization of @c suggested in the last paragraph of Hartigan
+   and Wong (1979): sort the data points by euclidean distance from the
+   global centroid, and select k evenly spaced points from the sorted
+   array.
 */
 
 static int hartigan_wong_init (hw_info *hw)
@@ -663,6 +663,7 @@ static gretl_bundle *trivial_case (hw_info *hw,
 			     GRETL_TYPE_MATRIX);
     gretl_bundle_donate_data(ret, "clustid", clustid,
 			     GRETL_TYPE_MATRIX);
+    gretl_bundle_set_scalar(ret, "cluster_SST", gsst);
     gretl_bundle_set_scalar(ret, "global_SST", gsst);
 
     if (verbosity) {
@@ -687,7 +688,7 @@ static int kmeans_init (hw_info *hw,
     } else if (iflag == INIT_RAND) {
 	get_k_random_candidates(hw);
     } else {
-	; /* INIT_USER or INIT_FIN: use the incoming @c as is */
+	; /* INIT_USER or INIT_FINAL: use the incoming hw->c as is */
     }
 
     /* For each point i, find its two closest centers, ic1[i] and
@@ -859,7 +860,9 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	goto bailout;
     }
 
-    if (iflag != INIT_FIN) {
+    SST = SSTmin = compute_sst(&hw);
+
+    if (iflag != INIT_FINAL) {
 	if (verbosity > 2) {
 	    pprintf(prn, "  point transfers converged in %d iterations\n", i+1);
 	}
@@ -882,12 +885,14 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	}
     }
 
+    SSTmin = MIN(SST, SSTmin);
+
     if (iflag == INIT_RAND) {
 	if (verbosity > 1) {
 	    pprintf(prn, "Minimum SST = %g\n", SSTmin);
 	}
 	gretl_matrix_copy_values(hw.c, hw.cmin);
-	iflag = INIT_FIN;
+	iflag = INIT_FINAL;
 	/* one more pass to re-establish the best result */
 	goto start_outer_loop;
     }
@@ -926,7 +931,8 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     }
     gretl_bundle_donate_data(ret, "clustid", clustid,
 			     GRETL_TYPE_MATRIX);
-    /* for reference, add the global SST */
+    /* for reference, add the cluster and global SSTs */
+    gretl_bundle_set_scalar(ret, "cluster_SST", SSTmin);
     gretl_bundle_set_scalar(ret, "global_SST", global_sst(&hw));
 
  bailout:

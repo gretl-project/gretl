@@ -7899,11 +7899,17 @@
 	  </li>
 	  <li>
 	    <para>
+	      <lit>cluster_SST</lit>: the sum of squared deviations of
+	      the points from the centroid of the cluster to which they
+	      have been assigned.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      <lit>global_SST</lit>: the sum of squared deviations of
 	      the points from the global centroid. This can be compared
-	      with the sum of the last column of <lit>clustinfo</lit>,
-	      which will be a good deal smaller if the clustering is
-	      effective.
+	      with <lit>cluster_SST</lit>, which will be a good deal
+	      smaller if the clustering is effective.
 	    </para>
 	  </li>
 	</ilist>
