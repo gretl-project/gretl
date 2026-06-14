@@ -422,9 +422,8 @@ static void add_graph_toolbar (GtkWidget *hbox, png_plot *plot)
 
 /* end apparatus for graph toolbar */
 
-/* Provide the data coordinates for a gretl/gnuplot
-   graph, if they are all positive, otherwise return
-   non-zero. Called by the plot editor.
+/* Provide the data coordinates for a gretl/gnuplot graph, if they are
+   all positive, otherwise return non-zero. Called by the plot editor.
 */
 
 int plot_get_coordinates (png_plot *plot,
@@ -1057,11 +1056,10 @@ static int is_term_line (const char *s, int *batch)
     return ret;
 }
 
-/* Check whether (a) we might want to prepend a "set
-   term" statement (not if the user has already given
-   one) and (b) whether we might want to append
-   "pause mouse close" (not if a batch-type terminal
-   has been specified).
+/* Check whether (a) we might want to prepend a "set term" statement
+   (not if the user has already given one) and (b) whether we might want
+   to append "pause mouse close" (not if a batch-type terminal has been
+   specified).
 */
 
 static void pre_test_plot_buffer (const char *buf,
@@ -1111,13 +1109,13 @@ static void geoplot_dump_revise (const char *buf,
     bufgets_finalize(buf);
 }
 
-/* dump_plot_buffer: this is used when we're taking the material from
-   an editor window containing gnuplot commands, and either (a)
-   sending it to gnuplot for execution, or (b) saving it to a "user
-   file".  In the saving-to-file case @addpause will be 0.
+/* dump_plot_buffer: this is used when we're taking the material from an
+   editor window containing gnuplot commands, and either (a) sending it
+   to gnuplot for execution, or (b) saving it to a "user file".  In the
+   saving-to-file case @addpause will be 0.
 
-   This function handles the addition of "pause mouse close",
-   if @addpause is non-zero.
+   This function handles the addition of "pause mouse close", if
+   @addpause is non-zero.
 */
 
 int dump_plot_buffer (const char *buf, const char *fname,
@@ -1278,8 +1276,8 @@ void gnuplot_view_session_graph (const char *fname)
 
 #ifdef G_OS_WIN32
 
-/* common code for sending an EMF file to the clipboard,
-   or printing an EMF, on MS Windows
+/* Common code for sending an EMF file to the clipboard, or printing an
+   EMF, on MS Windows.
 */
 
 static void win32_process_graph (png_plot *plot, int dest)
@@ -1322,8 +1320,8 @@ static png_plot *copyplot;
 static gboolean cb_image_mono;
 
 /* Here we're just posting the information that an image should be
-   available for pasting (and also recording if the user wanted it to
-   be monochrome).
+   available for pasting (and also recording if the user wanted it to be
+   monochrome).
 */
 
 static void set_plot_for_copy (png_plot *plot)
@@ -1740,9 +1738,8 @@ static int line_starts_heredata (const char *line,
 }
 
 /* This recognizes the limitations of the GPT_LABEL struct (see
-   lib/src/plotspec.h). In principle that struct could be rejigged
-   to hold information on "level" (front/back), point type and point
-   size.
+   lib/src/plotspec.h). In principle that struct could be rejigged to
+   hold information on "level" (front/back), point type and point size.
 */
 
 static int unhandled_label_spec (const char *s)
@@ -2094,8 +2091,8 @@ static int parse_gp_unset_line (GPT_SPEC *spec, const char *s)
     return err;
 }
 
-/* here we're appending a second specification (e.g. rotation)
-   to a prior tics spec (e.g. "nomirror")
+/* here we're appending a second specification (e.g. rotation) to a
+   prior tics spec (e.g. "nomirror")
 */
 
 static void xtics_concat (char *targ, const char *src, size_t sz)
@@ -2145,10 +2142,10 @@ static void read_xtics_setting (GPT_SPEC *spec,
 }
 
 /* Try to accept variant RGB specifications besides the one that's
-   standard in gretl plot files, namely "#RRGGBB" in hex. The
-   candidate string -- which might be a color name of up to 17
-   characters -- is in the @cstr argument; on success it's
-   overwritten by a standard gnuplot hex string.
+   standard in gretl plot files, namely "#RRGGBB" in hex. The candidate
+   string -- which might be a color name of up to 17 characters -- is in
+   the @cstr argument; on success it's overwritten by a standard gnuplot
+   hex string.
 */
 
 static int verify_rgb (char *cstr)
@@ -2530,9 +2527,9 @@ static int get_boxplot_auxdata (GPT_SPEC *spec, char *line,
 }
 
 /* Determine the number of data points in a plot. While we're at it,
-   determine the type of plot, check whether there are any
-   data-point markers along with the data, and see if there are
-   are definitions of time-series vertical bars.
+   determine the type of plot, check whether there are any data-point
+   markers along with the data, and see if there are are definitions of
+   time-series vertical bars.
 */
 
 static void get_plot_nobs (png_plot *plot,
@@ -2733,9 +2730,8 @@ static void grab_line_title (GPT_LINE *line, const char *src)
    using 1:2:xtic(""):ytic("")
    using 1:($2+x)
 
-   we need to extract the data column numbers, and if we
-   find special stuff inline record the 'using' string as
-   a whole
+   we need to extract the data column numbers, and if we find special
+   stuff inline record the 'using' string as a whole
 */
 
 static int process_using_spec (const char **ps,
@@ -2976,11 +2972,11 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     return err;
 }
 
-/* We got a special comment supposedly indicating the name and ID
-   number of the X or Y variable in an OLS fitted line. Here we check
-   this info for validity: @vname should be the name of a bona fide
-   series variable, and its ID number should match the given @v.  We
-   return 1 if this works out OK, otherwise 0.
+/* We got a special comment supposedly indicating the name and ID number
+   of the X or Y variable in an OLS fitted line. Here we check this info
+   for validity: @vname should be the name of a bona fide series
+   variable, and its ID number should match the given @v.  We return 1
+   if this works out OK, otherwise 0.
 */
 
 static int plot_ols_var_ok (const char *vname, int v)
@@ -3075,9 +3071,9 @@ static int plot_get_data_and_markers (GPT_SPEC *spec,
     return err;
 }
 
-/* Parse special comment to get the 0-based index numbers of
-   any user-defined lines that have been added to the plot.
-   The comment looks like:
+/* Parse special comment to get the 0-based index numbers of any
+   user-defined lines that have been added to the plot.  The comment
+   looks like:
 
    # %d user-defined lines: %d %d ...
 */
@@ -3242,8 +3238,8 @@ static void get_heatmap_matrix (GPT_SPEC *spec, gchar *buf,
    supplement or override "set" variables that are recognized by gretl
    and form part of @spec. If we don't do this the GUI plot editor may
    be broken. However, at the same time we have to be careful not to
-   break literal lines by mistakenly supposing they can be parlayed
-   into elements of @spec.
+   break literal lines by mistakenly supposing they can be parlayed into
+   elements of @spec.
 */
 
 static void maybe_promote_literal_lines (GPT_SPEC *spec,
@@ -3337,8 +3333,8 @@ static void plot_get_ols_info (const char *line,
 
 /* Read plotspec struct from gnuplot command file.  This is not a
    general parser for gnuplot files; it is designed specifically for
-   files auto-generated by gretl and even then there are some sorts
-   of plot that are not fully handled.
+   files auto-generated by gretl and even then there are some sorts of
+   plot that are not fully handled.
 */
 
 static int read_plotspec_from_file (png_plot *plot)
@@ -3827,10 +3823,9 @@ static void copy_state_to_pixbuf (png_plot *plot)
 
 # endif
 
-/* Note that the screen coordinates as of the last mouse
-   button press are recorded in plot->screen_x0 and
-   plot->screen_y0. These represent the constant corner of
-   the box that should be drawn.
+/* Note that the screen coordinates as of the last mouse button press
+   are recorded in plot->screen_x0 and plot->screen_y0. These represent
+   the constant corner of the box that should be drawn.
 */
 
 static void draw_selection_box (png_plot *plot, int x, int y)
@@ -3891,8 +3886,8 @@ static int make_alt_label (gchar *alt, const gchar *label)
 #if GTK_MAJOR_VERSION >= 3
 
 /* given a GdkPixbuf read from file, create a corresponding cairo
-   surface, attached to @plot as plot->cs. This will be used as
-   the "backing store" for re-draws of the plot.
+   surface, attached to @plot as plot->cs. This will be used as the
+   "backing store" for re-draws of the plot.
 */
 
 static int copy_pixbuf_to_surface (png_plot *plot,
@@ -4331,10 +4326,10 @@ static int substitute_graph_font (char *line, const gchar *fstr)
     return (p == NULL)? E_DATA : 0;
 }
 
-/* Filter the original font spec out of the plot file, substituting
-   the user's choice from a font selection dialog, then recreate
-   the on-screen PNG. We do this for plots for which we can't offer
-   the full-blown graph editor.
+/* Filter the original font spec out of the plot file, substituting the
+   user's choice from a font selection dialog, then recreate the
+   on-screen PNG. We do this for plots for which we can't offer the
+   full-blown graph editor.
 */
 
 void activate_plot_font_choice (png_plot *plot, const char *grfont)
@@ -5061,7 +5056,7 @@ static gchar *recover_plot_header (char *line, FILE *fp)
     return setterm;
 }
 
-/* preparation for redisplaying graph: here we handle the case where
+/* Preparation for redisplaying graph: here we handle the case where
    we're switching to a zoomed view (by use of a temporary gnuplot
    source file); then we get gnuplot to create a new PNG.
  */
@@ -5139,9 +5134,8 @@ static int repaint_png (png_plot *plot, int view)
     return render_png(plot, view);
 }
 
-/* On replacing "full" view of a plot with zoomed view:
-   sync the zoomed x and y ranges to both the plot and
-   its attached GPT_SPEC pointer.
+/* On replacing "full" view of a plot with zoomed view: sync the zoomed
+   x and y ranges to both the plot and its attached GPT_SPEC pointer.
 */
 
 static void plot_sync_xy_ranges (png_plot *plot)
@@ -5158,8 +5152,8 @@ static void plot_sync_xy_ranges (png_plot *plot)
     plot->zoom_ymin = plot->zoom_ymax = 0.0;
 }
 
-/* with a zoomed version of the current plot in place,
-   replace the full version with the zoom
+/* With a zoomed version of the current plot in place, replace the full
+   version with the zoom.
 */
 
 static int zoom_replaces_plot (png_plot *plot)
@@ -6464,10 +6458,9 @@ static void mac_do_gp_script (const char *plotfile)
 
 #endif
 
-/* Callback for "Gnuplot" item in Tools menu: open a
-   gnuplot session and let the user do whatever. In
-   this case we need a controlling terminal window if
-   we're not on MS Windows.
+/* Callback for "Gnuplot" item in Tools menu: open a gnuplot session and
+   let the user do whatever. In this case we need a controlling terminal
+   window if we're not on MS Windows.
 */
 
 void launch_gnuplot_interactive (void)
