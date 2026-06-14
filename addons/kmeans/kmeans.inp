@@ -111,21 +111,10 @@ function series kmeans_predict (const list xlist "Features",
     return cluster_id
 end function
 
-function void check_required_pkg_version (void)
-    /* Check if installed dependencies fulfill version requirements. */
-
-    pkg query PairPlot --quiet
-    errorif($result.version < 0.8,\
-            sprintf("Please update the 'PairPlot' package to at least version 0.8.\n\ The hansl command is 'pkg install PairPlot'")\
-            )
-end function
-
 function bundle kmeans_fit (const list xlist "Features",
                             const int n_clusters[1::2] "No. of clusters",
                             bundle opts[null] "Parameter bundle")
     /* Estimate clusters. */
-
-    check_required_pkg_version()
 
     if !exists(opts)
         bundle opts = defbundle()
