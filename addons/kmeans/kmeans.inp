@@ -308,7 +308,7 @@ function bundle within_cluster_variation (const matrix distances,
         if cluster_size == 0
             B.sum_of_avg_variation += sum(squared_distances).^2 * (1/rows(squared_distances))
         else
-            B.sum_of_avg_variation += sum(selifr(squared_distances, cluster_mask).^2) * (1 / cluster_size)
+            B.sum_of_avg_variation += sum(selifr(squared_distances, cluster_mask)) * (1 / cluster_size)
         endif
     endloop
 
