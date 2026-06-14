@@ -17,6 +17,7 @@ void sample_menubar_state (gboolean s);
 void drop_obs_state (gboolean s);
 void iconview_menubar_state (gboolean s);
 void main_menus_enable (gboolean s);
+void gretl_edit_menu_state (gboolean s);
 
 void sample_related_menu_state (void);
 
