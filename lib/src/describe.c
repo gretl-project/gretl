@@ -7345,17 +7345,17 @@ int diff_test (const int *list, const DATASET *dset,
 
 /**
  * means_test:
- * @list: gives the ID numbers of the variables to compare.
+ * @list: gives the ID numbers of the series to compare.
  * @dset: dataset struct.
  * @opt: if OPT_O, assume that the population variances differ;
- * if OPT_D interpret the second series as a factor (dummy);
- * if OPT_R, carry out a robust, regression-based test; if OPT_P,
- * carry out a paired-difference test; if OPT_Q, don't print
+ * if OPT_D (--split-by) interpret the second series as a factor (dummy);
+ * if OPT_R, carry out a robust, regression-based test; if OPT_P
+ * (--paired) carry out a paired-difference test; if OPT_Q, don't print
  * the resuults.
  * @prn: gretl printing struct.
  *
  * Carries out test of the null hypothesis that the means of two
- * variables are equal.
+ * series are equal.
  *
  * Returns: 0 on successful completion, error code on error.
  */
@@ -7376,8 +7376,11 @@ int means_test (const int *list, const DATASET *dset,
     int df, err;
 
     if (paired && usedum) {
-        /* Can't use --split-by with paired samples */
-        return E_BADOPT;
+	/* --split-by and --paired are incompatible */
+	return E_BADOPT;
+    } else if (!usedum && list[0] == 1) {
+	/* We need two series */
+	return E_ARGS;
     }
 
     err = incompatible_options(opt, OPT_O | OPT_P | OPT_R);
