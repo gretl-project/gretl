@@ -283,23 +283,14 @@ function bundle within_cluster_variation (const matrix distances,
       But it could also be some other distance measure.
 
       The following definition is equal to the within-cluster variation as
-      defined in James et al. "An Introduction to Statistical Learning", p. 387.
+      defined in James et al. "An Introduction to Statistical Learning", p. 
+      387--388.
     */
 
-    scalar n_clusters = max(cluster_id)
     matrix squared_distances = distances.^2
-    bundle B = _(sum_of_avg_variation = 0,\
+    matrix agg = aggregate(squared_distances, cluster_id, mean)
+    bundle B = _(sum_of_avg_variation = sumc(agg[,3]),\
                  sum_of_total_variation = sum(squared_distances))
-
-    loop i=1..n_clusters
-        matrix cluster_mask = (cluster_id .= $i)
-        scalar cluster_size = sum(cluster_mask)
-        if cluster_size == 0
-            B.sum_of_avg_variation += sum(squared_distances).^2 * (1/rows(squared_distances))
-        else
-            B.sum_of_avg_variation += sum(selifr(squared_distances, cluster_mask)) * (1 / cluster_size)
-        endif
-    endloop
 
     return B
 end function
