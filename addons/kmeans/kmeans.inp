@@ -74,47 +74,54 @@ function matrix init_centroids_by_pca (const matrix features,
     return features[mask,]
 end function
 
-function matrix compute_distance (const matrix features,
-                                  const string distance_type,
-                                  const matrix centroids)
-    /* Compute distance between two matrices.
-    return: Matrix of distances.*/
-
-    if $version < 20252 && distance_type == "mahalanobis"
-        /* Before version 20252, the distance() function did not treat the
-           3rd argument consistently with the other metrics for the "mahalanobis" case.*/
-        scalar m = rows(features)
-        scalar p = rows(centroids)
-        matrix ret = zeros(m, p)
-        matrix C = cholesky(mcov(features))'
-        matrix z1n = zeros(1, cols(features))
-        loop j=1..p
-            ret[,j] = distance((features .- centroids[j,]) / C, "euclidean", z1n)
-        endloop
-    else
-        matrix ret = distance(features, distance_type, centroids)
-    endif
-
-    return ret
-end function
-
 function series kmeans_predict (const list xlist "Features",
                                 const bundle self)
-    /* Predict cluster belonging for a given model.
-    return: Series with predicted cluster belongings. */
+    /* Predict cluster membership for a given model,
+       returning the result as a series.
+    */
 
     errorif(sum(missing(xlist)), "Some features have missing values. Please drop these first.")
 
-    matrix distances = compute_distance({xlist}, self.distance_type, self.centroids)
+    matrix distances = distance({xlist}, self.distance_type, self.centroids)
     series cluster_id = iminr(distances)
 
     return cluster_id
 end function
 
-function bundle kmeans_fit (const list xlist "Features",
-                            const int n_clusters[1::2] "No. of clusters",
-                            bundle opts[null] "Parameter bundle")
+function bundle call_ASA136 (const matrix X,
+                             int n_clusters,
+                             const bundle opts[null])
+    m = rows(X)
+    n = cols(X)
+    bundle b = kmeans(X, n_clusters, opts)
+    matrix C = b.clustinfo[,2:end-1]
+    # print C
+    matrix dsq = zeros(m, 1)
+    loop i=1..m
+        k = b.clustid[i]
+        loop j=1..n
+            d = X[i,j] - C[k,j]
+            dsq[i] += d * d
+        endloop
+    endloop
+    return _(within_variation_total = b.cluster_SST,
+      centroids = C, cluster_id = b.clustid, distances = dsq)
+    return b
+end function
+
+function bundle real_kmeans_fit (const list xlist,
+                                 int n_clusters[1::2],
+                                 const matrix clusters[null],
+                                 bundle opts[null])
     /* Estimate clusters. */
+
+    if typeof(clusters) == 3
+        # we got an initial clusters matrix
+        errorif(cols(clusters) != nelem(xlist),
+          sprintf("Columns of clusters (%d) doesn't match number of features (%d)",
+          cols(clusters), nelem(xlist)))
+        n_clusters = rows(clusters)
+    endif
 
     if !exists(opts)
         bundle opts = defbundle()
@@ -127,13 +134,34 @@ function bundle kmeans_fit (const list xlist "Features",
     self.distance_type = tolower(self.distance_type)
     self.initializer = tolower(self.initializer)
     self.algorithm = tolower(self.algorithm)
+
     scalar self.n_clusters = n_clusters
+    if exists(clusters)
+        matrix self.clusters0 = clusters
+    endif
     matrix features = {xlist}
     scalar self.within_variation_total = $huge
     scalar draw_id = 1
     matrix self.cluster_id = mshape(NA, $nobs, 1)
     matrix self.distances = mshape(NA, $nobs, 1)
     scalar counter_errors = 0
+
+    if self.verbose
+        printf "kmeans_fit: %d observations, %d features, %d clusters\n",
+          $nobs, nelem(xlist), n_clusters
+        printf "metric is %s, with %d random draws\n", self.distance_type, self.n_draws
+    endif
+
+    # proof of concept: prior call to built-in kmeans()
+    if 0 # self.distance_type == "euclidean"
+        bundle Tmp = call_ASA136(features, n_clusters)
+        scalar self.within_variation_total = Tmp.within_variation_total
+        matrix self.centroids = Tmp.centroids
+        matrix cluster_id = Tmp.cluster_id
+        matrix distances = Tmp.distances
+        # print "Via ASA136"
+        # print distances      
+    endif
 
     loop self.n_draws  # evaluate several initial random draws of clusters
         if self.verbose == 2
@@ -165,6 +193,8 @@ function bundle kmeans_fit (const list xlist "Features",
     endif
 
     cnameset(self.centroids, varnames(xlist))
+    print self.centroids
+    print distances
 
     matrix self.cluster_id = cluster_id
     matrix self.distances = distances
@@ -173,11 +203,17 @@ function bundle kmeans_fit (const list xlist "Features",
     return self
 end function
 
+function bundle kmeans_fit (const list xlist "Features",
+                            const int n_clusters[1::2] "No. of clusters",
+                            bundle opts[null] "Parameter bundle")
+    return real_kmeans_fit(xlist, n_clusters, null, opts)
+end function
+
 function void add_variations (const matrix features, bundle *self)
     /* Add various variation statistics.
     return: void */
 
-    matrix distances_from_mean = compute_distance(features, self.distance_type, meanc(features))
+    matrix distances_from_mean = distance(features, self.distance_type, meanc(features))
     self.total_ssq = sumc(distances_from_mean.^2)
 
     bundle B = within_cluster_variation(self.distances, self.cluster_id)
@@ -239,7 +275,7 @@ function bundle compute_kmeans (const bundle self, const matrix features)
 
     loop while iter <= self.max_iter
         matrix centroids = compute_centroids(features, current_cluster_id)
-        matrix all_distances = compute_distance(features, self.distance_type, centroids)
+        matrix all_distances = distance(features, self.distance_type, centroids)
         matrix new_cluster_id = iminr(all_distances)
 
         if rows(values(new_cluster_id)) == n_clusters  # check + update
@@ -311,9 +347,11 @@ function matrix compute_centroids (const matrix features,
 end function
 
 function string get_distance_type (const int distance)
-    /* Only for kmeansGUI(). Maps the integer to the name of the respective distance measure. */
+    /* Only for kmeansGUI(). Maps the integer code to the name of
+    the distance measure. */
 
-    strings Distances = defarray("euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis")
+    strings Distances = defarray("euclidean", "manhattan", "hamming", "chebyshev",
+      "cosine", "mahalanobis")
 
     return Distances[distance]
 end function
@@ -414,7 +452,7 @@ function series kmeans_sil_samples (const bundle Model, const list xlist)
         matrix own_points = selifr(features, own_cluster_mask)
         if sum(own_cluster_mask) > 1
             # 1st entry is the distance to self, so we skip it
-            matrix dists_own = compute_distance(features[i,], Model.distance_type, own_points)[2:]'
+            matrix dists_own = distance(features[i,], Model.distance_type, own_points)[2:]'
             # The pairwise distance is the same as the this one:
             /* matrix dat = features[i,] | own_points
             matrix dists_own2 = unvech(distance(dat, Model.distance_type), 0)[2:,1]
@@ -435,7 +473,7 @@ function series kmeans_sil_samples (const bundle Model, const list xlist)
             matrix mask_k = (cluster_id .= k)
             if sum(mask_k) > 0
                 matrix other_points = selifr(features, mask_k)
-                matrix dists_other = compute_distance(features[i,], Model.distance_type, other_points)
+                matrix dists_other = distance(features[i,], Model.distance_type, other_points)
                 scalar mean_other_distance = sum(dists_other) / nelem(dists_other)
                 if mean_other_distance < b_i
                     b_i = mean_other_distance  # update the "neigboring cluster"
@@ -526,7 +564,6 @@ function void kmeans_sil_plot (const bundle Model,
         matrix cluster_sil_values = selifr(plot_data, cluster_mask)[,1]
         matrix cluster_sil_values = mreverse(msortby(cluster_sil_values, 1))
         cluster_sil_values ~= mean_sil_score
-
 
         plot cluster_sil_values
             options fit=none time-series single-yaxis with-lines=2 \
