@@ -1762,6 +1762,19 @@ real_matrix_print_to_prn (const gretl_matrix *m,
     if (colnames == NULL) {
 	colnames = gretl_matrix_get_colnames(m);
     }
+    if (colnames != NULL) {
+	int n, maxlen = 0;
+
+	for (i=0; i<m->cols; i++) {
+	    n = strlen(colnames[i]);
+	    if (n+1 > maxlen) {
+		maxlen = n+1;
+	    }
+	}
+	if (maxlen < strwidth) {
+	    strwidth = maxlen < 8 ? 8 : maxlen;
+	}
+    }
 
     rownames = gretl_matrix_get_rownames(m);
 

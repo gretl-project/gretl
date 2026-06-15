@@ -217,7 +217,7 @@ static double compute_sst (hw_info *hw)
 }
 
 /* The initialization of @c suggested in the last paragraph of Hartigan
-   and Wong (1979): sort the data points by euclidean distance from the
+   and Wong (1979): sort the data points by Euclidean distance from the
    global centroid, and select k evenly spaced points from the sorted
    array.
 */
