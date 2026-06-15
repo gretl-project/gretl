@@ -8040,21 +8040,29 @@
 	  </li>
 	  <li>
 	    <para>
-	      <lit>clustinfo</lit>: una matrice con <math>k</math> righe e <math>n</math>+2
-	      colonne. La prima colonna contiene il numero di punti
-	      inclusi in ciascun cluster; le successive n colonne
-	      contengono il centroide del cluster; l’ultima colonna
-	      contiene la somma dei quadrati degli scarti dei punti
-	      appartenenti al cluster rispetto al suo centroide.
+	      <lit>clustinfo</lit>: una matrice con <math>k</math>
+	      righe e <math>n</math>+2 colonne. La prima colonna
+	      contiene il numero di punti inclusi in ciascun cluster;
+	      le successive <math>n</math> colonne contengono il
+	      centroide del cluster; l’ultima colonna contiene la
+	      somma dei quadrati degli scarti dei punti appartenenti
+	      al cluster rispetto al suo centroide.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <lit>global_SST</lit>: : la somma dei quadrati degli
+	     <lit>cluster_SST</lit>: la somma dei quadrati degli
+	     scarti dei punti rispetto al centroide del cluster a cui
+	     sono stati assegnati.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>global_SST</lit>: la somma dei quadrati degli
 	      scarti dei punti rispetto al centroide globale. Questo
-	      valore può essere confrontato con la somma dell’ultima
-	      colonna di <lit>clustinfo</lit>, che risulterà tanto più
-	      piccola quanto più la classificazione è efficace.
+	      valore può essere confrontato con
+	      <lit>cluster_SST</lit>, che risulterà tanto più piccolo
+	      quanto più la classificazione è efficace.
 	    </para>
 	  </li>
 	</ilist>
