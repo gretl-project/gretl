@@ -129,7 +129,9 @@ enum {
 #define ustring_node(n) (n->t == STR && n->vname != NULL)
 #define ulist_node(n)   (n->t == LIST && n->vname != NULL)
 #define useries_node(n) (n->t == SERIES && n->vnum >= 0)
-#define uvar_node(n)    (n->vname != NULL)
+
+#define uvar_node(n) (n->vname != NULL)
+#define func_node(n) (n->t == UFUN || (n->t > F1_MIN && n->t < FN_MAX))
 
 #define scalar_matrix_node(n) (n->t == MAT && gretl_matrix_is_scalar(n->v.m))
 #define scalar_node(n) (n->t == NUM || scalar_matrix_node(n))
@@ -5676,7 +5678,7 @@ static NODE *object_slice_node (NODE *s, NODE *l, NODE *r, parser *p)
 	if (obj != NULL) {
 	    if (obj->t == MAT || obj->t == BUNDLE || obj->t == ARRAY) {
 		; /* OK */
-	    } else if (obj->t == BMEMB || obj->t == OSL || obj->t == UFUN) {
+	    } else if (obj->t == BMEMB || obj->t == OSL || func_node(obj)) {
 		if (obj->aux != NULL) {
 		    obj = obj->aux;
 		}
