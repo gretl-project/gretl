@@ -193,8 +193,11 @@ function bundle real_kmeans_fit (const list xlist,
     endif
 
     cnameset(self.centroids, varnames(xlist))
-    print self.centroids
-    print distances
+    if self.verbose
+        printf "minimized objective function: %g\n\n",
+          self.within_variation_total
+        print self.centroids
+    endif
 
     matrix self.cluster_id = cluster_id
     matrix self.distances = distances
