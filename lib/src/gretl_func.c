@@ -11603,8 +11603,18 @@ static void check_for_comment (const char *s, int *incomm)
 {
     const char *p = s;
     int commbak = *incomm;
+    int started = 0;
     int quoted = 0;
 
+    p = s + strspn(s, " \t");
+    if (*incomm == 2 && ends_ccmt(p)) {
+	*incomm = 0;
+	p += 2;
+	p += strspn(p, " ");
+	return;
+    }
+
+    p = s;
     while (*p) {
         if (!quoted && !*incomm && *p == '#') {
             break;
@@ -11614,10 +11624,11 @@ static void check_for_comment (const char *s, int *incomm)
         }
         if (!quoted) {
             if (starts_ccmt(p)) {
+		started = 1;
                 *incomm = 1;
                 p += 2;
             } else if (ends_ccmt(p)) {
-                *incomm = 0;
+                *incomm = started ? 0 : 3;
                 p += 2;
                 p += strspn(p, " ");
             }
@@ -11627,7 +11638,7 @@ static void check_for_comment (const char *s, int *incomm)
         }
     }
 
-    if (*incomm && commbak) {
+    if (*incomm > 0 && *incomm < 3 && commbak) {
         /* on the second or subsequent line of a C-style comment */
         *incomm = 2;
     }
@@ -11803,7 +11814,7 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
 
         if (!handled) {
             nsp = this_indent * tabwidth;
-            if (incomment == 2) {
+            if (incomment > 1) {
 		/* C-style comment continuation */
 		nsp += 3;
             } else if (continuation) {
@@ -11828,6 +11839,9 @@ void normalize_hansl (const char *buf, int tabwidth, PRN *prn)
 	    /* scrub the left-paren record */
             lp_zero = lp_pos = 0;
         }
+	if (incomment == 3) {
+	    incomment = 0;
+	}
     }
 
     bufgets_finalize(buf);

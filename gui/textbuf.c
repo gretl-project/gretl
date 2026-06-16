@@ -127,6 +127,9 @@ static int maybe_insert_smart_tab (GtkWidget *w, int *comp_ok);
 #ifndef GRETL_EDIT
 static gchar *textview_get_current_line_with_newline (GtkWidget *view);
 #endif
+static gboolean get_function_limits (GtkTextBuffer *tbuf,
+				     GtkTextIter *istart,
+				     GtkTextIter *iend);
 
 static int object_get_int (gpointer p, const char *key)
 {
@@ -1034,14 +1037,13 @@ static gchar *ensure_utf8_path (gchar *path)
 
 # endif
 
-/* Packages for Windows and macOS: gtksourceview needs to
-   be told where to find its language-specs and style
-   files: these live under gtksourceview inside the package.
+/* Packages for Windows and macOS: gtksourceview needs to be told where
+   to find its language-specs and style files: these live under
+   gtksourceview inside the package.
 
-   On Windows we need to ensure that the "set_search_path"
-   functions are fed a UTF-8 path, since gtksourceview uses
-   g_open() internally and the Glib filename encoding is
-   always UTF-8 on Windows.
+   On Windows we need to ensure that the "set_search_path" functions are
+   fed a UTF-8 path, since gtksourceview uses g_open() internally and
+   the Glib filename encoding is always UTF-8 on Windows.
 */
 
 static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
@@ -1073,9 +1075,9 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 
 #else /* not PKGBUILD */
 
-/* gtksourceview needs to be told to search both its own "native"
-   paths and @prefix/share/gretl/gtksourceview for both language
-   file and style files
+/* gtksourceview needs to be told to search both its own "native" paths
+   and @prefix/share/gretl/gtksourceview for both language file and
+   style files
 */
 
 static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
@@ -3437,9 +3439,8 @@ static void normalize_indent (GtkTextBuffer *tbuf,
     }
 
     if (region) {
-	/* identify the case where a region ended prior to
-	   the end of the script, and did not include a
-	   trailing newline
+	/* Identify the case where a region ended prior to the end of
+	   the script, and did not include a trailing newline.
 	*/
 	GtkTextIter final;
 
@@ -3454,7 +3455,7 @@ static void normalize_indent (GtkTextBuffer *tbuf,
     normalize_hansl(buf, tabwidth, prn);
     ins = gretl_print_steal_buffer(prn);
     if (strip_nl) {
-	/* strip an appended newline if need be */
+	/* Strip an appended newline if need be. */
 	int len = strlen(ins);
 
 	if (ins[len-1] == '\n') {
@@ -3540,6 +3541,19 @@ static void auto_indent_script (GtkWidget *w, windata_t *vwin)
     gtk_adjustment_value_changed(adj);
 }
 
+static void indent_function (GtkWidget *w, gpointer p)
+{
+    struct textbit *tb = (struct textbit *) p;
+    GtkTextIter start, end;
+    gchar *text = NULL;
+
+    if (get_function_limits(tb->buf, &start, &end)) {
+	text = gtk_text_buffer_get_text(tb->buf, &start, &end, FALSE);
+	normalize_indent(tb->buf, text, &start, &end, 1);
+	g_free(text);
+    }
+}
+
 static void indent_region (GtkWidget *w, gpointer p)
 {
     struct textbit *tb = (struct textbit *) p;
@@ -3553,7 +3567,6 @@ static void indent_region (GtkWidget *w, gpointer p)
 	gtk_text_buffer_delete(tb->buf, &tb->start, &tb->end);
 
 	bufgets_init(tb->chunk);
-
 	while (bufgets(line, sizeof line, tb->chunk)) {
 	    n = spaces_to_tab_stop(line, TAB_NEXT);
 	    for (i=0; i<n; i++) {
@@ -3561,7 +3574,6 @@ static void indent_region (GtkWidget *w, gpointer p)
 	    }
 	    gtk_text_buffer_insert(tb->buf, &tb->start, line, -1);
 	}
-
 	bufgets_finalize(tb->chunk);
     }
 }
@@ -3850,14 +3862,16 @@ static int line_continues_previous (GtkTextBuffer *tbuf,
     return ret;
 }
 
-/* get "command word", max 8 characters: work backwards up script
-   to find this */
+/* Get a "command word", max 8 characters: work backwards up script
+   to find this.
+*/
 
 static char *get_previous_line_start_word (char *word,
 					   GtkTextBuffer *tbuf,
 					   GtkTextIter iter,
 					   int *leadspace,
-					   int *contd)
+					   int *contd,
+					   int *ccmt_end)
 {
     GtkTextIter end, prev = iter;
     int *pcont = contd;
@@ -3872,8 +3886,18 @@ static char *get_previous_line_start_word (char *word,
 	if (gtk_text_iter_forward_to_line_end(&end)) {
 	    s = gtk_text_buffer_get_text(tbuf, &prev, &end, FALSE);
 	    if (s != NULL) {
-		if (i == 0 && s[strlen(s)-1] == ')') {
-		    rparen = 1;
+		int n = strlen(s);
+
+		if (i == 0) {
+		    /* Check for some possibly relevant stuff at
+		       the end of the previous line.
+		    */
+		    if (s[n-1] == ')') {
+			rparen = 1;
+		    } else if (ccmt_end != NULL &&
+			       s[n-1] == '/' && s[n-2] == '*') {
+			*ccmt_end = 1;
+		    }
 		}
 		if (get_word_and_cont(s, word, pcont)) {
 		    pcont = NULL;
@@ -3881,12 +3905,10 @@ static char *get_previous_line_start_word (char *word,
 		g_free(s);
 	    }
 	}
-
 	if (line_continues_previous(tbuf, prev)) {
 	    /* back up one line further */
 	    *word = '\0';
 	}
-
 	if (*word != '\0' && leadspace != NULL) {
 	    *leadspace = leading_spaces_at_iter(tbuf, &prev, word);
 	}
@@ -3961,6 +3983,7 @@ static int maybe_insert_smart_tab (GtkWidget *w, int *comp_ok)
 	GtkTextIter prev = start;
 	char *s, thisword[9] = {0};
 	char prevword[9];
+	int ccmt_end = 0;
 	int contd = 0;
 	int i, nsp = 0;
 
@@ -3971,18 +3994,26 @@ static int maybe_insert_smart_tab (GtkWidget *w, int *comp_ok)
 		    "current line = '%s'\n", s);
 #endif
 	    sscanf(s, "%8s", thisword);
+	    fprintf(stderr, "thisword = '%s'\n", thisword);
 	    curr_nsp = strspn(s, " \t");
 	    g_free(s);
 	}
 
-	get_previous_line_start_word(prevword, tbuf, prev, &nsp, &contd);
+	if (!strcmp(thisword, "*/")) {
+	    /* special case: @thisword ends a C-style comment */
+	    ccmt_end = 1;
+	}
 
+	get_previous_line_start_word(prevword, tbuf, prev,
+				     &nsp, &contd, &ccmt_end);
 	if (contd) {
 	    nsp += 2;
+	} else if (ccmt_end) {
+	    nsp -= 3;
 	} else {
 	    nsp += incremental_leading_spaces(prevword, thisword);
 #if TABDEBUG > 1
-	    fprintf(stderr, "    leading spaces: nsp + incr = %d, curr_nsp %d\n",
+	    fprintf(stderr, "leading spaces %d, current_nsp %d\n",
 		    nsp, curr_nsp);
 #endif
 	}
@@ -4159,7 +4190,8 @@ static gboolean script_electric_enter (GtkWidget *text, int alt)
 	*thisword = '\0';
 	sscanf(s, "%8s", thisword);
 	nsp = count_leading_spaces(s);
-	get_previous_line_start_word(prevword, tbuf, start, &targsp, &contd);
+	get_previous_line_start_word(prevword, tbuf, start,
+				     &targsp, &contd, NULL);
 
 #if TABDEBUG
 	if (contd) {
@@ -4391,6 +4423,96 @@ static void call_prefs_dialog (GtkWidget *w, windata_t *vwin)
     preferences_dialog(TAB_EDITOR, NULL, vwin_toplevel(vwin));
 }
 
+static gboolean basic_forward_search (GtkTextIter *iter,
+				      const char *needle,
+				      GtkTextIter *match)
+{
+#if GTKSOURCEVIEW_VERSION == 2
+    return gtk_source_iter_forward_search(iter, needle,
+					  0, match,
+					  NULL, NULL);
+#else
+    return gtk_text_iter_forward_search(iter, needle,
+					0, match,
+					NULL, NULL);
+#endif
+}
+
+static gboolean basic_backward_search (GtkTextIter *iter,
+				       const char *needle,
+				       GtkTextIter *match)
+{
+#if GTKSOURCEVIEW_VERSION == 2
+    return gtk_source_iter_backward_search(iter, needle,
+					   0, match,
+					   NULL, NULL);
+#else
+    return gtk_text_iter_backward_search(iter, needle,
+					 0, match,
+					 NULL, NULL);
+#endif
+}
+
+static gint point_is_in_function (GtkTextBuffer *tbuf)
+{
+    const char *fstart = "function ";
+    const char *fstop = "end function";
+    GtkTextIter iter, match1, match2;
+    gboolean f1, f2;
+    gint ret = 0;
+
+    /* Note that for @fstart and @fstop to be counted as relevant,
+       they should occur at the start of a line.
+    */
+
+    gtk_text_buffer_get_iter_at_mark(tbuf, &iter,
+				     gtk_text_buffer_get_insert(tbuf));
+
+    f1 = basic_backward_search(&iter, fstart, &match1);
+    if (!f1 || gtk_text_iter_get_line_offset(&match1) > 0) {
+	/* we can't be inside a function */
+	return 0;
+    }
+
+    f2 = basic_backward_search(&iter, fstop, &match2);
+    if (f1 && (!f2 || gtk_text_iter_get_line_offset(&match2) > 0)) {
+	/* we found @fstart but not @fstop */
+	ret = 1;
+    } else if (f1 && f2 && gtk_text_iter_compare(&match1, &match2) > 0) {
+	/* we found both, with @fstart occurring after @fstop */
+	ret = 1;
+    }
+
+    return ret;
+}
+
+static gboolean get_function_limits (GtkTextBuffer *tbuf,
+				     GtkTextIter *istart,
+				     GtkTextIter *iend)
+{
+    const char *fstart = "function ";
+    const char *fstop = "end function";
+    GtkTextIter iter;
+    gboolean f1, f2;
+    gboolean ret = FALSE;
+
+    gtk_text_buffer_get_iter_at_mark(tbuf, &iter,
+				     gtk_text_buffer_get_insert(tbuf));
+
+    f1 = basic_backward_search(&iter, fstart, istart);
+    f2 = basic_forward_search(&iter, fstop, iend);
+
+    if (f1 && f2 && gtk_text_iter_compare(istart, iend) < 0) {
+	gtk_text_iter_forward_to_line_end(iend);
+	ret = TRUE;
+    } else if (f1 && !f2) {
+	gtk_text_buffer_get_end_iter(tbuf, iend);
+	ret = TRUE;
+    }
+
+    return ret;
+}
+
 static GtkWidget *
 build_script_popup (windata_t *vwin, struct textbit **ptb)
 {
@@ -4457,36 +4579,38 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
 	item = gtk_menu_item_new_with_label(_(items[i]));
 	g_signal_connect(G_OBJECT(item), "activate",
-			 G_CALLBACK(comment_or_uncomment_text),
-			 *ptb);
+			 G_CALLBACK(comment_or_uncomment_text), *ptb);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
     }
 
     if (editing_hansl(vwin->role)) {
-	if (tb->selected) {
+	if (point_is_in_function(tb->buf)) {
+	    item = gtk_menu_item_new_with_label(_("Auto-indent function"));
+	    g_signal_connect(G_OBJECT(item), "activate",
+			     G_CALLBACK(indent_function), *ptb);
+	    gtk_widget_show(item);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+	} else if (tb->selected) {
 	    /* indentation of selection */
 	    item = gtk_menu_item_new_with_label(smarttab?
 						_("Auto-indent region") :
 						_("Indent region"));
 	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(indent_region),
-			     *ptb);
+			     G_CALLBACK(indent_region), *ptb);
 	    gtk_widget_show(item);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
 	    /* visibility of selection */
 	    item = gtk_menu_item_new_with_label(_("Hide region"));
 	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(hide_region),
-			     *ptb);
+			     G_CALLBACK(hide_region), *ptb);
 	    gtk_widget_show(item);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
 	}
 	if (!smarttab && tb->selected && text_is_indented(tb->chunk)) {
 	    item = gtk_menu_item_new_with_label(_("Unindent region"));
 	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(unindent_region),
-			     *ptb);
+			     G_CALLBACK(unindent_region), *ptb);
 	    gtk_widget_show(item);
 	    gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
 	}
