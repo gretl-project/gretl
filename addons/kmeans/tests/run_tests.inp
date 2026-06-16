@@ -1,0 +1,227 @@
+set verbose off
+clear
+
+set assert stop
+include assertion.gfn
+
+include ../kmeans.inp
+#include distances.gfn
+#include logging.gfn
+
+nulldata 40
+matrix m = mnormal($nobs, 6)
+list L = null
+loop i=1..cols(m)
+    L += genseries(sprintf("v%d", $i), m[,i])
+endloop
+
+bundles Params = null
+Params = Params + _(initializer = "random",
+                    n_clusters = 2,
+                    expected_values = 2,
+                    expected_nobs = $nobs,
+                    distance_type = "euclidean")
+Params = Params + _(initializer = "random",
+                    n_clusters = 4,
+                    expected_values = 4,
+                    expected_nobs = $nobs,
+                    distance_type = "euclidean")
+Params = Params + _(initializer = "pca",
+                    n_clusters = 4,
+                    expected_values = 4,
+                    expected_nobs = $nobs,
+                    distance_type = "mahalanobis")
+
+function void test_initialize_clusters (const list L, const bundles P)
+    print "Start testing function initialize_clusters()."
+
+    matrix x = {L}
+
+    loop foreach i P
+        printf "Testing with initializer=%s, n_clusters=%d, distance_type=%s\n",
+          P[i].initializer, P[i].n_clusters, P[i].distance_type
+
+        # Given
+        bundle Input = _(initializer = P[i].initializer,
+                         n_clusters = P[i].n_clusters,
+                         distance_type = P[i].distance_type)
+
+        # When
+        matrix actual = initialize_clusters(x, Input)
+        scalar actual_nobs = rows(actual)
+
+        scalar actual_values = rows(values(actual))
+
+        # Then
+        assert(actual_nobs == P[i].expected_nobs)
+        assert(actual_values == P[i].expected_values)
+    endloop
+end function
+test_initialize_clusters(L, Params)
+
+
+
+
+matrix features = {0, 1, 2;\
+                   2, 3, 4;\
+                   1, 1, 1;\
+                   8, 10, 12}
+bundles Params = null
+Params = Params + _(features = features,\
+                    cluster_id = {1; 1; 2; 2},\
+                    expected_centroids = {1, 2, 3;\
+                                          4.5, 5.5, 6.5},\
+                    expected_rows_labels = defarray("Centroid=1", "Centroid=2")\
+                    )
+Params = Params + _(features = features,\
+                    cluster_id = {1; 1; 2; 3},\
+                    expected_centroids = {1, 2, 3;\
+                                          1, 1, 1;\
+                                          8, 10, 12},\
+                    expected_rows_labels = defarray("Centroid=1",\
+                                                    "Centroid=2",\
+                                                    "Centroid=0")\
+                    )
+
+function void test_compute_centroids (const bundles P)
+    print "Start testing function compute_centroids()."
+
+    loop foreach i P
+        # Given
+        expected_n_centroids = rows(P[i].expected_centroids)
+        expected_centroids = vec(P[i].expected_centroids)
+
+        # When
+        matrix actual = compute_centroids(P[i].features, P[i].cluster_id)
+        print actual
+        strings actual_row_labels = rnameget(actual)
+        scalar actual_n_centroids = rows(actual)
+        actual = vec(actual)
+
+        # Then
+        loop j=1..rows(actual)
+            assert(actual[j] == expected_centroids[j])
+        endloop
+
+        loop j=1..nelem(P[i].expected_rows_labels)
+            assert(actual_row_labels[j] == P[i].expected_rows_labels[j])
+        endloop
+    endloop
+end function
+test_compute_centroids(Params)
+
+
+
+set seed 12345
+nulldata 256
+scalar n_clusters = 3
+
+
+function list build_dataset (const int n_clusters)
+    /* Compile example dataset. */
+
+    true = randgen(i, 1, n_clusters)
+    nvar = 4
+    m = 2 * mnormal(nvar, n_clusters)
+
+    list X = null
+    loop i = 1..nvar
+        x$i = normal() + replace(true, seq(1, n_clusters), m[i,])
+        X += x$i
+    endloop
+
+    return X
+end function
+
+function void test_kmeans_fit (const int n_clusters)
+    print "Start testing function kmeans_fit()"
+
+    # Given
+    /* We compare against R
+    columns = sprintf("3:%d\n", nvar+2)
+    kstr = sprintf("%d", nc)
+    foreign language=R --send-data
+        # install.packages("stats")
+        X = gretldata[,@columns];
+        moo <- kmeans(X, @kstr);
+        sort(moo$centers)
+        moo$totss
+        moo$withinss
+        moo$tot.withinss
+        moo$betweenss
+        summary(moo);
+        Rc <- moo$cluster;
+        write.csv(Rc, "/home/at/tmp/Rc.csv");
+    end foreign
+    append "/home/at/tmp/Rc.csv"
+    */
+
+    list X = build_dataset(n_clusters)  # seed: 12345
+    matrix expected_centroids = {-3.8484, -1.5347, -1.1536,\
+                                 -1.0501, -0.18217, -0.15841,\
+                                 -0.039039, -0.0036822, 0.79111,\
+                                  1.2147, 1.3121, 1.7962}'
+    scalar expected_total_ssq = 2292.87
+    scalar expected_within_variation_total = 966.275
+    scalar expected_between_variation = 1326.59
+
+    # When
+    bundle actual = kmeans_fit(X, n_clusters)
+    matrix actual_centroids = sort(vec(actual.centroids))
+    scalar actual_total_ssq = actual.total_ssq
+    scalar actual_within_variation_total = actual.within_variation_total
+    scalar actual_between_variation = actual.between_variation
+
+    # Then
+    print "Comparing results for total_ssq"
+    assert_almost_equal_num(actual_total_ssq, expected_total_ssq, 1e-3)
+    print "Comparing results for within_variation_total"
+    assert_almost_equal_num(actual_within_variation_total, expected_within_variation_total, 1e-3)
+    print "Comparing results for between_variation"
+    assert_almost_equal_num(actual_between_variation, expected_between_variation, 1e-2)
+
+    loop i=1..rows(actual_centroids)
+        assert_almost_equal_num(actual_centroids[i], expected_centroids[i], 1e-4)
+    endloop
+end function
+test_kmeans_fit(n_clusters)
+
+
+
+set seed 12345432
+open abdata.gdt
+list X = k w ys
+depvar = n
+list Z = depvar X
+list P = const
+loop foreach i Z
+    P += genseries("p$i", pmean($i))
+endloop
+
+scalar n_groups = 12
+catch kbun = kmeans_fit(P, n_groups, _(verbose=2))
+assert($error != FALSE) # Error expected
+
+
+######################
+print "Test case from Jack..."
+print "...using mahalanobis distance and random initializer"
+######################
+open mroz87.gdt --quiet
+list X = 5..8
+bundle Model = kmeans_fit(X, 3, _(distance_type = "mahalanobis",
+                            initializer = "random"))
+
+######################
+print "Test case from Jack..."
+print "...using mahalanobis distance and pca initializer"
+######################
+open mroz87.gdt --quiet
+list X = 5..8
+bundle Model = kmeans_fit(X, 3, _(distance_type = "mahalanobis",
+                            initializer = "pca"))
+
+
+
+print "Finished all tests successfully."
+quit
