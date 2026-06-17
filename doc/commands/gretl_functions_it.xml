@@ -7418,8 +7418,16 @@
 	<para>
 	  Se <argname>nome</argname> è l'identificatore per una serie
 	  esistente, ritorna 1 se la serie è stata dichiarata come
-	  discreta e 0 altrimenti. Se <argname>nome</argname>
-	  non identifica una serie, ritorna <lit>NA</lit>.
+	  discreta, per esempio col comando <cmdref targ="discrete"/>,
+	  e 0 altrimenti. Se <argname>nome</argname> non identifica
+	  una serie, ritorna <lit>NA</lit>.
+	</para>
+	<para>
+	  Attenzione: questa funzione non va a guardare i valori che
+	  la serie effettivamente contiene: se è necessario un
+	  controllo più approfondito, è consigliabile utilizzare le
+	  funzioni <fncref targ="uniq"/> o <fncref targ="values"/> e
+	  analizzarne il risultato.
 	</para>
       </description>
     </function>
