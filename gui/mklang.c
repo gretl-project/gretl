@@ -34,6 +34,7 @@ const char *special_keyword[] = {
     "endog",
     "instr",
     "equations",
+    "inject",
     "tsplots",
     NULL
 };
