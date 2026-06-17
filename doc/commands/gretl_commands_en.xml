@@ -6264,7 +6264,7 @@
   </command>
 
   <command name="gretl_edit" section="Utilities" context="gui"
-    label="gretl_edit">
+    label="gretl_edit: rationale">
 
     <description>
       <para>
