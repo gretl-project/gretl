@@ -7279,9 +7279,17 @@
       <description>
 	<para>
 	  If <argname>name</argname> is the identifier for a currently
-	  defined series, returns 1 if the series is marked as
-	  discrete-valued, otherwise 0. If <argname>name</argname>
-	  does not identify a series, returns <lit>NA</lit>.
+	  defined series, returns 1 if the series has been marked as
+	  discrete-valued, for example via the <cmdref
+	  targ="discrete"/> command, otherwise 0. If
+	  <argname>name</argname> does not identify a series, returns
+	  <lit>NA</lit>.
+	</para>
+	<para>
+	  Warning: this function does not perform a check on the
+	  actual values that the series contains: if you need a more
+	  in-depth check, you should use the <fncref targ="uniq"/> or
+	  <fncref targ="values"/> functions and inspect their result.
 	</para>
       </description>
     </function>
