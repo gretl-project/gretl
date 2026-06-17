@@ -3312,7 +3312,7 @@ int series_is_log (const DATASET *dset, int i, char *parent)
  * @dset: pointer to data information struct.
  * @i: index number of series.
  * @s: non-zero to mark variable as discrete, zero to
- * mark as not discrete.
+ * mark as not discrete (continuous).
  *
  * Mark a variable as being discrete or not.
  */
@@ -3322,6 +3322,10 @@ void series_set_discrete (DATASET *dset, int i, int s)
     if (i > 0 && i < dset->v) {
 	int flags = dset->varinfo[i]->flags;
 
+	/* Note: we don't perform any checks here, to see if it
+	   makes sense to mark the series in question as discrete:
+	   should we do so?
+	*/
 	if (s && !(flags & VAR_DISCRETE)) {
 	    dset->varinfo[i]->flags |= VAR_DISCRETE;
 	    set_dataset_is_changed(dset, 1);

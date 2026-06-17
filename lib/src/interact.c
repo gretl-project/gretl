@@ -857,8 +857,10 @@ static int set_var_info (const int *list,
     for (i=1; i<=list[0]; i++) {
         vi = list[i];
         if (opt & OPT_D) {
+	    /* --discrete */
             series_set_discrete(dset, vi, 1);
         } else if (opt & OPT_C) {
+	    /* --continuous */
             series_set_discrete(dset, vi, 0);
         }
         if (opt & OPT_F) {
