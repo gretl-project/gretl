@@ -189,11 +189,6 @@ void iconview_menubar_state (gboolean s)
     flip(mdata->ui, "/menubar/View/IconView", s);
 }
 
-void gretl_edit_menu_state (gboolean s)
-{
-    flip(mdata->ui, "/menubar/Tools/GretlEdit", s);
-}
-
 #define OK_MIDAS_PD(p) (p == 1 || p == 4 || p == 12)
 
 #define COMPACTABLE(d) ((d->structure == TIME_SERIES || \

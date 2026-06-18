@@ -1676,61 +1676,6 @@ static void gretl_show_console (void)
     }
 }
 
-static gchar *gretl_edit_path (void)
-{
-    const char *bindir = gretl_bindir();
-    gchar *ret;
-
-#if defined(G_OS_WIN32)
-    ret = g_strdup_printf("%sgretl_edit.exe", bindir);
-#else
-    ret = g_strdup_printf("%sgretl_edit", bindir);
-#endif
-
-    return ret;
-}
-
-static void check_for_gretl_edit (void)
-{
-    gchar *exepath = gretl_edit_path();
-
-    if (gretl_stat(exepath, NULL) != 0) {
-	/* stat() failed */
-	gretl_edit_menu_state(FALSE);
-    }
-    g_free(exepath);
-}
-
-static void launch_gretl_edit (void)
-{
-    gchar *exepath = gretl_edit_path();
-
-#if defined(G_OS_WIN32)
-    win32_run_async(exepath, NULL);
-#else
-    GError *error = NULL;
-    gchar *argv[2];
-
-    argv[0] = exepath;
-    argv[1] = NULL;
-
-    g_spawn_async(NULL, /* working dir */
-		  argv,
-		  NULL, /* env */
-		  G_SPAWN_DEFAULT,
-		  NULL, /* child_setup */
-		  NULL, /* user_data */
-		  NULL, /* child_pid ptr */
-		  &error);
-
-    if (error != NULL) {
-	errbox(error->message);
-	g_error_free(error);
-    }
-#endif /* !G_OS_WIN32 */
-    g_free(exepath);
-}
-
 static void make_main_window (void)
 {
 #ifdef MAC_INTEGRATION
@@ -1879,8 +1824,6 @@ static void make_main_window (void)
 	gtk_window_move(GTK_WINDOW(mdata->main), main_x, main_y);
     }
 
-    check_for_gretl_edit();
-
     if (wlabel != NULL) {
 	set_workdir_label();
     }
@@ -1969,7 +1912,6 @@ GtkActionEntry main_entries[] = {
     { "SetSeed", NULL, N_("_Seed for random numbers"), NULL, NULL, G_CALLBACK(rand_seed_dialog) },
     { "CommandLog", NULL, N_("_Command log"), NULL, NULL, G_CALLBACK(view_command_log) },
     { "ShowConsole", NULL, N_("_Gretl console"), NULL, NULL, G_CALLBACK(gretl_show_console) },
-    { "GretlEdit", NULL, N_("_gretl edit"), NULL, NULL, G_CALLBACK(launch_gretl_edit) },
     { "Gnuplot", NULL, N_("_Gnuplot"), NULL, NULL, G_CALLBACK(launch_gnuplot_interactive) },
     { "StartR", NULL, N_("Start GNU _R"), NULL, NULL, G_CALLBACK(start_R_callback) },
     { "ColorTool", NULL, N_("Color tool"), NULL, NULL, G_CALLBACK(show_color_tool) },
