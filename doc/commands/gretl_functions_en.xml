@@ -4522,11 +4522,12 @@
 	  <argname>Y</argname>.
 	</para>
 	<para>
-	  To obtain the distances from a given reference point to each
-	  of <math>n</math> data-points, give <argname>Y</argname> as a
-	  single row. If the reference point is the centroid in the
-          usual sense (vector of sample means), give <lit>meanc(X)</lit>
-          as the <argname>Y</argname> value.
+	  To obtain the distances between a given reference point and
+	  each of the <math>m</math> data-points, give
+	  <argname>Y</argname> as a single row; the result is then an
+	  <math>m</math>-vector. If the reference point is the
+	  centroid in the usual sense (vector of sample means), give
+	  <lit>meanc(X)</lit> as the <argname>Y</argname> value.
 	</para>
 	<subhead>Definitions of the supported metrics</subhead>
 	<ilist>
