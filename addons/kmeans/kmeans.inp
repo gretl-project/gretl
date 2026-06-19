@@ -1,16 +1,53 @@
 function bundle set_bundle_and_get_defaults (const list xlist,
                                              bundle opts[null])
     /* Compile self bundle by merging eventual information
-    from 'opts' bundle. */
+       from 'opts' bundle. */
 
     if !exists(opts)
         bundle opts = defbundle()
+    elif inbundle(opts, "distance_type")
+        verify_distance_type(opts.distance_type)
     endif
 
     bundle self = default_values(xlist)
     self = opts + self          # override defaults
 
     return self
+end function
+
+function strings all_distance_types (void)
+    return defarray("euclidean", "manhattan",
+      "hamming", "chebyshev", "cosine", "mahalanobis")
+end function
+
+function void verify_distance_type (const string s)
+    strings dtypes = all_distance_types()
+    scalar matches = 0
+    scalar n = strlen(s)
+    loop i=1..nelem(dtypes)
+        if strncmp(s, dtypes[i], n) == 0
+            matches++
+        endif
+    endloop
+    errorif(matches == 0 || matches > 1,
+      sprintf("Invalid distance_type '%s'", s))
+end function
+
+function string full_distance_name (const string s)
+    strings dtypes = all_distance_types()
+    scalar n = strlen(s)
+    string ret = ""
+    loop i=1..nelem(dtypes)
+        if strncmp(s, dtypes[i], n) == 0
+            ret = dtypes[i]
+            break
+        endif
+    endloop
+    return ret
+end function
+
+function scalar distance_is_euclidean (const string s)
+    return strncmp(s, "euclidean", strlen(s)) == 0
 end function
 
 function bundle default_values (const list xlist)
@@ -59,14 +96,14 @@ end function
 function matrix init_centroids_by_pca (const matrix features,
                                        scalar n_clusters)
     /* Try to pick data points that are as far apart as possible by means of PCA.
-    Idea borrowed from Jack Lucchetti.
-    return: Matrix of centroids for each cluster (rows) and each feature (columns). */
+       Idea borrowed from Jack Lucchetti.
+       return: Matrix of centroids for each cluster (rows) and each feature (columns). */
 
     errorif(n_clusters < 2, "At least two clusters are required.")
 
     scalar n_obs = rows(features)
     matrix mask = 1 + seq(0, (n_clusters - 1)) \
-                  * floor((n_obs - 1) / (n_clusters - 1))
+      * floor((n_obs - 1) / (n_clusters - 1))
     matrix pca_matrix = princomp(features, 1, 1) ~ seq(1, n_obs)'
     pca_matrix = msortby(pca_matrix, 1)
     mask = pca_matrix[mask, 2]
@@ -104,7 +141,7 @@ function bundle call_ASA136 (const matrix X,
             dsq[i] += d * d
         endloop
     endloop
-    return _(within_variation_total = b.cluster_SST,
+    return _(within_distance_total = b.cluster_SST,
       centroids = C, cluster_id = b.clustid, distances = dsq)
     return b
 end function
@@ -128,10 +165,9 @@ function bundle real_kmeans_fit (const list xlist,
     endif
 
     errorif(sum(missing(xlist)),\
-            "Some features have missing values. Please drop these first.")
+      "Some features have missing values. Please drop these first.")
 
     bundle self = set_bundle_and_get_defaults(xlist, opts)
-    self.distance_type = tolower(self.distance_type)
     self.initializer = tolower(self.initializer)
     self.algorithm = tolower(self.algorithm)
 
@@ -140,54 +176,80 @@ function bundle real_kmeans_fit (const list xlist,
         matrix self.clusters0 = clusters
     endif
     matrix features = {xlist}
-    scalar self.within_variation_total = $huge
+    scalar self.within_distance_total = $huge
     scalar draw_id = 1
     matrix self.cluster_id = mshape(NA, $nobs, 1)
     matrix self.distances = mshape(NA, $nobs, 1)
-    scalar counter_errors = 0
+    scalar n_errors = 0
+
+    if n_clusters == 1
+        self.n_draws = 0
+        matrix self.cluster_id = ones($nobs, 1)
+        matrix self.centroids = meanc(features)
+        matrix D = distance(features, self.distance_type, self.centroids)
+        matrix self.distances = sumr(D)
+        scalar self.within_distance_total = sumc(self.distances)
+    endif
 
     if self.verbose
         printf "kmeans_fit: %d observations, %d features, %d clusters\n",
           $nobs, nelem(xlist), n_clusters
-        printf "metric is %s, with %d random draws\n", self.distance_type, self.n_draws
+        printf "metric is %s, with %d random draws\n",
+          full_distance_name(self.distance_type), self.n_draws
+    endif
+
+    if n_clusters == 1
+        if self.verbose
+            printf "Sum of within distances = %g\n", self.within_distance_total
+        endif
+        return self
     endif
 
     # proof of concept: prior call to built-in kmeans()
-    if 0 # self.distance_type == "euclidean"
+    if 0 # distance_is_euclidean(self.distance_type)
         bundle Tmp = call_ASA136(features, n_clusters)
-        scalar self.within_variation_total = Tmp.within_variation_total
+        scalar self.within_distance_total = Tmp.within_distance_total
         matrix self.centroids = Tmp.centroids
         matrix cluster_id = Tmp.cluster_id
         matrix distances = Tmp.distances
         # print "Via ASA136"
-        # print distances      
+        # print distances
     endif
 
     loop self.n_draws  # evaluate several initial random draws of clusters
-        if self.verbose == 2
-            Info(sprintf("\nStart random draw: %d", draw_id))
+        if self.verbose > 2
+            printf "\nStart random draw: %d", draw_id
             flush
         endif
         bundle Tmp = compute_kmeans(self, features)
-        counter_errors += Tmp.error
+        n_errors += Tmp.error
+
+        if self.verbose == 2
+            if Tmp.error
+                printf "random draw %d: failed \n", draw_id
+            else
+                printf "random draw %d: total within distance = %g\n",
+                  draw_id, Tmp.within_distance_total
+            endif
+        endif
 
         # select minimizing draw
-        if Tmp.within_variation_total < self.within_variation_total
-            scalar self.within_variation_total = Tmp.within_variation_total
+        if Tmp.within_distance_total < self.within_distance_total
+            scalar self.within_distance_total = Tmp.within_distance_total
             matrix self.centroids = Tmp.centroids
             matrix cluster_id = Tmp.cluster_id
             matrix distances = Tmp.distances
         endif
 
-        if self.verbose == 2 && Tmp.error == FALSE
-            Info(sprintf("\nFinished the %d-th random draw.", draw_id))
+        if self.verbose > 2 && Tmp.error == FALSE
+            printf "\nFinished the %d-th random draw.", draw_id
             flush
         endif
 
         draw_id++
     endloop
 
-    if counter_errors == self.n_draws
+    if n_errors == self.n_draws
         string msg = "All initializations failed. Please check your data OR use a different initializer."
         funcerr "@msg"
     endif
@@ -195,7 +257,7 @@ function bundle real_kmeans_fit (const list xlist,
     cnameset(self.centroids, varnames(xlist))
     if self.verbose
         printf "minimized objective function: %g\n\n",
-          self.within_variation_total
+          self.within_distance_total
         print self.centroids
     endif
 
@@ -214,16 +276,18 @@ end function
 
 function void add_variations (const matrix features, bundle *self)
     /* Add various variation statistics.
-    return: void */
+       return: void */
 
     matrix distances_from_mean = distance(features, self.distance_type, meanc(features))
-    self.total_ssq = sumc(distances_from_mean.^2)
-
-    bundle B = within_cluster_variation(self.distances, self.cluster_id)
-    scalar self.within_variation_avg = B["sum_of_avg_variation"]
-    scalar self.within_variation_total = B["sum_of_total_variation"]
-    scalar self.between_variation = self.total_ssq - self.within_variation_total
-    scalar self.between_to_total_variation = self.between_variation / self.total_ssq
+    if distance_is_euclidean(self.distance_type)
+        self.total_dist = sumc(distances_from_mean.^2)
+    else
+        self.total_dist = sumc(distances_from_mean)
+    endif
+    scalar self.within_distance_total = within_cluster_distance(self.distances,
+      self.cluster_id, self.distance_type)
+    scalar self.between_variation = self.total_dist - self.within_distance_total
+    scalar self.between_to_total_variation = self.between_variation / self.total_dist
 end function
 
 function void kmeans_summary (const bundle self)
@@ -234,7 +298,7 @@ function void kmeans_summary (const bundle self)
 
     printf "\nParameters\n"
     printf "  No. of clusters: %d\n", self.n_clusters
-    printf "  Distance type: '%s'\n", self.distance_type
+    printf "  Distance type: %s\n", full_distance_name(self.distance_type)
     printf "  Algorithm: '%s'\n", self.algorithm
     printf "  Initializer: '%s'\n", self.initializer
     printf "  Max. iterations: %d\n", self.max_iter
@@ -242,12 +306,18 @@ function void kmeans_summary (const bundle self)
     printf "  No. of random draws: %d\n", self.n_draws
     printf "  Tolerance: %f\n", self.tolerance
 
-    printf "\nEstimation results:\n"
-    printf "  Total sum of squares: %e\n", self.total_ssq
-    printf "  Total within-cluster sum of squares: %e\n", self.within_variation_total
-    printf "  Weighted total within-cluster sum of squares: %e\n", self.within_variation_avg
-    printf "  Between cluster sum of squares: %e\n", self.between_variation
-    printf "  (Between / Total): %.3f pct.\n", (self.between_to_total_variation * 100)
+    printf "\nResults:\n"
+    if distance_is_euclidean(self.distance_type)
+        printf "  Total sum of squares: %e\n", self.total_dist
+        printf "  Total within-cluster sum of squares: %g\n", self.within_distance_total
+        printf "  Between cluster sum of squares: %g\n", self.between_variation
+        printf "  (Between / Total): %.3f pct.\n", (self.between_to_total_variation * 100)
+    else
+        printf "  Total distance from global centroid: %g\n", self.total_dist
+        printf "  Total within-cluster distance: %g\n", self.within_distance_total
+        printf "  Between cluster distance: %g\n", self.between_variation
+        printf "  (Between / Total): %.3f pct.\n", (self.between_to_total_variation * 100)
+    endif
     print "************************************************"
 end function
 
@@ -255,7 +325,7 @@ function void kmeans_plot (const list xlist, bundle self)
     /* Plot clusters in 2-dimensions. */
 
     string self.filename = inbundle(self, "filename") ? \
-                                    self.filename : "display"
+      self.filename : "display"
     series factor = self.cluster_id
 
     PairPlot(xlist, factor, self)
@@ -265,7 +335,8 @@ end function
 
 function bundle compute_kmeans (const bundle self, const matrix features)
     /* Actual computation of kmeans. Identify clusters.
-    return: bundle, output for a given random draw of cluster association. */
+       return: bundle, output for a given random draw of cluster association.
+    */
 
     bundle Model
     matrix current_cluster_id = initialize_clusters(features, self)
@@ -291,14 +362,15 @@ function bundle compute_kmeans (const bundle self, const matrix features)
             break
         endif
 
-        updated_inertia = within_cluster_variation(min_distances, current_cluster_id)["sum_of_total_variation"]
+        updated_inertia = within_cluster_distance(min_distances, current_cluster_id,
+          self.distance_type)
         inertia_change = current_inertia - updated_inertia
         current_inertia = updated_inertia
 
         if inertia_change >= 0 && inertia_change < self.tolerance
-            if self.verbose == 2
-                Info(sprintf("Converged after %d out of %d iterations (within total variation = %.5f).",
-                             iter, self.max_iter, current_inertia))
+            if self.verbose > 2
+                printf "Converged after %d out of %d iterations (within total distance = %.5f).",
+                  iter, self.max_iter, current_inertia
                 flush
             endif
             break
@@ -306,68 +378,66 @@ function bundle compute_kmeans (const bundle self, const matrix features)
     endloop
 
     matrix Model.distances = min_distances
-    scalar Model.within_variation_total = current_inertia
+    scalar Model.within_distance_total = current_inertia
     matrix Model.cluster_id = current_cluster_id
     matrix Model.centroids = centroids
 
     return Model
 end function
 
-function bundle within_cluster_variation (const matrix distances,
-                                          const matrix cluster_id)
-    /* Compute the sum of the (average) squared distances across all clusters.
+function scalar within_cluster_distance (const matrix distances,
+                                         const matrix cluster_id,
+                                         const string distance_type)
+    /* Compute the sum of the distances between observations and centroids
+       across all clusters.
 
-      "distances" already refers to some computed distance from the centroid,
-      for instance $(x_{ij} - xbar_{ij})^2$ in case of the Euclidean distance.
-      But it could also be some other distance measure.
-
-      The following definition is equal to the within-cluster variation as
-      defined in James et al. "An Introduction to Statistical Learning", p. 
-      387--388.
+       "distances" already refers to some computed distance from the centroid,
+       for instance $(x_{ij} - xbar_{ij})^2$ in case of the Euclidean distance.
+       But it could also be some other distance measure.
     */
 
-    matrix squared_distances = distances.^2
-    matrix agg = aggregate(squared_distances, cluster_id, mean)
-    bundle B = _(sum_of_avg_variation = sumc(agg[,3]),\
-                 sum_of_total_variation = sum(squared_distances))
-
-    return B
+    if distance_is_euclidean(distance_type)
+        # in K-means, the convention seems to be to work with the sum
+        # of squares itself rather than the square root of same
+        matrix agg = aggregate(distances.^2, cluster_id, sum)
+    else
+        matrix agg = aggregate(distances, cluster_id, sum)
+    endif
+    return sumc(agg[,3])
 end function
 
 function matrix compute_centroids (const matrix features,
                                    const matrix cluster_id)
-    /* Compute centroids (means) for each cluster.
-    return: "n_clusters by 1+cols(features)" matrix, The i-th row corresponds
-    to the i-th cluster; each column refers to the centroid (mean) value for
-    each respective feature. */
+    /* Computes the centroid for each cluster.
+       Returns a matrix with n_clusters rows and cols(features) columns.
+       Row i pertains to cluster i; column j holds the mean of feature j
+       for the cluster.
+    */
 
     matrix tmp = aggregate(features, cluster_id, mean)
     strings row_labels = "Centroid=" ~ tmp[,1]
-    centroid_matrix = tmp[,3:]
-    rnameset(centroid_matrix, row_labels)
+    centroids = tmp[,3:]
+    rnameset(centroids, row_labels)
 
-    return centroid_matrix
+    return centroids
 end function
 
 function string get_distance_type (const int distance)
     /* Only for kmeansGUI(). Maps the integer code to the name of
-    the distance measure. */
-
-    strings Distances = defarray("euclidean", "manhattan", "hamming", "chebyshev",
-      "cosine", "mahalanobis")
-
+       the distance measure. */
+    strings Distances = all_distance_types()
     return Distances[distance]
 end function
 
 function bundle kmeansGUI (const list X "Input",
                            const int n_clusters[1::3] "No. of clusters (k)",
-                           const int distance[1:6:1] "Distance type" {"euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis"},
-                           const int plot_type[0:3:0] "Plot type" {"none", "Scree-Plot (1 to k)", "Cluster (Pair-Plot for k clusters)", "Silhouette Plot (k clusters)"})
+      const int distance[1:6:1] "Distance type" {"euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis"},
+      const int plot_type[0:3:0] "Plot type" {"none", "Scree-Plot (1 to k)", "Cluster (Pair-Plot for k clusters)", "Silhouette Plot (k clusters)"})
     /* Function for creating GUI dialog box. */
 
     bundle self = defbundle()
     self.distance_type = get_distance_type(distance)
-    self.verbose = 2   # in GUI mode, highest verbosity level is activated
+    self.verbose = 2  # in GUI mode, highest verbosity level is activated
 
     if plot_type == 1
         matrix results = kmeans_screeplot(X, n_clusters, null, self)
@@ -420,7 +490,7 @@ function matrix	kmeans_screeplot (const list xlist "Features",
         if model.error
             Error(sprintf("\nError: obtained an error when assuming %d clusters\n", k_values[i]))
         endif
-        results[i,2] = model.within_variation_total
+        results[i,2] = model.within_distance_total
     endloop
 
     mplot = mreverse(results, TRUE)
@@ -458,9 +528,9 @@ function series kmeans_sil_samples (const bundle Model, const list xlist)
             matrix dists_own = distance(features[i,], Model.distance_type, own_points)[2:]'
             # The pairwise distance is the same as the this one:
             /* matrix dat = features[i,] | own_points
-            matrix dists_own2 = unvech(distance(dat, Model.distance_type), 0)[2:,1]
-            out = dists_own' ~ dists_own2
-            print out */
+               matrix dists_own2 = unvech(distance(dat, Model.distance_type), 0)[2:,1]
+               out = dists_own' ~ dists_own2
+               print out */
 
             scalar a_i = meanc(dists_own)  # mean distance to own cluster
         else
@@ -531,7 +601,7 @@ function void kmeans_sil_plot (const bundle Model,
        Each cluster is plotted separately. */
 
     if !exists("opts")
-       bundle opts = _()
+        bundle opts = _()
     endif
 
     matrix silhouette_samples = {kmeans_sil_samples(Model, xlist)}
@@ -570,7 +640,7 @@ function void kmeans_sil_plot (const bundle Model,
 
         plot cluster_sil_values
             options fit=none time-series single-yaxis with-lines=2 \
-                    @fsize_cmd
+              @fsize_cmd
             printf "set ylabel 'Cluster %d (n=%d)'", k, rows(cluster_sil_values)
             literal set grid
             literal set boxwidth 0.8
