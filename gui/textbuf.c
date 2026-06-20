@@ -3994,7 +3994,6 @@ static int maybe_insert_smart_tab (GtkWidget *w, int *comp_ok)
 		    "current line = '%s'\n", s);
 #endif
 	    sscanf(s, "%8s", thisword);
-	    fprintf(stderr, "thisword = '%s'\n", thisword);
 	    curr_nsp = strspn(s, " \t");
 	    g_free(s);
 	}
