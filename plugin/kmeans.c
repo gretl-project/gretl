@@ -762,6 +762,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     int *live;
     int indx;
     int i, j, l;
+    int iter;
     int maxiter = 128;
     int m = a->rows;
     int n = a->cols;
@@ -829,15 +830,18 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 
  start_outer_loop:
 
+    /* initializer: can be auto, user-specified, or random */
     *err = kmeans_init(&hw, an, nc, itran, ncp, iflag);
     if (*err) {
 	goto bailout;
     }
 
-    indx = 0;
+    iter = indx = 0;
     *err = E_NOCONV;
 
-    for (i=0; i<maxiter; i++)  {
+    /* run the ASA136 algorithm */
+    while (iter < maxiter) {
+	iter++;
 	optra(&hw, nc, an, ncp, itran, live, &indx);
 	if (indx == m) {
 	    /* No optimal transfer in the last m steps: OK, stop */
@@ -860,24 +864,31 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	goto bailout;
     }
 
-    SST = SSTmin = compute_sst(&hw);
+    SST = compute_sst(&hw);
+    if (iflag == INIT_AUTO || iflag == INIT_USER) {
+	/* prior to randomization */
+	if (verbosity > 1) {
+	    pprintf(prn, "%s initialization: SST = %g (%d iterations)\n",
+		    iflag == INIT_AUTO ? "auto" : "user-specified", SST, iter);
+	}
+	SSTmin = SST;
+	gretl_matrix_copy_values(hw.cmin, hw.c);
+    } else if (SST < SSTmin) {
+	SSTmin = SST;
+	gretl_matrix_copy_values(hw.cmin, hw.c);
+    }
 
     if (iflag != INIT_FINAL) {
-	if (verbosity > 2) {
-	    pprintf(prn, "  point transfers converged in %d iterations\n", i+1);
-	}
 	if (rand_starts > 0 && ri <= rand_starts) {
-	    SST = compute_sst(&hw);
-	    if (verbosity > 1) {
-		if (ri == 0) {
-		    pprintf(prn, "initial SST = %g\n", SST);
+	    /* we're doing randomization and we're not finished yet */
+	    if (verbosity > 1 && ri > 0) {
+		if (rand_starts > 9) {
+		    pprintf(prn, "start %02d: SST = %g (%d iterations) \n",
+			    ri, SST, iter);
 		} else {
-		    pprintf(prn, "start %d: SST = %g\n", ri, SST);
+		    pprintf(prn, "start %d: SST = %g (%d iterations)\n",
+			    ri, SST, iter);
 		}
-	    }
-	    if (SST < SSTmin) {
-		SSTmin = SST;
-		gretl_matrix_copy_values(hw.cmin, hw.c);
 	    }
 	    iflag = INIT_RAND;
 	    ri++;
@@ -889,7 +900,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 
     if (iflag == INIT_RAND) {
 	if (verbosity > 1) {
-	    pprintf(prn, "Minimum SST = %g\n", SSTmin);
+	    pprintf(prn, "Minimized SST = %g\n", SSTmin);
 	}
 	gretl_matrix_copy_values(hw.c, hw.cmin);
 	iflag = INIT_FINAL;
