@@ -117,7 +117,8 @@ function series kmeans_predict (const list xlist "Features",
        returning the result as a series.
     */
 
-    errorif(sum(missing(xlist)), "Some features have missing values. Please drop these first.")
+    errorif(sum(missing(xlist)),
+      "Some features have missing values. Please drop these first.")
 
     matrix distances = distance({xlist}, self.distance_type, self.centroids)
     series cluster_id = iminr(distances)
@@ -125,25 +126,47 @@ function series kmeans_predict (const list xlist "Features",
     return cluster_id
 end function
 
-function bundle call_ASA136 (const matrix X,
-                             int n_clusters,
-                             const bundle opts[null])
+function void call_ASA136 (const matrix X, bundle *self)
+    bundle opts = _()
+    if inbundle(self, "verbose")
+        opts.verbosity = self.verbose # FIXME
+    endif
+    if inbundle(self, "n_draws")
+        opts.rand_starts = self.n_draws
+    endif
+    if inbundle(self, "clusters0")
+        bundle b = kmeans(X, self.clusters0, opts)
+    else
+        bundle b = kmeans(X, self.n_clusters, opts)
+    endif
     m = rows(X)
     n = cols(X)
-    bundle b = kmeans(X, n_clusters, opts)
-    matrix C = b.clustinfo[,2:end-1]
-    # print C
+    self.within_distance_total = b.cluster_SST
+    self.total_distance = b.global_SST
+    self.cluster_id = b.clustid
+    self.centroids = b.clustinfo[,2:end-1]
     matrix dsq = zeros(m, 1)
     loop i=1..m
         k = b.clustid[i]
         loop j=1..n
-            d = X[i,j] - C[k,j]
+            d = X[i,j] - self.centroids[k,j]
             dsq[i] += d * d
         endloop
     endloop
-    return _(within_distance_total = b.cluster_SST,
-      centroids = C, cluster_id = b.clustid, distances = dsq)
-    return b
+    self.distances = dsq
+    scalar self.between_variation = self.total_distance - self.within_distance_total
+    scalar self.between_to_total_variation = self.between_variation / self.total_distance
+    # other components?
+end function
+
+function scalar use_built_in_kmeans (const bundle self)
+    if self.initializer == "pca"
+        return 0
+    elif distance_is_euclidean(self.distance_type)
+        return 1
+    else
+        return 0
+    endif
 end function
 
 function bundle real_kmeans_fit (const list xlist,
@@ -205,15 +228,9 @@ function bundle real_kmeans_fit (const list xlist,
         return self
     endif
 
-    # proof of concept: prior call to built-in kmeans()
-    if 0 # distance_is_euclidean(self.distance_type)
-        bundle Tmp = call_ASA136(features, n_clusters)
-        scalar self.within_distance_total = Tmp.within_distance_total
-        matrix self.centroids = Tmp.centroids
-        matrix cluster_id = Tmp.cluster_id
-        matrix distances = Tmp.distances
-        # print "Via ASA136"
-        # print distances
+    if use_built_in_kmeans(self)
+        call_ASA136(features, &self)
+        return self
     endif
 
     loop self.n_draws  # evaluate several initial random draws of clusters
@@ -280,14 +297,14 @@ function void add_variations (const matrix features, bundle *self)
 
     matrix distances_from_mean = distance(features, self.distance_type, meanc(features))
     if distance_is_euclidean(self.distance_type)
-        self.total_dist = sumc(distances_from_mean.^2)
+        self.total_distance = sumc(distances_from_mean.^2)
     else
-        self.total_dist = sumc(distances_from_mean)
+        self.total_distance = sumc(distances_from_mean)
     endif
     scalar self.within_distance_total = within_cluster_distance(self.distances,
       self.cluster_id, self.distance_type)
-    scalar self.between_variation = self.total_dist - self.within_distance_total
-    scalar self.between_to_total_variation = self.between_variation / self.total_dist
+    scalar self.between_variation = self.total_distance - self.within_distance_total
+    scalar self.between_to_total_variation = self.between_variation / self.total_distance
 end function
 
 function void kmeans_summary (const bundle self)
@@ -308,12 +325,12 @@ function void kmeans_summary (const bundle self)
 
     printf "\nResults:\n"
     if distance_is_euclidean(self.distance_type)
-        printf "  Total sum of squares: %e\n", self.total_dist
+        printf "  Total sum of squares: %g\n", self.total_distance
         printf "  Total within-cluster sum of squares: %g\n", self.within_distance_total
         printf "  Between cluster sum of squares: %g\n", self.between_variation
         printf "  (Between / Total): %.3f pct.\n", (self.between_to_total_variation * 100)
     else
-        printf "  Total distance from global centroid: %g\n", self.total_dist
+        printf "  Total distance from global centroid: %g\n", self.total_distance
         printf "  Total within-cluster distance: %g\n", self.within_distance_total
         printf "  Between cluster distance: %g\n", self.between_variation
         printf "  (Between / Total): %.3f pct.\n", (self.between_to_total_variation * 100)
