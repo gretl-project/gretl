@@ -134,6 +134,11 @@ function void call_ASA136 (const matrix X, bundle *self)
     if inbundle(self, "n_draws")
         opts.rand_starts = self.n_draws
     endif
+    if inbundle(self, "initializer")
+        if self.initializer == "pca"
+            opts.init = "pca"
+        endif
+    endif
     if inbundle(self, "clusters0")
         bundle b = kmeans(X, self.clusters0, opts)
     else
@@ -157,16 +162,6 @@ function void call_ASA136 (const matrix X, bundle *self)
     scalar self.between_variation = self.total_distance - self.within_distance_total
     scalar self.between_to_total_variation = self.between_variation / self.total_distance
     # other components?
-end function
-
-function scalar use_built_in_kmeans (const bundle self)
-    if self.initializer == "pca"
-        return 0
-    elif distance_is_euclidean(self.distance_type)
-        return 1
-    else
-        return 0
-    endif
 end function
 
 function bundle real_kmeans_fit (const list xlist,
@@ -228,7 +223,7 @@ function bundle real_kmeans_fit (const list xlist,
         return self
     endif
 
-    if use_built_in_kmeans(self)
+    if distance_is_euclidean(self.distance_type)
         call_ASA136(features, &self)
         return self
     endif
