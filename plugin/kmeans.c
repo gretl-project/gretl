@@ -34,10 +34,11 @@
 #include "matrix_extra.h"
 
 typedef enum InitFlag_ {
-    INIT_AUTO,   /* Hartigan and Wong initialization */
-    INIT_USER,   /* Initialize using input matrix */
-    INIT_RAND,   /* randomized intialization */
-    INIT_FINAL   /* Re-initialize using "best" clusters after random trials */
+    INIT_HW,    /* Hartigan and Wong initialization */
+    INIT_PCA,   /* Initialize via Principal Components */
+    INIT_USER,  /* Initialize using input matrix */
+    INIT_RAND,  /* randomized intialization */
+    INIT_FINAL  /* Re-initialize using "best" clusters after random trials */
 } InitFlag;
 
 typedef struct hw_info_ {
@@ -262,8 +263,6 @@ static int hartigan_wong_init (hw_info *hw)
     return err;
 }
 
-#if 0 /* not just yet */
-
 /* Initialization of @c via Principal Components. As with the Hartigan
    and Wong approach the idea is to select k widely separated points as
    the initial centroids.
@@ -271,7 +270,7 @@ static int hartigan_wong_init (hw_info *hw)
 
 static int pca_init (hw_info *hw)
 {
-    gretl_matrix *pca = NULL;
+    gretl_matrix *pc = NULL;
     gretl_matrix *tmp = NULL;
     double alj;
     int step;
@@ -279,17 +278,17 @@ static int pca_init (hw_info *hw)
     int err = 0;
 
     step = floor((hw->m - 1) / (hw->k - 1));
-    pca = gretl_matrix_pca(hw->a, 1, OPT_V, &err);
+
+    pc = gretl_matrix_pca(hw->a, 1, OPT_V, &err);
     if (!err) {
-	err = gretl_matrix_realloc(pca, hw->m, 2);
+	err = gretl_matrix_realloc(pc, hw->m, 2);
     }
     if (!err) {
 	for (i=0; i<hw->m; i++) {
-	    gretl_matrix_set(pca, i, 1, i);
+	    gretl_matrix_set(pc, i, 1, i);
 	}
-	tmp = gretl_matrix_sort_by_column(pca, 0, &err);
+	tmp = gretl_matrix_sort_by_column(pc, 0, &err);
     }
-
     if (!err) {
 	for (i=0; i<hw->k; i++) {
 	    l = gretl_matrix_get(tmp, i*step, 1);
@@ -300,13 +299,11 @@ static int pca_init (hw_info *hw)
 	}
     }
 
-    gretl_matrix_free(pca);
+    gretl_matrix_free(pc);
     gretl_matrix_free(tmp);
 
     return err;
 }
-
-#endif
 
 static void get_k_random_candidates (hw_info *hw)
 {
@@ -729,8 +726,10 @@ static int kmeans_init (hw_info *hw,
     double huge = libset_get_double(CONV_HUGE);
     int err = 0;
 
-    if (iflag == INIT_AUTO) {
+    if (iflag == INIT_HW) {
 	hartigan_wong_init(hw);
+    } else if (iflag == INIT_PCA) {
+	pca_init(hw);
     } else if (iflag == INIT_RAND) {
 	get_k_random_candidates(hw);
     } else {
@@ -767,7 +766,8 @@ static int kmeans_init (hw_info *hw,
 
 static int check_opts (gretl_bundle *b,
 		       int *rand_starts,
-		       int *verbosity)
+		       int *verbosity,
+		       InitFlag *iflag)
 {
     int err = 0;
 
@@ -776,6 +776,13 @@ static int check_opts (gretl_bundle *b,
     }
     if (gretl_bundle_has_key(b, "verbosity")) {
 	*verbosity = gretl_bundle_get_int(b, "verbosity", &err);
+    }
+    if (gretl_bundle_has_key(b, "init")) {
+	const char *s = gretl_bundle_get_string(b, "init", &err);
+
+	if (!err && !strcmp(s, "pca")) {
+	    *iflag = INIT_PCA;
+	}
     }
 
     return err;
@@ -813,7 +820,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     int m = a->rows;
     int n = a->cols;
     int ri = 0;
-    InitFlag iflag = INIT_AUTO;
+    InitFlag iflag = INIT_HW;
     int rand_starts = 0;
     int verbosity = 0;
 
@@ -831,7 +838,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 
     if (!*err && opts != NULL) {
 	*err = check_opts((gretl_bundle *) opts, &rand_starts,
-			  &verbosity);
+			  &verbosity, &iflag);
     }
     if (*err) {
 	return NULL;
@@ -845,7 +852,8 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 
     if (verbosity) {
 	pprintf(prn, "kmeans: m=%d, n=%d, k=%d, initial centers %s\n",
-		m, n, k, c0 == NULL ? "automatic" : "user-specified");
+		m, n, k, iflag == INIT_USER ? "user-specified" :
+		iflag == INIT_PCA ? "pca" : "hw");
 	if (k > 1) {
 	    pprintf(prn, "%d randomized restarts requested\n", rand_starts);
 	}
@@ -911,14 +919,17 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     }
 
     SST = compute_sst(&hw);
-    if (iflag == INIT_AUTO || iflag == INIT_USER) {
+    if (iflag < INIT_RAND) {
 	/* prior to randomization */
 	if (verbosity > 1) {
 	    pprintf(prn, "%s initialization: SST = %g (%d iterations)\n",
-		    iflag == INIT_AUTO ? "auto" : "user-specified", SST, iter);
+		    iflag == INIT_HW ? "hw" : iflag == INIT_PCA ? "pca" :
+		    "user-specified", SST, iter);
 	}
 	SSTmin = SST;
-	gretl_matrix_copy_values(hw.cmin, hw.c);
+	if (rand_starts > 0) {
+	    gretl_matrix_copy_values(hw.cmin, hw.c);
+	}
     } else if (SST < SSTmin) {
 	SSTmin = SST;
 	gretl_matrix_copy_values(hw.cmin, hw.c);
