@@ -262,6 +262,52 @@ static int hartigan_wong_init (hw_info *hw)
     return err;
 }
 
+#if 0 /* not just yet */
+
+/* Initialization of @c via Principal Components. As with the Hartigan
+   and Wong approach the idea is to select k widely separated points as
+   the initial centroids.
+*/
+
+static int pca_init (hw_info *hw)
+{
+    gretl_matrix *pca = NULL;
+    gretl_matrix *tmp = NULL;
+    double alj;
+    int step;
+    int i, j, l;
+    int err = 0;
+
+    step = floor((hw->m - 1) / (hw->k - 1));
+    pca = gretl_matrix_pca(hw->a, 1, OPT_V, &err);
+    if (!err) {
+	err = gretl_matrix_realloc(pca, hw->m, 2);
+    }
+    if (!err) {
+	for (i=0; i<hw->m; i++) {
+	    gretl_matrix_set(pca, i, 1, i);
+	}
+	tmp = gretl_matrix_sort_by_column(pca, 0, &err);
+    }
+
+    if (!err) {
+	for (i=0; i<hw->k; i++) {
+	    l = gretl_matrix_get(tmp, i*step, 1);
+	    for (j=0; j<hw->n; j++) {
+		alj = gretl_matrix_get(hw->a, l, j);
+		gretl_matrix_set(hw->c, i, j, alj);
+	    }
+	}
+    }
+
+    gretl_matrix_free(pca);
+    gretl_matrix_free(tmp);
+
+    return err;
+}
+
+#endif
+
 static void get_k_random_candidates (hw_info *hw)
 {
     gretl_vector *v = gretl_vector_alloc(hw->k);
