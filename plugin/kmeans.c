@@ -35,7 +35,7 @@
 
 typedef enum InitFlag_ {
     INIT_HW,    /* Hartigan and Wong initialization */
-    INIT_PCA,   /* Initialize via Principal Components */
+    INIT_PC,    /* Initialize via Principal Components */
     INIT_USER,  /* Initialize using input matrix */
     INIT_RAND,  /* randomized intialization */
     INIT_FINAL  /* Re-initialize using "best" clusters after random trials */
@@ -268,7 +268,7 @@ static int hartigan_wong_init (hw_info *hw)
    the initial centroids.
 */
 
-static int pca_init (hw_info *hw)
+static int pc_init (hw_info *hw)
 {
     gretl_matrix *pc = NULL;
     gretl_matrix *tmp = NULL;
@@ -728,8 +728,8 @@ static int kmeans_init (hw_info *hw,
 
     if (iflag == INIT_HW) {
 	hartigan_wong_init(hw);
-    } else if (iflag == INIT_PCA) {
-	pca_init(hw);
+    } else if (iflag == INIT_PC) {
+	pc_init(hw);
     } else if (iflag == INIT_RAND) {
 	get_k_random_candidates(hw);
     } else {
@@ -780,8 +780,8 @@ static int check_opts (gretl_bundle *b,
     if (gretl_bundle_has_key(b, "init")) {
 	const char *s = gretl_bundle_get_string(b, "init", &err);
 
-	if (!err && !strcmp(s, "pca")) {
-	    *iflag = INIT_PCA;
+	if (!err && !strcmp(s, "pc")) {
+	    *iflag = INIT_PC;
 	}
     }
 
@@ -853,7 +853,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     if (verbosity) {
 	pprintf(prn, "kmeans: m=%d, n=%d, k=%d, initial centers %s\n",
 		m, n, k, iflag == INIT_USER ? "user-specified" :
-		iflag == INIT_PCA ? "pca" : "hw");
+		iflag == INIT_PC ? "pc" : "hw");
 	if (k > 1) {
 	    pprintf(prn, "%d randomized restarts requested\n", rand_starts);
 	}
@@ -923,7 +923,7 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	/* prior to randomization */
 	if (verbosity > 1) {
 	    pprintf(prn, "%s initialization: SST = %g (%d iterations)\n",
-		    iflag == INIT_HW ? "hw" : iflag == INIT_PCA ? "pca" :
+		    iflag == INIT_HW ? "hw" : iflag == INIT_PC ? "pc" :
 		    "user-specified", SST, iter);
 	}
 	SSTmin = SST;
