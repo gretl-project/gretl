@@ -12,6 +12,7 @@ function bundle handle_options_and_defaults (const list xlist,
             # backward compatibility
             opts.metric = opts.distance_type
             verify_metric(opts.metric)
+            delete opts.distance_type
         endif
         if inbundle(opts, "initializer")
             if (opts.initializer == "pca")
@@ -44,13 +45,13 @@ function void verify_metric (const string s)
       sprintf("Invalid metric '%s'", s))
 end function
 
-function string full_distance_name (const string s)
-    strings dtypes = all_metrics()
+function string full_metric_name (const string s)
+    strings mtypes = all_metrics()
     scalar n = strlen(s)
     string ret = ""
-    loop i=1..nelem(dtypes)
-        if strncmp(s, dtypes[i], n) == 0
-            ret = dtypes[i]
+    loop i=1..nelem(mtypes)
+        if strncmp(s, mtypes[i], n) == 0
+            ret = mtypes[i]
             break
         endif
     endloop
@@ -107,7 +108,6 @@ function matrix init_centroids_by_pc (const matrix features,
     /* Pick data points that are as far apart as possible by
        means of Principal Components
     */
-
     errorif(k < 2, "At least two clusters are required.")
 
     scalar n_obs = rows(features)
@@ -222,7 +222,7 @@ function bundle real_kmeans_fit (const list xlist,
         printf "kmeans_fit: %d observations, %d features, %d clusters\n",
           $nobs, nelem(xlist), n_clusters
         printf "metric is %s, initializer %s, %d random draws\n",
-          full_distance_name(self.metric), self.initializer,
+          full_metric_name(self.metric), self.initializer,
           self.n_draws
     endif
 
@@ -238,14 +238,17 @@ function bundle real_kmeans_fit (const list xlist,
         return self
     endif
 
-    if self.initializer == "pc"
+    string save_init = self.initializer
+
+    if save_init == "pc"
         bundle b = compute_kmeans(self, features)
         scalar self.within_distance = b.within_distance
         matrix self.centroids = b.centroids
         matrix cluster_id = b.cluster_id
         matrix distances = b.distances
         if self.verbose == 2
-            printf "PC initializer: total within distance = %g\n", b.within_distance
+            printf "PC initializer: total within distance = %g\n",
+              b.within_distance
         endif
         self.initializer = "random"
     endif
@@ -253,8 +256,6 @@ function bundle real_kmeans_fit (const list xlist,
     # try some random initializations if self.n_draws > 0
     loop d=1..self.n_draws
         bundle b = compute_kmeans(self, features)
-        n_errors += b.error
-
         if b.error
             n_errors++
             if self.verbose == 2
@@ -276,6 +277,8 @@ function bundle real_kmeans_fit (const list xlist,
             matrix distances = b.distances
         endif
     endloop
+
+    self.initializer = save_init
 
     if self.n_draws > 0 && n_errors == self.n_draws
         string msg = "All random initializations failed. Please check your data."
@@ -325,7 +328,7 @@ function void kmeans_summary (const bundle self)
 
     printf "\nParameters\n"
     printf "  No. of clusters: %d\n", self.n_clusters
-    printf "  Distance type: %s\n", full_distance_name(self.metric)
+    printf "  Metric: %s\n", full_metric_name(self.metric)
     printf "  Initializer: '%s'\n", self.initializer
     printf "  Max. iterations: %d\n", self.max_iter
     #printf "  Actual iterations: %d\n", self.actual_iter
