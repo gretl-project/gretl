@@ -558,7 +558,6 @@ function series kmeans_sil_samples (const bundle Model, const list xlist)
                matrix dists_own2 = unvech(distance(dat, Model.metric), 0)[2:,1]
                out = dists_own' ~ dists_own2
                print out */
-
             scalar a_i = meanc(dists_own)  # mean distance to own cluster
         else
             scalar a_i = 0
@@ -568,7 +567,7 @@ function series kmeans_sil_samples (const bundle Model, const list xlist)
         scalar b_i = $huge
         loop k=1..Model.n_clusters
             if k == own_cluster
-                continue  # skip own cluster
+                continue
             endif
             matrix mask_k = (cluster_id .= k)
             if sum(mask_k) > 0
@@ -576,7 +575,8 @@ function series kmeans_sil_samples (const bundle Model, const list xlist)
                 matrix dists_other = distance(features[i,], Model.metric, other_points)
                 scalar mean_other_distance = sum(dists_other) / nelem(dists_other)
                 if mean_other_distance < b_i
-                    b_i = mean_other_distance  # update the "neigboring cluster"
+                    # update the "neigboring cluster"
+                    b_i = mean_other_distance
                 endif
             endif
         endloop
@@ -662,8 +662,10 @@ function void kmeans_sil_plot (const bundle Model,
     loop k=1..n_clusters
         matrix cluster_mask = (plot_data[,2] .= k)
         matrix cluster_sil_values = selifr(plot_data, cluster_mask)[,1]
-        matrix cluster_sil_values = mreverse(msortby(cluster_sil_values, 1))
+        cluster_sil_values = mreverse(msortby(cluster_sil_values, 1))
         cluster_sil_values ~= mean_sil_score
+        cnameset(cluster_sil_values, defarray("score for data point", "mean score, all clusters"))
+        print cluster_sil_values
 
         plot cluster_sil_values
             options fit=none time-series single-yaxis with-lines=2 \
@@ -676,9 +678,11 @@ function void kmeans_sil_plot (const bundle Model,
             printf "set bmargin %f", bmargin
             printf "set linetype 1 ps %g pt 7", pointsize
             printf "set linetype 2 lw 1.5 dt 2"
-            literal set nokey
+            literal set key top right
+            # literal set nokey
         end plot --outbuf=plotfiles[k]
     endloop
 
-    gridplot plotfiles --cols=columns --width=width --height=height --output="@filename"
+    gridplot plotfiles --cols=columns --width=width --height=height \
+      --title="Silhouette plots per cluster" --output="@filename"
 end function
