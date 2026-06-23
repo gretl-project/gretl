@@ -1,0 +1,321 @@
+\documentclass{article}
+\usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
+\usepackage{fancyvrb,color,gretl}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[authoryear]{natbib}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+
+\definecolor{steel}{rgb}{0.03,0.20,0.45}
+
+\hypersetup{pdftitle={kmeans},
+            pdfauthor={Artur Tarassow and Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarksnumbered=true,
+            plainpages=false
+          }
+
+\setlength{\parskip}{1ex}
+\setlength{\parindent}{0pt}
+\setcounter{secnumdepth}{1}
+\setcounter{tocdepth}{1}
+
+\renewcommand{\floatpagefraction}{.8}
+
+\newenvironment{funcdoc}
+{\noindent\hrulefill\\[-12pt]}
+{\medbreak}
+
+\title{\textsf{kmeans}}
+\author{Artur Tarassow and Allin Cottrell}
+\date{June 23, 2026}
+
+\section{Introduction}
+
+This package offers functionality to identify unknown clusters in
+multidimensional data using the well known $K$-means algorithm.  This
+algorithm divides a set of $m$ observations, each of dimension
+$n$, into disjoint clusters, $C_i, i=1,\dots,K$. Each cluster is
+defined by its centroid, an $n$-vector comprising the means of the
+variables for the observations it includes.
+
+The objective is to minimize some loss function, most commonly the
+sum of squared Euclidean distances between the data-points and their
+associated cluster centroid. See \cite[ch.\ 12]{ISL2e} for a detailed
+account.
+
+In addition the package provides functions to compute so-called
+silhouette scores; that is, measures of how similar an observation is to
+its own cluster compared to other clusters \cite{Rousseeuw87}.  These
+values are bounded by 1 (``best'', the point is firmly anchored in its
+own cluster) and $-1$ (``worst'', the point really belongs
+elsewhere). Values near 0 indicate overlapping clusters.
+
+\section{GUI access}
+
+Currently, only $K$-means estimation, but not silhouette analysis, can be
+performed via the dialog box, which can be opened via `View -> K-Means`.
+
+Two choices are available:
+\begin{enumerate}
+\item If you activate the checkbox ``Show scree plot'' the scree plot
+  will be shown, and the parameter \dtk{n_clusters} is the maximum
+  number of clusters to evaluate and plot. The returned bundle will
+  contain only a matrix with two columns, the first holding the number
+  of clusters and the second holding the within-cluster sum of squares.
+\item If you activate the checkbox ``Show pair-plot'' the pair-plot will
+  be shown, and the parameter \dtk{n_clusters} is the number of clusters
+  to estimate. The returned bundle will contain detailed information
+  about the estimation.
+\end{enumerate}
+
+\section{Public Functions}
+
+\subsection{\dtk{kmeans_fit}}
+
+\begin{code}
+kmeans_fit (list xlist, int n_clusters[2::3], bundle opts[null])
+\end{code}
+
+Executes the kmeans algorithm and estimates the clusters. It is required
+that \texttt{xlist} does not contain missing values, so please make sure
+to clean your data before calling this function.
+
+Notes on the arguments:
+\begin{itemize}
+\item \texttt{xlist}: a list of series, the features on which clustering
+  is to be based.
+\item \dtk{n_clusters}: an integer, the number of clusters to assume
+  (default: 3).
+\item opts: a bundle holding optional parameters, including any of the following:
+  \begin{itemize}
+    \item \texttt{metric}: a string identifying the distance metric to be
+      employed (default: \texttt{euclidean}). Alternatives includes
+      \texttt{manhattan} and \texttt{chebyshev}; see the help for
+      gretl's \texttt{distance()} function for a full list.
+    \item \texttt{initializer}: FIXME
+    \item \dtk{n_draws}: an integer specifying how many times the
+      $K$-means kmeans algorithm will be run with different randomly
+      selected initial centroids (default: 10).
+    \item \texttt{tolerance}: a scalar, the value for the improvement in
+      the objective function below which the algorithm is considered as
+      having converged (default: 0.0001).
+    \item \texttt{verbose}: an integer governing printed output: 0 means
+      don't print anything; 1 print some details; 2 print more details.
+  \end{itemize}
+\end{itemize}
+
+The return value from \dtk{kmeans_fit} is a bundle containing the
+following members:
+
+%% WORK needed below here
+
+\end{document}
+
+\begin{itemize}
+\item \dtk{between_variation}: scalar, the between-cluster sum of squares =
+  `total_ssq - within_variation_total`
+
+\item \texttt{centroids}: matrix, Estimated mean values (centroids) for each
+  feature (columns) and for each cluster (rows).
+
+\item \dtk{cluster_id}: matrix, Estimated cluster ID for each observation
+  for the best draw minimizing `inertia`.
+
+\item \texttt{distances}: matrix, Estimated distance for the best draw
+  minimizing `inertia`.
+
+\item \texttt{error}: error code: in case of no error 0, otherwise
+  a positive integer.
+
+\item \texttt{nobs}: integer, the number of observations used for training.
+
+\item \dtk{total_ssq}: scalar, the sum of the squared distances of the
+  features from its mean values.
+
+\item \dtk{within_variation_total}: scalar, Sum of the squared distances
+  across all clusters (*inertia*).
+
+
+## kmeans_predict
+
+```
+kmeans_predict (list xlist, bundle Model)
+```
+
+Predict cluster belonging based on the estimated model.
+
+**Arguments:**
+
+- `xlist`: list, Features (regressors) used for predicting cluster belonging.
+- `Model`: bundle, Model object returned by the `kmeans_fit()` function.
+
+**Return:** Series holding the predicted cluster ID for each observation.
+
+
+## kmeans_summary
+
+```
+kmeans_summary (bundle Model)
+```
+
+Print summarizing information on estimation step after having applied the `kmeans_fit()` function.
+
+**Arguments:**
+
+- Model: bundle, Bundle returned by the `kmeans_fit()` function.
+
+**Return:** Nothing.
+
+
+## kmeans_plot
+
+```
+kmeans_plot (list xlist, bundle self[null])
+```
+
+Factorized scatter plot estimated clusters for each 2-dimensional combination of features. This function calls the user-defined package "PairPlot" which must be installed.
+
+**Arguments:**
+
+- `xlist`: list, Features (regressors) used for plotting.
+- `self`: bundle, Bundle for manipulating the plot. **Note** Here you can also pass options accepted by the "PairPlot" package which is used in the background.
+
+**Return:** Nothing.
+
+
+## kmeans_screeplot
+
+```
+kmeans_screeplot (list xlist, int max_clusters, string filename[null], bundle self[null])
+```
+
+This function plots the scree plot for the kmeans algorithm. The scree
+plot shows the within-cluster sum of squares (*inertia*) for different
+numbers of clusters (from 1 to `max_clusters`). The optimal number of
+clusters is the one where the within-cluster sum of squares starts to
+decrease more slowly.
+
+**Arguments:**
+
+- `xlist`: list, Features (regressors) used for plotting.
+- `max_clusters`: int, Maximum number of clusters to plot (default: 3).
+- `filename`: string, Name of the file to save the plot (optional). If not provided, the plot will be shown on the screen.
+- `self`: bundle, Bundle for manipulating the plot (optional). **Note, accepted options are:**
+
+    * The same as for the `kmeans_fit()` function for the `opts` bundle. Relevant for controlling the k-means algorithm.
+    * `verbose`: int, If `2` show summary for each model, else show nothing.
+    * `fontsize`: scalar, Font size for the plot.
+    * `linewidth`: scalar, Line width for the plot.
+
+**Return:** Matrix with two columns: the first column is the number of clusters, and the second column is the within-cluster sum of squares (*inertia*). Each row corresponds to a different number of clusters.
+
+
+## kmeans_sil_samples
+
+```
+kmeans_sil_samples (bundle Model, list xlist)
+```
+
+Compute the silhouette sample value for each observation in the fitted
+kmeans model. The silhouette value measures how similar an observation
+is to its own cluster compared to other clusters.
+
+**Reference:** https://en.wikipedia.org/wiki/Silhouette_(clustering)
+
+**Arguments:**
+
+- `Model`: bundle, Model object returned by the `kmeans_fit()` function.
+- `xlist`: list, Features (regressors) used for clustering.
+
+**Return:** Series holding the silhouette value for each observation.
+
+
+## kmeans_sil_score
+
+```
+kmeans_sil_score (bundle Model, list xlist, bool global[TRUE])
+```
+
+Compute the mean silhouette score for all samples in the fitted kmeans
+model if the optional parameter `global` is set to `TRUE` (default). The
+silhouette score is a measure of how well clusters are separated; higher
+values indicate better-defined clusters. The best value is 1 and the
+worst value is -1. Values near 0 indicate overlapping clusters. Negative
+values generally indicate that a sample has been assigned to the wrong
+cluster, as a different cluster is more similar. If `global` is set to
+`FALSE`, the mean silhouette score is computed for each cluster
+separately.
+
+**Reference:** https://scikit-learn.org/stable/modules/generated/sklearn.metrics.silhouette_score.html
+
+**Arguments:**
+
+- `Model`: bundle, Model object returned by the `kmeans_fit()` function.
+- `xlist`: list, Features (regressors) used for clustering.
+- `global`: bool, If TRUE (default) compute the mean silhouette score for all samples, otherwise compute it for each cluster separately.
+
+**Return:** Scalar value representing the mean silhouette score if `global` is set to TRUE, otherwise a matrix is returned  (columns refer to the cluster and the score).
+
+
+## kmeans_sil_plot
+
+```
+kmeans_sil_plot (bundle Model, list xlist, bundle opts[null])
+```
+
+Create a silhouette plot for the fitted kmeans model. Each cluster is
+plotted separately, showing the silhouette value for each
+observation. Plot options can be passed via the `opts` bundle. The
+dashed vertical line shows the mean Silhouette score.
+
+**Reference:** https://en.wikipedia.org/wiki/Silhouette_(clustering)
+
+**Arguments:**
+
+- `Model`: bundle, Model object returned by the `kmeans_fit()` function.
+- `xlist`: list, Features (regressors) used for clustering.
+- `opts`: bundle, Optional parameters for controlling the plot. The following options are supported:
+    * `filename`: string, Name of the file to save the plot. If not provided, the plot will be shown on the screen.
+    * `width`: scalar, Width of the plot in pixels (default: 600).
+    * `height`: scalar, Height of the plot in pixels (default: 900).
+    * `columns`: scalar, Number of columns in the grid layout for clusters (default: 1).
+    * `base_margin`: scalar, Base margin for top and bottom plot margins (default: 2.5).
+    * `pointsize`: scalar, Size of points (default: 0.75)
+
+**Return:** Nothing.
+
+
+\section{Changelog}
+
+* **v0.6 (August 2025)**
+    * Add new silhouette functions: `kmeans_sil_samples()`, `kmeans_sil_score()`, and `kmeans_sil_plot()`
+    * Bugifx: Correctly handle the case for the "mahalanobis" distance metric in the `compute_distance()` function. (Kudos to Allin Cottrell for reporting and providing a fix)
+    * GUI dialog: Add option to plot silhouette analysis and general improvements
+    * Raise minimum version of gretl to 2023c
+
+* **v0.5 (February 2025)**
+    * Bugfix: in case of a single cluster, switch to "random" initializer as "pca" would fail; throw error if pca initializer is called for a single cluster
+    * Improvement: Improve robustness if empty clusters are estimated (e.g., due to bad random initialization of centroids)
+
+* **v0.4 (January 2025)**
+    * Add the function `kmeans_screeplot()` for plotting the scree plot (method to determine the optimal number of clusters).
+    * Change default values for parameters `pointsize` and `fontsize` in the `kmeans_plot()` function. Now set by gretl's default values.
+    * Bugfix: The distance measure is now taken into account when calling the function via the GUI. Before, the default distance measure was always used.
+
+* **v0.3 (February 2024)**
+    * Add GUI dialog
+    * Move to markdown-based help file
+    * Internal improvements
+
+* **v0.2 (July 2022)**
+    * Fix bug that arises if the sample range is restricted, and you're trying to coerce a column vector that's not the full length of the dataset into a series on adding it to a bundle.
+    * Returned objects `cluster_id` and `distances` when calling the `kmeans_fit()` function are of type matrix instead of series, now.
+
+* **v0.1 (February 2022)**
+    * initial release
+
+\end{document}

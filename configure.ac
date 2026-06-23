@@ -1132,6 +1132,7 @@ if test "${build_addons}" = "yes" ; then
     addons/PairPlot/pkg.inp
     addons/kmeans/Makefile
     addons/kmeans/pkg.inp
+    addons/kmeans/doc/Makefile
   ])
 fi
 

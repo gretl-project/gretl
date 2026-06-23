@@ -35,7 +35,10 @@ all: $(PKG).gfn
 $(PKG).gfn: symlinks $(INP) $(SPEC) $(SMPL)
 	$(GRETLCLI) -t pkg.inp
 
-$(PKG).zip: $(PKG).gfn
+doc/$(PKG).pdf: $(PKG).gfn
+	$(MAKE) -C doc
+
+$(PKG).zip: $(PKG).gfn doc/$(PKG).pdf
 	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
 
 .PHONY : symlinks check install installdirs clean
