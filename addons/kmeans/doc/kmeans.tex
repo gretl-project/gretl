@@ -29,7 +29,7 @@
 {\noindent\hrulefill\\[-12pt]}
 {\medbreak}
 
-\title{\textsf{kmeans}}
+\title{The \textsf{kmeans} addon}
 \author{Artur Tarassow and Allin Cottrell}
 \date{June 23, 2026}
 
@@ -38,29 +38,57 @@
 
 \section{Introduction}
 
-This package offers functionality to identify unknown clusters in
+In conjunction with gretl's built-in \texttt{kmeans} function
+this package provides functionality to identify clusters in
 multidimensional data using the $K$-means algorithm.  This algorithm
-divides a set of $m$ observations, each of dimension $n$, into disjoint
-clusters, $C_i, i=1,\dots,K$. Each cluster is defined by its centroid,
-an $n$-vector comprising the means of the variables for the observations
-it includes.
+divides a set of $m$ observations, each of dimension $n$, into
+disjoint clusters, $C_i, i=1,\dots,K$. Each cluster is defined by its
+centroid, an $n$-vector comprising the means of the variables for the
+observations it includes.
 
 The objective is to minimize some loss function, most commonly the
 sum of squared Euclidean distances between the data-points and their
-associated cluster centroid. See \citet[ch.\ 12]{ISL2e} for a detailed
-account.
+associated cluster centroid.
 
 In addition the package provides functions to compute so-called
 silhouette scores; that is, measures of how similar an observation is to
-its own cluster compared to other clusters \cite{Rousseeuw87}.  These
+its own cluster compared to other clusters \citep{Rousseeuw87}.  These
 values are bounded by 1 (``best'', the point is firmly anchored in its
 own cluster) and $-1$ (``worst'', the point really belongs
 elsewhere). Values near 0 indicate overlapping clusters.
 
-\section{GUI access}
+\section{The algorithm}
+\label{sec:algo}
 
-Currently, only $K$-means estimation, but not silhouette analysis, can be
-performed via the dialog box, which can be opened via `View -> K-Means`.
+In general terms, the $K$-means algorithm can be described as follows.
+\begin{enumerate}
+\item Fix on $K$ centroids to serve as a starting point. This is
+  usually done by selecting $K$ of the $m$ observations, either at
+  random or by means of a deterministic method designed to ensure that
+  the selected observations are widely separated (more on this below).
+\item Assign each data-point to the cluster whose centroid is nearest
+  according to the chosen metric.
+\item Calculate the resulting centroid for each cluster; calculate and
+  record the loss function (total within-cluster distance).
+\item Go to step 2, unless either (a) no points were moved in step 2
+  or (b) the reduction in the loss function is smaller than some
+  specified tolerance, in which case stop.
+\end{enumerate}
+
+For more detailed accounts see \citet{hartigan-wong79}, \citet[ch.\
+12]{ISL2e}. Here we'll just note what's most relevant for gretl.
+
+
+
+\section{Scripting usage}
+\label{sec:scripting}
+
+
+\section{GUI access}
+\label{sec:gui}
+
+$K$-means functionality can be accessed via the item \textsf{K-Means}
+under the \textsf{View} menu in gretl's main window.
 
 Two choices are available:
 \begin{enumerate}
@@ -138,7 +166,7 @@ items shown in Table~\ref{tab:fit-return}.
   \label{tab:fit-return}
 \end{table}
 
-%% WORK needed below here
+%% WORK needed below here!!
 
 \bibliographystyle{gretl}
 \bibliography{gretl}
