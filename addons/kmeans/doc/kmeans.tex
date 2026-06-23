@@ -39,15 +39,15 @@
 \section{Introduction}
 
 This package offers functionality to identify unknown clusters in
-multidimensional data using the well known $K$-means algorithm.  This
-algorithm divides a set of $m$ observations, each of dimension
-$n$, into disjoint clusters, $C_i, i=1,\dots,K$. Each cluster is
-defined by its centroid, an $n$-vector comprising the means of the
-variables for the observations it includes.
+multidimensional data using the $K$-means algorithm.  This algorithm
+divides a set of $m$ observations, each of dimension $n$, into disjoint
+clusters, $C_i, i=1,\dots,K$. Each cluster is defined by its centroid,
+an $n$-vector comprising the means of the variables for the observations
+it includes.
 
 The objective is to minimize some loss function, most commonly the
 sum of squared Euclidean distances between the data-points and their
-associated cluster centroid. See \cite[ch.\ 12]{ISL2e} for a detailed
+associated cluster centroid. See \citet[ch.\ 12]{ISL2e} for a detailed
 account.
 
 In addition the package provides functions to compute so-called
@@ -75,44 +75,68 @@ Two choices are available:
   about the estimation.
 \end{enumerate}
 
-\section{Public Functions}
+\clearpage
 
-\subsection{\dtk{kmeans_fit}}
+\section{Reference: public functions}
+\label{sec:funcref}
 
-\begin{code}
-kmeans_fit (list xlist, int n_clusters[2::3], bundle opts[null])
-\end{code}
+\begin{funcdoc}
+\begin{verbatim}
+kmeans_fit (list xlist, numeric clusters, bundle opts[null])
+\end{verbatim}
+  Executes the $K$-means algorithm and estimates the clusters. The
+  \texttt{xlist} argument, which specifies the features on which
+  clustering is to be based, must not contain any missing values, so be
+  sure to clean your data before calling this function.  The
+  \texttt{clusters} argument must be either a positive integer,
+  specifying the assumed number of clusters, $K$, or a $K \times n$
+  matrix holding initial centroids.  Table~\ref{tab:fit-parms} lists
+  the parameters that can be passed via the \texttt{opts} argument.
+\end{funcdoc}
 
-Executes the kmeans algorithm and estimates the clusters. It is required
-that \texttt{xlist} does not contain missing values, so please make sure
-to clean your data before calling this function.
-
-Notes on the arguments:
-\begin{itemize}
-\item \texttt{xlist}: a list of series, the features on which clustering
-  is to be based.
-\item \dtk{n_clusters}: an integer, the number of clusters to assume
-  (default: 3).
-\item opts: a bundle holding optional parameters, including any of the following:
-  \begin{itemize}
-    \item \texttt{metric}: a string identifying the distance metric to be
-      employed (default: \texttt{euclidean}). Alternatives includes
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{llp{0.7\textwidth}}
+    \texttt{metric} & string & specifies the distance metric, default
+      \texttt{euclidean}. Alternatives includes
       \texttt{manhattan} and \texttt{chebyshev}; see the help for
-      gretl's \texttt{distance()} function for a full list.
-    \item \texttt{initializer}: FIXME
-    \item \dtk{n_draws}: an integer specifying how many times the
-      $K$-means kmeans algorithm will be run with different randomly
-      selected initial centroids (default: 10).
-    \item \texttt{tolerance}: a scalar, the value for the improvement in
+      gretl's \texttt{distance()} function for a full list. \\
+    \texttt{init} & string & TBD \\
+    \dtk{n_draws} & scalar & integer specifying how many times the
+      $K$-means algorithm will be run with different randomly
+      selected initial centroids, default 10. \\
+    \texttt{tolerance} & scalar & value for the improvement in
       the objective function below which the algorithm is considered as
-      having converged (default: 0.0001).
-    \item \texttt{verbose}: an integer governing printed output: 0 means
-      don't print anything; 1 print some details; 2 print more details.
-  \end{itemize}
-\end{itemize}
+      having converged, default 0.0001.\\
+    \texttt{verbose} & scalar & integer governing printed output: 0 means
+      don't print anything; 1, print some details; 2, print more details.
+  \end{tabular}
+  \caption{Summary of optional parameters for \dtk{kmeans_fit}}
+  \label{tab:fit-parms}
+\end{table}
 
 The return value from \dtk{kmeans_fit} is a bundle containing the
-following members:
+items shown in Table~\ref{tab:fit-return}.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{llp{0.6\textwidth}}
+    \dtk{between_distance} & scalar & TBD \\
+    \texttt{centroids} & matrix & holds the optimized centroids, $K
+                                  \times n$.\\
+    \dtk{cluster_id} & matrix & $m$-vector recording for each data-point
+                                the cluster to which it is assigned \\
+    \texttt{distances} & matrix & $m$-vector recording for each
+                                  data-point the distance to its
+                                  associated centroid\\
+    \texttt{error} & scalar & error code: either 0 for no error
+                              or a positive integer.\\
+    \texttt{nobs} & scalar & the number of observations used.\\
+    \dots & \dots & TBD
+  \end{tabular}
+  \caption{Summary of optional parameters for \dtk{kmeans_fit}}
+  \label{tab:fit-return}
+\end{table}
 
 %% WORK needed below here
 
@@ -120,31 +144,6 @@ following members:
 \bibliography{gretl}
 
 \end{document}
-
-\begin{itemize}
-\item \dtk{between_variation}: scalar, the between-cluster sum of squares =
-  `total_ssq - within_variation_total`
-
-\item \texttt{centroids}: matrix, Estimated mean values (centroids) for each
-  feature (columns) and for each cluster (rows).
-
-\item \dtk{cluster_id}: matrix, Estimated cluster ID for each observation
-  for the best draw minimizing `inertia`.
-
-\item \texttt{distances}: matrix, Estimated distance for the best draw
-  minimizing `inertia`.
-
-\item \texttt{error}: error code: in case of no error 0, otherwise
-  a positive integer.
-
-\item \texttt{nobs}: integer, the number of observations used for training.
-
-\item \dtk{total_ssq}: scalar, the sum of the squared distances of the
-  features from its mean values.
-
-\item \dtk{within_variation_total}: scalar, Sum of the squared distances
-  across all clusters (*inertia*).
-
 
 ## kmeans_predict
 

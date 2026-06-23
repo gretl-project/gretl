@@ -14,10 +14,17 @@ function bundle handle_options_and_defaults (const list xlist,
             verify_metric(opts.metric)
             delete opts.distance_type
         endif
-        if inbundle(opts, "initializer")
-            if (opts.initializer == "pca")
-                opts.initializer = "pc"
+        if inbundle(opts, "init")
+            if (opts.init == "pca")
+                opts.init = "pc"
             endif
+        elif inbundle(opts, "initializer")
+            # backward compatibility
+            opts.init = opts.initializer
+            if (opts.init == "pca")
+                opts.init = "pc"
+            endif
+            delete opts.initializer
         endif
     endif
 
@@ -68,7 +75,7 @@ function bundle default_values (const list xlist, bool plotting)
     bundle self = defbundle()
     scalar self.error = FALSE
     scalar self.verbose = plotting ? 0 : 1
-    string self.initializer = "random"
+    string self.init = "random"
     scalar self.n_draws = 10
     scalar self.max_iter = 128
     scalar self.tolerance = 1e-4
@@ -88,7 +95,7 @@ end function
 function matrix initialize_centroids (const matrix features,
                                       const bundle self)
     scalar k = self.n_clusters
-    string init = tolower(self.initializer)
+    string init = tolower(self.init)
     # "pc" is not supported for k = 1
     init = k == 1 ? "random" : init
     matrix centroids
@@ -97,8 +104,10 @@ function matrix initialize_centroids (const matrix features,
         centroids = features[randperm(rows(features), k),]
     elif init == "pc"
         centroids = init_centroids_by_pc(features, k)
+    elif init == "user"
+        centroids = self.centroids0
     else
-        funcerr "Invalid initializer"
+        funcerr "Invalid 'init' value"
     endif
     return centroids
 end function
@@ -142,8 +151,8 @@ function void call_ASA136 (const matrix X, bundle *self)
     if inbundle(self, "n_draws")
         opts.rand_starts = self.n_draws
     endif
-    if inbundle(self, "initializer")
-        if self.initializer == "pc"
+    if inbundle(self, "init")
+        if self.init == "pc"
             opts.init = "pc"
         endif
     endif
@@ -172,10 +181,9 @@ function void call_ASA136 (const matrix X, bundle *self)
     # other components?
 end function
 
-function bundle real_kmeans_fit (const list xlist,
-                                 int n_clusters[1::2],
-                                 const matrix clusters[null],
-                                 bundle opts[null])
+function bundle kmeans_fit (const list xlist,
+                            numeric clusters,
+                            bundle opts[null])
     /* Estimate clusters. */
 
     if typeof(clusters) == 3
@@ -183,7 +191,17 @@ function bundle real_kmeans_fit (const list xlist,
         errorif(cols(clusters) != nelem(xlist),
           sprintf("Columns of clusters (%d) doesn't match number of features (%d)",
           cols(clusters), nelem(xlist)))
+        matrix clusters0 = clusters
         n_clusters = rows(clusters)
+    elif typeof(clusters) == 1
+        # got a scalar
+        if clusters != floor(clusters)
+            funcerr "kmeans_fit: clusters must be an integer or a matrix"
+        else
+            n_clusters = clusters
+        endif
+    else
+        funcerr "kmeans_fit: clusters must be an integer or a matrix"
     endif
 
     if !exists(opts)
@@ -194,11 +212,12 @@ function bundle real_kmeans_fit (const list xlist,
       "Some features have missing values. Please drop these first.")
 
     bundle self = handle_options_and_defaults(xlist, 0, opts)
-    self.initializer = tolower(self.initializer)
+    self.init = tolower(self.init)
 
     scalar self.n_clusters = n_clusters
-    if exists(clusters)
-        matrix self.clusters0 = clusters
+    if exists(clusters0)
+        matrix self.clusters0 = clusters0
+        self.init = "user"
     endif
     matrix features = {xlist}
     scalar self.within_distance = $huge
@@ -221,9 +240,8 @@ function bundle real_kmeans_fit (const list xlist,
     if self.verbose
         printf "kmeans_fit: %d observations, %d features, %d clusters\n",
           $nobs, nelem(xlist), n_clusters
-        printf "metric is %s, initializer %s, %d random draws\n",
-          full_metric_name(self.metric), self.initializer,
-          self.n_draws
+        printf "metric %s, initializer %s, %d random draws\n",
+          full_metric_name(self.metric), self.init, self.n_draws
     endif
 
     if n_clusters == 1
@@ -238,22 +256,22 @@ function bundle real_kmeans_fit (const list xlist,
         return self
     endif
 
-    string save_init = self.initializer
+    string save_init = self.init
 
-    if save_init == "pc"
+    if save_init == "pc" || save_init == "user"
         bundle b = compute_kmeans(self, features)
         scalar self.within_distance = b.within_distance
         matrix self.centroids = b.centroids
         matrix cluster_id = b.cluster_id
         matrix distances = b.distances
         if self.verbose == 2
-            printf "PC initializer: total within distance = %g\n",
+            printf "PC init: total within distance = %g\n",
               b.within_distance
         endif
-        self.initializer = "random"
+        # hand off to random for n_draws > 0
+        self.init = "random"
     endif
 
-    # try some random initializations if self.n_draws > 0
     loop d=1..self.n_draws
         bundle b = compute_kmeans(self, features)
         if b.error
@@ -278,7 +296,7 @@ function bundle real_kmeans_fit (const list xlist,
         endif
     endloop
 
-    self.initializer = save_init
+    self.init = save_init
 
     if self.n_draws > 0 && n_errors == self.n_draws
         string msg = "All random initializations failed. Please check your data."
@@ -296,12 +314,6 @@ function bundle real_kmeans_fit (const list xlist,
     add_variations(features, &self)
 
     return self
-end function
-
-function bundle kmeans_fit (const list xlist "Features",
-                            const int n_clusters[1::2] "No. of clusters",
-                            bundle opts[null] "Parameter bundle")
-    return real_kmeans_fit(xlist, n_clusters, null, opts)
 end function
 
 function void add_variations (const matrix features, bundle *self)
@@ -324,22 +336,20 @@ function void kmeans_summary (const bundle self)
     /* Print summary after fitting. */
 
     print "************************************************"
-    print "*** K-means unsupervised learning clustering ***"
+    print "*** K-means clustering ***"
 
     printf "\nParameters\n"
-    printf "  No. of clusters: %d\n", self.n_clusters
+    printf "  Number of clusters: %d\n", self.n_clusters
     printf "  Metric: %s\n", full_metric_name(self.metric)
-    printf "  Initializer: '%s'\n", self.initializer
-    printf "  Max. iterations: %d\n", self.max_iter
-    #printf "  Actual iterations: %d\n", self.actual_iter
-    printf "  No. of random draws: %d\n", self.n_draws
+    printf "  Initializer: %s\n", self.init
+    printf "  Number of random draws: %d\n", self.n_draws
     printf "  Tolerance: %f\n", self.tolerance
 
     printf "\nResults:\n"
     if metric_is_euclidean(self.metric)
         printf "  Total sum of squares: %g\n", self.total_distance
-        printf "  Total within-cluster sum of squares: %g\n", self.within_distance
-        printf "  Between cluster sum of squares: %g\n", self.between_distance
+        printf "  Within-cluster sum of squares: %g\n", self.within_distance
+        printf "  Between-cluster sum of squares: %g\n", self.between_distance
         printf "  (Between / Total): %.3f pct.\n", (self.between_fraction * 100)
     else
         printf "  Total distance from global centroid: %g\n", self.total_distance
@@ -351,22 +361,19 @@ function void kmeans_summary (const bundle self)
 end function
 
 function void kmeans_plot (const list xlist, bundle self)
-    /* Plot clusters in 2-dimensions. */
+    /* Plot clusters in two dimensions. */
 
     string self.filename = inbundle(self, "filename") ? \
       self.filename : "display"
     series factor = self.cluster_id
-
     PairPlot(xlist, factor, self)
-
-    Info("Finished plotting.")
 end function
 
-function bundle compute_kmeans (const bundle self, const matrix features)
+function bundle compute_kmeans (const bundle self,
+                                const matrix features)
     /* Actual computation of k-means. Identify optimal clusters and
        return a bundle.
     */
-
     bundle Model
     matrix centroids = initialize_centroids(features, self)
     scalar k = self.n_clusters
