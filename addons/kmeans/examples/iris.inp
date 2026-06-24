@@ -1,0 +1,17 @@
+set verbose off
+include kmeans.gfn
+
+open iris.gdt
+list L = 1 .. 4
+matrix X = {L}
+bundle b = kmeans(X, 3, _(init="hw", verbosity=2))
+series sphat = b.clustid
+xtab species sphat
+
+# experiment using species as initial clusters
+printf "\n"
+matrix C0 = zeros(3, 4)
+C0[1,] = meanc(X[1:50,])
+C0[2,] = meanc(X[50:100,])
+C0[3,] = meanc(X[51:150,])
+bundle b = kmeans(X, C0, _(verbosity=2))
