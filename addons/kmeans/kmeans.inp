@@ -130,14 +130,13 @@ function matrix init_centroids_by_pc (const matrix features,
 end function
 
 function series kmeans_predict (const list xlist "Features",
-                                const bundle self)
+                                const bundle Model)
     /* Predict cluster membership for a given model,
        returning the result as a series.
     */
-
     errorif(sum(missing(xlist)),
       "Some features have missing values. Please drop these first.")
-    matrix distances = distance({xlist}, self.metric, self.centroids)
+    matrix distances = distance({xlist}, Model.metric, Model.centroids)
     series cluster_id = iminr(distances)
 
     return cluster_id
@@ -332,30 +331,30 @@ function void add_variations (const matrix features, bundle *self)
     scalar self.between_fraction = self.between_distance / self.total_distance
 end function
 
-function void kmeans_summary (const bundle self)
+function void kmeans_summary (const bundle b)
     /* Print summary after fitting. */
 
     print "************************************************"
     print "*** K-means clustering ***"
 
     printf "\nParameters\n"
-    printf "  Number of clusters: %d\n", self.n_clusters
-    printf "  Metric: %s\n", full_metric_name(self.metric)
-    printf "  Initializer: %s\n", self.init
-    printf "  Number of random draws: %d\n", self.n_draws
-    printf "  Tolerance: %f\n", self.tolerance
+    printf "  Number of clusters: %d\n", b.n_clusters
+    printf "  Metric: %s\n", full_metric_name(b.metric)
+    printf "  Initializer: %s\n", b.init
+    printf "  Number of random draws: %d\n", b.n_draws
+    printf "  Tolerance: %f\n", b.tolerance
 
     printf "\nResults:\n"
-    if metric_is_euclidean(self.metric)
-        printf "  Total sum of squares: %g\n", self.total_distance
-        printf "  Within-cluster sum of squares: %g\n", self.within_distance
-        printf "  Between-cluster sum of squares: %g\n", self.between_distance
-        printf "  (Between / Total): %.3f pct.\n", (self.between_fraction * 100)
+    if metric_is_euclidean(b.metric)
+        printf "  Total sum of squares: %g\n", b.total_distance
+        printf "  Within-cluster sum of squares: %g\n", b.within_distance
+        printf "  Between-cluster sum of squares: %g\n", b.between_distance
+        printf "  (Between / Total): %.3f pct.\n", (b.between_fraction * 100)
     else
-        printf "  Total distance from global centroid: %g\n", self.total_distance
-        printf "  Total within-cluster distance: %g\n", self.within_distance
-        printf "  Between cluster distance: %g\n", self.between_distance
-        printf "  (Between / Total): %.3f pct.\n", (self.between_fraction * 100)
+        printf "  Total distance from global centroid: %g\n", b.total_distance
+        printf "  Total within-cluster distance: %g\n", b.within_distance
+        printf "  Between cluster distance: %g\n", b.between_distance
+        printf "  (Between / Total): %.3f pct.\n", (b.between_fraction * 100)
     endif
     print "************************************************"
 end function
