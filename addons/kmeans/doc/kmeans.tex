@@ -38,51 +38,77 @@
 
 \section{Introduction}
 
-In conjunction with gretl's built-in \texttt{kmeans} function
-this package provides functionality to identify clusters in
-multidimensional data using the $K$-means algorithm.  This algorithm
-divides a set of $m$ observations, each of dimension $n$, into
-disjoint clusters, $C_i, i=1,\dots,K$. Each cluster is defined by its
-centroid, an $n$-vector comprising the means of the variables for the
-observations it includes.
+In conjunction with gretl's built-in \texttt{kmeans} function this
+package provides functionality to identify clusters in multidimensional
+data using the $K$-means algorithm.  This algorithm divides a set of $m$
+observations, each of dimension $n$, into disjoint clusters,
+$C_i, i=1,\dots,K$. Each cluster is defined by its centroid, an
+$n$-vector comprising the means of the variables for the observations it
+includes. Useful references include \citet{hartigan-wong79} and
+\citet[ch.\ 12]{ISL2e}.
 
-The objective is to minimize some loss function, most commonly the
-sum of squared Euclidean distances between the data-points and their
-associated cluster centroid.
+The aim of $K$-means is to minimize a loss function, namely the total
+distance between the data-points and their associated cluster
+centroids. Most commonly the metric is squared Euclidean distance (sum
+of squares of the distances in each of the $n$ dimensions) but other
+metrics---such as Manhattan (sum of the absolute distances in each
+dimension) or Chebyshev (greatest absolute distance in any
+dimension)---are sometimes used.
 
-In addition the package provides functions to compute so-called
-silhouette scores; that is, measures of how similar an observation is to
-its own cluster compared to other clusters \citep{Rousseeuw87}.  These
-values are bounded by 1 (``best'', the point is firmly anchored in its
-own cluster) and $-1$ (``worst'', the point really belongs
-elsewhere). Values near 0 indicate overlapping clusters.
+In addition the package provides apparatus to visualize the results of
+clustering, to assess its effectiveness, and to gauge whether the
+assumed number of clusters is appropriate.
+
+TODO: summarize the structure of what follows, once it's ready.
 
 \section{The algorithm}
 \label{sec:algo}
 
 In general terms, the $K$-means algorithm can be described as follows.
 \begin{enumerate}
-\item Fix on $K$ centroids to serve as a starting point. This is
-  usually done by selecting $K$ of the $m$ observations, either at
-  random or by means of a deterministic method designed to ensure that
-  the selected observations are widely separated (more on this below).
+\item Fix on $K$ $n$-vectors to serve as initial centroids. This is
+  usually done by selection from the $m$ observations, either at random
+  or by means of a deterministic method designed to ensure that the
+  selected points are widely separated (more on this below).
 \item Assign each data-point to the cluster whose centroid is nearest
   according to the chosen metric.
 \item Calculate the resulting centroid for each cluster; calculate and
-  record the loss function (total within-cluster distance).
-\item Go to step 2, unless either (a) no points were moved in step 2
-  or (b) the reduction in the loss function is smaller than some
+  record the total within-cluster distance.
+\item Go to step 2, unless either (a) no points were moved in step 2 or
+  (b) the reduction in within-cluster distance is smaller than some
   specified tolerance, in which case stop.
 \end{enumerate}
 
-For more detailed accounts see \citet{hartigan-wong79}, \citet[ch.\
-12]{ISL2e}. Here we'll just note what's most relevant for gretl.
+This algorithm will almost surely proceed to a locally optimal set of
+clusters but there's no guarantee that the global optimum will be
+found. In most cases there exist multiple local optima, some better than
+others, and the stopping point of the algorithm depends on its starting
+point. It's usually recommended to try several random initializations,
+perhaps along with a deterministic one, then select the best solution.
 
+Talk about the distance options in re.\ \texttt{kmeans} and
+\dtk{kmeans_fit}.
 
+Talk about the deterministic init options.
 
 \section{Scripting usage}
 \label{sec:scripting}
 
+
+\section{Plotting}
+\label{sec:plots}
+
+
+\subsection{Silhouettes}
+
+The silhouette score \citep{Rousseeuw87} for an observation is a
+composite measure of its similarity to the members of its own cluster
+and to the members of other clusters. These scores are in $[-1,1]$,
+where 1 is ``best'' (the point is firmly located in its own cluster) and
+$-1$ is ``worst'' (the point appears to belong elsewhere).  Values near
+0 indicate overlapping of the clusters.
+
+TODO: talk about the silhouette plotting function.
 
 \section{GUI access}
 \label{sec:gui}
@@ -166,59 +192,40 @@ items shown in Table~\ref{tab:fit-return}.
   \label{tab:fit-return}
 \end{table}
 
+\begin{funcdoc}
+\begin{verbatim}
+kmeans_predict (list xlist, bundle Model)
+\end{verbatim}
+  The first argument should be a list of features, as in
+  \dtk{kmeans_fit}, and the second should be a bundle obtained from
+  \dtk{kmeans_fit}.  This function returns a series holding the
+  predicted cluster ID for each observation of \texttt{xlist} in the
+  current sample range.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+kmeans_summary (bundle Model)
+\end{verbatim}
+  Prints summary information given a bundle obtained from \dtk{kmeans_fit}.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+kmeans_plot (list xlist, bundle self[null])
+\end{verbatim}
+  Produces a scatter plot for each pair of features in xlist, factorized
+  by ... CLARIFY!  self: bundle, Bundle for manipulating the
+  plot. [Here you can also pass options accepted by the
+  PairPlot package.]
+\end{funcdoc}
+
 %% WORK needed below here!!
 
 \bibliographystyle{gretl}
 \bibliography{gretl}
 
 \end{document}
-
-## kmeans_predict
-
-```
-kmeans_predict (list xlist, bundle Model)
-```
-
-Predict cluster belonging based on the estimated model.
-
-**Arguments:**
-
-- `xlist`: list, Features (regressors) used for predicting cluster belonging.
-- `Model`: bundle, Model object returned by the `kmeans_fit()` function.
-
-**Return:** Series holding the predicted cluster ID for each observation.
-
-
-## kmeans_summary
-
-```
-kmeans_summary (bundle Model)
-```
-
-Print summarizing information on estimation step after having applied the `kmeans_fit()` function.
-
-**Arguments:**
-
-- Model: bundle, Bundle returned by the `kmeans_fit()` function.
-
-**Return:** Nothing.
-
-
-## kmeans_plot
-
-```
-kmeans_plot (list xlist, bundle self[null])
-```
-
-Factorized scatter plot estimated clusters for each 2-dimensional combination of features. This function calls the user-defined package "PairPlot" which must be installed.
-
-**Arguments:**
-
-- `xlist`: list, Features (regressors) used for plotting.
-- `self`: bundle, Bundle for manipulating the plot. **Note** Here you can also pass options accepted by the "PairPlot" package which is used in the background.
-
-**Return:** Nothing.
-
 
 ## kmeans_screeplot
 

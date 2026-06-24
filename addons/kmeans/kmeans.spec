@@ -1,7 +1,7 @@
 author = Artur Tarassow
 email = atecon@posteo.de
 version = @VERSION@
-date = 2026-06-13
+date = 2026-06-24
 description = K-means clustering algorithm
 tags = C13 C52
 min-version = @VERSION@
@@ -13,5 +13,6 @@ sample-script = kmeans_sample.inp
 depends = logging PairPlot
 gui-main = kmeansGUI
 #menu-only = kmeansGUI
-label = k-Means
+label = K-Means
 menu-attachment = MAINWIN/View
+data-files = examples
