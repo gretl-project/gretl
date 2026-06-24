@@ -180,6 +180,19 @@ function void call_ASA136 (const matrix X, bundle *self)
     # other components?
 end function
 
+function void print_draw_info (int d, int dmax, const bundle b)
+    if dmax > 9
+        printf "draw %02d: ", d
+    else
+        printf "draw %d: ", d
+    endif
+    if b.error
+        printf "failed\n"
+    else
+        printf "total within distance = %g\n", d, b.within_distance
+    endif
+end function
+
 function bundle kmeans_fit (const list xlist,
                             numeric clusters,
                             bundle opts[null])
@@ -273,20 +286,14 @@ function bundle kmeans_fit (const list xlist,
 
     loop d=1..self.n_draws
         bundle b = compute_kmeans(self, features)
+        if self.verbose == 2
+            print_draw_info(d, self.n_draws, b)
+        endif
         if b.error
             n_errors++
-            if self.verbose == 2
-                printf "random draw %d: failed \n", d
-            endif
             continue
         endif
-
-        if self.verbose == 2
-            printf "random draw %d: total within distance = %g\n", d,
-              b.within_distance
-        endif
-
-        # select minimizing draw
+        # record minimizing draw
         if b.within_distance < self.within_distance
             scalar self.within_distance = b.within_distance
             matrix self.centroids = b.centroids
@@ -670,7 +677,7 @@ function void kmeans_sil_plot (const bundle Model,
         matrix cluster_sil_values = selifr(plot_data, cluster_mask)[,1]
         cluster_sil_values = mreverse(msortby(cluster_sil_values, 1))
         cluster_sil_values ~= mean_sil_score
-        cnameset(cluster_sil_values, defarray("score for data point", "mean score, all clusters"))
+        cnameset(cluster_sil_values, defarray("score for data points", "mean score, all clusters"))
         print cluster_sil_values
 
         plot cluster_sil_values
