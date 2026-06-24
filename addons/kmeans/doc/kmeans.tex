@@ -136,7 +136,7 @@ Two choices are available:
 
 \begin{funcdoc}
 \begin{verbatim}
-kmeans_fit (list xlist, numeric clusters, bundle opts[null])
+bundle kmeans_fit (list xlist, numeric clusters, bundle opts[null])
 \end{verbatim}
   Executes the $K$-means algorithm and estimates the clusters. The
   \texttt{xlist} argument, which specifies the features on which
@@ -169,8 +169,8 @@ kmeans_fit (list xlist, numeric clusters, bundle opts[null])
   \label{tab:fit-parms}
 \end{table}
 
-The return value from \dtk{kmeans_fit} is a bundle containing the
-items shown in Table~\ref{tab:fit-return}.
+The bundle returned by \dtk{kmeans_fit} contains the items shown in
+Table~\ref{tab:fit-return}.
 
 \begin{table}[htbp]
   \centering
@@ -194,18 +194,18 @@ items shown in Table~\ref{tab:fit-return}.
 
 \begin{funcdoc}
 \begin{verbatim}
-kmeans_predict (const list xlist, const bundle Model)
+series kmeans_predict (const list xlist, const bundle Model)
 \end{verbatim}
   The first argument should be a list of features, as in
   \dtk{kmeans_fit}, and the second should be a bundle obtained from
-  \dtk{kmeans_fit}.  This function returns a series holding the
-  predicted cluster ID for each observation of \texttt{xlist} in the
-  current sample range.
+  \dtk{kmeans_fit}.  The series that is returned holds the predicted
+  cluster ID for each observation of \texttt{xlist} in the current
+  sample range.
 \end{funcdoc}
 
 \begin{funcdoc}
 \begin{verbatim}
-kmeans_summary (const bundle Model)
+void kmeans_summary (const bundle Model)
 \end{verbatim}
   Prints summary information given a bundle obtained from \dtk{kmeans_fit}.
 \end{funcdoc}

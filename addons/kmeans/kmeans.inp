@@ -277,8 +277,8 @@ function bundle kmeans_fit (const list xlist,
         matrix cluster_id = b.cluster_id
         matrix distances = b.distances
         if self.verbose == 2
-            printf "PC init: total within distance = %g\n",
-              b.within_distance
+            printf "%s init: total within distance = %g\n",
+              save_init == "pc" ? "PC" : "user", b.within_distance
         endif
         # hand off to random for n_draws > 0
         self.init = "random"
@@ -503,7 +503,7 @@ function bundle kmeansGUI (const list X "Input",
     return Model
 end function
 
-function matrix	kmeans_screeplot (const list xlist "Features",
+function matrix kmeans_screeplot (const list xlist "Features",
                                   const int kmax[1::3] "No. of clusters",
                                   const string filename[null],
                                   bundle opts[null] "Parameter bundle")
@@ -526,7 +526,8 @@ function matrix	kmeans_screeplot (const list xlist "Features",
 
     loop i=1..nelem(k_values)
         bundle model = kmeans_fit(xlist, k_values[i], opts)
-        errorif(model.error, sprintf("scree: kmeans_fit failed for k = %d\n", k_values[i]))
+        errorif(model.error,
+          sprintf("scree: kmeans_fit failed for k = %d\n", k_values[i]))
         if opts.verbose == 2
             kmeans_summary(model)
         endif
