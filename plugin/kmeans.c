@@ -228,7 +228,7 @@ static int hartigan_wong_init (hw_info *hw)
     gretl_matrix *dmat;
     gretl_matrix *s;
     double d, d2i, cmean;
-    int i, j, l, r;
+    int i, j, r;
     int step;
     int err = 0;
 
@@ -249,11 +249,11 @@ static int hartigan_wong_init (hw_info *hw)
     s = gretl_matrix_sort_by_column(dmat, 0, &err);
     step = hw->m / hw->k;
 
-    for (l=0; l<hw->k; l++) {
-	r = gretl_matrix_get(s, l * step, 1);
+    for (i=0; i<hw->k; i++) {
+	r = (int) gretl_matrix_get(s, i * step, 1);
 	for (j=0; j<hw->n; j++) {
 	    d = gretl_matrix_get(hw->a, r, j);
-	    gretl_matrix_set(hw->c, l, j, d);
+	    gretl_matrix_set(hw->c, i, j, d);
 	}
     }
 
@@ -274,7 +274,7 @@ static int pc_init (hw_info *hw)
     gretl_matrix *tmp = NULL;
     double alj;
     int step;
-    int i, j, l;
+    int i, j, r;
     int err = 0;
 
     step = floor((hw->m - 1) / (hw->k - 1));
@@ -291,9 +291,9 @@ static int pc_init (hw_info *hw)
     }
     if (!err) {
 	for (i=0; i<hw->k; i++) {
-	    l = gretl_matrix_get(tmp, i*step, 1);
+	    r = (int) gretl_matrix_get(tmp, i*step, 1);
 	    for (j=0; j<hw->n; j++) {
-		alj = gretl_matrix_get(hw->a, l, j);
+		alj = gretl_matrix_get(hw->a, r, j);
 		gretl_matrix_set(hw->c, i, j, alj);
 	    }
 	}
