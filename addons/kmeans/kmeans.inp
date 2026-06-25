@@ -477,6 +477,7 @@ function bundle kmeansGUI (const list X "Input",
     self.verbose = 2  # in GUI mode, highest verbosity level is activated
 
     if plot_type == 1
+        # scree plot
         self.verbose = 0
         matrix results = kmeans_screeplot(X, n_clusters, null, self)
         bundle Model = _(results)
@@ -504,7 +505,7 @@ function bundle kmeansGUI (const list X "Input",
 end function
 
 function matrix kmeans_screeplot (const list xlist "Features",
-                                  const int kmax[1::3] "No. of clusters",
+                                  const int kmax[2::3] "No. of clusters",
                                   const string filename[null],
                                   bundle opts[null] "Parameter bundle")
     /* Create a scree plot. */
@@ -518,22 +519,27 @@ function matrix kmeans_screeplot (const list xlist "Features",
     if inbundle(opts, "fontsize")
         fontopt = sprintf("font=\",%d\"", opts.fontsize)
     endif
-
     string fname = exists(filename) ? filename : "display"
-    matrix k_values = seq(1, kmax)'
-    matrix results = k_values ~ zeros(kmax, 1)
-    cnameset(results, defarray("# clusters", "distance"))
+    matrix results
+    
+    if metric_is_euclidean(opts.metric)
+        opts.scree = 1
+        bundle b = kmeans({xlist}, kmax, opts)
+        results = b.Scree
+    else
+        results = zeros(kmax, 2)
+        loop k=1..kmax
+            bundle model = kmeans_fit(xlist, k, opts)
+            errorif(model.error,
+              sprintf("scree: kmeans_fit failed for k = %d\n", k))
+            if opts.verbose == 2
+                kmeans_summary(model)
+            endif
+            results[k,] = {k, model.within_distance}
+        endloop
+    endif
 
-    loop i=1..kmax
-        bundle model = kmeans_fit(xlist, i, opts)
-        errorif(model.error,
-          sprintf("scree: kmeans_fit failed for k = %d\n", k_values[i]))
-        if opts.verbose == 2
-            kmeans_summary(model)
-        endif
-        results[i,2] = model.within_distance
-    endloop
-
+    cnameset(results, defarray("clusters", "distance"))
     print results
 
     matrix mplot = mreverse(results, TRUE)
