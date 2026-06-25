@@ -1071,25 +1071,30 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 
     if (scree) {
 	/* testing multiple @k values */
-	gretl_matrix *S;
+	gretl_matrix *Scree;
 	double WCSS;
 	int kmax = k;
 
-	S = gretl_matrix_alloc(kmax, 2);
+	Scree = gretl_matrix_alloc(kmax, 2);
 	for (k=1; k<=kmax && !*err; k++) {
-	    gretl_matrix_set(S, k-1, 0, (double) k);
+	    gretl_matrix_set(Scree, k-1, 0, (double) k);
 	    if (k == 1) {
 		WCSS = k1_SST(a, err);
 	    } else {
 		real_kmeans(a, k, NULL, opts, &WCSS, prn, err);
 	    }
 	    if (!*err) {
-		gretl_matrix_set(S, k-1, 1, WCSS);
+		gretl_matrix_set(Scree, k-1, 1, WCSS);
 	    }
 	}
 	if (!*err) {
+	    char **S = strings_array_new(2);
+
 	    ret = gretl_bundle_new();
-	    gretl_bundle_donate_data(ret, "Scree", S, GRETL_TYPE_MATRIX);
+	    S[0] = gretl_strdup("clusters");
+	    S[1] = gretl_strdup("distance");
+	    gretl_matrix_set_colnames(Scree, S);
+	    gretl_bundle_donate_data(ret, "Scree", Scree, GRETL_TYPE_MATRIX);
 	}
     } else {
 	/* standard case: single @k */

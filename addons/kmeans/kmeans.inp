@@ -1,5 +1,4 @@
-function bundle handle_options_and_defaults (const list xlist,
-                                             bool plotting,
+function bundle handle_options_and_defaults (bool plotting,
                                              bundle opts[null])
     # Compose self bundle, merging information from @opts
 
@@ -28,7 +27,7 @@ function bundle handle_options_and_defaults (const list xlist,
         endif
     endif
 
-    bundle self = default_values(xlist, plotting)
+    bundle self = default_values(plotting)
     self = opts + self          # override defaults
 
     return self
@@ -69,7 +68,7 @@ function scalar metric_is_euclidean (const string s)
     return strncmp(s, "euclidean", strlen(s)) == 0
 end function
 
-function bundle default_values (const list xlist, bool plotting)
+function bundle default_values (bool plotting)
     /* Set default values. */
 
     bundle self = defbundle()
@@ -83,7 +82,6 @@ function bundle default_values (const list xlist, bool plotting)
     scalar self.nobs = $nobs
 
     if plotting
-        # For kmeans_plot() and kmeans_screeplot()
         scalar self.use_circles = FALSE
         scalar self.linewidth = 1.5
         scalar self.fontsize = 10
@@ -223,7 +221,7 @@ function bundle kmeans_fit (const list xlist,
     errorif(sum(missing(xlist)),\
       "Some features have missing values. Please drop these first.")
 
-    bundle self = handle_options_and_defaults(xlist, 0, opts)
+    bundle self = handle_options_and_defaults(0, opts)
     self.init = tolower(self.init)
 
     scalar self.n_clusters = n_clusters
@@ -323,8 +321,7 @@ function bundle kmeans_fit (const list xlist,
 end function
 
 function void add_variations (const matrix features, bundle *self)
-    /* Add various variation statistics.
-       return: void */
+    /* Add variation statistics */
 
     matrix distances_from_mean = distance(features, self.metric, meanc(features))
     if metric_is_euclidean(self.metric)
@@ -366,13 +363,13 @@ function void kmeans_summary (const bundle b)
     print "************************************************"
 end function
 
-function void kmeans_plot (const list xlist, bundle self)
+function void kmeans_plot (const list xlist, bundle kmb)
     /* Plot clusters in two dimensions. */
 
-    string self.filename = inbundle(self, "filename") ? \
-      self.filename : "display"
-    series factor = self.cluster_id
-    PairPlot(xlist, factor, self)
+    string kmb.filename = inbundle(kmb, "filename") ? \
+      kmb.filename : "display"
+    series factor = kmb.cluster_id
+    PairPlot(xlist, factor, kmb)
 end function
 
 function bundle compute_kmeans (const bundle self,
@@ -424,12 +421,8 @@ end function
 function scalar within_cluster_distance (const matrix distances,
                                          const matrix cluster_id,
                                          const string metric)
-    /* Compute the sum of the distances between observations and centroids
-       across all clusters.
-
-       "distances" already refers to some computed distance from the centroid,
-       for instance $(x_{ij} - xbar_{ij})^2$ in case of the Euclidean distance.
-       But it could also be some other distance measure.
+    /* Compute the sum of the distances between observations and
+       cluster centroids across all clusters.
     */
 
     if metric_is_euclidean(metric)
@@ -455,32 +448,33 @@ function matrix compute_centroids (const matrix features,
     strings row_labels = "Centroid=" ~ tmp[,1]
     centroids = tmp[,3:]
     rnameset(centroids, row_labels)
-
     return centroids
 end function
 
 function string get_metric (const int distance)
     /* Only for kmeansGUI(). Maps the integer code to the name of
-       the distance measure. */
+       the distance measure.
+    */
     strings Distances = all_metrics()
     return Distances[distance]
 end function
 
-function bundle kmeansGUI (const list X "Input",
+function bundle kmeansGUI (const list X "Features",
                            const int n_clusters[1::3] "No. of clusters (k)",
-      const int distance[1:6:1] "Distance type" {"euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis"},
+      const int metric[1:6:1] "Metric" {"euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis"},
       const int plot_type[0:3:0] "Plot type" {"none", "Scree (1 to k)", "Cluster (pairs)", "Silhouette Plot"})
     /* Function for creating GUI dialog box. */
 
     bundle self = defbundle()
-    self.metric = get_metric(distance)
+    self.metric = get_metric(metric)
     self.verbose = 2  # in GUI mode, highest verbosity level is activated
 
     if plot_type == 1
         # scree plot
         self.verbose = 0
-        matrix results = kmeans_screeplot(X, n_clusters, null, self)
-        bundle Model = _(results)
+        matrix scree = kmeans_scree(X, n_clusters, self)
+        kmeans_screeplot(scree, null, null)
+        bundle Model = _(scree)
         return Model
     endif
 
@@ -504,24 +498,15 @@ function bundle kmeansGUI (const list X "Input",
     return Model
 end function
 
-function matrix kmeans_screeplot (const list xlist "Features",
-                                  const int kmax[2::3] "No. of clusters",
-                                  const string filename[null],
-                                  bundle opts[null] "Parameter bundle")
-    /* Create a scree plot. */
-
+function matrix kmeans_scree (const list xlist "Features",
+                              const int kmax[2::3] "No. of clusters",
+                              bundle opts[null])
     if !exists(opts)
         bundle opts = _()
     endif
-    bundle opts = handle_options_and_defaults(xlist, 1, opts)
+    bundle opts = handle_options_and_defaults(0, opts)
 
-    string fontopt = ""
-    if inbundle(opts, "fontsize")
-        fontopt = sprintf("font=\",%d\"", opts.fontsize)
-    endif
-    string fname = exists(filename) ? filename : "display"
     matrix results
-    
     if metric_is_euclidean(opts.metric)
         opts.scree = 1
         bundle b = kmeans({xlist}, kmax, opts)
@@ -537,12 +522,37 @@ function matrix kmeans_screeplot (const list xlist "Features",
             endif
             results[k,] = {k, model.within_distance}
         endloop
+        cnamset(results, "clusters distance")
     endif
 
-    cnameset(results, defarray("clusters", "distance"))
-    print results
+    return results
+end function
 
-    matrix mplot = mreverse(results, TRUE)
+function void kmeans_screeplot (const matrix scree,
+                                const string filename[null],
+                                bundle opts[null] "Parameter bundle")
+    /* Create a scree plot. */
+
+    if !exists(opts)
+        bundle opts = _()
+    endif
+    bundle opts = handle_options_and_defaults(1, opts)
+
+    string fontopt = ""
+    if inbundle(opts, "fontsize")
+        fontopt = sprintf("font=\",%d\"", opts.fontsize)
+    endif
+    string fname = exists(filename) ? filename : "display"
+
+    scalar x = minc(scree[,2])
+    printf "Total within-cluster distance as a function of K\n"
+    if x > 10000
+        printf "\n%9.0f\n", scree
+    else
+        print scree
+    endif
+
+    matrix mplot = mreverse(scree, TRUE)
     plot mplot
         options with-lp fit=none @fontopt
         literal set ylabel "Within distance"
@@ -551,8 +561,6 @@ function matrix kmeans_screeplot (const list xlist "Features",
         literal set grid
         literal set xtics 1
     end plot --output="@fname"
-
-    return results
 end function
 
 function series kmeans_sil_samples (const bundle Model, const list xlist)
@@ -609,7 +617,8 @@ end function
 
 function scalar compute_sil_sample (const scalar a_i, const scalar b_i)
     /* Compute the silhouette sample for a single observation.
-       URL: https://en.wikipedia.org/wiki/Silhouette_(clustering) */
+       https://en.wikipedia.org/wiki/Silhouette_(clustering)
+    */
 
     if a_i == 0 && b_i == 0
         return 0  # avoid division by zero
