@@ -1017,8 +1017,8 @@ static const char *list_exclude_other (gretl_bundle *ui)
     }
 }
 
-/* Note that we're returning a list in the GList sense here, not a gretl
-   list.
+/* Note that we're returning a list in the GList sense here,
+   not a gretl list.
 */
 
 static GList *get_selection_list (GretlType type, gretl_bundle *ui)
@@ -1984,7 +1984,7 @@ static int series_arg_ok (const char *name,
 
    Special case: the function has exactly one series argument, and
    a single series is selected in the main gretl window: in that
-   case we pre-select that series.
+   case we can pre-select that series.
 */
 
 static void arg_combo_set_default (call_info *cinfo,
@@ -2021,22 +2021,22 @@ static void arg_combo_set_default (call_info *cinfo,
 
     for (i=0; list != NULL; i++) {
 	gchar *name = list->data;
-	int ok = 0;
+	int ok = 1;
 
 	if (already_set_as_default(cinfo, argnum, name, ptype)) {
+	    ok = 0;
+	    continue;
+	} else if (want_series && !is_nullarg_label(name) &&
+		   !series_arg_ok(name, require_binary,
+				  require_discrete)) {
+	    /* excluded by ui-maker */
+	    ok = 0;
+	    continue;
+	} else if (!null_OK && is_nullarg_label(name)) {
+	    /* "can't happen" */
+	    ok = 0;
 	    continue;
 	}
-
-	if (mvname != NULL && !strcmp(name, mvname)) {
-	    ok = 1;
-	} else if (want_series && !is_nullarg_label(name)) {
-	    ok = series_arg_ok(name, require_binary, require_discrete);
-	} else if (null_OK && is_nullarg_label(name)) {
-	    ok = 1;
-	} else if (!strcmp(name, SELNAME)) {
-	    ok = 1;
-	}
-
 	if (ok) {
 	    sel = i;
 	    break;
