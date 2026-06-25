@@ -797,10 +797,11 @@ static int check_opts (gretl_bundle *b,
    @err: location to receive error code
 */
 
-gretl_bundle *kmeans (const gretl_matrix *a,
-		      int k, const gretl_matrix *c0,
-		      const gretl_bundle *opts,
-		      PRN *prn, int *err)
+static gretl_bundle *real_kmeans (const gretl_matrix *a,
+				  int k, const gretl_matrix *c0,
+				  const gretl_bundle *opts,
+				  double *WCSS, PRN *prn,
+				  int *err)
 {
     gretl_bundle *ret = NULL;
     hw_info hw = {0};
@@ -821,11 +822,12 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     int n = a->cols;
     int ri = 0;
     InitFlag iflag = INIT_HW;
+    int scree = (WCSS != NULL);
     int rand_starts = 0;
     int verbosity = 0;
 
     /* initial checks */
-    if (c0 != NULL) {
+    if (!scree && c0 != NULL) {
 	k = c0->rows;
 	if (c0->cols != n) {
 	    *err = E_NONCONF;
@@ -965,12 +967,15 @@ gretl_bundle *kmeans (const gretl_matrix *a,
 	goto start_outer_loop;
     }
 
-    ret = gretl_bundle_new();
-
-    /* build the clustinfo matrix */
-    {
+    if (scree) {
+	*WCSS = SSTmin;
+	goto bailout;
+    } else {
+	/* build the clustinfo matrix */
 	gretl_matrix *cinfo = gretl_zero_matrix_new(k, n+2);
 	double *sst = compute_sst_full(&hw);
+
+	ret = gretl_bundle_new();
 
 	for (i=0; i<k; i++) {
 	    /* count of points in cluster i (first col) */
@@ -1008,6 +1013,88 @@ gretl_bundle *kmeans (const gretl_matrix *a,
     destroy_hw_info(&hw);
     gretl_matrix_free(an);
     free(iwork);
+
+    return ret;
+}
+
+static int check_for_scree (const gretl_bundle *opts,
+			    const gretl_matrix *c0,
+			    int *scree)
+{
+    int err = 0;
+
+    if (gretl_bundle_get_bool((gretl_bundle *) opts, "scree", 0)) {
+	if (c0 != NULL) {
+	    err = E_INVARG;
+	    gretl_errmsg_set("With the 'scree' option, centers must be a scalar");
+	} else {
+	    *scree = 1;
+	}
+    }
+
+    return err;
+}
+
+static double k1_SST (const gretl_matrix *a, int *err)
+{
+    double *abar = get_ameans(a, err);
+    double SST = 0;
+
+    if (abar != NULL) {
+	double d;
+	int i, j;
+
+	for (j=0; j<a->cols; j++) {
+	    for (i=0; i<a->rows; i++) {
+		d = gretl_matrix_get(a, i, j) - abar[j];
+		SST += d * d;
+	    }
+	}
+	free(abar);
+    }
+
+    return SST;
+}
+
+gretl_bundle *kmeans (const gretl_matrix *a,
+		      int k, const gretl_matrix *c0,
+		      const gretl_bundle *opts,
+		      PRN *prn, int *err)
+{
+    gretl_bundle *ret = NULL;
+    int scree = 0;
+
+    *err = check_for_scree(opts, c0, &scree);
+    if (*err) {
+	return NULL;
+    }
+
+    if (scree) {
+	/* testing multiple @k values */
+	gretl_matrix *S;
+	double WCSS;
+	int kmax = k;
+
+	S = gretl_matrix_alloc(kmax, 2);
+	for (k=1; k<=kmax && !*err; k++) {
+	    gretl_matrix_set(S, k-1, 0, (double) k);
+	    if (k == 1) {
+		WCSS = k1_SST(a, err);
+	    } else {
+		real_kmeans(a, k, NULL, opts, &WCSS, prn, err);
+	    }
+	    if (!*err) {
+		gretl_matrix_set(S, k-1, 1, WCSS);
+	    }
+	}
+	if (!*err) {
+	    ret = gretl_bundle_new();
+	    gretl_bundle_donate_data(ret, "Scree", S, GRETL_TYPE_MATRIX);
+	}
+    } else {
+	/* standard case: single @k */
+	ret = real_kmeans(a, k, c0, opts, NULL, prn, err);
+    }
 
     return ret;
 }
