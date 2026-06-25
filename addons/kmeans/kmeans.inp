@@ -524,8 +524,8 @@ function matrix kmeans_screeplot (const list xlist "Features",
     matrix results = k_values ~ zeros(kmax, 1)
     cnameset(results, defarray("# clusters", "distance"))
 
-    loop i=1..nelem(k_values)
-        bundle model = kmeans_fit(xlist, k_values[i], opts)
+    loop i=1..kmax
+        bundle model = kmeans_fit(xlist, i, opts)
         errorif(model.error,
           sprintf("scree: kmeans_fit failed for k = %d\n", k_values[i]))
         if opts.verbose == 2
