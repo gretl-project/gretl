@@ -1772,7 +1772,7 @@ real_matrix_print_to_prn (const gretl_matrix *m,
 	    }
 	}
 	if (maxlen < strwidth) {
-	    strwidth = maxlen < 8 ? 8 : maxlen;
+	    strwidth = maxlen < 9 ? 9 : maxlen;
 	}
     }
 
