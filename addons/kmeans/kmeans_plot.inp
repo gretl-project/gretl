@@ -13,7 +13,7 @@ end function
 
 function void kmeans_screeplot (const matrix scree,
                                 const string filename[null],
-                                bundle opts[null] "Parameter bundle")
+                                bundle opts[null] "options")
     /* Create a scree plot. */
 
     if !exists(opts)

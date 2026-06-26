@@ -7851,9 +7851,7 @@
 	  decribed by Hartigan and Wong: the data points are sorted by
 	  Euclidean distance from the global centroid, then
 	  <math>k</math> evenly spaced points are selected from the
-	  sorted array. You can request a quick-and-dirty initializer by
-	  passing as <argname>centers</argname> the first <math>k</math>
-	  rows of <argname>X</argname>.
+	  sorted array.
 	</para>
 	<para>
 	  <argname>opts</argname>: provides a means of passing options
@@ -7901,9 +7899,9 @@
 	      <lit>clustinfo</lit>: a matrix with <math>k</math> rows
 	      and <math>n</math>+2 columns. The first column holds the
 	      count of points included in each cluster; the next
-	      <math>n</math> columns hold the cluster centroid; and the
-	      last column holds the sum of squared deviations of the
-	      included points from the centroid.
+	      <math>n</math> columns hold the cluster centroid proper;
+	      and the last column holds the sum of squared deviations of
+	      the included points from the centroid.
 	    </para>
 	  </li>
 	  <li>

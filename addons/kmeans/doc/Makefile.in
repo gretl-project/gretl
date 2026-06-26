@@ -3,9 +3,9 @@ TEXDIR = $(topsrc)/doc/tex
 
 PKG = kmeans
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
-FIGS = 
+FIGS = kmeans_dialog.png
 
-SRCS = $(PKG).tex gretl.sty gretl.bst gretl.bib
+SRCS = $(PKG).tex gretl.sty gretl.bst gretl.bib $(FIGS)
 
 $(PKG).pdf: $(SRCS)
 	@pdflatex $(PKG) && bibtex $(PKG) && pdflatex $(PKG) && pdflatex $(PKG)

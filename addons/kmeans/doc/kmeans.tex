@@ -59,7 +59,21 @@ In addition the package provides apparatus to visualize the results of
 clustering, to assess its effectiveness, and to gauge whether the
 assumed number of clusters is appropriate.
 
-TODO: summarize the structure of what follows, once it's ready.
+In brief, here's the relationship between the built-in \texttt{kmeans}
+function and the \texttt{kmeans} addon (with primary function
+\dtk{kmeans_fit}). Built-in \texttt{kmeans} is fully specialized to
+squared Euclidean distance, and employs a C-coded version of algorithm
+ASA136 \cite{hartigan-wong79}, which is known to be particularly
+efficient. The addon takes the squared Euclidean metric as default, and
+in fact \dtk{kmeans_fit} calls built-in \texttt{kmeans} to solve the
+basic $K$-means problem if that metric is in use. But the addon also
+supports a variety of alternative metrics, and it provides additional
+apparatus to visualize the results of clustering, to assess its
+effectiveness, and to gauge whether the assumed number of clusters is
+appropriate. Plus it offers a graphical interface (see
+section~\ref{sec:gui}).
+
+% TODO: summarize the structure of what follows, once it's ready.
 
 \section{The algorithm}
 \label{sec:algo}
@@ -69,30 +83,54 @@ In general terms, the $K$-means algorithm can be described as follows.
 \item Fix on $K$ $n$-vectors to serve as initial centroids. This is
   usually done by selection from the $m$ observations, either at random
   or by means of a deterministic method designed to ensure that the
-  selected points are widely separated (more on this below).
+  selected points are widely separated (more on this below). Set
+  total within-cluster distance to some arbitrary huge value.
 \item Assign each data-point to the cluster whose centroid is nearest
   according to the chosen metric.
-\item Calculate the resulting centroid for each cluster; calculate and
-  record the total within-cluster distance.
-\item Go to step 2, unless either (a) no points were moved in step 2 or
-  (b) the reduction in within-cluster distance is smaller than some
+\item Calculate the resulting centroid for each cluster; calculate the
+  total within-cluster distance and compare it to its previous value.
+\item Go to step 2, unless either (a) no points were reassigned in step
+  2 or (b) the reduction in within-cluster distance is smaller than some
   specified tolerance, in which case stop.
 \end{enumerate}
 
 This algorithm will almost surely proceed to a locally optimal set of
 clusters but there's no guarantee that the global optimum will be
-found. In most cases there exist multiple local optima, some better than
-others, and the stopping point of the algorithm depends on its starting
-point. It's usually recommended to try several random initializations,
-perhaps along with a deterministic one, then select the best solution.
+found.\footnote{It's generally reckoned that mounting a direct search
+  for the global optimum is prohibitively expensive in computational
+  terms.} In most cases there exist multiple local optima, some better
+than others, and the stopping point of the algorithm depends on its
+starting point.
 
-Talk about the distance options in re.\ \texttt{kmeans} and
-\dtk{kmeans_fit}.
+Our recommendation is to start with a deterministic initializer and
+follow up with several random draws, and selecting the best solution.
+For built-in \texttt{kmeans} two deterministic initializers are
+supported, as follows:
+\begin{itemize}
+\item Hartigan--Wong (code \texttt{hw}): the method suggested in the last
+  paragraph of their 1979 paper. The data points are sorted by Euclidean
+  distance from the global centroid, then $K$ evenly spaced points are
+  selected from the sorted array.
+\item Principal Components (code \texttt{pc}): the data points are
+  sorted by value of the first Principal Component of the
+  $n$-dimensional data, and again evenly spaced points are selected from
+  the sorted array.
+\end{itemize}
 
-Talk about the deterministic init options.
+At present \dtk{kmeans_fit} supports \texttt{pc} but not \texttt{hw}.
+If $m$ and/or $n$ are very large these initializers will be relatively
+expensive computationally. You can prevent their use them by passing
+\texttt{none} for the initializer option (see below for details).
+
+The number of randomized starting points is controlled by an
+\dtk{n_draws} option, with a default value of 8. Some researchers
+recommend 20 or higher. If you just want to examine the effects of a
+deterministic initializer you can set \dtk{n_draws} to 0.
 
 \section{Scripting usage}
 \label{sec:scripting}
+
+
 
 
 \section{Plotting}
@@ -103,10 +141,10 @@ Talk about the deterministic init options.
 
 The silhouette score \citep{Rousseeuw87} for an observation is a
 composite measure of its similarity to the members of its own cluster
-and to the members of other clusters. These scores are in $[-1,1]$,
-where 1 is ``best'' (the point is firmly located in its own cluster) and
-$-1$ is ``worst'' (the point appears to belong elsewhere).  Values near
-0 indicate overlapping of the clusters.
+and to the members of other clusters. These scores are by construction
+in $[-1,1]$, where 1 is ``best'' (the point is firmly located in its own
+cluster) and $-1$ is ``worst'' (the point appears to belong elsewhere).
+Values near 0 indicate overlapping clusters.
 
 TODO: talk about the silhouette plotting function.
 
@@ -114,19 +152,31 @@ TODO: talk about the silhouette plotting function.
 \label{sec:gui}
 
 $K$-means functionality can be accessed via the item \textsf{K-Means}
-under the \textsf{View} menu in gretl's main window.
+under the \textsf{View} menu in gretl's main window. The dialog box
+is shown in Figure~\ref{fig:dialog}.
 
-Two choices are available:
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.65]{kmeans_dialog.png}
+  \caption{K-Means dialog}
+  \label{fig:dialog}
+\end{figure}
+
+Pulling down the \textsf{Plot type} selector reveals three choices:
+``Scree'', ``Cluster (pairs)'' and ``Silhouette''.
 \begin{enumerate}
-\item If you activate the checkbox ``Show scree plot'' the scree plot
-  will be shown, and the parameter \dtk{n_clusters} is the maximum
-  number of clusters to evaluate and plot. The returned bundle will
-  contain only a matrix with two columns, the first holding the number
-  of clusters and the second holding the within-cluster sum of squares.
-\item If you activate the checkbox ``Show pair-plot'' the pair-plot will
-  be shown, and the parameter \dtk{n_clusters} is the number of clusters
-  to estimate. The returned bundle will contain detailed information
-  about the estimation.
+\item In the ``Scree'' case the number of clusters value is taken as a
+  maximum, $K^*$ (and you'll probably want to make it larger than the
+  default of 3). The $K$-means problem is solved for $K=1,\dots,K^*$ and
+  you are shown the relationship between number of clusters and the
+  minimized value of within-cluster distance.
+\item In the ``Cluster (pairs)'' case you get a grid holding pairwise
+  plots of the $n$ features, factorized by their estimated cluster
+  membership.
+\item In the ``Silhouette'' case you get a plot for each cluster,
+  showing the Silhouette score for each point (ranked from best to worst
+  in terms of the solidity of its assignment to the cluster) as well as
+  the average across all clusters.
 \end{enumerate}
 
 \clearpage
@@ -162,7 +212,7 @@ bundle kmeans_fit (list xlist, numeric clusters, bundle opts[null])
     \texttt{tolerance} & scalar & value for the improvement in
       the objective function below which the algorithm is considered as
       having converged, default 0.0001.\\
-    \texttt{verbose} & scalar & integer governing printed output: 0 means
+    \texttt{verbosity} & scalar & integer governing printed output: 0 means
       don't print anything; 1, print some details; 2, print more details.
   \end{tabular}
   \caption{Summary of optional parameters for \dtk{kmeans_fit}}
@@ -212,7 +262,7 @@ void kmeans_summary (const bundle Model)
 
 \begin{funcdoc}
 \begin{verbatim}
-kmeans_plot (const list xlist, const bundle Model)
+void kmeans_plot (const list xlist, const bundle Model)
 \end{verbatim}
   Produces a scatter plot for each pair of features in xlist, factorized
   by the \dtk{cluster_id} series in \texttt{Model}
@@ -220,6 +270,34 @@ kmeans_plot (const list xlist, const bundle Model)
   ... CLARIFY!  self: bundle, Bundle for manipulating the
   plot. [Here you can also pass options accepted by the
   PairPlot package.]
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+matrix kmeans_scree (list xlist, int Kmax, bundle opts[null])
+\end{verbatim}
+  Produces a two-column matrix representing the ``scree'' field for a
+  $K$-means problem.  The first column holds number of clusters, from 1
+  to \texttt{Kmax}, and the second holds the minimized within-cluster
+  distance. The \texttt{opts} bundle can hold options relevant to
+  \dtk{kmeans_fit}, which is called multiple times to fill the matrix.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+void kmeans_screeplot (matrix scree, string filename[null], bundle opts[null])
+\end{verbatim}
+  Produces a so-called scree plot, showing total within-cluster distance
+  as a function of the number of assumed clusters, from 1 to some
+  maximum value of $K$.  Adding a cluster is bound to reduce
+  within-cluster distance, but if the plot shows an ``elbow'' where the
+  slope becomes markedly flatter this gives an informal indication of
+  the most appropriate number of clusters.
+
+  The first argument should be obtained from \dtk{kmeans_scree}. If the
+  second argument is given it should be the name of a file to which
+  the graphic should be written (by default it is shown on-screen). The
+  last argument \dots TBD
 \end{funcdoc}
 
 %% WORK needed below here!!

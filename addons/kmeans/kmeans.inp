@@ -14,13 +14,13 @@ function bundle handle_options_and_defaults (bool plotting,
             delete opts.distance_type
         endif
         if inbundle(opts, "init")
-            if (opts.init == "pca")
+            if opts.init == "pca"
                 opts.init = "pc"
             endif
         elif inbundle(opts, "initializer")
             # backward compatibility
             opts.init = opts.initializer
-            if (opts.init == "pca")
+            if opts.init == "pca"
                 opts.init = "pc"
             endif
             delete opts.initializer
@@ -28,7 +28,7 @@ function bundle handle_options_and_defaults (bool plotting,
     endif
 
     bundle self = default_values(plotting)
-    self = opts + self          # override defaults
+    self = opts + self # override defaults
 
     return self
 end function
@@ -73,7 +73,7 @@ function bundle default_values (bool plotting)
 
     bundle self = defbundle()
     scalar self.error = FALSE
-    scalar self.verbose = plotting ? 0 : 1
+    scalar self.verbosity = plotting ? 0 : 1
     string self.init = "random"
     scalar self.n_draws = 10
     scalar self.max_iter = 128
@@ -142,8 +142,8 @@ end function
 
 function void call_ASA136 (const matrix X, bundle *self)
     bundle opts = _()
-    if inbundle(self, "verbose")
-        opts.verbosity = self.verbose # FIXME
+    if inbundle(self, "verbosity")
+        opts.verbosity = self.verbosity # FIXME
     endif
     if inbundle(self, "n_draws")
         opts.rand_starts = self.n_draws
@@ -247,7 +247,7 @@ function bundle kmeans_fit (const list xlist,
         scalar self.within_distance = self.total_distance
     endif
 
-    if self.verbose
+    if self.verbosity
         printf "kmeans_fit: %d observations, %d features, %d clusters\n",
           $nobs, nelem(xlist), n_clusters
         printf "metric %s, initializer %s, %d random draws\n",
@@ -255,7 +255,7 @@ function bundle kmeans_fit (const list xlist,
     endif
 
     if n_clusters == 1
-        if self.verbose
+        if self.verbosity
             printf "Sum of within distances = %g\n", self.within_distance
         endif
         return self
@@ -274,7 +274,7 @@ function bundle kmeans_fit (const list xlist,
         matrix self.centroids = b.centroids
         matrix cluster_id = b.cluster_id
         matrix distances = b.distances
-        if self.verbose == 2
+        if self.verbosity == 2
             printf "%s init: total within distance = %g\n",
               save_init == "pc" ? "PC" : "user", b.within_distance
         endif
@@ -284,7 +284,7 @@ function bundle kmeans_fit (const list xlist,
 
     loop d=1..self.n_draws
         bundle b = compute_kmeans(self, features)
-        if self.verbose == 2
+        if self.verbosity == 2
             print_draw_info(d, self.n_draws, b)
         endif
         if b.error
@@ -308,7 +308,7 @@ function bundle kmeans_fit (const list xlist,
     endif
 
     cnameset(self.centroids, varnames(xlist))
-    if self.verbose
+    if self.verbosity
         printf "minimized objective function: %g\n\n", self.within_distance
         print self.centroids
     endif
@@ -391,7 +391,7 @@ function bundle compute_kmeans (const bundle self,
           self.metric)
         delta = this_distance - prev_distance
         if delta <= 0 && abs(delta) < self.tolerance
-            if self.verbose > 2
+            if self.verbosity > 2
                 printf "Converged after %d iterations (within total distance = %.5f).",
                   iter, this_distance
                 flush
@@ -453,16 +453,16 @@ end function
 function bundle kmeansGUI (const list X "Features",
                            const int n_clusters[1::3] "No. of clusters (k)",
       const int metric[1:6:1] "Metric" {"euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis"},
-      const int plot_type[0:3:0] "Plot type" {"none", "Scree (1 to k)", "Cluster (pairs)", "Silhouette Plot"})
+      const int plot_type[0:3:0] "Plot type" {"none", "Scree (1 to k)", "Cluster (pairs)", "Silhouette"})
     /* Function for creating GUI dialog box. */
 
     bundle self = defbundle()
     self.metric = get_metric(metric)
-    self.verbose = 2  # in GUI mode, highest verbosity level is activated
+    self.verbosity = 2  # in GUI mode, highest verbosity level is activated
 
     if plot_type == 1
         # scree plot
-        self.verbose = 0
+        self.verbosity = 0 # ?
         matrix scree = kmeans_scree(X, n_clusters, self)
         kmeans_screeplot(scree, null, null)
         bundle Model = _(scree)
@@ -508,7 +508,7 @@ function matrix kmeans_scree (const list xlist "Features",
             bundle model = kmeans_fit(xlist, k, opts)
             errorif(model.error,
               sprintf("scree: kmeans_fit failed for k = %d\n", k))
-            if opts.verbose == 2
+            if opts.verbosity == 2
                 kmeans_summary(model)
             endif
             results[k,] = {k, model.within_distance}
