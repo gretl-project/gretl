@@ -6,5 +6,6 @@ string dtd = topsrc ~ "/share/functions/gretlfunc.dtd"
 string pkgdir = topsrc ~ "/addons/kmeans"
 
 include @pkgdir/kmeans.inp
+include @pkgdir/kmeans_plot.inp
 
 makepkg kmeans.gfn --index --translations --quiet --dtd="@dtd"
