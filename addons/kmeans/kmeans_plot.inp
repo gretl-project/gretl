@@ -2,7 +2,7 @@
 
 function void kmeans_plot (const list xlist, bundle kmb)
     /* -doc-
-    Plot clusters in two dimensions. 
+       Plot clusters in two dimensions.
     */
 
     string kmb.filename = inbundle(kmb, "filename") ? \
@@ -177,6 +177,12 @@ function void kmeans_sil_plot (const bundle Model,
         cluster_sil_values = mreverse(msortby(cluster_sil_values, 1))
         cluster_sil_values ~= mean_sil_score
         cnameset(cluster_sil_values, defarray("score for data points", "mean score, all clusters"))
+        if k == n_clusters
+            keystr = "set key outside below"
+            bmargin *= 1.8
+        else
+            keystr = "unset key"
+        endif
         print cluster_sil_values
 
         plot cluster_sil_values
@@ -189,8 +195,8 @@ function void kmeans_sil_plot (const bundle Model,
             printf "set tmargin %f", tmargin
             printf "set bmargin %f", bmargin
             printf "set linetype 1 ps %g pt 7", pointsize
-            printf "set linetype 2 lw 1.5 dt 2"
-            literal set key top right
+            literal set linetype 2 lw 1.5 dt 2
+            printf "%s", keystr
             # literal set nokey
         end plot --outbuf=plotfiles[k]
     endloop
