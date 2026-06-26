@@ -1950,41 +1950,36 @@ static void maybe_add_mainwin_list (call_info *cinfo,
     list = g_list_prepend(list, SELNAME);
 }
 
-static int series_arg_ok (const char *name,
-			  int require_binary,
-			  int require_discrete)
+static int series_arg_ok (const char *name, int discrete)
 {
     int v = current_series_index(dataset, name);
     int ok = 0;
 
-    fprintf(stderr, "series_arg_ok: looking at '%s'\n", name);
-
-    if (require_binary || require_discrete) {
-	/* series will already have been tested for this */
-	fprintf(stderr, " first branch\n");
+    if (discrete) {
+	/* a discrete series has been specified for this argument, so
+	   we should not prefer a "probably stochastic" series.
+	*/
 	ok = 1;
     } else if (v > 0 && probably_stochastic(v)) {
-	fprintf(stderr, " second branch\n");
 	ok = 1;
     }
 
-    fprintf(stderr, "series_arg_ok: ok = %d\n", ok);
     return ok;
 }
 
-/* Try to be somewhat clever in selecting the default values to show
+/* Try to be somewhat smart in selecting the default values to show
    in function-argument drop-down "combo" selectors.
 
-   Heuristics: (a) when a series is wanted, it's more likely to be a
-   stochastic series rather than (e.g.) a time trend or panel group
-   variable, so we try to avoid the latter as defaults; and (b) it's
-   unlikely that the user wants to select the same named variable in
-   more than one argument slot, so we try to avoid setting duplicate
-   defaults.
+   Heuristics:
 
-   Special case: the function has exactly one series argument, and
-   a single series is selected in the main gretl window: in that
-   case we can pre-select that series.
+   (a) When a series is wanted, it's more likely to be a stochastic
+   series rather than (say) a time trend or panel group variable, so
+   we try to avoid the latter as defaults -- unless the ui-maker has
+   specified a binary or discrete series.
+
+   (b) It's unlikely that the user wants to select the same named
+   variable in more than one argument slot, so we try to avoid setting
+   duplicate defaults.
 */
 
 static void arg_combo_set_default (call_info *cinfo,
@@ -1994,50 +1989,41 @@ static void arg_combo_set_default (call_info *cinfo,
 				   int null_OK,
 				   gretl_bundle *ui)
 {
-    const char *mvname = NULL;
-    int require_binary = 0;
-    int require_discrete = 0;
+    int discrete = 0;
     int want_series;
     int argnum;
     int sel = -1;
-    int i;
+    int i, ncands;
 
     argnum = widget_get_int(combo, "argnum");
     want_series = series_param(ptype);
 
-    if (want_series) {
-	if (ui != NULL) {
-	    get_series_requirements(ui, &require_binary, &require_discrete);
-	}
-	if (n_params_of_type(cinfo, ptype) == 1) {
-	    /* there's only one series argument */
-	    int mv = mdata_active_var();
+    if (want_series && ui != NULL) {
+	int want_binary = 0;
+	int want_discrete = 0;
 
-	    if (mv > 0) {
-		mvname = dataset->varname[mv];
-	    }
-	}
+	get_series_requirements(ui, &want_binary, &want_discrete);
+	discrete = want_binary || want_discrete;
     }
+
+    ncands = g_list_length(list);
 
     for (i=0; list != NULL; i++) {
 	gchar *name = list->data;
-	int ok = 1;
+	int ok_default = 1;
 
 	if (already_set_as_default(cinfo, argnum, name, ptype)) {
-	    ok = 0;
+	    ok_default = 0;
 	    continue;
 	} else if (want_series && !is_nullarg_label(name) &&
-		   !series_arg_ok(name, require_binary,
-				  require_discrete)) {
-	    /* excluded by ui-maker */
-	    ok = 0;
-	    continue;
-	} else if (!null_OK && is_nullarg_label(name)) {
-	    /* "can't happen" */
-	    ok = 0;
-	    continue;
+		   !series_arg_ok(name, discrete)) {
+	    /* not preferred? */
+	    if (ncands > 1) {
+		ok_default = 0;
+		continue;
+	    }
 	}
-	if (ok) {
+	if (ok_default) {
 	    sel = i;
 	    break;
 	} else {
