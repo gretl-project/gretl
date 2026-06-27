@@ -34,8 +34,8 @@
 #include "matrix_extra.h"
 
 typedef enum InitFlag_ {
-    INIT_HW,    /* Hartigan and Wong initialization */
     INIT_PC,    /* Initialize via Principal Components */
+    INIT_HW,    /* Hartigan and Wong initialization */
     INIT_USER,  /* Initialize using input matrix */
     INIT_RAND,  /* randomized intialization */
     INIT_FINAL  /* Re-initialize using "best" clusters after random trials */
@@ -84,7 +84,7 @@ static int build_hw_info (hw_info *hw,
 			  const gretl_matrix *a,
 			  const gretl_matrix *c0,
 			  int k,
-			  int rand_starts,
+			  int n_draws,
 			  InitFlag *iflag)
 {
     int err = 0;
@@ -101,7 +101,7 @@ static int build_hw_info (hw_info *hw,
     }
     hw->ic1 = malloc(2 * hw->m * sizeof *hw->ic1);
     hw->ic2 = hw->ic1 + hw->m;
-    if (rand_starts > 0) {
+    if (n_draws > 0) {
 	/* recorder for "best so far" */
 	hw->cmin = gretl_matrix_alloc(hw->k, hw->n);
     } else {
@@ -631,7 +631,7 @@ static void find_nearest_neighbors (hw_info *hw)
     }
 }
 
-static void add_clustinfo_colnames (const gretl_matrix *a,
+static void add_centroids_colnames (const gretl_matrix *a,
 				    gretl_matrix *cinfo)
 {
     int n = cinfo->cols;
@@ -701,10 +701,10 @@ static gretl_bundle *trivial_case (hw_info *hw,
 	cinfo->val[n+1] = gsst;
     }
 
-    add_clustinfo_colnames(hw->a, cinfo);
-    gretl_bundle_donate_data(ret, "clustinfo", cinfo,
+    add_centroids_colnames(hw->a, cinfo);
+    gretl_bundle_donate_data(ret, "centroids", cinfo,
 			     GRETL_TYPE_MATRIX);
-    gretl_bundle_donate_data(ret, "clustid", clustid,
+    gretl_bundle_donate_data(ret, "cluster_id", clustid,
 			     GRETL_TYPE_MATRIX);
     gretl_bundle_set_scalar(ret, "cluster_SST", gsst);
     gretl_bundle_set_scalar(ret, "global_SST", gsst);
@@ -765,14 +765,14 @@ static int kmeans_init (hw_info *hw,
 }
 
 static int check_opts (gretl_bundle *b,
-		       int *rand_starts,
+		       int *n_draws,
 		       int *verbosity,
 		       InitFlag *iflag)
 {
     int err = 0;
 
-    if (gretl_bundle_has_key(b, "rand_starts")) {
-	*rand_starts = gretl_bundle_get_int(b, "rand_starts", &err);
+    if (gretl_bundle_has_key(b, "n_draws")) {
+	*n_draws = gretl_bundle_get_int(b, "n_draws", &err);
     }
     if (gretl_bundle_has_key(b, "verbosity")) {
 	*verbosity = gretl_bundle_get_int(b, "verbosity", &err);
@@ -780,20 +780,28 @@ static int check_opts (gretl_bundle *b,
     if (gretl_bundle_has_key(b, "init")) {
 	const char *s = gretl_bundle_get_string(b, "init", &err);
 
-	if (!err && !strcmp(s, "pc")) {
-	    *iflag = INIT_PC;
+	if (!err) {
+	    if (!strcmp(s, "pc")) {
+		*iflag = INIT_PC;
+	    } else if (!strcmp(s, "hw")) {
+		*iflag = INIT_HW;
+	    } else if (!strcmp(s, "random")) {
+		*iflag = INIT_RAND;
+	    }
 	}
     }
 
     return err;
 }
 
-/* kmeans() carries out the K-means algorithm.
+/* real_kmeans() carries out the K-means algorithm.
 
    @a (m x n): the data points
    @k: the assumed number of clusters (or 0)
    @c0: initial specification of clusters (or NULL)
-   @clustinfo: pointer to get information on the clusters
+   @opts: options bundle
+   @WCSS: pointer to receive within-cluster distance (for scree)
+   @prn: printer
    @err: location to receive error code
 */
 
@@ -821,9 +829,9 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     int m = a->rows;
     int n = a->cols;
     int ri = 0;
-    InitFlag iflag = INIT_HW;
+    InitFlag iflag = INIT_PC;
     int scree = (WCSS != NULL);
-    int rand_starts = 0;
+    int n_draws = 8;
     int verbosity = 0;
 
     /* initial checks */
@@ -839,25 +847,26 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     }
 
     if (!*err && opts != NULL) {
-	*err = check_opts((gretl_bundle *) opts, &rand_starts,
+	*err = check_opts((gretl_bundle *) opts, &n_draws,
 			  &verbosity, &iflag);
     }
     if (*err) {
 	return NULL;
     }
 
-    *err = build_hw_info(&hw, a, c0, k, rand_starts, &iflag);
+    *err = build_hw_info(&hw, a, c0, k, n_draws, &iflag);
     if (*err) {
 	destroy_hw_info(&hw);
 	return NULL;
     }
 
     if (verbosity) {
+	/* FIXME: case of being called by kmeans_fit() */
 	pprintf(prn, "kmeans: m=%d, n=%d, k=%d, initial centers %s\n",
 		m, n, k, iflag == INIT_USER ? "user-specified" :
-		iflag == INIT_PC ? "pc" : "hw");
+		iflag == INIT_PC ? "pc" : iflag == INIT_HW ? "hw" : "random");
 	if (k > 1) {
-	    pprintf(prn, "%d randomized restarts requested\n", rand_starts);
+	    pprintf(prn, "%d random draws requested\n", n_draws);
 	}
     }
 
@@ -921,6 +930,7 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     }
 
     SST = compute_sst(&hw);
+
     if (iflag < INIT_RAND) {
 	/* prior to randomization */
 	if (verbosity > 1) {
@@ -929,7 +939,7 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
 		    "user-specified", SST, iter);
 	}
 	SSTmin = SST;
-	if (rand_starts > 0) {
+	if (n_draws > 0) {
 	    gretl_matrix_copy_values(hw.cmin, hw.c);
 	}
     } else if (SST < SSTmin) {
@@ -938,14 +948,14 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     }
 
     if (iflag != INIT_FINAL) {
-	if (rand_starts > 0 && ri <= rand_starts) {
+	if (n_draws > 0 && ri <= n_draws) {
 	    /* we're doing randomization and we're not finished yet */
 	    if (verbosity > 1 && ri > 0) {
-		if (rand_starts > 9) {
-		    pprintf(prn, "start %02d: SST = %g (%d iterations) \n",
+		if (n_draws > 9) {
+		    pprintf(prn, "draw %02d: SST = %g (%d iterations) \n",
 			    ri, SST, iter);
 		} else {
-		    pprintf(prn, "start %d: SST = %g (%d iterations)\n",
+		    pprintf(prn, "draw %d: SST = %g (%d iterations)\n",
 			    ri, SST, iter);
 		}
 	    }
@@ -971,7 +981,7 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
 	*WCSS = SSTmin;
 	goto bailout;
     } else {
-	/* build the clustinfo matrix */
+	/* build the centroids matrix */
 	gretl_matrix *cinfo = gretl_zero_matrix_new(k, n+2);
 	double *sst = compute_sst_full(&hw);
 
@@ -990,11 +1000,11 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
 	}
 
 	free(sst);
-	add_clustinfo_colnames(a, cinfo);
+	add_centroids_colnames(a, cinfo);
 	if (verbosity) {
 	    gretl_matrix_print_to_prn(cinfo, "Cluster information:", prn);
 	}
-	gretl_bundle_donate_data(ret, "clustinfo", cinfo,
+	gretl_bundle_donate_data(ret, "centroids", cinfo,
 				 GRETL_TYPE_MATRIX);
     }
 
@@ -1002,7 +1012,7 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     for (i=0; i<m; i++) {
 	gretl_vector_set(clustid, i, hw.ic1[i]);
     }
-    gretl_bundle_donate_data(ret, "clustid", clustid,
+    gretl_bundle_donate_data(ret, "cluster_id", clustid,
 			     GRETL_TYPE_MATRIX);
     /* for reference, add the cluster and global SSTs */
     gretl_bundle_set_scalar(ret, "cluster_SST", SSTmin);

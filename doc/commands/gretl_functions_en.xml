@@ -7842,78 +7842,118 @@
 	  matrix contains any missing values.
 	</para>
 	<para>
-	  <argname>centers</argname>: can take either of two forms: (a)
-	  a scalar (integer) giving <math>k</math>, the number of
+	  <argname>centers</argname>: can take either of two forms:
+	  (a) a scalar (integer) giving <math>k</math>, the number of
 	  clusters, or (b) a <by r="k" c="n"/> matrix holding
-	  <math>k</math> initial centroids, to be taken as the starting
-	  point of the algorithm. If <argname>centers</argname> is a
-	  scalar the initializer is set automatically using the method
-	  decribed by Hartigan and Wong: the data points are sorted by
-	  Euclidean distance from the global centroid, then
-	  <math>k</math> evenly spaced points are selected from the
-	  sorted array.
+	  <math>k</math> initial centroids, to be taken as the
+	  starting point of the algorithm.
 	</para>
 	<para>
 	  <argname>opts</argname>: provides a means of passing options
-	  to inflect the procedure. At present two options are
+	  to inflect the procedure. At present three options are
 	  supported.
 	</para>
 	<ilist>
 	  <li>
 	    <para>
-	      Under the key <lit>rand_starts</lit> you can give an
-	      integer specifying a number of randomly selected starting
-	      points from which the algorithm will be rerun (by default,
-	      0).  The <math>k</math>-means problem typically features
-	      multiple local optima and ASA136 is not guaranteed to find
-	      the global optimum; the chance of getting to, or close to,
-	      the global optimum is enhanced by specifying a number of
-	      randomized restarts.
+	      <lit>init</lit>: a string specifying an automatic
+	      initialization method: <lit>pc</lit> (Principal
+	      Components, the default) <lit>hw</lit> (Hartigan and
+	      Wong) or <lit>random</lit>. The first two methods are
+	      deterministic. Note that if the
+	      <argname>centers</argname> is a matrix this option is
+	      ignored.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Under the key <lit>verbosity</lit> you can give a value
-	      from 0 and 3 to control the amount of printed output
-	      from the function. The default value of 0 gives silent
-	      operation and the levels 1 to 3 give progressively greater
-	      detail on the procedure.
+	      <lit>n_draws</lit>: an integer specifying the number of
+	      randomly selected starting points from which the
+	      algorithm will be (re-)run (by default, 8).  The
+	      <math>k</math>-means problem typically features multiple
+	      local optima and ASA136 is not guaranteed to find the
+	      global optimum. The chance of getting to, or close to,
+	      the global optimum is enhanced by trying a number of
+	      random initializations but you can set
+	      <lit>n_draws</lit> to 0 if you wish.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>verbosity</lit>: an integer value from 0 and 3 to
+	      control the amount of printed output from the
+	      function. The default value of 0 gives silent operation
+	      and the levels 1 to 3 give progressively greater detail
+	      on the procedure.
 	    </para>
 	  </li>
 	</ilist>
-	<subhead>Return value</subhead>
+
+	<subhead>Initialization</subhead>
 	<para>
-	  The return value from <lit>kmeans</lit> is a bundle containing
-	  three members:
+	  Note that there are basically three possibilities for
+	  initialization in <lit>kmeans</lit>.
 	</para>
 	<ilist>
 	  <li>
 	    <para>
-	      <lit>clustid</lit>: an <math>m</math>-vector holding the
-	      1-based index of the cluster to which each point is
+	      You accept the default of deterministic initialization
+	      via Principal Components, or specify the <lit>hw</lit>
+	      mathod instead.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      You pass an initial centroids matrix as
+	      <argname>centers</argname>.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      You specify <lit>random</lit> initialization, hence
+	      skipping all deterministic methods.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  In each case <lit>kmeans</lit> follows up with 8 randomized
+	  starting points by default, and selects the results that
+	  minimize the objective function, though this can be altered
+	  via the <lit>n_draws</lit> option.
+	</para>
+
+	<subhead>Return value</subhead>
+	<para>
+	  The return value is a bundle containing four members:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>cluster_id</lit>: an <math>m</math>-vector holding
+	      the 1-based index of the cluster to which each point is
 	      assigned.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <lit>clustinfo</lit>: a matrix with <math>k</math> rows
+	      <lit>centroids</lit>: a matrix with <math>k</math> rows
 	      and <math>n</math>+2 columns. The first column holds the
-	      count of points included in each cluster; the next
+	      count of observations included in each cluster; the next
 	      <math>n</math> columns hold the cluster centroid proper;
-	      and the last column holds the sum of squared deviations of
-	      the included points from the centroid.
+	      and the last column holds the sum of squared deviations
+	      of the included points from the centroid.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <lit>cluster_SST</lit>: the sum of squared deviations of
+	      <lit>cluster_SST</lit>: the total squared deviations of
 	      the points from the centroid of the cluster to which they
 	      have been assigned.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <lit>global_SST</lit>: the sum of squared deviations of
+	      <lit>global_SST</lit>: the total squared deviations of
 	      the points from the global centroid. This can be compared
 	      with <lit>cluster_SST</lit>, which will be a good deal
 	      smaller if the clustering is effective.
