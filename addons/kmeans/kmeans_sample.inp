@@ -19,10 +19,10 @@ elif EXAMPLE == 2
     n_clusters = 2
 
 elif EXAMPLE == 3
-    # NOTE: You need to install the "PairPlot" package first
     open iris.gdt --quiet
     list x = 1..4
     scalar n_clusters = 3
+
 elif EXAMPLE == 4
     open denmark --quiet
     list x = LRM LRY
@@ -51,7 +51,6 @@ print sil_samples -o --range=1:15
 # Silhouette plot
 kmeans_sil_plot(Model, x, _(height=750))
 
-
 print Model.centroids                   # print centroids
 series cluster_id = Model.cluster_id
 # Look for eventual gaps for observations for which some of the input variables
@@ -64,10 +63,8 @@ print cluster_id -o --range=1:15
 # Evaluate "inertia" for 1 to 4 clusters
 # ==========
 smpl x --no-missing
-matrix scree = kmeans_screeplot(x, 4)
-# Alternatively, save plot and set font size
-#matrix scree = kmeans_screeplot(x, 4, "screeplot.png", _(fontsize=14))
-print scree
+matrix scree = kmeans_scree(x, 4)
+kmeans_screeplot(scree, , _(fontsize=14))
 
 
 # Predict
@@ -94,7 +91,6 @@ kmeans_plot(x, Model)
 bundle opt = _(max_iter = 100, n_draws = 10,
                distance_type = "manhattan", initializer = "pca")
 bundle Model = kmeans_fit(x, n_clusters, opt)
-print Model
 
 # Plot distinct clusters and tweak the plot
 scalar Model.transparency_level = 120  # this is an option supported by PairPlot

@@ -183,7 +183,7 @@ function void kmeans_sil_plot (const bundle Model,
         else
             keystr = "unset key"
         endif
-        print cluster_sil_values
+        # print cluster_sil_values
 
         plot cluster_sil_values
             options fit=none time-series single-yaxis with-lines=2 \
