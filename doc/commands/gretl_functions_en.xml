@@ -7859,23 +7859,16 @@
 	      <lit>init</lit>: a string specifying an automatic
 	      initialization method: <lit>pc</lit> (Principal
 	      Components, the default) <lit>hw</lit> (Hartigan and
-	      Wong) or <lit>random</lit>. The first two methods are
-	      deterministic. Note that if the
+	      Wong) or <lit>random</lit>. Note that if the
 	      <argname>centers</argname> is a matrix this option is
-	      ignored.
+	      ignored. See below for details.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
 	      <lit>n_draws</lit>: an integer specifying the number of
 	      randomly selected starting points from which the
-	      algorithm will be (re-)run (by default, 8).  The
-	      <math>k</math>-means problem typically features multiple
-	      local optima and ASA136 is not guaranteed to find the
-	      global optimum. The chance of getting to, or close to,
-	      the global optimum is enhanced by trying a number of
-	      random initializations but you can set
-	      <lit>n_draws</lit> to 0 if you wish.
+	      algorithm will be (re-)run (by default, 8).
 	    </para>
 	  </li>
 	  <li>
@@ -7891,35 +7884,52 @@
 
 	<subhead>Initialization</subhead>
 	<para>
-	  Note that there are basically three possibilities for
-	  initialization in <lit>kmeans</lit>.
+	  Unless you specify a <argname>centers</argname>
+	  matrix, initialization takes the form of selecting
+	  <math>k</math> of the <math>m</math> observations as
+	  candidate centroids. Selection can be done by deterministic
+	  means and/or at random. Here are some comments on the
+	  choices for <lit>init</lit> mentioned above.
 	</para>
 	<ilist>
 	  <li>
 	    <para>
-	      You accept the default of deterministic initialization
-	      via Principal Components, or specify the <lit>hw</lit>
-	      mathod instead.
+	      <lit>pc</lit>: the observations are sorted by value of
+	      the first Principal Component of the <math>n</math>
+	      features then <math>k</math> evenly spaced values are
+	      selected. The idea is to pick centroids that are widely
+	      separated.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      You pass an initial centroids matrix as
-	      <argname>centers</argname>.
+	      <lit>hw</lit>: the method suggested by Hartigan and Wong
+	      in the last paragraph of their 1979 paper. The
+	      observations are sorted by squared Euclidean distance
+	      from the global centroid, then again <math>k</math>
+	      evenly spaced values are selected.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      You specify <lit>random</lit> initialization, hence
-	      skipping all deterministic methods.
+	      <lit>random</lit>: this option suppresses use of
+	      a deterministic method. The first initializer is then
+	      just the first of the <lit>n_draws</lit> mentioned
+	      above.
 	    </para>
 	  </li>
 	</ilist>
 	<para>
-	  In each case <lit>kmeans</lit> follows up with 8 randomized
-	  starting points by default, and selects the results that
-	  minimize the objective function, though this can be altered
-	  via the <lit>n_draws</lit> option.
+	  The <math>k</math>-means problem typically features multiple
+	  local optima and ASA136 is not guaranteed to find the global
+	  optimum. If you start with a deterministic initialization
+	  then follow up with several random starting points and
+	  select the best results (as happens by default), you have a
+	  reasonable chance of getting to, or close to, the global
+	  optimum. However, you can adjust <lit>init</lit> and/or
+	  <lit>n_draws</lit> to taste. (It's acceptable to set
+	  <lit>n_draws</lit> to 0 if you do not specify
+	  <lit>random</lit> initialization.)
 	</para>
 
 	<subhead>Return value</subhead>
