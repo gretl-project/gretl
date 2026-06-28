@@ -634,24 +634,26 @@ static void find_nearest_neighbors (hw_info *hw)
 static void add_centroids_colnames (const gretl_matrix *a,
 				    gretl_matrix *cinfo)
 {
-    int n = cinfo->cols;
-    char **S = strings_array_new(n);
+    int n = a->cols;
+    char **S = strings_array_new(n+2);
 
     if (S != NULL) {
 	const char **Sa = gretl_matrix_get_colnames(a);
 	char tmp[12];
 	int i;
 
-	for (i=0; i<n; i++) {
-	    if (i == 0) {
+	for (i=0; i<n+2; i++) {
+	    if (i < n) {
+		if (Sa != NULL) {
+		    S[i] = gretl_strdup(Sa[i]);
+		} else {
+		    sprintf(tmp, "a%d", i);
+		    S[i] = gretl_strdup(tmp);
+		}
+	    } else if (i == n) {
 		S[i] = gretl_strdup("nobs");
-	    } else if (i == n-1) {
-		S[i] = gretl_strdup("SST");
-	    } else if (Sa != NULL) {
-		S[i] = gretl_strdup(Sa[i-1]);
 	    } else {
-		sprintf(tmp, "a%d", i);
-		S[i] = gretl_strdup(tmp);
+		S[i] = gretl_strdup("SST");
 	    }
 	}
 	gretl_matrix_set_colnames(cinfo, S);
@@ -671,6 +673,7 @@ static gretl_bundle *trivial_case (hw_info *hw,
     gretl_bundle *ret = NULL;
     gretl_vector *cinfo;
     gretl_vector *clustid;
+    double csst = 0;
     double gsst = 0;
     int m = hw->m;
     int n = hw->n;
@@ -687,18 +690,18 @@ static gretl_bundle *trivial_case (hw_info *hw,
     ret = gretl_bundle_new();
     gsst = global_sst(hw);
 
-    cinfo->val[0] = m;
     for (j=0; j<n; j++) {
 	if (iflag == INIT_USER) {
-	    cinfo->val[j+1] = hw->c->val[j];
+	    cinfo->val[j] = hw->c->val[j];
 	} else {
-	    cinfo->val[j+1] = hw->ameans[j];
+	    cinfo->val[j] = hw->ameans[j];
 	}
     }
+    cinfo->val[n] = m;
     if (iflag == INIT_USER) {
-	cinfo->val[n+1] = compute_sst(hw);
+	csst = cinfo->val[n+1] = compute_sst(hw);
     } else {
-	cinfo->val[n+1] = gsst;
+	csst = cinfo->val[n+1] = gsst;
     }
 
     add_centroids_colnames(hw->a, cinfo);
@@ -706,7 +709,7 @@ static gretl_bundle *trivial_case (hw_info *hw,
 			     GRETL_TYPE_MATRIX);
     gretl_bundle_donate_data(ret, "cluster_id", clustid,
 			     GRETL_TYPE_MATRIX);
-    gretl_bundle_set_scalar(ret, "cluster_SST", gsst);
+    gretl_bundle_set_scalar(ret, "cluster_SST", csst);
     gretl_bundle_set_scalar(ret, "global_SST", gsst);
     gretl_bundle_set_string(ret, "metric", "euclidean");
 
@@ -989,14 +992,14 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
 	ret = gretl_bundle_new();
 
 	for (i=0; i<k; i++) {
-	    /* count of points in cluster i (first col) */
-	    gretl_matrix_set(cinfo, i, 0, (double) nc[i]);
-	    /* per-cluster centroids (middle cols) */
+	    /* per-cluster centroids (first n columns) */
 	    for (j=0; j<n; j++) {
 		tmp = gretl_matrix_get(hw.c, i, j);
-		gretl_matrix_set(cinfo, i, j+1, tmp);
+		gretl_matrix_set(cinfo, i, j, tmp);
 	    }
-	    /* per-cluster SST (last col) */
+	    /* then count of points in cluster i */
+	    gretl_matrix_set(cinfo, i, n, (double) nc[i]);
+	    /* then per-cluster SST */
 	    gretl_matrix_set(cinfo, i, n+1, sst[i]);
 	}
 

@@ -7825,7 +7825,7 @@
       </fnargs>
       <description>
 	<para>
-	  Performs algorithm ASA136 (<cite
+	  Executes algorithm ASA136 (<cite
 	  key="hartigan-wong79">Hartigan and Wong, 1979</cite>) to find
 	  <math>k</math> clusters to which <math>m</math> points can be
 	  allocated, with the objective of minimizing the total
@@ -7947,11 +7947,11 @@
 	  <li>
 	    <para>
 	      <lit>centroids</lit>: a matrix with <math>k</math> rows
-	      and <math>n</math>+2 columns. The first column holds the
-	      count of observations included in each cluster; the next
-	      <math>n</math> columns hold the cluster centroid proper;
-	      and the last column holds the sum of squared deviations
-	      of the included points from the centroid.
+	      and <math>n</math>+2 columns. The first <math>n</math>
+	      columns hold the cluster centroid proper; the next holds
+	      the count of observations included in the cluster; and
+	      the last column holds the sum of squared deviations of the
+	      included points from the centroid.
 	    </para>
 	  </li>
 	  <li>
