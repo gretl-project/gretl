@@ -55,10 +55,6 @@ metrics---such as Manhattan (sum of the absolute distances in each
 dimension) or Chebyshev (greatest absolute distance in any
 dimension)---are sometimes used.
 
-In addition the package provides apparatus to visualize the results of
-clustering, to assess its effectiveness, and to gauge whether the
-assumed number of clusters is appropriate.
-
 In brief, here's the relationship between the built-in \texttt{kmeans}
 function and the \texttt{kmeans} addon (with primary function
 \dtk{kmeans_fit}). Built-in \texttt{kmeans} is fully specialized to
@@ -67,11 +63,10 @@ ASA136 \cite{hartigan-wong79}, which is known to be particularly
 efficient. The addon takes the squared Euclidean metric as default, and
 in fact \dtk{kmeans_fit} calls built-in \texttt{kmeans} to solve the
 basic $K$-means problem if that metric is in use. But the addon also
-supports a variety of alternative metrics, and it provides additional
-apparatus to visualize the results of clustering, to assess its
-effectiveness, and to gauge whether the assumed number of clusters is
-appropriate. Plus it offers a graphical interface (see
-section~\ref{sec:gui}).
+supports a variety of alternative metrics, and it provides tools to
+visualize the results of clustering, to assess its effectiveness, and to
+gauge whether the assumed number of clusters is appropriate. Plus it
+offers a graphical interface (see section~\ref{sec:gui}).
 
 % TODO: summarize the structure of what follows, once it's ready.
 
@@ -107,14 +102,14 @@ follow up with several random draws, and selecting the best solution.
 For built-in \texttt{kmeans} two deterministic initializers are
 supported, as follows:
 \begin{itemize}
+ \item Principal Components (code \texttt{pc}): the data points are
+  sorted by value of the first Principal Component of the
+  $n$-dimensional data, and again evenly spaced points are selected from
+  the sorted array.
 \item Hartigan--Wong (code \texttt{hw}): the method suggested in the last
   paragraph of their 1979 paper. The data points are sorted by Euclidean
   distance from the global centroid, then $K$ evenly spaced points are
   selected from the sorted array.
-\item Principal Components (code \texttt{pc}): the data points are
-  sorted by value of the first Principal Component of the
-  $n$-dimensional data, and again evenly spaced points are selected from
-  the sorted array.
 \end{itemize}
 
 At present \dtk{kmeans_fit} supports \texttt{pc} but not \texttt{hw}.
@@ -238,7 +233,7 @@ Table~\ref{tab:fit-return}.
     \texttt{nobs} & scalar & the number of observations used.\\
     \dots & \dots & TBD
   \end{tabular}
-  \caption{Summary of optional parameters for \dtk{kmeans_fit}}
+  \caption{Members of the bundle returned by \dtk{kmeans_fit}}
   \label{tab:fit-return}
 \end{table}
 
