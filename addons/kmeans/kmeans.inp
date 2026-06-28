@@ -149,9 +149,7 @@ function void call_ASA136 (const matrix X, bundle *self)
         opts.rand_starts = self.n_draws
     endif
     if inbundle(self, "init")
-        if self.init == "pc"
-            opts.init = "pc"
-        endif
+        opts.init = self.init
     endif
     if inbundle(self, "clusters0")
         bundle b = kmeans(X, self.clusters0, opts)
@@ -162,8 +160,8 @@ function void call_ASA136 (const matrix X, bundle *self)
     n = cols(X)
     self.within_distance = b.cluster_SST
     self.total_distance = b.global_SST
-    self.cluster_id = b.clustid
-    self.centroids = b.clustinfo[,2:end-1]
+    self.cluster_id = b.cluster_id
+    self.centroids = b.centroids[,2:end-1]
     matrix dsq = zeros(m, 1)
     loop i=1..m
         k = b.clustid[i]
@@ -519,3 +517,42 @@ function matrix kmeans_scree (const list xlist "Features",
     return results
 end function
 
+function matrix kmeans_crosstab (const list X,
+                                 const series actual,
+                                 const string metric,
+                                 const matrix centroids)
+    matrix F = centroids
+    k = rows(F)
+    n = nelem(X)
+    if cols(F) == n + 2
+        F = F[,2:end-1]
+    endif
+
+    string aname = argname(actual)
+    if aname != "" && aname != "actual"
+        strings Sa = strvals(actual)
+        genseries(aname, actual)
+        if nelem(Sa)
+            stringify(@aname, Sa)
+        endif
+    else
+        aname = "actual"
+    endif
+
+    # compute 'true' centroids in C
+    C = aggregate(X, actual, mean)[,3:]
+
+    # for each estimated centroid, find the nearest
+    # 'true' centroid and record its index
+    ord = zeros(k,1)
+    loop i=1..k
+        ord[i] = iminr(distance(F[i,], metric, C))
+        printf "estimated=%d, <-> actual %d\n", i, ord[i]
+    endloop
+
+    # reorder the clusters and compute c_hat
+    F = msortby(F~ord, n+1)[,1:end-1]
+    series cluster = iminr(distance({X}, metric, F))
+    xtab @aname cluster
+    return $result
+end function
