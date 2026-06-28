@@ -75,7 +75,7 @@ function bundle default_values (bool plotting)
     scalar self.error = FALSE
     scalar self.verbosity = plotting ? 0 : 1
     string self.init = "random"
-    scalar self.n_draws = 10
+    scalar self.n_draws = 8
     scalar self.max_iter = 128
     scalar self.tolerance = 1e-4
     string self.metric = "euclidean"
@@ -490,7 +490,7 @@ function bundle kmeansGUI (const list X "Features",
 end function
 
 function matrix kmeans_scree (const list xlist "Features",
-                              const int kmax[2::3] "No. of clusters",
+                              const int kmax[3::5] "No. of clusters",
                               bundle opts[null])
     if !exists(opts)
         bundle opts = _()
