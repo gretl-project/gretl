@@ -517,6 +517,7 @@ function matrix kmeans_scree (const list xlist "Features",
     return results
 end function
 
+/*
 function matrix kmeans_crosstab (const list X,
                                  const series actual,
                                  const string metric,
@@ -525,8 +526,9 @@ function matrix kmeans_crosstab (const list X,
     k = rows(F)
     n = nelem(X)
     if cols(F) == n + 2
-        F = F[,2:end-1]
+        F = F[,1:n]
     endif
+    series cluster = iminr(distance({X}, metric, F))
 
     string aname = argname(actual)
     if aname != "" && aname != "actual"
@@ -548,11 +550,15 @@ function matrix kmeans_crosstab (const list X,
     loop i=1..k
         ord[i] = iminr(distance(F[i,], metric, C))
         printf "estimated=%d, <-> actual %d\n", i, ord[i]
+        eval distance(F[i,], metric, C)
     endloop
 
     # reorder the clusters and compute c_hat
+    print ord
     F = msortby(F~ord, n+1)[,1:end-1]
-    series cluster = iminr(distance({X}, metric, F))
-    xtab @aname cluster
+    series c2 = replace(cluster, seq(1,k), ord)
+    # series cluster = iminr(distance({X}, metric, F))
+    xtab actual c2
     return $result
 end function
+*/
