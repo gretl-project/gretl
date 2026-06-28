@@ -708,6 +708,7 @@ static gretl_bundle *trivial_case (hw_info *hw,
 			     GRETL_TYPE_MATRIX);
     gretl_bundle_set_scalar(ret, "cluster_SST", gsst);
     gretl_bundle_set_scalar(ret, "global_SST", gsst);
+    gretl_bundle_set_string(ret, "metric", "euclidean");
 
     if (verbosity) {
 	gretl_matrix_print_to_prn(cinfo, "Cluster information:", prn);
@@ -1017,6 +1018,7 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     /* for reference, add the cluster and global SSTs */
     gretl_bundle_set_scalar(ret, "cluster_SST", SSTmin);
     gretl_bundle_set_scalar(ret, "global_SST", global_sst(&hw));
+    gretl_bundle_set_string(ret, "metric", "euclidean");
 
  bailout:
 
