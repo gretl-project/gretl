@@ -747,6 +747,8 @@ static int contig_cols (matrix_subspec *spec,
     }
 }
 
+/* for 'real' matrices with doubles as elements */
+
 static void transcribe_cols_8 (gretl_matrix *M,
 			       const gretl_matrix *S,
 			       const int *cslice,
@@ -763,7 +765,7 @@ static void transcribe_cols_8 (gretl_matrix *M,
 	    }
 	}
     } else {
-	/* zap from (cols of) S into selected cols of M */
+	/* zap from (cols of) @S into selected cols of @M */
 	double *xtarg, *xsrc = S->val;
 	size_t colsize = nr * sizeof *M->val;
 
@@ -775,6 +777,8 @@ static void transcribe_cols_8 (gretl_matrix *M,
 	}
     }
 }
+
+/* for complex matrices */
 
 static void transcribe_cols_16 (gretl_matrix *M,
 			       const gretl_matrix *S,
