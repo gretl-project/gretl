@@ -590,9 +590,16 @@ static FREDbuf *fredget (FREDtask task, const char *sername,
 
 static int get_api_key (void)
 {
+    const char *envkey = getenv("FRED_API_KEY");
     const char *fname = "api.key";
     FILE *fp;
     int err = 0;
+
+    if (envkey != NULL) {
+	strncpy(API_KEY, envkey, 32);
+	API_KEY[32] = '\0';
+	return 0;
+    }
 
     fp = fopen(fname, "r");
 
