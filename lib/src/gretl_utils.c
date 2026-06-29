@@ -4022,7 +4022,7 @@ double _Complex __divdc3 (double a, double b,
 #endif
 
 /* Generate the permutations of @v from element i to n-1,
-   with a shout-out to Daniel A. Jiménez, now at Texas A&M
+   with a shout-out to Daniel A. Jiménez, now at Texas A&M. See
    https://www.cs.utexas.edu/~djimenez/utsa/cs3343/lecture25.html
 */
 
@@ -4037,9 +4037,7 @@ static void perm (double *v, int n, int i, double *p, int *pk)
 	}
 	*pk = k;
     } else {
-	/* recursively explore the permutations starting
-	   from index i to index n-1
-	*/
+	/* recurse over the permutations from index i to n-1 */
 	int tmp;
 
 	for (j=i; j<n; j++) {
@@ -4048,7 +4046,7 @@ static void perm (double *v, int n, int i, double *p, int *pk)
 	    v[i] = v[j];
 	    v[j] = tmp;
 	    perm(v, n, i+1, p, pk);
-	    /* and put them back as they were */
+	    /* put them back as they were */
 	    tmp = v[i];
 	    v[i] = v[j];
 	    v[j] = tmp;
@@ -4058,35 +4056,41 @@ static void perm (double *v, int n, int i, double *p, int *pk)
 
 /**
  * gretl_permute:
- * @v: m-vector (1 < m <= 8) whose element should be permuted.
+ * @v: m-vector (1 < m <= 8) whose elements should be permuted.
  * @err: location to receive error code.
  *
  * Returns: on successful completion, an m x n matrix, where
- * n is the number of permutations of m items and each column
- * holds a distinct permutation. The function is recursive.
+ * n = m! is the number of permutations of m items and each column
+ * holds a distinct permutation. The underlying function is
+ * recursive.
  */
 
 gretl_matrix *gretl_permute (gretl_vector *v, int *err)
 {
     gretl_matrix *P;
     int m = gretl_vector_get_length(v);
-    int n = 1;
-    int i, k;
+    int n, i, k;
 
     if (m < 2 || m > 8) {
+	/* maybe 8 is too cautious? */
 	*err = E_INVARG;
 	return NULL;
     }
 
+    /* determine @m factorial */
+    n = 1;
     for (i=2; i<=m; i++) {
 	n *= i;
     }
+
+    /* allocate storage */
     P = gretl_zero_matrix_new(m, n);
     if (P == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
+    /* fill @P */
     k = 0;
     perm(v->val, m, 0, P->val, &k);
 
