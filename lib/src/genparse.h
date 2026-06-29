@@ -265,6 +265,7 @@ enum {
     F_GPCOLORS,
     HF_JBTERMS,
     HF_FDEPTH,
+    HF_PERMUTE,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
     F_MIN,

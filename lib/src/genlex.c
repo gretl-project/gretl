@@ -646,6 +646,7 @@ struct str_table hidden_funcs[] = {
     { HF_FDEPTH,   "_fdepth" },
     { HF_GLASSO,   "_glasso" },
     { HF_VCNORM,   "_vcnorm" },
+    { HF_PERMUTE,  "_permute" },
     { 0,           NULL }
 };
 

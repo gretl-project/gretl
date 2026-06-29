@@ -261,6 +261,9 @@ gretl_matrix *dec2bin (double x, const gretl_matrix *v, int *err);
 
 gretl_matrix *bin2dec (const gretl_matrix *m, int *err);
 
+/* permutations */
+
+gretl_matrix *gretl_permute (gretl_vector *v, int *err);
 
 #if defined(__APPLE__) && defined(__aarch64__)
 

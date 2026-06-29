@@ -4020,3 +4020,65 @@ double _Complex __divdc3 (double a, double b,
 }
 
 #endif
+
+/* Generate the permutations of @v from element i to n-1,
+   with a shout-out to Daniel A. Jiménez, now at Texas A&M
+   https://www.cs.utexas.edu/~djimenez/utsa/cs3343/lecture25.html
+*/
+
+static void perm (double *v, int n, int i, double *p, int *pk)
+{
+    int	j, k = *pk;
+
+    if (i == n) {
+	for (j=0; j<n; j++) {
+	    p[k] = v[j];
+	    k++;
+	}
+	*pk = k;
+    } else {
+	/* recursively explore the permutations starting
+	   from index i to index n-1
+	*/
+	int tmp;
+
+	for (j=i; j<n; j++) {
+	    /* swap elements i and j */
+	    tmp = v[i];
+	    v[i] = v[j];
+	    v[j] = tmp;
+	    perm(v, n, i+1, p, pk);
+	    /* and put them back as they were */
+	    tmp = v[i];
+	    v[i] = v[j];
+	    v[j] = tmp;
+	}
+    }
+}
+
+gretl_matrix *gretl_permute (gretl_vector *v, int *err)
+{
+    gretl_matrix *P;
+    int m = gretl_vector_get_length(v);
+    int n = 1;
+    int i, k;
+
+    if (m == 0 || m > 8) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    for (i=2; i<=m; i++) {
+	n *= i;
+    }
+    P = gretl_zero_matrix_new(m, n);
+    if (P == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    k = 0;
+    perm(v->val, m, 0, P->val, &k);
+
+    return P;
+}
