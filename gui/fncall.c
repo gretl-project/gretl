@@ -2014,13 +2014,11 @@ static void arg_combo_set_default (call_info *cinfo,
 
 	if (already_set_as_default(cinfo, argnum, name, ptype)) {
 	    ok_default = 0;
-	    continue;
 	} else if (want_series && !is_nullarg_label(name) &&
 		   !series_arg_ok(name, discrete)) {
 	    /* not preferred? */
 	    if (ncands > 1) {
 		ok_default = 0;
-		continue;
 	    }
 	}
 	if (ok_default) {
