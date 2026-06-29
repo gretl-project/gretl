@@ -7976,10 +7976,7 @@
 	  individuare <math>k</math> cluster ai quali possono essere
 	  assegnati <math>m</math> punti, con l’obiettivo di
 	  minimizzare la distanza euclidea totale tra i punti e i
-	  centroidi dei cluster di appartenenza.
-	</para>
-	<para>
-	I parametri sono
+	  centroidi dei cluster di appartenenza.  I parametri sono
 	  specificati come segue.
 	</para>
 	<para>
@@ -7994,39 +7991,33 @@
 	  seguenti: (a) un intero <math>k</math>, il numero di
 	  clusters, oppure (b) una matrice <by r="k" c="n"/> con
 	  <math>k</math> centroidi iniziali, da utilizzare come punto
-	  di partenza dell’algoritmo. Se <argname>c</argname> s è uno
-	  scalare, l’inizializzazione viene impostata automaticamente
-	  secondo il metodo descritto da Hartigan e Wong: i punti
-	  vengono ordinati in base alla loro distanza euclidea dal
-	  centroide globale e quindi vengono selezionati
-	  <math>k</math> punti equidistanti. È possibile richiedere
-	  un’inizializzazione rapida ma approssimativa passando come
-	  <argname>c</argname> le prime <math>k</math> righe di
-	  <argname>X</argname>.
+	  di partenza dell’algoritmo.
 	</para>
 	<para>
 	  <argname>opts</argname>: consente di passare opzioni che
 	  modificano il comportamento della funzione. Al momento ce ne
-	  sono due possibili. 
+	  sono tre possibili. 
 	</para>
 	<ilist>
 	  <li>
 	    <para>
-	      Con la chiave <lit>rand_starts</lit> è possibile
-	      specificare un intero che indica il numero di punti
-	      iniziali scelti casualmente dai quali l’algoritmo verrà
-	      rieseguito (default: 0). Il problema
-	      <math>k</math>-means presenta tipicamente ottimi locali
-	      multipli e l’algoritmo ASA136 non garantisce il
-	      raggiungimento dell’ottimo globale; l’uso di più riavvii
-	      casuali aumenta la probabilità di trovare l’ottimo
-	      globale, o qualcosa che gli va vicino.
+	      <lit>init</lit>: una stringa per il metodo i
+	      inizializzazione automatica: <lit>pc</lit> (Componenti
+	      Principali, il default) <lit>hw</lit> (Hartigan and
+	      Wong) oppure <lit>random</lit>. Si noti che se l'argomento
+	      <argname>c</argname> è una matrice, quest'opzione viene
+	      ignorata. Si vedi sotto per maggiori dettagli.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Con la chiave <lit>verbosity</lit> è possibile
-	      specificare un valore da 0 a 3 per controllare la
+	      <lit>n_draws</lit>: un intero, il numero di punti di
+	      partenza scelti a caso (per default, 8).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>verbosity</lit>: un intero da 0 a 3 che controlla la
 	      quantità di informazioni stampate dalla funzione. Il
 	      default è 0, che corrisponde all’esecuzione silenziosa;
 	      i livelli da 1 a 3 forniscono dettagli progressivamente
@@ -8034,14 +8025,66 @@
 	    </para>
 	  </li>
 	</ilist>
-	<subhead>Risultato</subhead>
+
+	<subhead>Inizializzazione</subhead>
 	<para>
-	  La funzione <lit>kmeans</lit> restituisce un bundle con tre elementi:
+	  Quando l'argomento <argname>c</argname> non è una matrice,
+	  l’inizializzazione avviane scegliendo <math>k</math>
+	  osservazioni dalle <math>m</math> totali come
+	  candidate. Questa selezione può essere deterministica o
+	  casuale, ed è governata dalla chiave 
+	  <lit>init</lit> descritta sopra; seguono alcuni commenti.
 	</para>
 	<ilist>
 	  <li>
 	    <para>
-	      <lit>clustid</lit>: un vettore di lunghezza
+	      <lit>pc</lit>: le osservazioni vengono ordinate in base
+	      alla prima componente principale delle <math>n</math>
+	      variabili, e quindi vengono selezionati <math>k</math>
+	      valori il più possibile separati fra loro. L'idea è di
+	      partire da centroidi che siano distanti fra loro il più
+	      possibile.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>hw</lit>: il metodo descritto da Hartigan and Wong
+	      nell'ultimo capoverso del loro articolo del 1979. Le
+	      osservazioni vengono ordinate in base alla loro distanza
+	      euclidea dal centroide globale e quindi vengono
+	      selezionati <math>k</math> punti equidistanti.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>random</lit>: questa opzione non usa un metodo
+	      deterministico, ma prende la prima estrazione delle
+	      <lit>n_draws</lit> menzionate sopra.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  Il problema <math>k</math>-means presenta tipicamente ottimi
+	  locali multipli e l’algoritmo ASA136 non garantisce il
+	  raggiungimento dell’ottimo globale. Partendo da una
+	  inizializzazione deterministica seguita da qualche punto
+	  inziale random, ci sono decenti probabilità di arrivare
+	  sull'ottimo globale, o qualcosa che ci va vicino. Tuttavia,
+	  è possibile impostare <lit>init</lit> e/o <lit>n_draws</lit>
+	  a proprio piacimento. (È accettabile anche impostare
+	  <lit>n_draws</lit> a 0 se non si specifica
+	  l'inizializzazione <lit>random</lit>.)
+	</para>
+	    
+	<subhead>Risultato</subhead>
+	<para>
+	  La funzione <lit>kmeans</lit> restituisce un bundle con
+	  quattro elementi:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>cluster_id</lit>: un vettore di lunghezza
 	      <math>m</math> che contiene, per ciascun punto, l’indice
 	      (a partire da 1) del cluster al quale è stato assegnato.
 	    </para>
@@ -8049,12 +8092,12 @@
 	  <li>
 	    <para>
 	      <lit>clustinfo</lit>: una matrice con <math>k</math>
-	      righe e <math>n</math>+2 colonne. La prima colonna
-	      contiene il numero di punti inclusi in ciascun cluster;
-	      le successive <math>n</math> colonne contengono il
-	      centroide del cluster; l’ultima colonna contiene la
-	      somma dei quadrati degli scarti dei punti appartenenti
-	      al cluster rispetto al suo centroide.
+	      righe e <math>n</math>+2 colonne. Le prime
+	      <math>n</math> colonne contengono il centroide del
+	      cluster; quella successiva contiene il numero di punti
+	      inclusi in ciascun cluster, e l’ultima colonna contiene
+	      la somma dei quadrati degli scarti dei punti
+	      appartenenti al cluster rispetto al suo centroide.
 	    </para>
 	  </li>
 	  <li>

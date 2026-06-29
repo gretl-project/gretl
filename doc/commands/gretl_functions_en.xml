@@ -7830,10 +7830,7 @@
 	  <math>k</math> clusters to which <math>m</math> points can be
 	  allocated, with the objective of minimizing the total
 	  Euclidean distance between the points and the centroids of the
-	  clusters to which they belong.
-	</para>
-	<para>
-	  The parameters are specified as follows.
+	  clusters to which they belong. The parameters are specified as follows.
 	</para>
 	<para>
 	  <argname>X</argname>: an <by r="m" c="n"/> matrix holding the
@@ -7860,7 +7857,7 @@
 	      initialization method: <lit>pc</lit> (Principal
 	      Components, the default) <lit>hw</lit> (Hartigan and
 	      Wong) or <lit>random</lit>. Note that if the
-	      <argname>centers</argname> is a matrix this option is
+	      <argname>centers</argname> argument is a matrix this option is
 	      ignored. See below for details.
 	    </para>
 	  </li>
@@ -7946,7 +7943,7 @@
 	  </li>
 	  <li>
 	    <para>
-	      <lit>centroids</lit>: a matrix with <math>k</math> rows
+	      <lit>clustinfo</lit>: a matrix with <math>k</math> rows
 	      and <math>n</math>+2 columns. The first <math>n</math>
 	      columns hold the cluster centroid proper; the next holds
 	      the count of observations included in the cluster; and
