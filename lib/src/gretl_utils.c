@@ -4056,6 +4056,16 @@ static void perm (double *v, int n, int i, double *p, int *pk)
     }
 }
 
+/**
+ * gretl_permute:
+ * @v: m-vector (1 < m <= 8) whose element should be permuted.
+ * @err: location to receive error code.
+ *
+ * Returns: on successful completion, an m x n matrix, where
+ * n is the number of permutations of m items and each column
+ * holds a distinct permutation. The function is recursive.
+ */
+
 gretl_matrix *gretl_permute (gretl_vector *v, int *err)
 {
     gretl_matrix *P;
@@ -4063,7 +4073,7 @@ gretl_matrix *gretl_permute (gretl_vector *v, int *err)
     int n = 1;
     int i, k;
 
-    if (m == 0 || m > 8) {
+    if (m < 2 || m > 8) {
 	*err = E_INVARG;
 	return NULL;
     }
