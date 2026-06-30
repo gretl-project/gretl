@@ -2721,7 +2721,6 @@ static int xtab_get_data (Xtab *tab, int v, int j,
 	    *ttarg = 1;
 	    *itarg = nv;
 	    *Starg = S;
-	    strings_array_sort(Starg, &nv, OPT_NONE);
 	}
     } else if (!err) {
 	*itarg = u->rows;
@@ -2802,8 +2801,8 @@ static Xtab *get_new_xtab (int rv, int cv, const DATASET *dset,
     strcpy(tab->cvarname, dset->varname[cv]);
 
     /* The following could be made more efficient by substituting
-       sorted arrays for dset->Z[rv] and dset->Z[cv] but I'm not
-       sure if the fixed cost would be recouped.
+       sorted arrays for dset->Z[rv] and dset->Z[cv] but it's not
+       clear that the fixed cost would be recouped.
     */
 
     for (t=dset->t1; t<=dset->t2; t++) {
