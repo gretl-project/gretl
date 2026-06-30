@@ -623,9 +623,6 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	    pputc(prn, 'r');
 	}
 	pputs(prn, "}\n");
-    }
-
-    if (tex) {
 	pputs(prn, "     & ");
     }
 
@@ -655,7 +652,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
     }
 
     if (totals) {
-        dashlen = clen + 1 + tab->cols*cw + tw;
+        dashlen = rlen + tab->cols * cw + tw;
     }
 
     bufspace(rlen, prn);

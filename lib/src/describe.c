@@ -2679,25 +2679,38 @@ int compare_xtab_rows (const void *a, const void *b)
     return ret < 0 ? -1 : ret > 0 ? 1: 0;
 }
 
-static int xtab_get_data (Xtab *tab, int v, int j,
+static int xtab_get_data (Xtab *tab, int v, int cols,
 			  const DATASET *dset,
 			  series_table **pst)
 {
-    double **xtarg = (j == 1)? &tab->cval : &tab->rval;
-    char ***Starg = (j == 1)? &tab->Sc : &tab->Sr;
-    int *itarg = (j == 1)? &tab->cols : &tab->rows;
-    int *ttarg = (j == 1)? &tab->cstrs : &tab->rstrs;
     double *x = dset->Z[v] + dset->t1;
     int n = sample_size(dset);
     gretl_matrix *u;
+    double **xtarg;
+    char ***Starg;
+    int *itarg;
+    int *ttarg;
     int err = 0;
+
+    if (cols) {
+	xtarg = &tab->cval;
+	Starg = &tab->Sc;
+	itarg = &tab->cols;
+	ttarg = &tab->cstrs;
+    } else {
+	xtarg = &tab->rval;
+	Starg = &tab->Sr;
+	itarg = &tab->rows;
+	ttarg = &tab->rstrs;
+    }
 
     u = gretl_matrix_values(x, n, OPT_S, &err);
 
     if (!err && is_string_valued(dset, v)) {
 	series_table *st;
 	int ns, nv = u->rows;
-	char **S0, **S = NULL;
+	char **S = NULL;
+	char **S0;
 
 	*pst = st = series_get_string_table(dset, v);
 	S0 = series_table_get_strings(st, &ns);
