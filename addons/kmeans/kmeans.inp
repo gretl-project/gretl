@@ -517,48 +517,42 @@ function matrix kmeans_scree (const list xlist "Features",
     return results
 end function
 
-/*
-function matrix kmeans_crosstab (const list X,
-                                 const series actual,
-                                 const string metric,
-                                 const matrix centroids)
-    matrix F = centroids
-    k = rows(F)
-    n = nelem(X)
-    if cols(F) == n + 2
-        F = F[,1:n]
-    endif
-    series cluster = iminr(distance({X}, metric, F))
-
+function void kmeans_crosstab_xtab (const series est,
+                                    const series actual,
+                                    int k)
     string aname = argname(actual)
-    if aname != "" && aname != "actual"
-        strings Sa = strvals(actual)
-        genseries(aname, actual)
-        if nelem(Sa)
-            stringify(@aname, Sa)
+    estvals = seq(1,k)
+    matrix P = _permute(estvals)
+    np = cols(P)
+    series c_hat = est
+    ibest = 1
+    max_correct = 0
+    loop i=1..np
+        correct = sum(c_hat == actual)
+        if correct > max_correct
+            max_correct = correct
+            ibest = i
         endif
-    else
-        aname = "actual"
-    endif
-
-    # compute 'true' centroids in C
-    C = aggregate(X, actual, mean)[,3:]
-
-    # for each estimated centroid, find the nearest
-    # 'true' centroid and record its index
-    ord = zeros(k,1)
-    loop i=1..k
-        ord[i] = iminr(distance(F[i,], metric, C))
-        printf "estimated=%d, <-> actual %d\n", i, ord[i]
-        eval distance(F[i,], metric, C)
+        # printf "perm %d: correct=%d\n", i, correct
+        if i < np
+            c_hat = replace(est, estvals, P[,i+1])
+        endif
     endloop
-
-    # reorder the clusters and compute c_hat
-    print ord
-    F = msortby(F~ord, n+1)[,1:end-1]
-    series c2 = replace(cluster, seq(1,k), ord)
-    # series cluster = iminr(distance({X}, metric, F))
-    xtab actual c2
-    return $result
+    # printf "best order is P[,%d] (%d correct)\n", ibest, max_correct
+    # eval P[,ibest]'
+    if ibest == 1
+        c_hat = est
+    elif ibest != np
+        c_hat = replace(est, estvals, P[,ibest])
+    endif
+    if aname != "" && aname != "actual"
+        S = strvals(actual)
+        series @aname = actual
+        if nelem(S) > 0
+            stringify(@aname, S)
+        endif
+        xtab @aname c_hat
+    else
+        xtab actual c_hat
+    endif
 end function
-*/
