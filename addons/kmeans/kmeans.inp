@@ -345,25 +345,25 @@ function void kmeans_summary (const bundle kmb)
 
     printf "\nParameters\n"
     printf "  Number of clusters: %d\n", k
-    printf "  Metric: %s\n", full_metric_name(b.metric)
-    printf "  Initializer: %s\n", b.init
-    printf "  Number of random draws: %d\n", b.n_draws
-    if inbundle(b, "tolerance") == 1
-        printf "  Tolerance: %f\n", b.tolerance
+    printf "  Metric: %s\n", full_metric_name(kmb.metric)
+    printf "  Initializer: %s\n", kmb.init
+    printf "  Number of random draws: %d\n", kmb.n_draws
+    if inbundle(kmb, "tolerance") == 1
+        printf "  Tolerance: %f\n", kmb.tolerance
     endif
 
-    between_dist = b.total_distance - b.within_distance
-    between_frac = between_dist / b.total_distance
+    between_dist = kmb.total_distance - kmb.within_distance
+    between_frac = between_dist / kmb.total_distance
 
     printf "\nResults:\n"
-    if metric_is_euclidean(b.metric)
-        printf "  Total sum of squares: %g\n", b.total_distance
-        printf "  Within-cluster sum of squares: %g\n", b.within_distance
+    if metric_is_euclidean(kmb.metric)
+        printf "  Total sum of squares: %g\n", kmb.total_distance
+        printf "  Within-cluster sum of squares: %g\n", kmb.within_distance
         printf "  Between-cluster sum of squares: %g\n", between_dist
         printf "  (Between / Total): %.3f pct.\n", between_frac * 100
     else
-        printf "  Total distance from global centroid: %g\n", b.total_distance
-        printf "  Total within-cluster distance: %g\n", b.within_distance
+        printf "  Total distance from global centroid: %g\n", kmb.total_distance
+        printf "  Total within-cluster distance: %g\n", kmb.within_distance
         printf "  Between cluster distance: %g\n", between_dist
         printf "  (Between / Total): %.3f pct.\n", between_frac * 100
     endif
