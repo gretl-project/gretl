@@ -457,7 +457,7 @@ static void optra (hw_info *hw, int *nc, gretl_matrix *an,
 	    if (hw->d[i] <= r2) {
 		hw->ic2[i] = l2;
 	    } else {
-		/* Update cluster centers, live, ncp and an for clusters
+		/* Update cluster centers, @live, @ncp and @an for clusters
 		   l1 and l2, and update ic1[i] and ic2[i].
 		*/
 		*indx = 0;

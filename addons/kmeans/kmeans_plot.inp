@@ -69,7 +69,7 @@ function series kmeans_sil_samples (const bundle Model, const list xlist)
                matrix dists_own2 = unvech(distance(dat, Model.metric), 0)[2:,1]
                out = dists_own' ~ dists_own2
                print out */
-            scalar a_i = meanc(dists_own)  # mean distance to own cluster
+            scalar a_i = meanc(dists_own) # mean distance to own cluster
         else
             scalar a_i = 0
         endif
@@ -143,8 +143,8 @@ function void kmeans_sil_plot (const bundle Model,
         bundle opts = _()
     endif
 
+    scalar n_clusters = rows(Model.centroids)
     matrix silhouette_samples = {kmeans_sil_samples(Model, xlist)}
-    scalar n_clusters = Model.n_clusters
     scalar mean_sil_score = meanc(silhouette_samples)
     matrix plot_data = silhouette_samples ~ Model.cluster_id
     strings plotfiles = array(n_clusters)

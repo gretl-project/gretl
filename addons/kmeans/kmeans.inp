@@ -341,12 +341,16 @@ function void kmeans_summary (const bundle kmb)
     print "************************************************"
     print "*** K-means clustering ***"
 
+    k = rows(kmb.centroids)
+
     printf "\nParameters\n"
-    printf "  Number of clusters: %d\n", b.n_clusters
+    printf "  Number of clusters: %d\n", k
     printf "  Metric: %s\n", full_metric_name(b.metric)
     printf "  Initializer: %s\n", b.init
     printf "  Number of random draws: %d\n", b.n_draws
-    printf "  Tolerance: %f\n", b.tolerance
+    if inbundle(b, "tolerance") == 1
+        printf "  Tolerance: %f\n", b.tolerance
+    endif
 
     between_dist = b.total_distance - b.within_distance
     between_frac = between_dist / b.total_distance
@@ -356,12 +360,12 @@ function void kmeans_summary (const bundle kmb)
         printf "  Total sum of squares: %g\n", b.total_distance
         printf "  Within-cluster sum of squares: %g\n", b.within_distance
         printf "  Between-cluster sum of squares: %g\n", between_dist
-        printf "  (Between / Total): %.3f pct.\n", (between_frac * 100)
+        printf "  (Between / Total): %.3f pct.\n", between_frac * 100
     else
         printf "  Total distance from global centroid: %g\n", b.total_distance
         printf "  Total within-cluster distance: %g\n", b.within_distance
         printf "  Between cluster distance: %g\n", between_dist
-        printf "  (Between / Total): %.3f pct.\n", (between_frac * 100)
+        printf "  (Between / Total): %.3f pct.\n", between_frac * 100
     endif
     print "************************************************"
 end function
@@ -393,6 +397,7 @@ function bundle compute_kmeans (const bundle self,
         this_distance = within_cluster_distance(min_dists, cluster_id,
           self.metric)
         delta = this_distance - prev_distance
+        # FIXME shouldn't this be proportional?
         if delta <= 0 && abs(delta) < self.tolerance
             if self.verbosity > 2
                 printf "Converged after %d iterations (within total distance = %.5f).",
