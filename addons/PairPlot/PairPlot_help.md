@@ -47,7 +47,7 @@ The user can control the following aspects by adding the respective parameter to
 - `key`: bool, If the `factor` series is provided, a legend shows the color and point pattern for each distinct value of the `factor` variable. Default: 1 (TRUE).
 - `key_fontsize` int, Control the font size for the key. Default: 14
 - `key_position`: string, Controls the position of the legend in each subplot (use standard gnuplot options). default: "top left".
-- `offset_level`: scalar, Provides a mechanism to put a boundary around the data inside of an auto-scaled graph. For details see: https://gnuplot.sourceforge.net/docs_4.2/node209.html , Default: 0.02.
+- `offset_level`: scalar, Provides a mechanism to put a boundary around the data inside of an auto-scaled graph. For details see: https://gnuplot.sourceforge.net/docs_6.0/loc14594.html , Default: 0.02.
 - `tmargin`: scalar, Top margin of the plot in lines. Positive values move the
 - `bmargin`: scalar, Bottom margin of the plot in lines.
 - `lmargin`: scalar, Left margin of the plot in lines.
