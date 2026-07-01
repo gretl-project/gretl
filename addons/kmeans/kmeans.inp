@@ -128,13 +128,19 @@ function matrix init_centroids_by_pc (const matrix features,
 end function
 
 function series kmeans_predict (const list xlist "Features",
-                                const bundle Model)
-    /* Predict cluster membership for a given model,
+                                const bundle kmb)
+    /* Predict cluster membership based on a k-means bundle,
        returning the result as a series.
     */
     errorif(sum(missing(xlist)),
       "Some features have missing values. Please drop these first.")
-    matrix distances = distance({xlist}, Model.metric, Model.centroids)
+
+    n = nelem(xlist)
+    if cols(kmb.centroids) > n
+        matrix distances = distance({xlist}, kmb.metric, kmb.centroids[,1:n])
+    else
+        matrix distances = distance({xlist}, kmb.metric, kmb.centroids)
+    endif
     series cluster_id = iminr(distances)
 
     return cluster_id
@@ -164,15 +170,13 @@ function void call_ASA136 (const matrix X, bundle *self)
     self.centroids = b.centroids[,2:end-1]
     matrix dsq = zeros(m, 1)
     loop i=1..m
-        k = b.clustid[i]
+        k = b.cluster_id[i]
         loop j=1..n
             d = X[i,j] - self.centroids[k,j]
             dsq[i] += d * d
         endloop
     endloop
     self.distances = dsq
-    scalar self.between_distance = self.total_distance - self.within_distance
-    scalar self.between_fraction = self.between_distance / self.total_distance
     # other components?
 end function
 
@@ -329,11 +333,9 @@ function void add_variations (const matrix features, bundle *self)
     endif
     scalar self.within_distance = within_cluster_distance(self.distances,
       self.cluster_id, self.metric)
-    scalar self.between_distance = self.total_distance - self.within_distance
-    scalar self.between_fraction = self.between_distance / self.total_distance
 end function
 
-function void kmeans_summary (const bundle b)
+function void kmeans_summary (const bundle kmb)
     /* Print summary after fitting. */
 
     print "************************************************"
@@ -346,17 +348,20 @@ function void kmeans_summary (const bundle b)
     printf "  Number of random draws: %d\n", b.n_draws
     printf "  Tolerance: %f\n", b.tolerance
 
+    between_dist = b.total_distance - b.within_distance
+    between_frac = between_dist / b.total_distance
+
     printf "\nResults:\n"
     if metric_is_euclidean(b.metric)
         printf "  Total sum of squares: %g\n", b.total_distance
         printf "  Within-cluster sum of squares: %g\n", b.within_distance
-        printf "  Between-cluster sum of squares: %g\n", b.between_distance
-        printf "  (Between / Total): %.3f pct.\n", (b.between_fraction * 100)
+        printf "  Between-cluster sum of squares: %g\n", between_dist
+        printf "  (Between / Total): %.3f pct.\n", (between_frac * 100)
     else
         printf "  Total distance from global centroid: %g\n", b.total_distance
         printf "  Total within-cluster distance: %g\n", b.within_distance
-        printf "  Between cluster distance: %g\n", b.between_distance
-        printf "  (Between / Total): %.3f pct.\n", (b.between_fraction * 100)
+        printf "  Between cluster distance: %g\n", between_dist
+        printf "  (Between / Total): %.3f pct.\n", (between_frac * 100)
     endif
     print "************************************************"
 end function
@@ -517,14 +522,18 @@ function matrix kmeans_scree (const list xlist "Features",
     return results
 end function
 
-function void kmeans_crosstab_xtab (const series est,
-                                    const series actual,
-                                    int k)
+function matrix kmeans_crosstab (const series estim,
+                                 const series actual)
+    estvals = values(estim)
+    k = nelem(estvals)
+    check = seq(1, k)
+    errorif(estvals != check || values(actual) != estvals,
+      "estim and actual must have values from 1 to k")
+    k = nelem(estvals)
     string aname = argname(actual)
-    estvals = seq(1,k)
     matrix P = _permute(estvals)
     np = cols(P)
-    series c_hat = est
+    series c_hat = estim
     ibest = 1
     max_correct = 0
     loop i=1..np
@@ -535,15 +544,15 @@ function void kmeans_crosstab_xtab (const series est,
         endif
         # printf "perm %d: correct=%d\n", i, correct
         if i < np
-            c_hat = replace(est, estvals, P[,i+1])
+            c_hat = replace(estim, estvals, P[,i+1])
         endif
     endloop
     # printf "best order is P[,%d] (%d correct)\n", ibest, max_correct
     # eval P[,ibest]'
     if ibest == 1
-        c_hat = est
+        c_hat = estim
     elif ibest != np
-        c_hat = replace(est, estvals, P[,ibest])
+        c_hat = replace(estim, estvals, P[,ibest])
     endif
     if aname != "" && aname != "actual"
         S = strvals(actual)
@@ -555,4 +564,5 @@ function void kmeans_crosstab_xtab (const series est,
     else
         xtab actual c_hat
     endif
+    return $result
 end function

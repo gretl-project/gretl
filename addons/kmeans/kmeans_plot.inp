@@ -13,7 +13,7 @@ end function
 
 function void kmeans_screeplot (const matrix scree,
                                 const string filename[null],
-                                bundle opts[null] "options")
+                                bundle opts[null])
     /* Create a scree plot. */
 
     if !exists(opts)
@@ -116,7 +116,7 @@ end function
 
 function numeric kmeans_sil_score (const bundle Model,
                                    const list xlist,
-                                   const bool global [TRUE])
+                                   const bool global[TRUE])
     /* Compute the mean Silhouette Coefficient of all samples. */
 
     series silhouette_samples = kmeans_sil_samples(Model, xlist)

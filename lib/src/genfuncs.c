@@ -9179,51 +9179,71 @@ DATASET *matrix_dset_plus_lists (const gretl_matrix *m1,
  * gretl_kmeans:
  *
  * @X: data matrix, m x n.
+ * @L: data list, n series.
  * @k: the number of clusters.
  * @c0: matrix of initial centroids, k x n, or NULL.
  * @opts: bundle containing options, or NULL.
  * @prn: gretl printer.
  * @err: location to receive error code.
  *
- * Assigns the m data-points to k clusters, using algorithm
- * ASA136 (Hartigan and Wong) to minimize the Euclidean
- * distance between the points and their respective centroids.
+ * Assigns m data-points, which can be given either in matrix form (@X)
+ * or in list form (@L) to k clusters using algorithm ASA136 (Hartigan
+ * and Wong) to minimize the Euclidean distance between the points and
+ * their respective centroids.
  *
- * If the argument @c0 is non-NULL this matrix is used to
- * initialize the ASA136 iteration, with its row dimension
- * specifying k. Otherwise the initial @k centroids are set
- * using the procedure suggested by Hartigan and Wong.
+ * If the argument @c0 is non-NULL this matrix is used to initialize the
+ * ASA136 iteration, with its row dimension specifying k. Otherwise the
+ * initial @k centroids are computed automatically.
  *
- * The @pts bundle can contain integer-valued options
- * under the keys "rand_starts" and "verbosity". The first
- * of these specifies a number of re-starts of the k-means
- * algorithm using centroids based on k of the data points
- * selected at random. The verbosity value can be 0, 1, 2
- * or 3, with a default value of 0.
+ * The @pts bundle can contain integer-valued options under the keys
+ * "n_draws" and "verbosity". The first of these specifies a number
+ * of re-starts of the k-means algorithm using centroids based on k of
+ * the data points selected at random. The verbosity value can be 0, 1,
+ * 2 or 3, with a default of 0.
  *
- * Returns: a bundle containing @clustid, an m-vector holding the
+ * Returns: a bundle containing @cluster_id, an m-vector holding the
  * 1-based index of the cluster to which each data-point is assigned,
- * plus @clustinfo, a k x (n+2) matrix holding for each cluster the
- * number of points it comprises, the means of the n variables
- * and the SST. In addition the global SST is provided.
+ * plus @centroids, a k x (n+2) matrix holding for each cluster the the
+ * means of the n variables, the number of observations included, and
+ * the SST. In addition the within-cluster and global SSTs are provided.
  *
  */
 
-gretl_bundle *gretl_kmeans (const gretl_matrix *X, int k,
+gretl_bundle *gretl_kmeans (gretl_matrix *X,
+			    const int *L, int k,
 			    const gretl_matrix *c0,
 			    const gretl_bundle *opts,
+			    const DATASET *dset,
 			    PRN *prn, int *err)
 {
-    gretl_bundle *(*kmeans) (const gretl_matrix *, int,
-			     const gretl_matrix *,
+    gretl_bundle *(*kmeans) (const gretl_matrix *,
+			     int, const gretl_matrix *,
 			     const gretl_bundle *,
 			     PRN *, int *);
+    gretl_bundle *ret = NULL;
 
-    kmeans = get_plugin_function("kmeans");
-    if (kmeans == NULL) {
-	*err = E_FOPEN;
-	return NULL;
+    if (X == NULL) {
+	X = gretl_matrix_data_subset(L, dset, dset->t1, dset->t2,
+				     M_MISSING_ERROR, err);
     } else {
-	return kmeans(X, k, c0, opts, prn, err);
+	int i, mn = X->rows * X->cols;
+
+	for (i=0; i<mn; i++) {
+	    if (na(X->val[i])) {
+		*err = E_MISSDATA;
+		break;
+	    }
+	}
     }
+
+    if (!*err) {
+	kmeans = get_plugin_function("kmeans");
+	if (kmeans == NULL) {
+	    *err = E_FOPEN;
+	} else {
+	    ret = kmeans(X, k, c0, opts, prn, err);
+	}
+    }
+
+    return ret;
 }

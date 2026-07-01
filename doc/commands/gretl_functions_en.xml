@@ -7819,7 +7819,7 @@
 
     <function name="kmeans" section="stats" output="bundle">
       <fnargs>
-	<fnarg type="matrix">X</fnarg>
+	<fnarg type="list-or-mat">X</fnarg>
 	<fnarg type="scalar-or-matrix">centers</fnarg>
 	<fnarg optional="true" type="bundle">opts</fnarg>
       </fnargs>
@@ -7827,23 +7827,24 @@
 	<para>
 	  Executes algorithm ASA136 (<cite
 	  key="hartigan-wong79">Hartigan and Wong, 1979</cite>) to find
-	  <math>k</math> clusters to which <math>m</math> points can be
-	  allocated, with the objective of minimizing the total
+	  <math>k</math> clusters to which <math>m</math> data-points
+	  can be allocated, with the objective of minimizing the total
 	  Euclidean distance between the points and the centroids of the
-	  clusters to which they belong. The parameters are specified as follows.
+	  clusters to which they belong. The parameters are specified as
+	  follows.
 	</para>
 	<para>
-	  <argname>X</argname>: an <by r="m" c="n"/> matrix holding the
-	  <quote>points</quote>, namely <math>m</math> observations on
-	  each of <math>n</math> features. An error is flagged if this
-	  matrix contains any missing values.
+	  <argname>X</argname>: either a list of <math>n</math> series
+	  or an <by r="m" c="n"/> matrix holding the input data, namely
+	  <math>m</math> observations on each of <math>n</math>
+	  <quote>features</quote>. An error is flagged if the data array
+	  contains any missing values.
 	</para>
 	<para>
-	  <argname>centers</argname>: can take either of two forms:
-	  (a) a scalar (integer) giving <math>k</math>, the number of
-	  clusters, or (b) a <by r="k" c="n"/> matrix holding
-	  <math>k</math> initial centroids, to be taken as the
-	  starting point of the algorithm.
+	  <argname>centers</argname>: either a scalar (integer)
+	  giving <math>k</math>, the number of clusters, or an <by
+	  r="k" c="n"/> matrix holding <math>k</math> initial centroids,
+	  to be taken as the starting point of the algorithm.
 	</para>
 	<para>
 	  <argname>opts</argname>: provides a means of passing options

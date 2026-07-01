@@ -57,24 +57,19 @@ typedef struct hw_info_ {
 static double *get_ameans (const gretl_matrix *a, int *err)
 {
     double *ameans = malloc(a->cols * sizeof *ameans);
-    double aij;
     int i, j;
 
-    *err = 0;
+    if (ameans == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
 
-    for (j=0; j<a->cols && !*err; j++) {
+    for (j=0; j<a->cols; j++) {
 	ameans[j] = 0.0;
-	for (i=0; i<a->rows && !*err; i++) {
-	    aij = gretl_matrix_get(a, i, j);
-	    if (na(aij)) {
-		*err = E_MISSDATA;
-	    } else {
-		ameans[j] += aij;
-	    }
+	for (i=0; i<a->rows; i++) {
+	    ameans[j] += gretl_matrix_get(a, i, j);
 	}
-	if (!*err) {
-	    ameans[j] /= a->rows;
-	}
+	ameans[j] /= a->rows;
     }
 
     return ameans;
@@ -800,8 +795,8 @@ static int check_opts (gretl_bundle *b,
 
 /* real_kmeans() carries out the K-means algorithm.
 
-   @a (m x n): the data points
-   @k: the assumed number of clusters (or 0)
+   @a (m x n): the data points in matrix form
+   @k: the assumed number of clusters, OR
    @c0: initial specification of clusters (or NULL)
    @opts: options bundle
    @WCSS: pointer to receive within-cluster distance (for scree)

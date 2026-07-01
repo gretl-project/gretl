@@ -7372,9 +7372,9 @@ int *list_from_strings_array (gretl_array *a, parser *p)
     return list;
 }
 
-/* get an *int LIST from node @n: note that the list is always
-   newly allocated, and so should be freed by the caller if
-   it's just for temporary use
+/* Get an *int LIST from node @n: note that the list is always newly
+   allocated, and so should be freed by the caller if it's just for
+   temporary use.
 */
 
 int *node_get_list (NODE *n, parser *p)
@@ -14254,18 +14254,24 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	}
     } else if (f == F_KMEANS) {
 	post_process = 0;
-        if (l->t != MAT) {
-            /* matrix a, required */
-            node_type_error(f, 1, MAT, l, p);
+        if (l->t != MAT && l->t != LIST) {
+            /* matrix or list, required */
+            node_type_error(f, 1, 0, l, p);
         } else if (m->t != NUM && m->t != MAT) {
 	    /* int k or matrix c0, required */
             node_type_error(f, 2, 0, m, p);
         } else {
-	    gretl_matrix *a = mat_node_get_real_matrix(l, p);
+	    gretl_matrix *a = NULL;
 	    gretl_matrix *c0 = NULL;
 	    gretl_bundle *opts = NULL;
+	    int *alist = NULL;
 	    int k = 0;
 
+	    if (l->t == MAT) {
+		a = mat_node_get_real_matrix(l, p);
+	    } else {
+		alist = node_get_list(l, p);
+	    }
 	    if (m->t == NUM) {
 		k = node_get_int(m, p);
 	    } else {
@@ -14283,8 +14289,10 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		ret = aux_bundle_node(p);
 	    }
 	    if (!p->err) {
-		ret->v.b = gretl_kmeans(a, k, c0, opts, p->prn, &p->err);
+		ret->v.b = gretl_kmeans(a, alist, k, c0, opts,
+					p->dset, p->prn, &p->err);
 	    }
+	    free(alist);
 	}
     }
 

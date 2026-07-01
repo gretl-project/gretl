@@ -203,7 +203,7 @@ bundle kmeans_fit (list xlist, numeric clusters, bundle opts[null])
     \texttt{init} & string & TBD \\
     \dtk{n_draws} & scalar & integer specifying how many times the
       $K$-means algorithm will be run with different randomly
-      selected initial centroids, default 10. \\
+      selected initial centroids, default 8. \\
     \texttt{tolerance} & scalar & value for the improvement in
       the objective function below which the algorithm is considered as
       having converged, default 0.0001.\\
@@ -293,6 +293,24 @@ void kmeans_screeplot (matrix scree, string filename[null], bundle opts[null])
   second argument is given it should be the name of a file to which
   the graphic should be written (by default it is shown on-screen). The
   last argument \dots TBD
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+matrix kmeans_crosstab (series cluster_id, series actual)
+\end{verbatim}
+  Relevant only if the dataset in use contains a series which identifies
+  underlying clusters, for example the \texttt{species} series in the
+  iris dataset (\texttt{iris.gdt}). It can then be of interest to see
+  the degree of match between the clusters obtained via the $K$-means
+  algorithm (\dtk{cluster_id}) and the underlying ones (generically,
+  \texttt{actual}). Since the numeric coding of the clusters is
+  essentially arbitrary, a simple cross-tabulation is likely to show
+  garbled results. This function searches for the most appropriate
+  mapping between the estimated clusters and the ``actual'' ones,
+  defined as that which maximizes the number of matched observations
+  (the trace of the cross-tabulation). The crosstab is printed using
+  gretl's \texttt{xtab} command, and is also returned in matrix form.
 \end{funcdoc}
 
 %% WORK needed below here!!

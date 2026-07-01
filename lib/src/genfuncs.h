@@ -292,9 +292,11 @@ DATASET *matrix_dset_plus_lists (const gretl_matrix *m1,
 				 int **plist1, int **plist2,
 				 int *err);
 
-gretl_bundle *gretl_kmeans (const gretl_matrix *X, int k,
+gretl_bundle *gretl_kmeans (gretl_matrix *X,
+			    const int *L, int k,
 			    const gretl_matrix *c0,
 			    const gretl_bundle *opts,
+			    const DATASET *dset,
 			    PRN *prn, int *err);
 
 #endif /* GENFUNCS_H */
