@@ -14,7 +14,9 @@ end function
 function void kmeans_screeplot (const matrix scree,
                                 const string filename[null],
                                 bundle opts[null])
-    /* Create a scree plot. */
+    /* -doc-
+       Create a scree plot.
+    */
 
     if !exists(opts)
         bundle opts = _()
