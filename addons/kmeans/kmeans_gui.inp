@@ -52,9 +52,8 @@ function void GUI_kmeans_plot(bundle *kmb, int ptype[1:3:1] \
     list X = kmb.xlist
     smpl X --no-missing
 
-    printf "HERE ptype = %d\n", ptype
-
     if ptype == 1
+        include PairPlot.gfn
         series factor = kmb.cluster_id
         PairPlot(X, factor)
     elif ptype == 2
@@ -67,9 +66,9 @@ function void GUI_kmeans_plot(bundle *kmb, int ptype[1:3:1] \
 end function
 
 function matrix kmeans_plot_precheck (bundle *kmb)
-    # unconditional for the moment, but you never know
-    if 0
-        return {1,1,0}
+    if rows(kmb.centroids) > 16
+        # PairPlot has a max of 16 factor values
+        return {0,1,1}
     else
         return {1,1,1}
     endif
