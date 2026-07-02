@@ -149,7 +149,7 @@ end function
 function void call_ASA136 (const matrix X, bundle *self)
     bundle opts = _()
     if inbundle(self, "verbosity")
-        opts.verbosity = self.verbosity # FIXME
+        opts.verbosity = self.verbosity # FIXME ?
     endif
     if inbundle(self, "n_draws")
         opts.n_draws = self.n_draws
@@ -167,8 +167,8 @@ function void call_ASA136 (const matrix X, bundle *self)
     n = cols(X)
     self.within_distance = b.cluster_SST
     self.total_distance = b.global_SST
-    self.cluster_id = b.cluster_id
-    self.centroids = b.centroids[,1:n]
+    series self.cluster_id = b.cluster_id
+    matrix self.centroids = b.centroids[,1:n]
     matrix dsq = zeros(m, 1)
     loop i=1..m
         k = b.cluster_id[i]
@@ -177,7 +177,7 @@ function void call_ASA136 (const matrix X, bundle *self)
             dsq[i] += d * d
         endloop
     endloop
-    self.distances = dsq
+    series self.distances = dsq
     # other components?
 end function
 

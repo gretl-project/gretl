@@ -148,7 +148,7 @@ function void kmeans_sil_plot (const bundle Model,
     scalar n_clusters = rows(Model.centroids)
     matrix silhouette_samples = {kmeans_sil_samples(Model, xlist)}
     scalar mean_sil_score = meanc(silhouette_samples)
-    matrix plot_data = silhouette_samples ~ Model.cluster_id
+    matrix plot_data = silhouette_samples ~ {Model.cluster_id}
     strings plotfiles = array(n_clusters)
 
     # plot options

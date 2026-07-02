@@ -1028,8 +1028,12 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     gretl_bundle_set_string(ret, "metric", "euclidean");
 
     if (verbosity) {
+	double btw = gSST - SSTmin;
+
 	pprintf(prn, "Within-cluster sum of squares: %g\n", SSTmin);
 	pprintf(prn, "Total sum of squares: %g\n", gSST);
+	pprintf(prn, "Between-cluster sum of squares: %g\n", btw);
+	pprintf(prn, "Between as percent of total: %.1f\n", 100 * btw / gSST);
 	pputc(prn, '\n');
     }
 

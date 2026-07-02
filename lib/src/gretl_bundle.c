@@ -1745,6 +1745,45 @@ int gretl_bundle_donate_series (gretl_bundle *bundle,
 				0, NULL);
 }
 
+#if 0 /* not needed? */
+
+int gretl_bundle_donate_vector_as_series (gretl_bundle *bundle,
+					  const char *key,
+					  gretl_vector *v,
+					  const DATASET *dset)
+{
+    int n = gretl_vector_get_length(v);
+
+    if (n == 0 || v->cols > 1) {
+	gretl_errmsg_set("gretl_bundle_donate_vector: invalid argument");
+	return E_INVARG;
+    } else if (n != sample_size(dset)) {
+	gretl_errmsg_set("gretl_bundle_donate_vector: invalid length");
+	return E_INVARG;
+    }
+
+    if (n < dset->n) {
+	double *x = malloc(dset->n * sizeof *x);
+	int t, s = 0;
+
+	for (t=0; t<dset->n; t++) {
+	    if (t < dset->t1 || t > dset->t2) {
+		x[t] = NADBL;
+	    } else {
+		x[t] = v->val[s++];
+	    }
+	}
+	free(v->val);
+	v->val = x;
+	v->rows = dset->n;
+    }
+
+    return real_bundle_set_data(bundle, key, v, GRETL_TYPE_SERIES,
+				0, NULL);
+}
+
+#endif
+
 /**
  * gretl_bundle_set_list:
  * @bundle: target bundle.
