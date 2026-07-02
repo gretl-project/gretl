@@ -11,8 +11,12 @@ public = kmeans_fit kmeans_predict kmeans_plot kmeans_summary \
 help = kmeans_help.md
 sample-script = kmeans_sample.inp
 depends = PairPlot
+
+
 gui-main = kmeansGUI
-#menu-only = kmeansGUI
+bundle-plot = GUI_kmeans_plot
+plot-precheck = kmeans_plot_precheck
+
 label = K-Means
 menu-attachment = MAINWIN/View
 data-files = examples

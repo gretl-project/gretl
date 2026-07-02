@@ -25,7 +25,7 @@ PKGSRC = $(topsrc)/addons/$(PKG)
 vpath %.inp $(PKGSRC)
 vpath %.spec $(PKGSRC)
 
-INP = $(PKG).inp $(PKG)_plot.inp
+INP = $(PKG).inp $(PKG)_plot.inp $(PKG)_gui.inp
 SPEC = $(PKG).spec
 SMPL = $(PKG)_sample.inp
 HELP = $(PKG)_help.md

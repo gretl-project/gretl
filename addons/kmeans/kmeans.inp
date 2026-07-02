@@ -152,11 +152,12 @@ function void call_ASA136 (const matrix X, bundle *self)
         opts.verbosity = self.verbosity # FIXME
     endif
     if inbundle(self, "n_draws")
-        opts.rand_starts = self.n_draws
+        opts.n_draws = self.n_draws
     endif
     if inbundle(self, "init")
         opts.init = self.init
     endif
+
     if inbundle(self, "clusters0")
         bundle b = kmeans(X, self.clusters0, opts)
     else
@@ -224,6 +225,7 @@ function bundle kmeans_fit (const list xlist,
       "Some features have missing values. Please drop these first.")
 
     bundle self = handle_options_and_defaults(0, opts)
+    self.xlist = xlist
     self.init = tolower(self.init)
 
     scalar self.n_clusters = n_clusters
@@ -448,53 +450,6 @@ function matrix compute_centroids (const matrix features,
     centroids = tmp[,3:]
     rnameset(centroids, row_labels)
     return centroids
-end function
-
-function string get_metric (const int distance)
-    /* Only for kmeansGUI(). Maps the integer code to the name of
-       the distance measure.
-    */
-    strings Distances = all_metrics()
-    return Distances[distance]
-end function
-
-function bundle kmeansGUI (const list X "Features",
-                           const int n_clusters[1::3] "No. of clusters (k)",
-      const int metric[1:6:1] "Metric" {"euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis"},
-      const int plot_type[0:3:0] "Plot type" {"none", "Scree (1 to k)", "Cluster (pairs)", "Silhouette"})
-    /* Function for creating GUI dialog box. */
-
-    bundle self = defbundle()
-    self.metric = get_metric(metric)
-    self.verbosity = 2  # in GUI mode, highest verbosity level is activated
-
-    if plot_type == 1
-        # scree plot
-        self.verbosity = 0 # ?
-        matrix scree = kmeans_scree(X, n_clusters, self)
-        kmeans_screeplot(scree, null, null)
-        bundle Model = _(scree)
-        return Model
-    endif
-
-    # Only for given k
-    bundle Model = kmeans_fit(X, n_clusters, self)
-    kmeans_summary(Model)
-    print Model.centroids
-
-    if plot_type == 2
-        kmeans_plot(X, Model)
-    endif
-    if plot_type == 3
-        kmeans_sil_plot(Model, X, self)
-        scalar sil_score = kmeans_sil_score(Model, X, TRUE)
-        matrix sil_score_local = kmeans_sil_score(Model, X, FALSE)
-        printf "\nSilhouette Analysis\n"
-        printf "Mean Silhouette Coefficient: %.3f\n\n", sil_score
-        printf "Per Cluster Silhouette Coefficients:\n%12.3f\n", sil_score_local
-    endif
-
-    return Model
 end function
 
 function matrix kmeans_scree (const list xlist "Features",
