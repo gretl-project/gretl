@@ -190,7 +190,7 @@ function void print_draw_info (int d, int dmax, const bundle b)
     if b.error
         printf "failed\n"
     else
-        printf "total within distance = %g\n", d, b.within_distance
+        printf "total within distance = %g\n", b.within_distance
     endif
 end function
 
@@ -251,10 +251,10 @@ function bundle kmeans_fit (const list xlist,
         scalar self.within_distance = self.total_distance
     endif
 
-    if self.verbosity
+    if self.verbosity && !metric_is_euclidean(self.metric)
         printf "kmeans_fit: %d observations, %d features, %d clusters\n",
           $nobs, nelem(xlist), n_clusters
-        printf "metric %s, initializer %s, %d random draws\n",
+        printf "metric %s, initializer %s, %d random draws\n\n",
           full_metric_name(self.metric), self.init, self.n_draws
     endif
 
@@ -362,12 +362,12 @@ function void kmeans_summary (const bundle kmb)
         printf "  Total sum of squares: %g\n", kmb.total_distance
         printf "  Within-cluster sum of squares: %g\n", kmb.within_distance
         printf "  Between-cluster sum of squares: %g\n", between_dist
-        printf "  (Between / Total): %.3f pct.\n", between_pc
+        printf "  Between as percent of total: %.3f\n", between_pc
     else
         printf "  Total distance from global centroid: %g\n", kmb.total_distance
         printf "  Total within-cluster distance: %g\n", kmb.within_distance
         printf "  Between cluster distance: %g\n", between_dist
-        printf "  (Between / Total): %.3f pct.\n", between_pc
+        printf "  Between as percent of total: %.1f\n", between_pc
     endif
     print "************************************************"
 end function

@@ -793,6 +793,15 @@ static int check_opts (gretl_bundle *b,
     return err;
 }
 
+static const char *init_string (InitFlag iflag)
+{
+    const char *istrs[] = {
+	"pc", "hw", "user-specified", "random"
+    };
+
+    return istrs[iflag];
+}
+
 /* real_kmeans() carries out the K-means algorithm.
 
    @a (m x n): the data points in matrix form
@@ -815,7 +824,7 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     gretl_vector *clustid = NULL;
     gretl_matrix *an = NULL;
     double tmp;
-    double SST, SSTmin;
+    double SST, SSTmin, gSST;
     int *iwork;
     int *nc;
     int *ncp;
@@ -860,13 +869,11 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     }
 
     if (verbosity) {
-	/* FIXME: case of being called by kmeans_fit() */
-	pprintf(prn, "kmeans: m=%d, n=%d, k=%d, initial centers %s\n",
-		m, n, k, iflag == INIT_USER ? "user-specified" :
-		iflag == INIT_PC ? "pc" : iflag == INIT_HW ? "hw" : "random");
-	if (k > 1) {
-	    pprintf(prn, "%d random draws requested\n", n_draws);
-	}
+	pprintf(prn, "kmeans: %d observations, %d features, %d clusters\n",
+		m, n, k);
+        pprintf(prn, "metric euclidean, initializer %s, %d random draws\n",
+		init_string(iflag), n_draws);
+	pputc(prn, '\n');
     }
 
     if (k == 1) {
@@ -933,9 +940,9 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     if (iflag < INIT_RAND) {
 	/* prior to randomization */
 	if (verbosity > 1) {
+	    pputc(prn, '\n');
 	    pprintf(prn, "%s initialization: SST = %g (%d iterations)\n",
-		    iflag == INIT_HW ? "hw" : iflag == INIT_PC ? "pc" :
-		    "user-specified", SST, iter);
+		    init_string(iflag), SST, iter);
 	}
 	SSTmin = SST;
 	if (n_draws > 0) {
@@ -969,6 +976,7 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     if (iflag == INIT_RAND) {
 	if (verbosity > 1) {
 	    pprintf(prn, "Minimized SST = %g\n", SSTmin);
+	    pputc(prn, '\n');
 	}
 	gretl_matrix_copy_values(hw.c, hw.cmin);
 	iflag = INIT_FINAL;
@@ -1014,9 +1022,16 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     gretl_bundle_donate_data(ret, "cluster_id", clustid,
 			     GRETL_TYPE_MATRIX);
     /* for reference, add the cluster and global SSTs */
+    gSST = global_sst(&hw);
     gretl_bundle_set_scalar(ret, "cluster_SST", SSTmin);
-    gretl_bundle_set_scalar(ret, "global_SST", global_sst(&hw));
+    gretl_bundle_set_scalar(ret, "global_SST", gSST);
     gretl_bundle_set_string(ret, "metric", "euclidean");
+
+    if (verbosity) {
+	pprintf(prn, "Within-cluster sum of squares: %g\n", SSTmin);
+	pprintf(prn, "Total sum of squares: %g\n", gSST);
+	pputc(prn, '\n');
+    }
 
  bailout:
 
