@@ -9,15 +9,16 @@ end function
 function bundle kmeansGUI (const list X "Features",
                            const int n_clusters[1::3] "No. of clusters (k)",
                            const int n_draws[0::8] "No. of random draws",
-                           bool verbose[TRUE] "Detailed output?",
-                           const int metric[1:6:1] "Metric" {"euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis"})
+                           const int metric[1:6:1] "Metric" {"euclidean", "manhattan", "hamming", "chebyshev", "cosine", "mahalanobis"},
+                           bool verbose[TRUE] "Detailed output?")
     /* Function for creating GUI dialog box. */
 
     bundle self = defbundle()
     self.metric = get_metric(metric)
     self.verbosity = verbose ? 2 : 1
     self.n_draws = n_draws
-    # Only for given k
+    self.init = "pc"
+
     bundle Model = kmeans_fit(X, n_clusters, self)
     kmeans_summary(Model)
     print Model.centroids
@@ -25,20 +26,20 @@ function bundle kmeansGUI (const list X "Features",
     return Model
 end function
 
-function void GUI_kmeans_plot(bundle *kmb, int ptype[0:2:0] \
+function void GUI_kmeans_plot(bundle *kmb, int ptype[1:3:1] \
                               "Plot type" {"Pair plot", "Scree plot", "Silhouette plot"})
 
     list X = kmb.xlist
     smpl X --no-missing
 
-    if ptype == 0
+    if ptype == 1
         series factor = kmb.cluster_id
         PairPlot(X, factor)
-    elif ptype == 1
+    elif ptype == 2
         nc = kmb.n_clusters
         matrix scree = kmeans_scree(X, nc+1)
         kmeans_screeplot(scree)
-    elif ptype == 2
+    elif ptype == 3
         kmeans_sil_plot(kmb, X)
     endif
 end function

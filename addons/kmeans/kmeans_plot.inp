@@ -179,9 +179,8 @@ function void kmeans_sil_plot (const bundle Model,
         cluster_sil_values = mreverse(msortby(cluster_sil_values, 1))
         cluster_sil_values ~= mean_sil_score
         cnameset(cluster_sil_values, defarray("score for data points", "mean score, all clusters"))
-        if k == n_clusters
-            keystr = "set key outside below"
-            bmargin *= 1.8
+        if k == 1
+            keystr = "set key top right"
         else
             keystr = "unset key"
         endif
@@ -201,7 +200,7 @@ function void kmeans_sil_plot (const bundle Model,
             printf "%s", keystr
             # literal set nokey
         end plot --outbuf=plotfiles[k]
-    endloop
+    endloop # clusters
 
     gridplot plotfiles --cols=columns --width=width --height=height \
       --title="Silhouette plots per cluster" --output="@filename"

@@ -168,7 +168,7 @@ function void call_ASA136 (const matrix X, bundle *self)
     self.within_distance = b.cluster_SST
     self.total_distance = b.global_SST
     self.cluster_id = b.cluster_id
-    self.centroids = b.centroids[,2:end-1]
+    self.centroids = b.centroids[,1:n]
     matrix dsq = zeros(m, 1)
     loop i=1..m
         k = b.cluster_id[i]
