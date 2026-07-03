@@ -31,7 +31,7 @@
 
 \title{The \textsf{kmeans} addon}
 \author{Artur Tarassow and Allin Cottrell}
-\date{June 23, 2026}
+%\date
 
 \begin{document}
 \maketitle
@@ -44,8 +44,9 @@ data using the $K$-means algorithm.  This algorithm divides a set of $m$
 observations, each of dimension $n$, into disjoint clusters,
 $C_i, i=1,\dots,K$. Each cluster is defined by its centroid, an
 $n$-vector comprising the means of the variables for the observations it
-includes. Useful references include \citet{hartigan-wong79} and
-\citet[ch.\ 12]{ISL2e}.
+includes. In this context the variables that constitute the $n$
+dimensions of the data are often called features.  Useful references
+include \citet{hartigan-wong79} and \citet[ch.\ 12]{ISL2e}.
 
 The aim of $K$-means is to minimize a loss function, namely the total
 distance between the data-points and their associated cluster
@@ -97,25 +98,25 @@ found.\footnote{It's generally reckoned that mounting a direct search
 than others, and the stopping point of the algorithm depends on its
 starting point.
 
-Our recommendation is to start with a deterministic initializer and
-follow up with several random draws, and selecting the best solution.
-For built-in \texttt{kmeans} two deterministic initializers are
-supported, as follows:
+Our recommendation is to start with a deterministic initializer, follow
+up with several random draws, and select the best solution.  For
+built-in \texttt{kmeans} two deterministic initializers are supported,
+as follows:
 \begin{itemize}
- \item Principal Components (code \texttt{pc}): the data points are
+\item Principal Components (code \texttt{pc}): the data points are
   sorted by value of the first Principal Component of the
-  $n$-dimensional data, and again evenly spaced points are selected from
+  $n$-dimensional data, then $K$ evenly spaced points are selected from
   the sorted array.
-\item Hartigan--Wong (code \texttt{hw}): the method suggested in the last
-  paragraph of their 1979 paper. The data points are sorted by Euclidean
-  distance from the global centroid, then $K$ evenly spaced points are
-  selected from the sorted array.
+\item Hartigan--Wong (code \texttt{hw}): the method suggested in the
+  last paragraph of their 1979 paper. The data points are sorted by
+  Euclidean distance from the global centroid, and again evenly spaced
+  points are selected.
 \end{itemize}
 
 At present \dtk{kmeans_fit} supports \texttt{pc} but not \texttt{hw}.
 If $m$ and/or $n$ are very large these initializers will be relatively
-expensive computationally. You can prevent their use them by passing
-\texttt{none} for the initializer option (see below for details).
+expensive computationally. You can prevent their use by passing
+\texttt{random} for the initializer option (see below for details).
 
 The number of randomized starting points is controlled by an
 \dtk{n_draws} option, with a default value of 8. Some researchers
@@ -125,54 +126,102 @@ deterministic initializer you can set \dtk{n_draws} to 0.
 \section{Scripting usage}
 \label{sec:scripting}
 
+This section is by way of a brief ``how to''. Full details on the
+functions mentioned below can be found in section~\ref{sec:funcref}.
 
+The first function you'll need is either built-in \texttt{kmeans} or
+(from the addon) \dtk{kmeans_fit}. These are very similar except that
+\texttt{kmeans} is specialized to Euclidean distance and uses a fast
+algorithm. In both cases you supply the data as a list of
+series,\footnote{In the case of \texttt{kmeans} a matrix is acceptable
+  instead of a list.}  specify how many clusters you want, and perhaps
+supply some optional settings. You get back a bundle whose primary
+contents are a series (or column vector), \dtk{cluster_id}, holding the
+ID number of the cluster to which each data point belongs, and a matrix,
+\texttt{centroids}, holding the cluster centroids.
 
+Here's a simple example using R. A. Fisher's famous \textsf{iris}
+dataset and mostly accepting the default values of the settings
+supported by these functions, apart from adding a little verbosity.
+\begin{code}
+open iris.gdt
+list X = 1 .. 4
+bundle opts = _(verbosity = 1)
 
-\section{Plotting}
-\label{sec:plots}
+bundle b = kmeans(X, 3, opts)
+# or
+include kmeans.gfn
+b = kmeans_fit(X, 3, opts)
+\end{code}
 
+You can get a printout of the basic information contained in the bundles
+returned by these functions using \dtk{kmeans_summary}: just pass the
+bundle as argument.
 
-\subsection{Silhouettes}
+Then you may want to visualize the clustering and assess its
+effectiveness. Three plotting functions are available for this job.
 
-The silhouette score \citep{Rousseeuw87} for an observation is a
-composite measure of its similarity to the members of its own cluster
-and to the members of other clusters. These scores are by construction
-in $[-1,1]$, where 1 is ``best'' (the point is firmly located in its own
-cluster) and $-1$ is ``worst'' (the point appears to belong elsewhere).
-Values near 0 indicate overlapping clusters.
+The \texttt{PairPlot} function (supplied by the addon of the same name)
+lets you visualize the relationship between each pair of features, with
+cluster membership indicated by specific colors and point-types.
+Here's how usage of that function could go:
+\begin{code}
+include PairPlot.gfn
+bundle plot_opts = _(centroid = "mean")
+PairPlot(X, b.cluster_id, plot_opts)
+\end{code}
+Again several options are available; here we just exercise one, to
+display the cluster centroids along with the data points.
 
-TODO: talk about the silhouette plotting function.
+The \textbf{silhouette value} \citep{Rousseeuw87} for an observation is
+a composite measure of its similarity to the members of its own cluster
+and to the members of its nearest neighboring cluster. These values are
+by construction in $[-1,1]$, where 1 is ``best'' (the point is firmly
+located in its own cluster) and $-1$ is ``worst'' (the point appears to
+belong elsewhere).  Values near 0 indicate overlapping clusters.  The
+\dtk{kmeans_sil_plot} function plots these points, with a separate panel
+for each cluster, along with the overall mean silhouette value. You pass
+a bundle obtained via \texttt{kmeans} or \dtk{kmeans_fit} along with the
+list of features. If the clustering is highly effective most of the
+points should be in the positive zone. Example:
+\begin{code}
+kmeans_sil_plot(b, X)
+\end{code}
+
+In the $K$-means context a \textbf{scree plot} provides a perspective on
+whether the right number of clusters has been specified. For 1 to some
+chosen maximum value of $K$ the minimized within-cluster distance is
+computed and plotted against number of clusters. The idea is to look for
+a so-called ``elbow'' where the slope of the curve becomes markedly less
+steep. Accepting the default values of the associated options, this plot
+can be produced as follows.
+\begin{code}
+kmeans_screeplot(kmeans_scree(X, 5))
+\end{code}
 
 \section{GUI access}
 \label{sec:gui}
 
 $K$-means functionality can be accessed via the item \textsf{K-Means}
-under the \textsf{View} menu in gretl's main window. The dialog box
-is shown in Figure~\ref{fig:dialog}.
+under the \textsf{View} menu in gretl's main window. The dialog box is
+shown in Figure~\ref{fig:dialog}.  On clicking \textsf{OK} you get a
+results window as shown in Figure~\ref{fig:results}. The ``Graph''
+button in the toolbar pops down a menu giving access to the three sorts
+of plot described in section~\ref{sec:scripting}.
 
-\begin{figure}[htbp]
+\begin{figure}[p]
   \centering
   \includegraphics[scale=0.65]{kmeans_dialog.png}
   \caption{K-Means dialog}
   \label{fig:dialog}
 \end{figure}
 
-Pulling down the \textsf{Plot type} selector reveals three choices:
-``Scree'', ``Cluster (pairs)'' and ``Silhouette''.
-\begin{enumerate}
-\item In the ``Scree'' case the number of clusters value is taken as a
-  maximum, $K^*$ (and you'll probably want to make it larger than the
-  default of 3). The $K$-means problem is solved for $K=1,\dots,K^*$ and
-  you are shown the relationship between number of clusters and the
-  minimized value of within-cluster distance.
-\item In the ``Cluster (pairs)'' case you get a grid holding pairwise
-  plots of the $n$ features, factorized by their estimated cluster
-  membership.
-\item In the ``Silhouette'' case you get a plot for each cluster,
-  showing the Silhouette score for each point (ranked from best to worst
-  in terms of the solidity of its assignment to the cluster) as well as
-  the average across all clusters.
-\end{enumerate}
+\begin{figure}[p]
+  \centering
+  \includegraphics[scale=0.65]{kmeans_results.png}
+  \caption{K-Means results window}
+  \label{fig:results}
+\end{figure}
 
 \clearpage
 
@@ -243,9 +292,8 @@ series kmeans_predict (const list xlist, const bundle Model)
 \end{verbatim}
   The first argument should be a list of features, as in
   \dtk{kmeans_fit}, and the second should be a bundle obtained from
-  \dtk{kmeans_fit}.  The series that is returned holds the predicted
-  cluster ID for each observation of \texttt{xlist} in the current
-  sample range.
+  \dtk{kmeans_fit}.  The returned series holds the predicted cluster ID
+  for each observation of \texttt{xlist} in the current sample range.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -255,17 +303,17 @@ void kmeans_summary (const bundle Model)
   Prints summary information given a bundle obtained from \dtk{kmeans_fit}.
 \end{funcdoc}
 
-\begin{funcdoc}
-\begin{verbatim}
-void kmeans_plot (const list xlist, const bundle Model)
-\end{verbatim}
-  Produces a scatter plot for each pair of features in xlist, factorized
-  by the \dtk{cluster_id} series in \texttt{Model}
+% \begin{funcdoc}
+% \begin{verbatim}
+% void kmeans_plot (const list xlist, const bundle Model)
+% \end{verbatim}
+%   Produces a scatter plot for each pair of features in xlist, factorized
+%   by the \dtk{cluster_id} series in \texttt{Model}
 
-  ... CLARIFY!  self: bundle, Bundle for manipulating the
-  plot. [Here you can also pass options accepted by the
-  PairPlot package.]
-\end{funcdoc}
+%   ... CLARIFY!  self: bundle, Bundle for manipulating the
+%   plot. [Here you can also pass options accepted by the
+%   PairPlot package.]
+% \end{funcdoc}
 
 \begin{funcdoc}
 \begin{verbatim}
@@ -290,7 +338,7 @@ void kmeans_screeplot (matrix scree, string filename[null], bundle opts[null])
   the most appropriate number of clusters.
 
   The first argument should be obtained from \dtk{kmeans_scree}. If the
-  second argument is given it should be the name of a file to which
+  second argument is given it should be the name of a PNG file to which
   the graphic should be written (by default it is shown on-screen). The
   last argument \dots TBD
 \end{funcdoc}
@@ -313,25 +361,14 @@ matrix kmeans_crosstab (series cluster_id, series actual)
   gretl's \texttt{xtab} command, and is also returned in matrix form.
 \end{funcdoc}
 
+
+
 %% WORK needed below here!!
 
 \bibliographystyle{gretl}
 \bibliography{gretl}
 
 \end{document}
-
-\begin{funcdoc}
-\begin{verbatim}
-kmeans_screeplot (list xlist, int Kmax, string filename[null], bundle self[null])
-\end{verbatim}
-  This function produces a so-called scree plot for the $K$-means
-  algorithm. The plot shows total within-cluster distance as a
-  function of the number of assumed clusters, from 1 to \texttt{Kmax}.
-  Adding a cluster is bound to reduce within-cluster distance, but if
-  the plot shows an ``elbow'' where the slope becomes markedly flatter
-  this gives an informal indication of the most appropriate number of
-  clusters.
-\end{funcdoc}
 
 **screeplotArguments:**
 
@@ -345,14 +382,12 @@ kmeans_screeplot (list xlist, int Kmax, string filename[null], bundle self[null]
     * `fontsize`: scalar, Font size for the plot.
     * `linewidth`: scalar, Line width for the plot.
 
-**Return:** Matrix with two columns: the first column is the number of clusters, and the second column is the within-cluster sum of squares (*inertia*). Each row corresponds to a different number of clusters.
+    Return: Matrix with two columns: the first column is the number of
+    clusters, and the second column is the within-cluster sum of squares
+    (*inertia*). Each row corresponds to a different number of clusters.
 
 
-## kmeans_sil_samples
-
-```
 kmeans_sil_samples (bundle Model, list xlist)
-```
 
 Compute the silhouette sample value for each observation in the fitted
 kmeans model. The silhouette value measures how similar an observation
@@ -367,12 +402,7 @@ is to its own cluster compared to other clusters.
 
 **Return:** Series holding the silhouette value for each observation.
 
-
-## kmeans_sil_score
-
-```
 kmeans_sil_score (bundle Model, list xlist, bool global[TRUE])
-```
 
 Compute the mean silhouette score for all samples in the fitted kmeans
 model if the optional parameter `global` is set to `TRUE` (default). The
@@ -395,11 +425,7 @@ separately.
 **Return:** Scalar value representing the mean silhouette score if `global` is set to TRUE, otherwise a matrix is returned  (columns refer to the cluster and the score).
 
 
-## kmeans_sil_plot
-
-```
 kmeans_sil_plot (bundle Model, list xlist, bundle opts[null])
-```
 
 Create a silhouette plot for the fitted kmeans model. Each cluster is
 plotted separately, showing the silhouette value for each

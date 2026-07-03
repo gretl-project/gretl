@@ -3,7 +3,7 @@ TEXDIR = $(topsrc)/doc/tex
 
 PKG = kmeans
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
-FIGS = kmeans_dialog.png
+FIGS = kmeans_dialog.png kmeans_results.png
 
 SRCS = $(PKG).tex gretl.sty gretl.bst gretl.bib $(FIGS)
 
