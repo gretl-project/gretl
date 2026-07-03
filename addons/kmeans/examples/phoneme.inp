@@ -19,7 +19,7 @@ printf "gretl, pc init, elapsed: %gs\n", $stopwatch
 
 printf "gretl: SST, global:   %7d\n", round(b.global_SST)
 printf "gretl: SST, clusters: %7d\n", round(b.cluster_SST)
-series phoneme_hat = b.clustid
+series phoneme_hat = b.cluster_id
 
 xtab g phoneme_hat
 

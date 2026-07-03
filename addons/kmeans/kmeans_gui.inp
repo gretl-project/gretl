@@ -66,8 +66,8 @@ function void GUI_kmeans_plot(bundle *kmb, int ptype[1:3:1] \
 end function
 
 function matrix kmeans_plot_precheck (bundle *kmb)
-    if rows(kmb.centroids) > 16
-        # PairPlot has a max of 16 factor values
+    if rows(kmb.centroids) > 16 || cols(kmb.centroids) > 9 
+        # ensure we're calling PairPlot with sensible dimensions
         return {0,1,1}
     else
         return {1,1,1}
