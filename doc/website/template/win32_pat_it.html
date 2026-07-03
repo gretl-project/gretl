@@ -16,9 +16,9 @@
 <h2>Versione MS Windows</h2>
 </center>
 
-<h2>Download</h2>
+<h2>Requisiti di sistema</h2>
 
-<p>A partire dalla versione 1.9.4, gretl richiede Windows XP o successivo, e un
+<p>Le versione odierna di gretl richiede Windows XP o successivo, e un
 processore che supporta il set di istruzioni SSE2. Quest'ultimo è disponibile in tutti i
 processori moderni, ma manca nei processori AMD precedenti all'Athlon 64 e nei processori
 Intel precedenti al Pentium 4. Se si cerca una versione di gretl che funzioni su
@@ -47,7 +47,7 @@ contiene nuovi bug. Per vedere le novità contenute nello snapshot, si può vede
 il <a href="../ChangeLog.html">Change log di gretl</a> (la voce "in progress").</p>
 
 
-<h2>Gretl a 64 bit per Windows 10 o successive (versione consigliata)</h2>
+<h2>Gretl a 64 bit per Windows 10 o successive con processori Intel/AMD</h2>
 
 <table cellpadding="4">
 <tr><td>&nbsp;</td><td><p><i>auto-installante</i></p></td>
@@ -68,6 +68,24 @@ il <a href="../ChangeLog.html">Change log di gretl</a> (la voce "in progress").<
 </p></td>
 <td><p>
 <a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-win64.zip/download">gretl-win64.zip</a>
+</p></td>
+</tr>
+</table>
+
+<h2>Gretl a 64 bit per Windows 10 o successive con processori ARM64</h2>
+
+<table cellpadding="4">
+<!-- <tr><td>&nbsp;</td><td><p><i>self-installer</i></p></td><tr> -->
+<tr>
+<td><p>versione più recente (SHORTDATE)</p></td>
+<td><p>
+<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-arm64.exe">gretl-VERSION-arm64.exe</a>
+</p></td>
+</tr>
+<tr>
+<td><p>OPPURE snapshot attuale</p></td>
+<td><p>
+<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl_install-arm64.exe/download">gretl_install-arm64.exe</a>
 </p></td>
 </tr>
 </table>
@@ -102,6 +120,24 @@ il <a href="../ChangeLog.html">Change log di gretl</a> (la voce "in progress").<
 href="http://mingw-w64.org/">mingw-w64</a>. Il programma di installazione è di
 <a href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
 
+
+<h2>Parallelizzazione tramite MPI</h2>
+
+<p>Diversi pacchetti e addon di gretl si basano sulla parallelizzazione
+  tramite <a href="https://hpc-tutorials.llnl.gov/mpi/">MPI</a> per ottenere prestazioni ottimali. Purtroppo, MPI non è
+  disponibile in una normale installazione di Windows. Per abilitare MPI,
+  <ul>
+    <li>se avete un processore Intel o AMD, è necessario installare il pacchetto MPI di Microsoft per Windows,
+      <a href="https://learn.microsoft.com/en-us/message-passing-interface/microsoft-mpi">MS-MPI</a>. Al momento della
+      stesura di questo testo, la versione più recente è MS-MPI v10.1.3, rilasciata nel 2023. Vi consigliamo di cercare
+      "MS-MPI" con il vostro motore di ricerca preferito per controllare se nel frattempo Microsoft abbia rilasciato una
+      versione più recente.
+    </li>
+    <li>Se avete un sistema ARM64, il programma di installazione che forniamo include già una libreria MPI, quindi
+      non dovrebbe essere necessario fare altro.
+    </li>
+  </ul>
+</p>
 
 <h2>Componenti aggiuntivi che può essere utile installare:</h2>
 
