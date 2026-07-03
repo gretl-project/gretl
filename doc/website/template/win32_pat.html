@@ -44,7 +44,7 @@ contain bug-fixes but sometimes it will contain newly introduced bugs. To see wh
 new in the snapshot, take a look at the  <a href="../ChangeLog.html">Change log</a>
 (the "in progress" entry).</p>
 
-<h2>64-bit gretl for Windows 10 or higher, with Intel processor</h2>
+<h2>64-bit gretl for Windows 10 or higher, with Intel/AMD processor</h2>
 
 <table cellpadding="4">
 <tr><td>&nbsp;</td><td><p><i>self-installer</i></p></td>
@@ -116,6 +116,25 @@ new in the snapshot, take a look at the  <a href="../ChangeLog.html">Change log<
 href="http://mingw-w64.org/">mingw-w64</a>. The free installer program is courtesy of <a
 href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
 
+<h2>Parallelization via MPI</h2>
+
+<p>Several gretl packages and addons rely on parallelization for
+  optimum performance. To enable MPI,
+  <ul>
+    <li> if you have an Intel or AMD processor, you need to install an
+  MPI implementation for windows. We recommend Mictrosoft's native
+  one. You can get version
+  10.0 <a href="https://www.microsoft.com/en-us/download/details.aspx?id=57467">here</a>
+  or version
+  10.1 <a href="https://www.microsoft.com/en-us/download/details.aspx?id=100593">here</a>,
+  but it may be advisable to search for "MS-MPI" on your favorite
+  search engine to see if Microsoft has come up with something newer.
+    </li>
+    <li>If you're on ARM64, the installer we provide already
+  contains an MPI library, so you should be OK. 
+    </li>
+  </ul>
+  
 <h2>Optional extras you may wish to install</h2>
 
 <center>
