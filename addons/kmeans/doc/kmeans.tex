@@ -60,7 +60,7 @@ In brief, here's the relationship between the built-in \texttt{kmeans}
 function and the \texttt{kmeans} addon (with primary function
 \dtk{kmeans_fit}). Built-in \texttt{kmeans} is fully specialized to
 squared Euclidean distance, and employs a C-coded version of algorithm
-ASA136 \cite{hartigan-wong79}, which is known to be particularly
+ASA136 \citep{hartigan-wong79}, which is known to be particularly
 efficient. The addon takes the squared Euclidean metric as default, and
 in fact \dtk{kmeans_fit} calls built-in \texttt{kmeans} to solve the
 basic $K$-means problem if that metric is in use. But the addon also
@@ -173,17 +173,17 @@ PairPlot(X, b.cluster_id, plot_opts)
 Again several options are available; here we just exercise one, to
 display the cluster centroids along with the data points.
 
-The \textbf{silhouette value} \citep{Rousseeuw87} for an observation is
-a composite measure of its similarity to the members of its own cluster
-and to the members of its nearest neighboring cluster. These values are
-by construction in $[-1,1]$, where 1 is ``best'' (the point is firmly
-located in its own cluster) and $-1$ is ``worst'' (the point appears to
-belong elsewhere).  Values near 0 indicate overlapping clusters.  The
-\dtk{kmeans_sil_plot} function plots these points, with a separate panel
-for each cluster, along with the overall mean silhouette value. You pass
-a bundle obtained via \texttt{kmeans} or \dtk{kmeans_fit} along with the
-list of features. If the clustering is highly effective most of the
-points should be in the positive zone. Example:
+The \textbf{silhouette value} \citep{Rousseeuw87} for an observation
+is a composite measure of its similarity to the members of its own
+cluster and to the members of its nearest neighboring cluster. These
+values are by construction in $[-1,1]$, where 1 is ``best'' (the point
+is firmly located in its own cluster) and $-1$ is ``worst'' (the point
+appears to belong elsewhere).  Values near 0 indicate overlapping
+clusters.  The \dtk{kmeans_sil_plot} function plots these points, with
+a separate panel for each cluster, along with the overall mean
+silhouette value. You pass a bundle obtained via \texttt{kmeans} or
+\dtk{kmeans_fit} along with the list of features. If the clustering is
+effective most of the points should be in the positive zone. Example:
 \begin{code}
 kmeans_sil_plot(b, X)
 \end{code}
@@ -230,12 +230,12 @@ of plot described in section~\ref{sec:scripting}.
 
 \begin{funcdoc}
 \begin{verbatim}
-bundle kmeans_fit (list xlist, numeric clusters, bundle opts[null])
+bundle kmeans_fit (list X, numeric clusters, bundle opts[null])
 \end{verbatim}
   Executes the $K$-means algorithm and estimates the clusters. The
-  \texttt{xlist} argument, which specifies the features on which
-  clustering is to be based, must not contain any missing values, so be
-  sure to clean your data before calling this function.  The
+  \texttt{X} argument, which specifies the features on which
+  clustering is to be based, must not contain any missing values, so
+  be sure to clean your data before calling this function.  The
   \texttt{clusters} argument must be either a positive integer,
   specifying the assumed number of clusters, $K$, or a $K \times n$
   matrix holding initial centroids.  Table~\ref{tab:fit-parms} lists
@@ -280,7 +280,7 @@ Table~\ref{tab:fit-return}.
     \texttt{error} & scalar & error code: either 0 for no error
                               or a positive integer.\\
     \texttt{nobs} & scalar & the number of observations used.\\
-    \dots & \dots & TBD
+    \dots & \dots & TO BE COMPLETED
   \end{tabular}
   \caption{Members of the bundle returned by \dtk{kmeans_fit}}
   \label{tab:fit-return}
@@ -288,7 +288,7 @@ Table~\ref{tab:fit-return}.
 
 \begin{funcdoc}
 \begin{verbatim}
-series kmeans_predict (const list xlist, const bundle Model)
+series kmeans_predict (const list X, const bundle Model)
 \end{verbatim}
   The first argument should be a list of features, as in
   \dtk{kmeans_fit}, and the second should be a bundle obtained from
@@ -317,7 +317,7 @@ void kmeans_summary (const bundle Model)
 
 \begin{funcdoc}
 \begin{verbatim}
-matrix kmeans_scree (list xlist, int Kmax, bundle opts[null])
+matrix kmeans_scree (list X, int Kmax, bundle opts[null])
 \end{verbatim}
   Produces a two-column matrix representing the ``scree'' field for a
   $K$-means problem.  The first column holds number of clusters, from 1
@@ -347,18 +347,19 @@ void kmeans_screeplot (matrix scree, string filename[null], bundle opts[null])
 \begin{verbatim}
 matrix kmeans_crosstab (series cluster_id, series actual)
 \end{verbatim}
-  Relevant only if the dataset in use contains a series which identifies
-  underlying clusters, for example the \texttt{species} series in the
-  iris dataset (\texttt{iris.gdt}). It can then be of interest to see
-  the degree of match between the clusters obtained via the $K$-means
-  algorithm (\dtk{cluster_id}) and the underlying ones (generically,
-  \texttt{actual}). Since the numeric coding of the clusters is
-  essentially arbitrary, a simple cross-tabulation is likely to show
-  garbled results. This function searches for the most appropriate
-  mapping between the estimated clusters and the ``actual'' ones,
-  defined as that which maximizes the number of matched observations
-  (the trace of the cross-tabulation). The crosstab is printed using
-  gretl's \texttt{xtab} command, and is also returned in matrix form.
+  Relevant only if the dataset in use contains a series which
+  identifies underlying clusters, for example the \texttt{species}
+  series in the iris dataset (\texttt{iris.gdt}). It can then be of
+  interest to see the degree of match between the clusters obtained
+  via the $K$-means algorithm (\dtk{cluster_id}) and the underlying
+  ones (generically, \texttt{actual}). Since the numeric coding of the
+  clusters is essentially arbitrary, a simple cross-tabulation is
+  likely to show garbled results. This function searches for the most
+  appropriate mapping between the estimated clusters and the
+  ``actual'' ones, defined as that which maximizes the number of
+  matching observations (the trace of the cross-tabulation). The
+  crosstab is printed using gretl's \texttt{xtab} command, and is also
+  returned in matrix form.
 \end{funcdoc}
 
 
