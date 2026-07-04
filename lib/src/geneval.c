@@ -4946,7 +4946,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
         case F_POLROOTS:
             ret->v.m = gretl_matrix_polroots(m, 1, 0, &p->err);
             break;
-	case HF_PERMUTE:
+	case F_PERMUTE:
 	    ret->v.m = gretl_permute(m, &p->err);
 	    break;
         case F_RANKING:
@@ -19437,7 +19437,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_FFT:
     case F_FFTI:
     case F_POLROOTS:
-    case HF_PERMUTE:
+    case F_PERMUTE:
     case F_CTRANS:
     case F_WHICH:
         /* matrix -> matrix functions */

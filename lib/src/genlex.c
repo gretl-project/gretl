@@ -612,6 +612,7 @@ struct str_table funcs[] = {
     { F_LNMGAMMA,  "lnmgamma"},
     { F_WHICH,     "which"},
     { F_GPCOLORS,  "gpcolors"},
+    { F_PERMUTE,   "permute"},
     { 0,           NULL }
 };
 
@@ -646,7 +647,6 @@ struct str_table hidden_funcs[] = {
     { HF_FDEPTH,   "_fdepth" },
     { HF_GLASSO,   "_glasso" },
     { HF_VCNORM,   "_vcnorm" },
-    { HF_PERMUTE,  "_permute" },
     { 0,           NULL }
 };
 

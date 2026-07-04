@@ -263,9 +263,9 @@ enum {
     F_RANDSTR,
     F_WHICH,
     F_GPCOLORS,
+    F_PERMUTE,
     HF_JBTERMS,
     HF_FDEPTH,
-    HF_PERMUTE,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
     F_MIN,

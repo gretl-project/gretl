@@ -11169,6 +11169,21 @@
       </description>
     </function>
 
+    <function name="permute" section="math" output="matrix">
+      <fnargs>
+	<fnarg type="vector">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Given an <math>m</math>-vector v, returns an <by r="m" c="n"/>
+	  matrix, where <math>n = m!</math> is the number of
+	  permutations of <math>m</math> items and each column holds
+	  a distinct permutation. The underlying function is recursive
+	  and <math>m</math> must not exceed 8.
+	</para>
+      </description>
+    </function>
+
     <function name="pexpand" section="panel" output="series">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
