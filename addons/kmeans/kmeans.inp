@@ -486,7 +486,7 @@ function matrix kmeans_crosstab (const series estim,
                                  const series actual)
     estvals = values(estim)
     k = nelem(estvals)
-    check = seq(1, k)
+    check = seq(1, k)'
     errorif(estvals != check || values(actual) != estvals,
       "estim and actual must have values from 1 to k")
     k = nelem(estvals)

@@ -1,4 +1,5 @@
 set verbose off
+include kmeans.gfn
 
 open phoneme_small.gdtb -q
 list L = x1 .. x255
@@ -11,6 +12,8 @@ scalar tm
 set stopwatch
 bundle b = kmeans(X, k, _(init="hw"))
 printf "gretl, hw init, elapsed: %gs\n", $stopwatch
+kmeans_sil_plot(b, L)
+quit
 
 # Principal Components initializer
 set stopwatch
@@ -21,7 +24,12 @@ printf "gretl: SST, global:   %7d\n", round(b.global_SST)
 printf "gretl: SST, clusters: %7d\n", round(b.cluster_SST)
 series phoneme_hat = b.cluster_id
 
-xtab g phoneme_hat
+kmeans_crosstab(phoneme_hat, g)
+
+bundle f = $sysinfo.foreign
+if !f.Rbin && !f.Rlib
+	quit
+endif
 
 foreign language=R --send-data=L
 	X <- gretldata
@@ -36,6 +44,4 @@ foreign language=R --send-data=L
 end foreign
 
 series R_phhat = mread("hat.mat", 1)
-printf "corresp(species_hat, R_sphat): %d\n",
-  corresp(phoneme_hat, R_phhat)
-xtab phoneme_hat R_phhat
+kmeans_crosstab(R_phhat, phoneme_hat)

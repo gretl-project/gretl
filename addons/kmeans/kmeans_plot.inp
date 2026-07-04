@@ -53,9 +53,10 @@ function series kmeans_sil_samples (const bundle Model, const list xlist)
 
     matrix features = {xlist}
     matrix cluster_id = Model.cluster_id
-    series silhouette_samples = zeros(Model.nobs, 1)
+    series silhouette_samples = 0
+    scalar n_clusters = rows(Model.centroids)
 
-    loop i=1..Model.nobs
+    loop i=1..$nobs
         scalar own_cluster = cluster_id[i]
         matrix own_cluster_mask = (cluster_id .= own_cluster)
 
@@ -78,7 +79,7 @@ function series kmeans_sil_samples (const bundle Model, const list xlist)
 
         # b(i): minimum mean distance to other clusters
         scalar b_i = $huge
-        loop k=1..Model.n_clusters
+        loop k=1..n_clusters
             if k == own_cluster
                 continue
             endif
@@ -147,8 +148,9 @@ function void kmeans_sil_plot (const bundle Model,
 
     scalar n_clusters = rows(Model.centroids)
     matrix silhouette_samples = {kmeans_sil_samples(Model, xlist)}
+    matrix cluster_id = Model.cluster_id
     scalar mean_sil_score = meanc(silhouette_samples)
-    matrix plot_data = silhouette_samples ~ {Model.cluster_id}
+    matrix plot_data = silhouette_samples ~ cluster_id
     strings plotfiles = array(n_clusters)
 
     # plot options
