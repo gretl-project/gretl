@@ -1445,6 +1445,7 @@ int gretl_rand_discrete (double *x, int t1, int t2,
     if (cp == NULL) {
         err = E_ALLOC;
     } else {
+	/* check that the probabilities sum to 1 */
         cp[0] = p->val[0];
         for (i=1; i<n; i++) {
             cp[i] = cp[i-1] + p->val[i];
