@@ -11179,7 +11179,23 @@
 	  matrix, where <math>n = m!</math> is the number of
 	  permutations of <math>m</math> items and each column holds
 	  a distinct permutation. The underlying function is recursive
-	  and <math>m</math> must not exceed 8.
+	  and <math>m</math> must not exceed 8. For example, the call
+	</para>
+	<code>
+	  permute({1,10,100})
+	</code>
+	<para>
+	  returns
+	</para>
+	<code>
+	    1     1    10    10   100   100 
+	   10   100     1   100    10     1 
+	  100    10   100     1     1    10
+	</code>
+	<para>
+	  <seelist>
+	    <fncref targ="binperms"/>
+	  </seelist>
 	</para>
       </description>
     </function>
