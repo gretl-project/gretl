@@ -4888,75 +4888,6 @@
       </description>
     </function>
 
-    <function name="eigengen" section="linalg" output="matrix">
-      <fnargs>
-	<fnarg type="smatrix">A</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Calcola gli autovalori, e, se richiesto, gli autovettori
-	  destri della matrice <by r="n" c="n"/>
-	  <argname>A</argname>. Se tutti gli autovalori sono reali, la
-	  funzione restituisce una matrice <by r="n" c="1"/>; in caso
-	  contrario, il risultato è una matrice <by r="n" c="2"/>,
-	  dove la prima colonna contiene le parti reali degli
-	  autovalori, mentre la seconda le corrispondenti parti
-	  immaginarie. Non c'è alcuna garanzia sul fatto che gli
-	  autovalori siano ordinati in alcun modo particolare.
-	</para>
-	<para>
-	  Il secondo argomento può essere il nome di una matrice
-	  esistente preceduto da <lit>&amp;</lit> (per indicare
-	  l'<quote>indirizzo</quote> della matrice in questione), e in tal caso gli
-	  autovettori destri vengono scritti in questa matrice, oppure
-	  la parola chiave <lit>null</lit>, e in tal caso gli
-	  autovettori non vengono riportati.
-	</para>
-	<para>
-	  Quando il secondo argomento è diverso da <lit>null</lit>, la
-	  matrice stessa è sovrascritta (non è necessario abbia la
-	  dimensione giusta per ricevere il risultato). La matrice
-	  risultante è organizzata come segue:
-	</para>
-	<ilist>
-	  <li>
-            <para>
-              Se l'<math>i</math>-esimo autovalore è reale,
-              l'<math>i</math>-esima colonna di <math>U</math>
-              conterrà l'autovettore corrispondente;
-            </para>
-	  </li>
-	  <li>
-            <para>
-              Se l'<math>i</math>-esimo autovalore è complesso,
-              l'<math>i</math>-esima colonna di <argname>U</argname>
-              conterrà la parte reale dell'autovettore corrispondente
-              e la colonna successiva la parte
-              immaginaria. L'autovettore associato all'autovalore
-              coniugato è il coniugato dell'autovettore.
-            </para>
-	  </li>
-	</ilist>
-	<para>
-	  In altre parole, gli autovettori compaiono nello stesso
-	  ordine degli autovalori, ma gli autovettori reali occupano
-	  una colonna, mentre quelli complessi ne occupano due (la
-	  parte reale è la prima); il numero totale di colonne è
-	  comunque <math>n</math>, perché l'autovettore coniugato è
-	  tralasciato.
-	</para>
-	<para>
-	  <seelist>
-            <fncref targ="eigensym"/>
-            <fncref targ="eigsolve"/>
-            <fncref targ="qrdecomp"/>
-            <fncref targ="svd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="eigensym" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="symmat">A</fnarg>
@@ -11358,6 +11289,38 @@
 	  a &pi;, e la seconda la densità spettrale corrispondente.
 	</para>
       </description>
+    </function>
+
+    <function name="permute" section="math" output="matrix">
+      <fnargs>
+	<fnarg type="vector">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dato un vettore v di dimensione <math>m</math>, la funzione
+	  restituisce una matrice di dimensioni <by r="m" c="n"/>,
+	  dove <math>n = m!</math> è il numero di permutazioni di
+	  <math>m</math> elementi e ogni colonna contiene una
+	  permutazione distinta. La funzione sottostante è ricorsiva e
+	  <math>m</math> non deve superare 8. Per esempio,
+	</para>
+	<code>
+	  permute({1,10,100})
+	</code>
+	<para>
+	  restituisce
+	</para>
+	<code>
+	    1     1    10    10   100   100 
+	   10   100     1   100    10     1 
+	  100    10   100     1     1    10
+	</code>
+      </description>
+      <para>
+	<seelist>
+	  <fncref targ="binperms"/>
+	</seelist>
+      </para>
     </function>
 
     <function name="pexpand" section="panel" output="series">
