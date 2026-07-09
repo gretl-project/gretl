@@ -413,9 +413,9 @@ int attach_subsample_to_model (MODEL *pmod, const DATASET *dset)
 
 #define MDEBUG 0
 
-/* This is called from objstack.c for each saved model, to
-   determine whether a proposed permanent shrinkage of the
-   dataset will invalidate the model.
+/* This is called from objstack.c for each saved model, to determine
+   whether a proposed permanent shrinkage of the dataset will invalidate
+   the model.
 */
 
 int subsample_check_model (MODEL *pmod, char *mask)
@@ -427,12 +427,11 @@ int subsample_check_model (MODEL *pmod, char *mask)
     }
 }
 
-/* Called from objstack.c for each saved model, when the
-   user calls for the imposition of a permanent subsample
-   restriction on the dataset. We've already checked that
-   the "new" subsample matches that on which model was
-   estimated, so all we have to do now is sync by removing
-   the model's subsample mask.
+/* Called from objstack.c for each saved model, when the user calls for
+   the imposition of a permanent subsample restriction on the
+   dataset. We've already checked that the "new" subsample matches that
+   on which model was estimated, so all we have to do now is sync by
+   removing the model's subsample mask.
 */
 
 int remove_model_subsample_info (MODEL *pmod)
@@ -466,9 +465,8 @@ static int ts_contig (const char *ts, int T)
     return n >= 2 && contig;
 }
 
-/* For forecasting purposes, check to see if a subsample
-   mask represents a sub-sampling of a panel dataset in
-   the time dimension only.
+/* For forecasting purposes, check to see if a subsample mask represents
+   a sub-sampling of a panel dataset in the time dimension only.
 */
 
 static int is_panel_time_sample (const char *mask,
@@ -511,12 +509,11 @@ static int is_panel_time_sample (const char *mask,
     return ret;
 }
 
-/* If series have been added to a resampled dataset, we can't
-   bring these back to the "full" dataset, which may have a
-   longer or shorter series length, and from which there is
-   no definite mapping by row. So we just delete them. In
-   this function we destroy their varnames and varinfo
-   structures; the numerical arrays get deleted later.
+/* If series have been added to a resampled dataset, we can't bring
+   these back to the "full" dataset, which may have a longer or shorter
+   series length, and from which there is no definite mapping by row. So
+   we just delete them. In this function we destroy their varnames and
+   varinfo structures; the numerical arrays get deleted later.
 */
 
 static int resample_sync_dataset (DATASET *dset)

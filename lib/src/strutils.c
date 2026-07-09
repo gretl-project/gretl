@@ -2694,13 +2694,14 @@ char *gretl_xml_encode (const char *str)
 int gretl_xml_encode_to_buf (char *targ, const char *src, int n)
 {
     const char *s = src;
-    int len = strlen(s) + 1;
+    int len;
 
     if (!g_utf8_validate(src, -1, NULL)) {
 	fprintf(stderr, "gretl_xml_encode_to_buf: source not UTF-8\n");
 	return 1;
     }
 
+    len = strlen(s) + 1;
     while (*s) {
 	if (*s == '&') len += 4;
 	else if (*s == '<') len += 3;
@@ -2717,7 +2718,6 @@ int gretl_xml_encode_to_buf (char *targ, const char *src, int n)
     }
 
     s = src;
-
     while (*s) {
 	if (*s == '&') {
 	    strcpy(targ, "&amp;");

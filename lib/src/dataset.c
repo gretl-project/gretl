@@ -400,10 +400,9 @@ void join_transcribe_varinfo (VARINFO *targ, const VARINFO *src)
 
 #endif
 
-/* For use in the context of returning from a sub-sampled
-   dataset to the full one: trim off series names and
-   "varinfo" beyond the index @nv, which gives the number
-   of series in the full dataset.
+/* For use in the context of returning from a (randomly) resampled
+   dataset to the full one: trim off series names and "varinfo" beyond
+   the index @nv, which gives the number of series in the full dataset.
 */
 
 int shrink_varinfo (DATASET *dset, int nv)
@@ -1662,11 +1661,10 @@ int dataset_add_series (DATASET *dset, int newvars)
     return err;
 }
 
-/* Special functionality for the case where @dset is made
-   from a matrix with dset->Z[i], i > 0, borrowed from the
-   matrix @val member. In expanding dset->Z we assume that
-   series names and other metadata are NOT required for the
-   newly added Z columns.
+/* Special functionality for the case where @dset is made from a matrix
+   with dset->Z[i], i > 0, borrowed from the matrix @val member. In
+   expanding dset->Z we assume that series names and other metadata are
+   NOT required for the newly added Z columns.
 */
 
 int matrix_dataset_expand_Z (DATASET *dset, int newcols)
@@ -2599,8 +2597,8 @@ const char *dataset_period_label (const DATASET *dset)
     }
 }
 
-/* intended for use with newly imported data: trash any
-   series that contain nothing but NAs
+/* Intended for use with newly imported data: trash any series that
+   contain nothing but NAs.
 */
 
 int maybe_prune_dataset (DATASET **pdset, gretl_string_table *st)
@@ -5203,6 +5201,11 @@ int merge_string_tables (DATASET *l_dset, int lvar,
     return err;
 }
 
+/* This is to do with setting string values on a series. We see whether
+   it seems feasible to set a 'label' for the series of the form
+   "1=string1, 2=string2, ...". If so, we go ahead and do that.
+*/
+
 static void maybe_adjust_label (DATASET *dset, int v,
 				char **S, int ns)
 {
@@ -5213,15 +5216,15 @@ static void maybe_adjust_label (DATASET *dset, int v,
 	len += strlen(S[i]) + 1 + floor(log10(1.0 + i));
     }
 
-    /* let's not create a super-long series label */
     if (len > 255) {
+	/* let's not create a super-long series label */
 	return;
     }
 
     tmp = calloc(len + 1, 1);
 
     if (tmp != NULL) {
-	char bit[16];
+	char bit[32];
 
 	for (i=0; i<ns; i++) {
 	    sprintf(bit, "%d=", i+1);
@@ -5236,9 +5239,9 @@ static void maybe_adjust_label (DATASET *dset, int v,
     }
 }
 
-/* Encode the strings in @a into numerical values in series
-   @v of dataset @dset. "Return" via @pU the array of unique
-   string values and via @pnu the number of such values.
+/* Encode the strings in @a into numerical values in series @v of
+   dataset @dset. "Return" via @pU the array of unique string values and
+   via @pnu the number of such values.
 */
 
 static int alt_set_strvals (DATASET *dset, int v, gretl_array *a,
@@ -5286,8 +5289,8 @@ static int alt_strvals_case (DATASET *dset, int v, gretl_array *a)
     return 1;
 }
 
-/* here we're trying to set strings values on a series from
-   scratch */
+/* Here we're trying to set strings values on a series from scratch.
+*/
 
 int series_set_string_vals (DATASET *dset, int i, gretl_array *a)
 {
@@ -5378,9 +5381,8 @@ int series_set_string_vals (DATASET *dset, int i, gretl_array *a)
     return err;
 }
 
-/* The pre-checked case: we know that series @i is suitable
-   for stringifying, and that @S contains the right number of
-   strings.
+/* The pre-checked case: we know that series @i is suitable for
+   stringifying, and that @S contains the right number of strings.
 */
 
 int series_set_string_vals_direct (DATASET *dset, int i,
@@ -5668,13 +5670,13 @@ static strval_sorter2 *make_strval_sorter2 (char **S0,
     return ssr;
 }
 
-/* In a sense the function series_alphabetize_strings() (above) is
-   just a special case of the following, where in place of an array @a
-   specified by the caller we use an implicit array holding the
-   distinct string values in alphabetical order. So it might appear
-   that series_alphabetize_strings() could just be implemented under
-   the following. However, it turns out that each case has its own
-   path to greatest efficiency, hence the two distinct functions.
+/* In a sense the function series_alphabetize_strings() (above) is just
+   a special case of the following, where in place of an array @a
+   specified by the caller we use an implicit array holding the distinct
+   string values in alphabetical order. So it might appear that
+   series_alphabetize_strings() could just be implemented under the
+   following. However, it turns out that each case has its own path to
+   greatest efficiency, hence the two distinct functions.
 */
 
 int series_reorder_strings (DATASET *dset, int v, gretl_array *a)
@@ -5857,11 +5859,10 @@ int assign_numeric_to_strvar (DATASET *dset, int targ,
     return err;
 }
 
-/* Given a mapping produced by series_table_map(), determine
-   how many (if any) string values need to be added to the
-   table for the target series, and whether numeric codes
-   in the source series need to be re-mapped or can simply
-   be blitted over.
+/* Given a mapping produced by series_table_map(), determine how many
+   (if any) string values need to be added to the table for the target
+   series, and whether numeric codes in the source series need to be
+   re-mapped or can simply be blitted over.
 */
 
 static void analyse_st_map (int *map, int nsa,
@@ -5915,9 +5916,9 @@ static int do_strv_adds (const int *map,
     return err;
 }
 
-/* Handle assignment from one string-valued series to another,
-   in the case when the dataset is subsampled. The source
-   series may or may not be a member of the dataset.
+/* Handle assignment from one string-valued series to another, in the
+   case when the dataset is subsampled. The source series may or may not
+   be a member of the dataset.
 */
 
 static int assign_strings_to_strvar_sub (DATASET *dset,
@@ -5971,9 +5972,9 @@ static int assign_strings_to_strvar_sub (DATASET *dset,
     return err;
 }
 
-/* note: @copy non-zero means that @stx must be copied into
-   place; otherwise it will be "donated" to @targ if the
-   dataset is not subsampled.
+/* note: @copy non-zero means that @stx must be copied into place;
+   otherwise it will be "donated" to @targ if the dataset is not
+   subsampled.
 */
 
 int assign_strings_to_strvar (DATASET *dset, int targ, double *x,
@@ -6001,9 +6002,8 @@ int set_panel_groups_name (DATASET *dset, const char *vname)
     }
 }
 
-/* This should be called only after the "group names"
-   property of @dset has been (recently) validated, via
-   panel_group_names_ok().
+/* This should be called only after the "group names" property of @dset
+   has been (recently) validated, via panel_group_names_ok().
 */
 
 const char *get_panel_group_name (const DATASET *dset, int obs)
@@ -6066,11 +6066,11 @@ int is_panel_group_names_series (const DATASET *dset, int v)
     }
 }
 
-/* For plotting purposes, try to get labels for panel groups, subject
-   to the constraint that they should be no longer than @maxlen. If
-   successful, this will return an array of at least N strings, where
-   N is the cross-sectional dimension of the panel. This array should
-   be treated as read-only.
+/* For plotting purposes, try to get labels for panel groups, subject to
+   the constraint that they should be no longer than @maxlen. If
+   successful, this will return an array of at least N strings, where N
+   is the cross-sectional dimension of the panel. This array should be
+   treated as read-only.
 */
 
 series_table *get_panel_group_table (const DATASET *dset,
@@ -6103,9 +6103,9 @@ series_table *get_panel_group_table (const DATASET *dset,
     return st;
 }
 
-/* For a panel dataset, when a group-names series is in place,
-   returns an array holding the unique names applicable in the
-   current sample range.
+/* For a panel dataset, when a group-names series is in place, returns
+   an array holding the unique names applicable in the current sample
+   range.
 */
 
 void *get_panel_group_names (const DATASET *dset, int *err)
@@ -6150,9 +6150,9 @@ int is_dataset_series (const DATASET *dset, const double *x)
     return 0;
 }
 
-/* Given a @delta in epoch days, a day-of-week in @wd, and days per
-   week in @pd, determine the number of days skipped relative to a
-   "full calendar".
+/* Given a @delta in epoch days, a day-of-week in @wd, and days per week
+   in @pd, determine the number of days skipped relative to a "full
+   calendar".
 */
 
 static int effective_daily_skip (int delta, int wd, int pd)
@@ -6176,9 +6176,9 @@ static int effective_daily_skip (int delta, int wd, int pd)
     return skip;
 }
 
-/* If we get here we've already checked that @dset is dated daily
-   data, and that @pd is a valid daily periodicity greater than or
-   equal to the current dset->pd.
+/* If we get here we've already checked that @dset is dated daily data,
+   and that @pd is a valid daily periodicity greater than or equal to
+   the current dset->pd.
 */
 
 static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
@@ -6452,10 +6452,9 @@ gretl_bundle *series_info_bundle (const DATASET *dset,
     return b;
 }
 
-/* Given a series label @s, see if it can be recognized
-   as identifying the series as the product of two others,
-   and if so write the names of the others into @targ1
-   and @targ2.
+/* Given a series label @s, see if it can be recognized as identifying
+   the series as the product of two others, and if so write the names of
+   the others into @targ1 and @targ2.
 */
 
 static int get_interaction_names (const char *s,
@@ -6489,9 +6488,9 @@ static int get_interaction_names (const char *s,
     return ret;
 }
 
-/* Given a series label @s, see if it can be recognized as
-   identifying the series as the square of another, and if
-   so write the name of the other into @targ.
+/* Given a series label @s, see if it can be recognized as identifying
+   the series as the square of another, and if so write the name of the
+   other into @targ.
 */
 
 static int get_square_parent_name (const char *s, char *targ,
@@ -6540,12 +6539,11 @@ static int get_square_parent_name (const char *s, char *targ,
     return ret;
 }
 
-/* Given either (a) two series identified by ID numbers
-   i, j where the second is supposed to be the square
-   of the first, or (b) three series i, j, k where the
-   third is supposed to be the product of the first two,
-   check that the putative relationship actually holds
-   over the current sample range. Return 1 if so, else 0.
+/* Given either (a) two series identified by ID numbers i, j where the
+   second is supposed to be the square of the first, or (b) three series
+   i, j, k where the third is supposed to be the product of the first
+   two, check that the putative relationship actually holds over the
+   current sample range. Return 1 if so, else 0.
 */
 
 static int validate_relationship (int i, int j, int k,
@@ -6573,10 +6571,10 @@ static int validate_relationship (int i, int j, int k,
     return 1;
 }
 
-/* In case we find more interaction terms that can be fitted into
-   the current column-size of the "list info" matrix, add two more
-   (since the encoding of each interaction for a given "primary"
-   series requires two columns).
+/* In case we find more interaction terms that can be fitted into the
+   current column-size of the "list info" matrix, add two more (since
+   the encoding of each interaction for a given "primary" series
+   requires two columns).
 */
 
 static int resize_listinfo_matrix (gretl_matrix *m)
@@ -6610,10 +6608,10 @@ static int get_iact_column (gretl_matrix *m, int i, int *err)
     return *err ? -1 : m->cols - 2;
 }
 
-/* The (optionally) "condensed" version of the listinfo_matrix
-   includes only primary terms (and excludes the constant).
-   The first column of the full matrix is replaced by the
-   position in @list of each primary term.
+/* The (optionally) "condensed" version of the listinfo_matrix includes
+   only primary terms (and excludes the constant).  The first column of
+   the full matrix is replaced by the position in @list of each primary
+   term.
 */
 
 static int condense_listinfo_matrix (gretl_matrix *m,
@@ -6664,11 +6662,10 @@ static int condense_listinfo_matrix (gretl_matrix *m,
     return 0;
 }
 
-static gretl_matrix *
-linfo_matrix_via_labels (const int *list,
-			 const DATASET *dset,
-			 gretlopt opt,
-			 int *err)
+static gretl_matrix *linfo_matrix_via_labels (const int *list,
+					      const DATASET *dset,
+					      gretlopt opt,
+					      int *err)
 {
     gretl_matrix *ret = NULL;
     const char *label;
@@ -6776,11 +6773,10 @@ linfo_matrix_via_labels (const int *list,
     return ret;
 }
 
-static gretl_matrix *
-linfo_matrix_via_data (const int *list,
-		       const DATASET *dset,
-		       gretlopt opt,
-		       int *err)
+static gretl_matrix *linfo_matrix_via_data (const int *list,
+					    const DATASET *dset,
+					    gretlopt opt,
+					    int *err)
 {
     gretl_matrix *ret = NULL;
     int i, vi, j, vj, k, vk;
@@ -6868,29 +6864,29 @@ linfo_matrix_via_data (const int *list,
     return ret;
 }
 
-/* Construct a matrix providing information about the relations
-   between the series in @list. This will have rows equal to the
-   number of series and at least 5 columns (shown as 1-based here).
-   All elements of the matrix are zero unless otherwise specified.
+/* Construct a matrix providing information about the relations between
+   the series in @list. This will have rows equal to the number of
+   series and at least 5 columns (shown as 1-based here).  All elements
+   of the matrix are zero unless otherwise specified.
 
-   col 1: Holds 1 if the series is "primary" (neither the square
-   of another series in the list, nor the interaction of two
-   series in the list).
+   col 1: Holds 1 if the series is "primary" (neither the square of
+   another series in the list, nor the interaction of two series in the
+   list).
 
    col 2: Holds 1 if the series is a 0/1 dummy.
 
-   col 3: If the series is primary and its square is also
-   present in the list, holds the list position of the square,
-   or if the series itself is a squared term, holds the list
-   position of the series of which it's the square.
+   col 3: If the series is primary and its square is also present in the
+   list, holds the list position of the square, or if the series itself
+   is a squared term, holds the list position of the series of which
+   it's the square.
 
-   cols 4, 5: If the series features in an interaction term,
-   col 4 holds the list position of its "partner" and col 5 the
-   list position of the interaction term. If the series features
-   in more than one interaction term, subsequent interaction info
-   goes into cols 6 and 7 or higher (these being added as required).
-   If the series itself is an interaction term, cols 4 and 5 get
-   the list positions of the two source series.
+   cols 4, 5: If the series features in an interaction term, col 4 holds
+   the list position of its "partner" and col 5 the list position of the
+   interaction term. If the series features in more than one interaction
+   term, subsequent interaction info goes into cols 6 and 7 or higher
+   (these being added as required).  If the series itself is an
+   interaction term, cols 4 and 5 get the list positions of the two
+   source series.
 */
 
 gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,
@@ -6907,12 +6903,11 @@ gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,
 
 #define excluded(l,i) (l != NULL && !in_gretl_list(l,i))
 
-/* Given the current dataset and the $mapfile name recorded
-   on it: get the content of $mapfile as a bundle then
-   revise the bundle (a) to include only the features in the
-   current sample and (b) to reflect any changes in the dataset
-   (series added, deleted or modified). Return the modified
-   bundle.
+/* Given the current dataset and the $mapfile name recorded on it: get
+   the content of $mapfile as a bundle then revise the bundle (a) to
+   include only the features in the current sample and (b) to reflect
+   any changes in the dataset (series added, deleted or
+   modified). Return the modified bundle.
 */
 
 gretl_bundle *get_current_map (const DATASET *dset,
