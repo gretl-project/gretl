@@ -1403,11 +1403,8 @@ int gretl_rand_tnormal (double *x, int t1, int t2,
     return 0;
 }
 
-#define USE_ALIAS 1
-
-#if USE_ALIAS
-
-/* start helper functions for gretl_rand_discrete(), using the alias method */
+/* Start helper functions for gretl_rand_discrete(), using the alias
+   method. */
 
 static double alias_pop (int *x, int *pn)
 {
@@ -1415,7 +1412,7 @@ static double alias_pop (int *x, int *pn)
     return x[*pn];
 }
 
-static void alias_append (int *x, int *pn, double xi)
+static void alias_push (int *x, int *pn, double xi)
 {
     int n = *pn + 1;
 
@@ -1423,75 +1420,79 @@ static void alias_append (int *x, int *pn, double xi)
     *pn = n;
 }
 
-/* construct a two-column lookup table */
+/* Construct lookup arrays for the alias method. For details see Luc
+   Devroey's Non-Uniform Random Variate Generation (Springer-Verlag, New
+   York, 1986) [ https://luc.devroye.org/chapter_three.pdf ].
 
-static gretl_matrix *alias_setup (const gretl_matrix *p)
+   The originator of this method was A.J. Walker; see “New fast method
+   for generatlng discrete random numbers wlth arbitrary frequency
+   distributions,” Electronics Letters, vol. 10, pp. 127-128, 1974,
+   and “An efficient method for generating discrete random
+   variables wlth general distributions,” ACM Transactions on
+   Mathematical Software, vol. 3, pp. 253-256, 1977.
+*/
+
+static int alias_setup (const gretl_matrix *p,
+			int **pA, double **pR)
 {
-    gretl_matrix *JQ = NULL;
-    int K = gretl_vector_get_length(p);
-    double Kp, qlg, qsm;
+    int *A = NULL;
+    double *R = NULL;
     int *smaller = NULL;
-    int *larger = NULL;
-    int sm, lg;
+    int *greater = NULL;
+    int sm, gr;
     int ns = 0;
-    int nl = 0;
-    int k;
+    int ng = 0;
+    int k, i;
 
-    JQ = gretl_zero_matrix_new(K, 2);
-    smaller = malloc(K * sizeof *smaller);
-    larger  = malloc(K * sizeof *larger);
+    k = gretl_vector_get_length(p);
+    *pA = A = malloc(k * sizeof *A);
+    *pR = R = malloc(k * sizeof *R);
+    smaller = malloc(2 * k * sizeof *smaller);
+    greater = smaller + k;
 
-    /* scale probabilities by K */
-    for (k=0; k<K; k++) {
-	Kp = K * p->val[k];
-	gretl_matrix_set(JQ, k, 1, Kp);
-	if (Kp < 1.0) {
-	    alias_append(smaller, &ns, k);
+    for (i=0; i<k; i++) {
+	A[i] = 0;
+    }
+
+    /* scale probabilities by k */
+    for (i=0; i<k; i++) {
+	R[i] = k * p->val[i];
+	if (R[i] < 1.0) {
+	    alias_push(smaller, &ns, i);
 	} else {
-	    alias_append(larger, &nl, k);
+	    alias_push(greater, &ng, i);
 	}
     }
 
     /* balance probabilities into pairs */
-    while (ns > 0 && nl > 0) {
+    while (ns > 0 && ng > 0) {
 	sm = alias_pop(smaller, &ns);
-	lg = alias_pop(larger, &nl);
-	gretl_matrix_set(JQ, sm, 0, lg);
-	qlg = gretl_matrix_get(JQ, lg, 1);
-	qsm = gretl_matrix_get(JQ, sm, 1);
-	qlg -= (1.0 - qsm);
-	gretl_matrix_set(JQ, lg, 1, qlg);
-	if (qlg < 1.0) {
-	    alias_append(smaller, &ns, lg);
+	gr = alias_pop(greater, &ng);
+	A[sm] = gr;
+	R[gr] -= 1.0 - R[sm];
+	if (R[gr] < 1.0) {
+	    alias_push(smaller, &ns, gr);
 	} else {
-	    alias_append(larger, &nl, lg);
+	    alias_push(greater, &ng, gr);
 	}
     }
 
     free(smaller);
-    free(larger);
 
-    return JQ;
+    return 0;
 }
 
-static int alias_draw (const gretl_matrix *JQ)
+static int alias_draw (const int *A, const double *R, int k)
 {
-    int k, K = JQ->rows;
-    double qk;
-
     /* pick a random bucket */
-    k = (int) floor(gretl_rand_01() * K);
-    qk = gretl_matrix_get(JQ, k, 1);
+    int i = (int) floor(gretl_rand_01() * k);
+    double u = gretl_rand_01();
 
     /* decide between the primary item and the alias */
-    if (gretl_rand_01() < qk) {
-        return k;
-    } else {
-        return gretl_matrix_get(JQ, k, 0);
-    }
+    return u < R[i] ? i : A[i];
 }
 
-/* end helper functions for gretl_rand_discrete() */
+/* End helper functions for gretl_rand_discrete(). */
 
 /**
  * gretl_rand_discrete:
@@ -1502,7 +1503,7 @@ static int alias_draw (const gretl_matrix *JQ)
  *
  * Fill the selected range of array @x with pseudo-random drawings
  * from the discrete distribution defined by @p, with support from 1
- * to @n.
+ * to @n, using the alias method.
  *
  * Returns: 0 on success, non-zero if @p is not a proper probability vector.
  */
@@ -1530,105 +1531,22 @@ int gretl_rand_discrete (double *x, int t1, int t2,
     }
 
     if (!err) {
-	gretl_matrix *JQ = alias_setup(p);
+	int *A = NULL;
+	double *R = NULL;
 	int t;
 
-	for (t=t1; t<=t2; t++) {
-	    x[t] = (double) (1 + alias_draw(JQ));
+	err = alias_setup(p, &A, &R);
+	if (!err) {
+	    for (t=t1; t<=t2; t++) {
+		x[t] = (double) (1 + alias_draw(A, R, k));
+	    }
 	}
-	gretl_matrix_free(JQ);
+	free(A);
+	free(R);
     }
 
     return err;
 }
-
-#else /* !USE_ALIAS (the old code) */
-
-int gretl_rand_discrete (double *x, int t1, int t2,
-                         const gretl_vector *p)
-{
-    gretl_matrix *S = NULL;
-    gretl_matrix *sS = NULL;
-    double *cp;
-    double u;
-    int n, nr = t2 - t1 + 1;
-    int i, j, t, pos;
-    int err = 0;
-
-    n = gretl_vector_get_length(p);
-
-    /* sanity check on @p */
-    for (i=0; i<n; i++) {
-        if (p->val[i] < 0.0 || p->val[i] > 1.0) {
-            fprintf(stderr, "gretl_rand_discrete: p is outside[0,1]\n");
-            return E_INVARG;
-        }
-    }
-
-    cp = malloc(n * sizeof *cp);
-
-    if (cp == NULL) {
-        err = E_ALLOC;
-    } else {
-	/* check that the probabilities sum to 1 */
-        cp[0] = p->val[0];
-        for (i=1; i<n; i++) {
-            cp[i] = cp[i-1] + p->val[i];
-        }
-        if (fabs(1.0 - cp[n-1]) > 1.0e-7) {
-            free(cp);
-            err = E_INVARG;
-        }
-    }
-
-    if (err) {
-        goto bailout;
-    }
-
-    /* force cp[n-1] to 1 to avoid numerical issues */
-    cp[n-1] = 1.0;
-
-    /* build a matrix with @nr uniform rvs sorted ascendingly
-       in column 2 and the corresponding row index in column 1
-    */
-    S = gretl_random_matrix_new(nr, 2, D_UNIFORM);
-    if (S == NULL) {
-        err = E_ALLOC;
-        goto bailout;
-    } else {
-        for (i=0; i<nr; i++) {
-            S->val[i] = i;
-        }
-    }
-
-    sS = gretl_matrix_sort_by_column(S, 1, &err);
-    gretl_matrix_free(S);
-    if (err) {
-        goto bailout;
-    }
-
-    /* go through the rows of @sS and assign the proper value
-       to the elements of @x
-    */
-    i = pos = 0;
-    for (t=t1; t<=t2; t++) {
-        j = (int) sS->val[i];
-        u = gretl_matrix_get(sS, i++, 1);
-        while (u > cp[pos]) {
-            pos++;
-        }
-        x[t1+j] = pos+1;
-    }
-
- bailout:
-
-    free(cp);
-    gretl_matrix_free(sS);
-
-    return err;
-}
-
-#endif /* USE_ALIAS or not */
 
 /**
  * gretl_rand_dirichlet:
