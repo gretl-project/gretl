@@ -1421,14 +1421,14 @@ static void alias_push (int *x, int *pn, double xi)
 }
 
 /* Construct lookup arrays for the alias method. For details see Luc
-   Devroey's Non-Uniform Random Variate Generation (Springer-Verlag, New
+   Devroye's Non-Uniform Random Variate Generation (Springer-Verlag, New
    York, 1986) [ https://luc.devroye.org/chapter_three.pdf ].
 
    The originator of this method was A.J. Walker; see “New fast method
-   for generatlng discrete random numbers wlth arbitrary frequency
+   for generating discrete random numbers wlth arbitrary frequency
    distributions,” Electronics Letters, vol. 10, pp. 127-128, 1974,
    and “An efficient method for generating discrete random
-   variables wlth general distributions,” ACM Transactions on
+   variables with general distributions,” ACM Transactions on
    Mathematical Software, vol. 3, pp. 253-256, 1977.
 */
 
