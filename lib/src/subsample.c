@@ -350,19 +350,19 @@ void sync_dataset_shared_members (const DATASET *dset)
     }
 }
 
-/* sync malloced elements of the fullset struct that might
-   have been moved via realloc
+/* Sync malloced elements of @fullset that might have been moved via
+   realloc().
 */
 
-static void sync_datainfo_members (const DATASET *dset)
+static void sync_dataset_members (const DATASET *dset)
 {
     if (fullset->v > dset->v) {
 	int i;
 
 #if FULLDEBUG
-	fprintf(stderr, "*** sync_datainfo_members: fullset->v = %d but dset->v = %d\n",
+	fprintf(stderr, "*** sync_dataset_members: fullset->v = %d but dset->v = %d\n",
 		fullset->v, dset->v);
-	fprintf(stderr, " deleting the last %d element(s) of fullZ\n",
+	fprintf(stderr, " deleting the last %d element(s) of fullset->Z\n",
 		fullset->v - dset->v);
 #endif
 	for (i=dset->v; i<fullset->v; i++) {
@@ -399,7 +399,7 @@ int attach_subsample_to_model (MODEL *pmod, const DATASET *dset)
 
     if (fullset != NULL) {
 	/* sync, in case anything has moved */
-	sync_datainfo_members(dset);
+	sync_dataset_members(dset);
 
 	if (pmod->submask != NULL) {
 	    free_subsample_mask(pmod->submask);
@@ -845,7 +845,7 @@ int restore_full_sample (DATASET *dset, ExecState *state)
 	    err = undo_panel_padding(dset);
 	}
 	if (!err) {
-	    sync_datainfo_members(dset);
+	    sync_dataset_members(dset);
 	    err = sync_data_to_full(dset);
 	}
     }
@@ -3374,7 +3374,7 @@ int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
 #endif
 
     if (fullset != NULL) {
-	sync_datainfo_members(dset);
+	sync_dataset_members(dset);
 	srcset = fullset;
     } else {
 	srcset = dset;
