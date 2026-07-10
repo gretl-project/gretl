@@ -52,6 +52,26 @@
 
 #define GDT_DEBUG 0
 
+static int read_file_fail (void)
+{
+    const xmlError *err = xmlGetLastError();
+
+    if (err != NULL) {
+	const char *msg = err->message;
+
+	fprintf(stderr, "xmlError: domain %d\n", err->domain);
+	fprintf(stderr, "message: %s\n", msg != NULL ? msg : "null");
+	if (err->file != NULL) {
+	    fprintf(stderr, "file: %s\n", err->file);
+	    fprintf(stderr, "line: %d\n", err->line);
+	}
+    } else {
+	fprintf(stderr, "xmlGetLastError() gave NULL\n");
+    }
+
+    return E_FOPEN;
+}
+
 int gretl_xml_open_doc_root (const char *fname,
 			     const char *rootname,
 			     xmlDocPtr *pdoc,
@@ -77,7 +97,7 @@ int gretl_xml_open_doc_root (const char *fname,
     doc = xmlReadFile(fname, NULL, options);
     if (doc == NULL) {
 	gretl_errmsg_sprintf(_("xmlReadFile failed on %s"), fname);
-	err = 1;
+	err = read_file_fail();
     }
 
     if (!err && pnode != NULL) {
@@ -4861,7 +4881,7 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
 
     if (doc == NULL) {
 	gretl_errmsg_sprintf(_("xmlReadFile failed on %s"), fname);
-	*err = E_DATA;
+	*err = read_file_fail();
     } else {
 	node = xmlDocGetRootElement(doc);
 	if (node == NULL) {
