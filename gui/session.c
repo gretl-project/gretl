@@ -1419,8 +1419,9 @@ static char *maybe_absolutize_tryfile (void)
     return get_tryfile();
 }
 
-/* note: the name of the file to be opened is in the gretl.c var
-   'tryfile' */
+/* Note: the name of the session file to be opened is stored in the
+   variable @tryfile in gretl.c.
+*/
 
 static gboolean real_open_session (gretl_bundle **pb)
 {
@@ -1897,7 +1898,7 @@ static void relpath_from_fname (char *path, const char *fname)
     }
 }
 
-/* dump the current dataset into the session dir */
+/* Dump the current dataset into the session directory */
 
 static int real_save_session_dataset (const char *dname)
 {

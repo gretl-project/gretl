@@ -2674,6 +2674,12 @@ char *gretl_xml_encode (const char *str)
     return targ;
 }
 
+struct xml_enc {
+    char find;
+    const char *repl;
+    int len;
+};
+
 /**
  * gretl_xml_encode_to_buf:
  * @targ: target buffer.
@@ -2693,48 +2699,53 @@ char *gretl_xml_encode (const char *str)
 
 int gretl_xml_encode_to_buf (char *targ, const char *src, int n)
 {
-    const char *s = src;
-    int len;
-
-    if (!g_utf8_validate(src, -1, NULL)) {
-	fprintf(stderr, "gretl_xml_encode_to_buf: source not UTF-8\n");
-	return 1;
-    }
-
-    len = strlen(s) + 1;
-    while (*s) {
-	if (*s == '&') len += 4;
-	else if (*s == '<') len += 3;
-	else if (*s == '>') len += 3;
-	else if (*s == '"') len += 5;
-	s++;
-    }
+    static struct xml_enc encs[] = {
+	{ '&', "&amp;",  5 },
+	{ '<', "&lt;",   4 },
+	{ '>', "&gt;",   4 },
+	{ '"', "&quot;", 6 }
+    };
+    int srclen = strlen(src);
+    int enclen = srclen;
+    int done;
+    int i, j;
 
     *targ = '\0';
 
-    if (len > n) {
-	fprintf(stderr, "gretl_xml_encode_to_buf: buffer too small\n");
-	return 1;
+    if (!g_utf8_validate(src, -1, NULL)) {
+	fprintf(stderr, "gretl_xml_encode_to_buf: source not UTF-8\n");
+	return E_INVARG;
     }
 
-    s = src;
-    while (*s) {
-	if (*s == '&') {
-	    strcpy(targ, "&amp;");
-	    targ += 5;
-	} else if (*s == '<') {
-	    strcpy(targ, "&lt;");
-	    targ += 4;
-	} else if (*s == '>') {
-	    strcpy(targ, "&gt;");
-	    targ += 4;
-	} else if (*s == '"') {
-	    strcpy(targ, "&quot;");
-	    targ += 6;
-	} else {
-	    *targ++ = *s;
+    /* determine the length of the modified string */
+    for (i=0; i<srclen; i++) {
+	for (j=0; j<4; j++) {
+	    if (src[i] == encs[j].find) {
+		enclen += encs[j].len - 1;
+		break;
+	    }
 	}
-	s++;
+    }
+    enclen++; /* terminating NUL byte */
+
+    if (enclen > n) {
+	fprintf(stderr, "gretl_xml_encode_to_buf: buffer too small\n");
+	return E_INVARG;
+    }
+
+    for (i=0; i<srclen; i++) {
+	done = 0;
+	for (j=0; j<4; j++) {
+	    if (src[i] == encs[j].find) {
+		strcpy(targ, encs[j].repl);
+		targ += encs[j].len;
+		done = 1;
+		break;
+	    }
+	}
+	if (!done) {
+	    *targ++ = src[i];
+	}
     }
 
     *targ = '\0';
