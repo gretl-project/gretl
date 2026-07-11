@@ -1,6 +1,8 @@
 version 2026c, in progress
 - new function kmeans(): algorithm ASA136 for the k-means
   problem
+- new function permute(): calculate all permutations of a
+  vector of up to 8 elements
 - GUI: forecast from single-equation model, support write
   and copy in CSV format
 - GUI: fix for call to function package with no arguments
@@ -8,13 +10,17 @@ version 2026c, in progress
   in a wider range of contexts
 - recession bars in time-series plots: extend support of
   this feature to daily data
+- enhance functiionality of ui-maker for function packages
 - fix bug: GUI plot editor breaks factorized plots
 - fix bug: crash in GUI data editor on Windows
 - fix bug: correlation matrix heatmap broken if the
   graph-name of an included series contains '%'
 - fix bug: crash in adf test on panel data when the
   --difference option is given
+- fix bug: potentially incorrect output from xtab when
+  given string-valued series as input
 - gretl_edit: support loading of function definitions
+- MS Windows: update doc regarding use of MS-MPI
 
 2026-04-30 version 2026b
 - new function which() to determine which elements of a
