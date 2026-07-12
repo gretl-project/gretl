@@ -354,18 +354,25 @@ function void kmeans_summary (const bundle kmb)
         printf "  Tolerance: %f\n", kmb.tolerance
     endif
 
-    between_dist = kmb.total_distance - kmb.within_distance
-    between_pc = 100 * between_dist / kmb.total_distance
+    if inbundle(kmb, "total_distance")
+        total_dist = kmb.total_distance
+        within_dist = kmb.within_distance
+    else
+        total_dist = kmb.global_SST
+        within_dist = kmb.cluster_SST
+    endif
+    between_dist = total_dist - within_dist
+    between_pc = 100 * between_dist / total_dist
 
     printf "\nResults:\n"
     if metric_is_euclidean(kmb.metric)
-        printf "  Total sum of squares: %g\n", kmb.total_distance
-        printf "  Within-cluster sum of squares: %g\n", kmb.within_distance
+        printf "  Total sum of squares: %g\n", total_dist
+        printf "  Within-cluster sum of squares: %g\n", within_dist
         printf "  Between-cluster sum of squares: %g\n", between_dist
         printf "  Between as percent of total: %.3f\n", between_pc
     else
-        printf "  Total distance from global centroid: %g\n", kmb.total_distance
-        printf "  Total within-cluster distance: %g\n", kmb.within_distance
+        printf "  Total distance from global centroid: %g\n", total_dis
+        printf "  Total within-cluster distance: %g\n", within_dist
         printf "  Between cluster distance: %g\n", between_dist
         printf "  Between as percent of total: %.1f\n", between_pc
     endif

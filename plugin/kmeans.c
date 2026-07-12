@@ -695,8 +695,10 @@ static gretl_bundle *trivial_case (hw_info *hw,
     cinfo->val[n] = m;
     if (iflag == INIT_USER) {
 	csst = cinfo->val[n+1] = compute_sst(hw);
+	gretl_bundle_set_string(ret, "init", "user-specified");
     } else {
 	csst = cinfo->val[n+1] = gsst;
+	gretl_bundle_set_string(ret, "init", "means");
     }
 
     add_centroids_colnames(hw->a, cinfo);
@@ -838,6 +840,7 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
     int n = a->cols;
     int ri = 0;
     InitFlag iflag = INIT_PC;
+    InitFlag iflag0;
     int scree = (WCSS != NULL);
     int n_draws = 8;
     int verbosity = 0;
@@ -880,6 +883,8 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
 	ret = trivial_case(&hw, iflag, verbosity, prn, err);
 	destroy_hw_info(&hw);
 	return ret;
+    } else {
+	iflag0 = iflag;
     }
 
     /* integer-valued workspace */
@@ -901,7 +906,7 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
 
  start_outer_loop:
 
-    /* initializer: can be auto, user-specified, or random */
+    /* initializer: can be PC, HW, user-specified or random */
     *err = kmeans_init(&hw, an, nc, itran, ncp, iflag);
     if (*err) {
 	goto bailout;
@@ -1013,6 +1018,8 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
 	}
 	gretl_bundle_donate_data(ret, "centroids", cinfo,
 				 GRETL_TYPE_MATRIX);
+	gretl_bundle_set_string(ret, "init", init_string(iflag0));
+	gretl_bundle_set_int(ret, "n_draws", n_draws);
     }
 
     /* fill the output vector */
