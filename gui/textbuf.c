@@ -377,15 +377,13 @@ static gchar *strip_hidden_placeholders (gchar *content)
     return content;
 }
 
-/* Note: a non-zero value for @save means that we're grabbing the
-   GtkTextBuffer content to save it to file; otherwise we want it for
-   the purpose of execution. In the former case we include any
-   currently invisible regions (by passing TRUE as the last argument
-   to gtk_text_buffer_get_text); in the latter we'll exclude them.  In
-   both cases we need to exclude any hidden region placeholders.
+/* Note: a non-zero value for @all means that we should include any
+   currently invisible regions (by passing TRUE as the last argument to
+   gtk_text_buffer_get_text); otherwise we'll exclude them. In either
+   cases we need to exclude any hidden region placeholders.
 */
 
-gchar *textview_get_hansl (GtkTextView *tview, int save)
+gchar *textview_get_hansl (GtkTextView *tview, int all)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter start, end;
@@ -398,7 +396,7 @@ gchar *textview_get_hansl (GtkTextView *tview, int save)
     gtk_text_buffer_get_end_iter(tbuf, &end);
 
     n_hidden = object_get_int(tbuf, "n_hidden");
-    include_invisible = (save && n_hidden > 0);
+    include_invisible = (all && n_hidden > 0);
     content = gtk_text_buffer_get_text(tbuf, &start, &end, include_invisible);
 
     if (n_hidden > 0) {

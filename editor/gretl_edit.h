@@ -22,7 +22,7 @@
 
 typedef struct exec_info_ exec_info;
 
-int gretlcli_exec_script (windata_t *vwin, gchar *buf);
+int gretlcli_exec_script (windata_t *vwin);
 
 void cancel_run_script (void);
 

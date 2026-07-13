@@ -42,10 +42,10 @@ GtkTargetEntry tabwin_drag_targets[] = {
     { "text/uri-list",  0, GRETL_FILENAME },
 };
 
-/* We support a tabbed editor for hansl scripts, one for
-   "alt" (foreign) scripts, and also a tabbed viewer for
-   gretl models -- unless we're gretl_edit, in which case
-   there's a single integrated tabbed script editor.
+/* We support a tabbed editor for hansl scripts, one for "alt" (foreign)
+   scripts, and also a tabbed viewer for gretl models -- unless we're
+   gretl_edit, in which case there's a single integrated tabbed script
+   editor.
 */
 
 static tabwin_t *tabhansl;
@@ -115,8 +115,9 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
     return ret;
 }
 
-/* called from winstack.c on program exit: @w will
-   be the top-level of a tabbed window */
+/* Called from winstack.c on program exit: @w will be the top-level of a
+   tabbed window.
+*/
 
 gboolean tabwin_exit_check (GtkWidget *w)
 {
@@ -130,7 +131,7 @@ gboolean tabwin_exit_check (GtkWidget *w)
     return maybe_block_tabedit_quit(tabwin, w);
 }
 
-/* called on delete-event: @w is the top-level */
+/* Called on delete-event: @w is the top-level. */
 
 static gboolean tabedit_quit_check (GtkWidget *w, GdkEvent *event,
 				    tabwin_t *tabwin)
@@ -143,7 +144,7 @@ static gboolean tabedit_quit_check (GtkWidget *w, GdkEvent *event,
     return maybe_block_tabedit_quit(tabwin, w);
 }
 
-/* activate or de-activate a tab's closer button */
+/* Activate or de-activate a tab's closer button. */
 
 static void viewer_tab_show_closer (GtkNotebook *notebook,
 				    GtkWidget *tab,
@@ -200,9 +201,8 @@ static void page_removed_callback (GtkNotebook *notebook,
     }
 
     if (np == 1) {
-	/* only one tab left after removal: this page should
-	   not display its own closer button, nor should it
-	   be detachable
+	/* There's only one tab left after removal: this page should not
+	   display its own closer button, nor should it be detachable.
 	*/
 	GtkWidget *tab = gtk_notebook_get_nth_page(notebook, 0);
 
@@ -235,9 +235,8 @@ static void page_added_callback (GtkNotebook *notebook,
     }
 }
 
-/* callback for tab-specific close button: this should be
-   invoked only if there's at least one tab left after
-   trashing the selected one
+/* Callback for tab-specific close button: this should be invoked only
+   if there's at least one tab left after trashing the selected one.
 */
 
 static void tabwin_tab_close (GtkWidget *w, windata_t *vwin)
@@ -304,9 +303,8 @@ void tabwin_tab_destroy (windata_t *vwin)
     }
 }
 
-/* on switching the current page, put the new page's
-   toolbar into place in tabwin (and remove the old
-   one, if present)
+/* On switching the current page, put the toolbar belonging to the new
+   tab into place in tabwin (and remove the old one, if present).
 */
 
 static gboolean switch_page_callback (GtkNotebook *tabs,
@@ -340,7 +338,7 @@ static gboolean switch_page_callback (GtkNotebook *tabs,
     return FALSE;
 }
 
-/* callback for the "create-window" signal */
+/* Callback for the "create-window" signal. */
 
 static GtkNotebook *detach_tab_callback (GtkNotebook *book,
 					 GtkWidget *page,
@@ -359,7 +357,7 @@ static GtkNotebook *detach_tab_callback (GtkNotebook *book,
     return NULL;
 }
 
-/* avoid excessive padding in a tab's close button */
+/* Avoid excessive padding in a tab's Close button. */
 
 static void no_button_padding (GtkWidget *w)
 {
@@ -379,7 +377,7 @@ static void no_button_padding (GtkWidget *w)
     }
 }
 
-/* put a tab-specific close button next to the tab's label */
+/* Put a tab-specific close button next to the tab's label. */
 
 static void viewer_tab_add_closer (GtkWidget *tab, windata_t *vwin)
 {
@@ -399,8 +397,7 @@ static void viewer_tab_add_closer (GtkWidget *tab, windata_t *vwin)
     g_object_set_data(G_OBJECT(tab), "closer", button);
 }
 
-/* try to ensure unique dummy title strings for unsaved
-   new scripts */
+/* Try to ensure unique dummy title strings for unsaved new scripts. */
 
 static gchar *untitled_title (tabwin_t *tabwin)
 {
@@ -426,7 +423,7 @@ static gchar *untitled_title (tabwin_t *tabwin)
     }
 }
 
-/* create and add tab with filename and closer button */
+/* Create and add a tab with filename and closer button. */
 
 static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
 				   windata_t *vwin,
@@ -473,8 +470,8 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
     return tab;
 }
 
-/* Note: provides a means of connecting catch_viewer_key(),
-   for a viewer that's embedded in a GtkNotebook.
+/* Note: provides a means of connecting catch_viewer_key(), for a viewer
+   that's embedded in a GtkNotebook.
 */
 
 static gint catch_tabwin_key (GtkWidget *w, GdkEventKey *key,
@@ -488,9 +485,9 @@ static gint catch_tabwin_key (GtkWidget *w, GdkEventKey *key,
     return catch_viewer_key(w, key, vwin);
 }
 
-/* Not sure why this is required, but without this callback
-   attached, the "drag-data-received" is triggered twice for
-   each drag-and-drop action. Seems like a GTK quirk.
+/* Not sure why this is required, but without this callback attached,
+   the "drag-data-received" signal is triggered twice for each
+   drag-and-drop action. Seems like a GTK quirk.
 */
 
 static gboolean
@@ -562,7 +559,7 @@ tabwin_handle_drag  (GtkWidget *widget,
     gtk_drag_finish(context, success, FALSE, time);
 }
 
-/* build a tabbed viewer/editor */
+/* Build a tabbed viewer/editor. */
 
 static tabwin_t *make_tabbed_viewer (int role)
 {
@@ -583,27 +580,25 @@ static tabwin_t *make_tabbed_viewer (int role)
     tabwin->main = gretl_gtk_window();
 #ifdef GRETL_EDIT
     gtk_window_set_title(GTK_WINDOW(tabwin->main), _(hansl_title));
-    g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
-		     G_CALLBACK(tabedit_quit_check), tabwin);
 #else
     if (role == EDIT_HANSL) {
 	gtk_window_set_title(GTK_WINDOW(tabwin->main), _(hansl_title));
- 	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
-			 G_CALLBACK(tabedit_quit_check), tabwin);
     } else if (editing_alt_script(role)) {
 	gtk_window_set_title(GTK_WINDOW(tabwin->main), _(alt_title));
- 	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
-			 G_CALLBACK(tabedit_quit_check), tabwin);
     } else {
 	gtk_window_set_title(GTK_WINDOW(tabwin->main), _("gretl: models"));
     }
+    /* try not to land fully on top of the main gretl window */
+    gtk_window_set_position(GTK_WINDOW(tabwin->main), GTK_WIN_POS_MOUSE);
 #endif
+
+    if (vwin_editing_script(role)) {
+	g_signal_connect(G_OBJECT(tabwin->main), "delete-event",
+			 G_CALLBACK(tabedit_quit_check), tabwin);
+    }
     g_signal_connect(G_OBJECT(tabwin->main), "destroy",
 		     G_CALLBACK(tabwin_destroy), tabwin);
     g_object_set_data(G_OBJECT(tabwin->main), "tabwin", tabwin);
-
-    /* try not to land fully on top of the main gretl window */
-    gtk_window_set_position(GTK_WINDOW(tabwin->main), GTK_WIN_POS_MOUSE);
 
     /* vertically oriented container */
     vbox = gtk_vbox_new(FALSE, 1);
@@ -641,7 +636,7 @@ static tabwin_t *get_tabwin_for_role (int role, int *starting)
 {
     tabwin_t *tabwin = NULL;
 
-#ifdef GRETL_EDIT /* experiment? */
+#ifdef GRETL_EDIT
     if (tabhansl != NULL) {
 	tabwin = tabhansl;
     } else {
@@ -677,8 +672,8 @@ static tabwin_t *get_tabwin_for_role (int role, int *starting)
 }
 
 /* Create a viewer/editor tab, as an alternative to a stand-alone
-   window. We build the tabbed top-level if need be, otherwise we
-   stick a new tab into the existing window.
+   window. We build the tabbed top-level if need be, otherwise we add
+   a new tab into the existing window.
 */
 
 windata_t *viewer_tab_new (int role, const char *info,
@@ -737,10 +732,9 @@ windata_t *viewer_tab_new (int role, const char *info,
     return vwin;
 }
 
-/* called when a new editor tab is added: if this is the
-   first such tab then tabwin->mbar will be NULL, otherwise
-   if will be some other page's mbar, which will have to
-   be swapped out
+/* Called when a new editor tab is added: if this is the first such tab
+   then tabwin->mbar will be NULL, otherwise it will be some other
+   page's mbar, which should be swapped out.
 */
 
 void tabwin_register_toolbar (windata_t *vwin)
@@ -748,9 +742,9 @@ void tabwin_register_toolbar (windata_t *vwin)
     tabwin_t *tabwin = vwin_get_tabwin(vwin);
     gulong handler_id;
 
-    /* take out a reference to @vwin's toolbar to prevent
+    /* Take out a reference to @vwin's toolbar to prevent
        its auto-destruction; also ensure that the pointer
-       goes to NULL on destruction
+       goes to NULL on destruction.
     */
     g_object_ref(vwin->mbar);
     handler_id = g_signal_connect(G_OBJECT(vwin->mbar), "destroy",
@@ -773,8 +767,8 @@ void tabwin_register_toolbar (windata_t *vwin)
     tabwin_insert_toolbar(tabwin, vwin);
 }
 
-/* This is used, inter alia, for an "untitled" tab:
-   to set its real filename when it is saved
+/* This is used, inter alia, for an "untitled" tab: to set its real
+   filename when it is saved.
 */
 
 void tabwin_tab_set_title (windata_t *vwin, const char *title)
@@ -820,9 +814,8 @@ const gchar *tabwin_tab_get_title (windata_t *vwin)
     return NULL;
 }
 
-/* set or unset the "modified flag" (trailing asterisk on
-   the filename) for the tab label for a page in tabbed
-   editor
+/* Set or unset the "modified" indicator (a trailing asterisk on the
+   filename) in the tab label for a page in a tabbed editor.
 */
 
 void tabwin_tab_set_status (windata_t *vwin)
@@ -891,7 +884,7 @@ void show_tabbed_viewer (windata_t *vwin)
     gtk_window_present(GTK_WINDOW(tabwin->main));
 }
 
-/* move among the editor tabs via keyboard */
+/* Move among the editor tabs via key-strokes. */
 
 void tabwin_navigate (windata_t *vwin, guint key)
 {
@@ -938,8 +931,8 @@ static gchar *title_from_vwin (windata_t *vwin)
     }
 }
 
-/* show or hide the New and Open toolbar items, which occupy
-   the first two slots on the toolbar
+/* Show or hide the New and Open toolbar items, which occupy the first
+   two slots on the toolbar.
 */
 
 void script_editor_show_new_open (windata_t *vwin, gboolean show)
@@ -958,8 +951,8 @@ void script_editor_show_new_open (windata_t *vwin, gboolean show)
     }
 }
 
-/* response to pulling a script or model out of the tabbed
-   context: we need to give the content its own window
+/* Respond to pulling a script or model out of the tabbed context: we
+   need to give the content its own window.
 */
 
 static void undock_tabbed_viewer (GtkWidget *w, windata_t *vwin)
@@ -1339,10 +1332,9 @@ static void tabwin_unregister_dialog (GtkWidget *w, tabwin_t *tabwin)
     }
 }
 
-/* Called when a tabbed viewer spawns a dialog that becomes
-   invalid if the currently active tab is destroyed. We make
-   make the current tab undestroyable and undetachable for the
-   duration.
+/* Called when a tabbed viewer spawns a dialog that becomes invalid if
+   the currently active tab is destroyed. We make make the current tab
+   undestroyable and undetachable for the duration.
 */
 
 void tabwin_register_dialog (GtkWidget *w, gpointer p)
@@ -1446,3 +1438,34 @@ windata_t *window_get_active_vwin (GtkWidget *window)
 
     return vwin;
 }
+
+#ifdef GRETL_EDIT
+
+int get_hansl_tabs_count (windata_t *vwin)
+{
+    tabwin_t *twin = vwin_get_tabwin(vwin);
+    GtkNotebook *notebook = GTK_NOTEBOOK(twin->tabs);
+    int np = gtk_notebook_get_n_pages(notebook);
+    windata_t *viewer;
+    GtkWidget *tab;
+    int i, ret = 0;
+
+    for (i=0; i<np; i++) {
+	tab = gtk_notebook_get_nth_page(notebook, i);
+	viewer = g_object_get_data(G_OBJECT(tab), "vwin");
+	if (viewer->role == EDIT_HANSL) {
+	    ret++;
+	}
+    }
+
+    return ret;
+}
+
+GtkWidget *editor_get_tabs (windata_t *vwin)
+{
+    tabwin_t *twin = vwin_get_tabwin(vwin);
+
+    return twin->tabs;
+}
+
+#endif

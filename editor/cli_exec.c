@@ -590,16 +590,19 @@ static gchar *get_cli_path (void)
     }
 }
 
-int gretlcli_exec_script (windata_t *vwin, gchar *buf)
+int gretlcli_exec_script (windata_t *vwin)
 {
+    gchar *buf = textview_get_hansl(GTK_TEXT_VIEW(vwin->text), 1);
     gchar *inpname = gretl_make_dotpath("cli_XXXXXX.inp");
-    FILE *fp = gretl_mktemp(inpname, "wb");
-    gchar *clipath = get_cli_path();
-#ifndef G_OS_WIN32
-    gchar **envp = get_cli_env();
-#endif
+    FILE *fp = NULL;
     int err = 0;
 
+    if (buf == NULL || *buf == '\0') {
+	errbox(_("No script to execute"));
+	return E_DATA;
+    }
+
+    fp = gretl_mktemp(inpname, "wb");
     if (fp == NULL) {
 	file_read_errbox(inpname);
 	err = E_FOPEN;
@@ -608,7 +611,10 @@ int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 	fclose(fp);
     }
 
+    g_free(buf);
+
     if (!err) {
+	gchar *clipath = get_cli_path();
 #ifdef G_OS_WIN32
 	gchar *cmd;
 
@@ -616,6 +622,7 @@ int gretlcli_exec_script (windata_t *vwin, gchar *buf)
 	run_script_async(cmd, NULL, clipath, NULL, inpname, vwin);
 #else
 	gchar **argv = g_malloc(4 * sizeof *argv);
+	gchar **envp = get_cli_env();
 
 	argv[0] = clipath;
 	argv[1] = g_strdup("-x");

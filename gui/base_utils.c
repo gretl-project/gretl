@@ -785,11 +785,11 @@ int browser_open (const char *url)
 # include "R_exec.c"
 #endif
 
-/* do_new_script(): passing a non-NULL @scriptname is a means
-   of creating a new script with a name pre-given by the user;
-   this applies only when we get the name of a non-existent
-   script on the command line. Otherwise the new script gets
-   a temporary name in the user's dotdir.
+/* do_new_script(): passing a non-NULL @scriptname is a means of
+   creating a new script with a name pre-given by the user; this applies
+   only when we get the name of a non-existent script on the command
+   line. Otherwise the new script gets a temporary name in the user's
+   dotdir.
 */
 
 void do_new_script (int code, const char *buf,
@@ -941,6 +941,10 @@ static int lang_from_role (int role)
     return 0;
 }
 
+/* Called (only) by do_run_script() and run_script_silent() below.
+   The script to be run will be obtained from vwin->text.
+*/
+
 static void real_run_script (windata_t *vwin, int silent)
 {
 #ifndef GRETL_EDIT
@@ -954,7 +958,8 @@ static void real_run_script (windata_t *vwin, int silent)
 
 #ifdef GRETL_EDIT
     if (vwin->role == EDIT_HANSL) {
-	buf = textview_get_hansl(GTK_TEXT_VIEW(vwin->text), 0);
+	gretlcli_exec_script(vwin);
+	return;
     } else {
 	buf = textview_get_text(vwin->text);
     }
@@ -1017,9 +1022,7 @@ static void real_run_script (windata_t *vwin, int silent)
     lang = lang_from_role(vwin->role);
 
 #ifdef GRETL_EDIT
-    if (vwin->role == EDIT_HANSL) {
-	gretlcli_exec_script(vwin, buf);
-    } else if (vwin->role == EDIT_R) {
+    if (vwin->role == EDIT_R) {
 	editor_run_R_script(vwin, buf);
 	/* editor_run... takes ownership of @buf */
 	buf = NULL;

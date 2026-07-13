@@ -273,9 +273,9 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
-/* callback for the "Open" icon in a script editing window,
-   which enables the user to switch to a different script,
-   or to open another tab if the editor is tab-enabled
+/* Callback for the "Open" icon in a script editing window, which
+   enables the user to switch to a different script, or to open another
+   tab if the editor is tab-enabled.
 */
 
 static void file_open_callback (GtkWidget *w, windata_t *vwin)
@@ -396,52 +396,69 @@ static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
                                   TRUE);
 }
 
-static void exec_popup_callback (GtkWidget *w, gpointer data)
+static void exec_popup_callback (GtkWidget *w, windata_t *vwin)
 {
-    GtkWidget *popup = (GtkWidget *) data;
-    windata_t *vwin = g_object_get_data(G_OBJECT(popup), "vwin");
-    gchar *buf = g_object_get_data(G_OBJECT(popup), "buf");
-    const gchar *str = gtk_menu_item_get_label(GTK_MENU_ITEM(w));
+    int id = widget_get_int(w, "id");
 
-    if (!strcmp(str, _("Execute script"))) {
-	gretlcli_exec_script(vwin, buf);
+    if (id == 0) {
+	gretlcli_exec_script(vwin);
     } else {
-	load_functions(buf);
+	load_functions(vwin, id == 3);
     }
 }
 
 static void create_pop_item (GtkWidget *popup, char *str,
-			     GtkCallback callback)
+			     int id, windata_t *vwin)
 {
     GtkWidget *item;
 
     item = gtk_menu_item_new_with_label(str);
     g_signal_connect(G_OBJECT(item), "activate",
-		     G_CALLBACK(callback),
-		     popup);
+		     G_CALLBACK(exec_popup_callback), vwin);
+    widget_set_int(item, "id", id);
     gtk_widget_show(item);
     gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
 }
 
-static void exec_choice_popup (windata_t *vwin,
-			       gchar *buf)
+/* This function is invoked only for hansl-editing tabs */
+
+static void exec_choice_popup (windata_t *vwin)
 {
     static GtkWidget *exec_popup;
-    const char *exec_items[] = {
+    const char *exec_labels[] = {
 	N_("Execute script"),
-	N_("(Re-)load functions")
+	N_("(Re-)load functions"),
+	N_("(Re-)load functions, this tab"),
+	N_("(Re-)load functions, all tabs")
     };
-    int i;
+    int opts[3] = {0, 1, 0};
+    int nopts = 2;
+    int i, k;
+
+#if 0 /* not ready yet! */
+    int nh = get_hansl_tabs_count(vwin);
+
+    if (nh == 1) {
+	opts[1] = 1;
+    } else {
+	nopts = 3;
+	opts[1] = 2;
+	opts[2] = 3;
+    }
+#endif
 
     if (exec_popup == NULL) {
 	exec_popup = gtk_menu_new();
-	for (i=0; i<2; i++) {
-	    create_pop_item(exec_popup, _(exec_items[i]),
-			    exec_popup_callback);
+	for (i=0; i<nopts; i++) {
+	    k = opts[i];
+	    create_pop_item(exec_popup, _(exec_labels[k]), k, vwin);
 	}
+	g_signal_connect(G_OBJECT(exec_popup), "selection-done",
+			  G_CALLBACK(gtk_widget_destroy), NULL);
+	g_signal_connect(G_OBJECT(exec_popup), "destroy",
+			 G_CALLBACK(gtk_widget_destroyed), &exec_popup);
     }
     g_object_set_data(G_OBJECT(exec_popup), "vwin", vwin);
-    g_object_set_data_full(G_OBJECT(exec_popup), "buf", buf, g_free);
 
 #if GTK_MAJOR_VERSION == 2
     GdkEvent *event = gtk_get_current_event();
@@ -455,34 +472,18 @@ static void exec_choice_popup (windata_t *vwin,
 #endif
 }
 
-static int have_functions (const gchar *buf)
-{
-    const char *p = buf;
-    int nf = 0;
-
-    while (strstr(p, "function ") != NULL) {
-	p += 8;
-	nf++;
-    }
-
-    return nf;
-}
-
 static void exec_callback (GtkWidget *w, windata_t *vwin)
 {
     if (widget_get_int(vwin->mbar, "exec_is_kill")) {
         cancel_run_script();
     } else if (vwin->role == EDIT_HANSL) {
-	gchar *buf = textview_get_hansl(GTK_TEXT_VIEW(vwin->text), 0);
-
-	if (have_functions(buf) > 1) {
-	    exec_choice_popup(vwin, buf);
+	if (textview_has_functions(GTK_TEXT_VIEW(vwin->text))) {
+	    exec_choice_popup(vwin);
 	} else {
-	    gretlcli_exec_script(vwin, buf);
-	    g_free(buf);
+	    gretlcli_exec_script(vwin);
 	}
     } else {
-        do_run_script(w, vwin);
+	do_run_script(w, vwin);
     }
 }
 

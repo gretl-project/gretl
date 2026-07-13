@@ -72,4 +72,12 @@ void list_add_tabwin_models (tabwin_t *tabwin, GList **plist);
 
 windata_t *window_get_active_vwin (GtkWidget *window);
 
+#ifdef GRETL_EDIT
+
+int get_hansl_tabs_count (windata_t *vwin);
+
+GtkWidget *editor_get_tabs (windata_t *vwin);
+
+#endif
+
 #endif /* TABWIN_H_ */

@@ -616,6 +616,8 @@ gboolean open_tryfile (gboolean startup)
     return ret;
 }
 
+/* @w here is the @main member of a tabwin struct: see tabwin.c */
+
 void set_editor (GtkWidget *w)
 {
     editor = w;

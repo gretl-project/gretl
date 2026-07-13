@@ -20,8 +20,10 @@
 #ifndef LOAD_FUNCS_H
 #define LOAD_FUNCS_H
 
-int load_functions (const char *buf);
+int load_functions (windata_t *vwin, gboolean all_tabs);
 
-void maybe_load_functions (GtkTextView *tview);
+void maybe_load_functions (windata_t *vwin);
+
+gboolean textview_has_functions (GtkTextView *tview);
 
 #endif /* LOAD_FUNCS_H */

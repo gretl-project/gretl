@@ -529,7 +529,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 #ifdef GRETL_EDIT
     if (Alt) {
 	if (key == GDK_period) {
-	    alt_dot_find(GTK_TEXT_VIEW(vwin->text));
+	    alt_dot_find(vwin);
 	    return TRUE;
 	} else if (key == GDK_comma) {
 	    textview_go_back(GTK_TEXT_VIEW(vwin->text));
@@ -1405,7 +1405,7 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 {
     windata_t *vwin;
     int have_content = 1;
-    int use_tab = 1;
+    int use_tab;
     int ins = 0;
 
     if (mode & NULL_FILE) {
@@ -1419,7 +1419,9 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 	}
     }
 
-#ifndef GRETL_EDIT
+#ifdef GRETL_EDIT
+    use_tab = 1;
+#else
     use_tab = use_tabbed_editor();
 #endif
 

@@ -68,17 +68,69 @@ static int exec_line (ExecState *s)
     return err;
 }
 
-int load_functions (const char *buf)
+static int real_load_functions (const gchar *buf,
+				ExecState *state,
+				char *line,
+				char *tmp)
+{
+    int err = 0;
+
+    bufgets_init(buf);
+
+    while (state->cmd->ci != QUIT) {
+	char *gotline = NULL;
+
+	gotline = get_input_line(line, buf, &err);
+	if (gotline == NULL || err) {
+	    break;
+	}
+	if (state->in_comment) {
+	    tailstrip(line);
+	} else {
+	    int contd = top_n_tail(line, sizeof line, &err);
+
+	    while (contd && !state->in_comment && !err) {
+		/* handle continued lines */
+		gotline = get_input_line(tmp, buf, &err);
+		if (gotline == NULL) {
+		    break;
+		}
+		if (!err && *tmp != '\0') {
+		    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
+			err = E_TOOLONG;
+			break;
+		    } else {
+			strcat(line, tmp);
+			compress_spaces(line);
+		    }
+		}
+		contd = top_n_tail(line, sizeof line, &err);
+	    }
+	}
+
+	if (!err) {
+	    state->flags = SCRIPT_EXEC;
+	    err = exec_line(state);
+	}
+
+	if (err) {
+	    gui_errmsg(err);
+	    break;
+	}
+    }
+
+    bufgets_finalize(buf);
+
+    return err;
+}
+
+int load_functions (windata_t *vwin, gboolean all_tabs)
 {
     ExecState state;
     char line[MAXLINE] = {0};
     char tmp[MAXLINE] = {0};
-    int exec_err = 0;
-
-    if (buf == NULL || *buf == '\0') {
-	errbox(_("No functions to load"));
-	return -1;
-    }
+    gchar *buf = NULL;
+    int err = 0;
 
     if (!cmd_init_done) {
 	gretl_cmd_init(&edcmd);
@@ -86,54 +138,35 @@ int load_functions (const char *buf)
     }
 
     gretl_set_batch_mode(1);
-    bufgets_init(buf);
     gretl_exec_state_init(&state, 0, line, &edcmd, NULL, NULL);
 
-    while (edcmd.ci != QUIT) {
-	char *gotline = NULL;
+    if (all_tabs) {
+	/* load functions from all hansl tabs */
+	GtkNotebook *book = GTK_NOTEBOOK(editor_get_tabs(vwin));
+	int np = gtk_notebook_get_n_pages(book);
+	GtkWidget *tab;
+	windata_t *viewer;
+	GtkTextView *tview;
+	int i;
 
-	gotline = get_input_line(line, buf, &exec_err);
-	if (gotline == NULL || exec_err) {
-	    break;
-	}
-	if (state.in_comment) {
-	    tailstrip(line);
-	} else {
-	    int contd = top_n_tail(line, sizeof line, &exec_err);
-
-	    while (contd && !state.in_comment && !exec_err) {
-		/* handle continued lines */
-		gotline = get_input_line(tmp, buf, &exec_err);
-		if (gotline == NULL) {
-		    break;
-		}
-		if (!exec_err && *tmp != '\0') {
-		    if (strlen(line) + strlen(tmp) > MAXLINE - 1) {
-			exec_err = E_TOOLONG;
-			break;
-		    } else {
-			strcat(line, tmp);
-			compress_spaces(line);
-		    }
-		}
-		contd = top_n_tail(line, sizeof line, &exec_err);
+	for (i=0; i<np; i++) {
+	    tab = gtk_notebook_get_nth_page(book, i);
+	    viewer = g_object_get_data(G_OBJECT(tab), "vwin");
+	    tview = GTK_TEXT_VIEW(viewer->text);
+	    if (viewer->role == EDIT_HANSL && textview_has_functions(tview)) {
+		buf = textview_get_hansl(tview, 1);
+		err = real_load_functions(buf, &state, line, tmp);
+		g_free(buf);
 	    }
 	}
-
-	if (!exec_err) {
-	    state.flags = SCRIPT_EXEC;
-	    exec_err = exec_line(&state);
-	}
-
-	if (exec_err) {
-	    gui_errmsg(exec_err);
-	    break;
-	}
+    } else {
+	/* load functions from "this" tab only */
+	buf = textview_get_hansl(GTK_TEXT_VIEW(vwin->text), 1);
+	err = real_load_functions(buf, &state, line, tmp);
+	g_free(buf);
     }
 
-    bufgets_finalize(buf);
-
-    return exec_err;
+    return err;
 }
 
 /* If the user starts an action associated with look-up of user
@@ -143,24 +176,50 @@ int load_functions (const char *buf)
    the current buffer.
 */
 
-void maybe_load_functions (GtkTextView *tview)
+void maybe_load_functions (windata_t *vwin)
 {
     if (n_user_functions() == 0) {
+	GtkTextView *tview = GTK_TEXT_VIEW(vwin->text);
 	GtkTextBuffer *tbuf = gtk_text_view_get_buffer(tview);
-	GtkTextIter start, match;
-	gboolean found;
+	GtkTextIter start, match_start, match_end;
 
 	gtk_text_buffer_get_start_iter(tbuf, &start);
-	found = gtk_text_iter_forward_search(&start, "function ",
-					     GTK_TEXT_SEARCH_TEXT_ONLY,
-					     &match, NULL, NULL);
-	if (found && gtk_text_iter_starts_line(&match)) {
-	    gchar *buf = textview_get_hansl(tview, 0);
+	while (gtk_text_iter_forward_search(&start, "function ",
+					    GTK_TEXT_SEARCH_TEXT_ONLY,
+					    &match_start, &match_end,
+					    NULL)) {
+	    if (gtk_text_iter_starts_line(&match_start)) {
+		gchar *buf = textview_get_hansl(tview, 1);
 
-	    if (buf != NULL) {
-		load_functions(buf);
-		g_free(buf);
+		if (buf != NULL) {
+		    load_functions(vwin, FALSE);
+		    g_free(buf);
+		}
+		break;
 	    }
+	    start = match_end; /* continue the search */
 	}
     }
+}
+
+gboolean textview_has_functions (GtkTextView *tview)
+{
+    GtkTextBuffer *tbuf = gtk_text_view_get_buffer(tview);
+    GtkTextIter start, match_start, match_end;
+    gboolean ret = FALSE;
+
+    gtk_text_buffer_get_start_iter(tbuf, &start);
+
+    while (gtk_text_iter_forward_search(&start, "function ",
+					GTK_TEXT_SEARCH_TEXT_ONLY,
+					&match_start, &match_end,
+					NULL)) {
+	if (gtk_text_iter_starts_line(&match_start)) {
+	    ret = TRUE;
+	    break;
+	}
+	start = match_end; /* continue the search */
+    }
+
+    return ret;
 }

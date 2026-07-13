@@ -24,7 +24,7 @@ void textview_go_back (GtkTextView *tview);
 
 int textview_has_backref (GtkTextView *tview);
 
-void alt_dot_find (GtkTextView *tview);
+void alt_dot_find (windata_t *vwin);
 
 void add_funcdef_finder (const char *sig,
 			 windata_t *popwin,
