@@ -22,8 +22,10 @@
 #include "clipboard.h"
 #include "winstack.h"
 
-#ifndef GRETL_EDIT
-#include "gpt_control.h"
+#ifdef GRETL_EDIT
+# include "gretl_edit.h"
+#else
+# include "gpt_control.h"
 #endif
 
 #define CLIPDEBUG 0
@@ -83,7 +85,7 @@ GtkTargetEntry image_targets[] = {
     { "text/html",         0, TARGET_HTM }
 };
 
-#endif /* __APPLE__ */
+#endif /* __APPLE__ or not */
 
 #define image_type(t) (t == TARGET_SVG || t == TARGET_EMF || \
 		       t == TARGET_EPS || t == TARGET_PDF || \
@@ -253,7 +255,7 @@ static void gretl_clipboard_set (int fmt, int imgtype)
 #endif
 
 #ifdef GRETL_EDIT
-    main = editor;
+    main = get_editor();
 #else
     main = mdata->main;
 #endif

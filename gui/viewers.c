@@ -118,15 +118,6 @@ gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
     return TRUE;
 }
 
-#ifdef GRETL_EDIT
-
-void vwin_go_back_callback (GtkWidget *w, windata_t *vwin)
-{
-    textview_go_back(GTK_TEXT_VIEW(vwin->text));
-}
-
-#endif
-
 void mark_vwin_content_changed (windata_t *vwin)
 {
     if (vwin->active_var == 0) {
@@ -532,7 +523,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	    alt_dot_find(vwin);
 	    return TRUE;
 	} else if (key == GDK_comma) {
-	    textview_go_back(GTK_TEXT_VIEW(vwin->text));
+	    editor_go_back();
 	    return TRUE;
 	}
     }
@@ -627,8 +618,8 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		return TRUE;
 	    }
 #ifdef GRETL_EDIT
-	    if (upkey == GDK_Q && !tabwin_exit_check(editor)) {
-		gtk_widget_destroy(editor);
+	    if (upkey == GDK_Q && !editor_exit_check()) {
+		editor_exit();
 	    }
 #endif
 	} else if (upkey == GDK_Q || upkey == GDK_W) {
@@ -1405,8 +1396,7 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 {
     windata_t *vwin;
     int have_content = 1;
-    int use_tab;
-    int ins = 0;
+    int use_tab = 0;
 
     if (mode & NULL_FILE) {
 	/* new script with pre-given name */
@@ -1425,7 +1415,7 @@ view_file_with_title (const char *filename, int editable, fmode mode,
     use_tab = use_tabbed_editor();
 #endif
 
-    if (!ins && role == EDIT_HANSL && use_tab) {
+    if (role == EDIT_HANSL && use_tab) {
 	vwin = viewer_tab_new(role, filename, NULL);
     } else if (editing_alt_script(role) && use_tab) {
 	vwin = viewer_tab_new(role, filename, NULL);

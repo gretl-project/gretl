@@ -74,7 +74,8 @@ static GOptionEntry options[] = {
 };
 
 windata_t *mdata;
-GtkWidget *editor;
+static GtkWidget *editor;
+static GtkWidget *notebook;
 char scriptfile[MAXLEN];
 float gui_scale;
 
@@ -616,9 +617,32 @@ gboolean open_tryfile (gboolean startup)
     return ret;
 }
 
-/* @w here is the @main member of a tabwin struct: see tabwin.c */
+/* @tmain here is the @main member of a tabwin struct, and @tabs is its
+   GtkNotebook member: see tabwin.c.
+*/
 
-void set_editor (GtkWidget *w)
+void set_editor (GtkWidget *tmain, GtkWidget *tabs)
 {
-    editor = w;
+    editor = tmain;
+    notebook = tabs;
+}
+
+GtkWidget *get_editor (void)
+{
+    return editor;
+}
+
+GtkWidget *get_notebook (void)
+{
+    return notebook;
+}
+
+gboolean editor_exit_check (void)
+{
+    return tabwin_exit_check(editor);
+}
+
+void editor_exit (void)
+{
+    gtk_widget_destroy(editor);
 }

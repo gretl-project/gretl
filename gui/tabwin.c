@@ -22,6 +22,10 @@
 #include "textbuf.h"
 #include "tabwin.h"
 
+#ifdef GRETL_EDIT
+# include "gretl_edit.h"
+#endif
+
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
 #endif
@@ -33,9 +37,9 @@ struct tabwin_t_ {
     GtkWidget *main;      /* top-level GTK window */
     GtkWidget *hbox;      /* horizontal box to hold menu bar */
     GtkWidget *mbar;      /* menu bar */
-    GtkWidget *tabs;      /* notebook for tabs */
+    GtkWidget *tabs;      /* GtkNotebook for tabs */
     GtkWidget *dialog;    /* associated dialog */
-    GtkWidget *dlg_owner; /* the tab that "owns" dialog */
+    GtkWidget *dlg_owner; /* the tab that "owns" @dialog */
 };
 
 GtkTargetEntry tabwin_drag_targets[] = {
@@ -46,6 +50,12 @@ GtkTargetEntry tabwin_drag_targets[] = {
    scripts, and also a tabbed viewer for gretl models -- unless we're
    gretl_edit, in which case there's a single integrated tabbed script
    editor.
+
+   The structure in the editor case: each "page" of the GtkNotebook is
+   an instance of vwin->main, a GtkWidget. This widget holds a pointer
+   to the associated windata_t struct, under the key "vwin".  To get
+   hold of the "vwin" for a given page, call gtk_notebook_get_nth_page
+   to get vwin->main then g_object_get_data to get the vwin itself.
 */
 
 static tabwin_t *tabhansl;
@@ -690,9 +700,7 @@ windata_t *viewer_tab_new (int role, const char *info,
     }
 
 #ifdef GRETL_EDIT
-    if (editor == NULL) {
-	set_editor(tabwin->main);
-    }
+    set_editor(tabwin->main, tabwin->tabs);
 #endif
 
     vwin = vwin_new(role, data);
@@ -1359,19 +1367,6 @@ void tabwin_register_dialog (GtkWidget *w, gpointer p)
     g_signal_connect(G_OBJECT(w), "destroy",
 		     G_CALLBACK(tabwin_unregister_dialog),
 		     tabwin);
-}
-
-int viewer_n_siblings (windata_t *vwin)
-{
-    tabwin_t *tabwin = vwin_get_tabwin(vwin);
-    int n = 0;
-
-    if (tabwin != NULL) {
-	n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(tabwin->tabs));
-	if (n > 0) n--;
-    }
-
-    return n;
 }
 
 int highest_numbered_var_in_tabwin (tabwin_t *tabwin,

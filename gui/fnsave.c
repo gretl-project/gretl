@@ -5404,7 +5404,7 @@ static fnpkg *load_gfn_from_zip (const char *fname, int *err)
 
 void edit_function_package (const char *fname)
 {
-    GtkWidget *editor;
+    GtkWidget *pkg_editor;
     function_info *finfo = NULL;
     int *publist = NULL;
     int *privlist = NULL;
@@ -5426,10 +5426,10 @@ void edit_function_package (const char *fname)
 	goto bailout;
     }
 
-    editor = function_package_get_editor(pkg);
-    if (editor != NULL) {
+    pkg_editor = function_package_get_editor(pkg);
+    if (pkg_editor != NULL) {
 	/* don't open a second editor for a given package */
-	gtk_window_present(GTK_WINDOW(editor));
+	gtk_window_present(GTK_WINDOW(pkg_editor));
 	return;
     }
 

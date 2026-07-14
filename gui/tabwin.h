@@ -20,7 +20,7 @@
 #ifndef TABWIN_H_
 #define TABWIN_H_
 
-typedef struct tabwin_t_  tabwin_t;
+typedef struct tabwin_t_ tabwin_t;
 
 windata_t *viewer_tab_new (int role, const char *info,
 			   gpointer data);
@@ -62,8 +62,6 @@ void tabwin_close_models_viewer (GtkWidget *w);
 void tabwin_register_dialog (GtkWidget *w, gpointer p);
 
 void script_editor_show_new_open (windata_t *vwin, gboolean show);
-
-int viewer_n_siblings (windata_t *vwin);
 
 int highest_numbered_var_in_tabwin (tabwin_t *tabwin, 
 				    const DATASET *dset);

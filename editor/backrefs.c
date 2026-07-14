@@ -18,6 +18,7 @@
  */
 
 #include "gretl.h"
+#include "gretl_edit.h"
 #include "textbuf.h"
 #include "load_functions.h"
 #include "gretl_func.h"
@@ -29,13 +30,16 @@
 */
 
 typedef struct backrefs_ {
+    GtkNotebook *book;
     GtkTextMark **marks;
     int *pages;
     int n_marks;
     int n_slots;
 } backrefs;
 
-/* Allocate a new backrefs struct, with space for one reference. */
+static backrefs *editor_refs;
+
+/* Allocate a backrefs struct with space for one reference. */
 
 static backrefs *backrefs_new (void)
 {
@@ -49,30 +53,30 @@ static backrefs *backrefs_new (void)
     return refs;
 }
 
-/* Free a backrefs struct when its parent widget is destroyed. */
+#if 0 /* In case we decide a cleanup function is needed */
 
-static void backrefs_destroy (gpointer data)
+/* Free the backrefs. */
+
+static void backrefs_destroy (void)
 {
-    if (data != NULL) {
-	backrefs *refs = (backrefs *) data;
-
-	free(refs->marks);
-	free(refs->pages);
-	free(refs);
+    if (editor_refs != NULL) {
+	free(editor_refs->marks);
+	free(editor_refs->pages);
+	free(editor_refs);
+	editor_refs = NULL;
     }
 }
 
-/* Push @mark onto a stack of backward references for @buf. */
+#endif
 
-static void push_backref (GtkTextBuffer *buf, GtkTextMark *mark,
-			  int page)
+/* Push @mark onto the stack of backward references. */
+
+static void push_backref (GtkTextMark *mark, int page)
 {
-    backrefs *refs = g_object_get_data(G_OBJECT(buf), "backrefs");
+    backrefs *refs = editor_refs;
 
     if (refs == NULL) {
-	refs = backrefs_new();
-	g_object_set_data_full(G_OBJECT(buf), "backrefs", refs,
-			       backrefs_destroy);
+	refs = editor_refs = backrefs_new();
     }
 
     if (refs->n_marks == refs->n_slots) {
@@ -89,116 +93,159 @@ static void push_backref (GtkTextBuffer *buf, GtkTextMark *mark,
     refs->n_marks += 1;
 }
 
-/* Pop a GtkTextMark off the stack of backward references for @buf, if
-   such a stack exists and is not empty.
+/* Pop a GtkTextMark off the stack of backward references, if such a
+   stack exists and is not empty.
 */
 
-static GtkTextMark *pop_backref (GtkTextBuffer *buf, int *page)
+static GtkTextMark *pop_backref (int *page)
 {
-    backrefs *refs = g_object_get_data(G_OBJECT(buf), "backrefs");
-    GtkTextMark *ret = NULL;
+    backrefs *refs = editor_refs;
+    GtkTextMark *mark = NULL;
 
     if (refs != NULL && refs->n_marks > 0) {
 	int n = refs->n_marks - 1;
 
 	*page = refs->pages[n];
-	ret = refs->marks[n];
+	mark = refs->marks[n];
 	refs->marks[n] = NULL;
 	refs->n_marks = n;
     }
 
-    return ret;
+    return mark;
 }
 
 /* Add a GtkTextMark at the current insertion point and push it. */
 
-static void textbuf_set_backref (GtkTextBuffer *buf, int page)
+static void textbuf_set_backref (GtkTextBuffer *tbuf, int page)
 {
     GtkTextIter point;
     GtkTextMark *mark;
 
-    gtk_text_buffer_get_iter_at_mark(buf, &point,
-				     gtk_text_buffer_get_insert(buf));
+    gtk_text_buffer_get_iter_at_mark(tbuf, &point,
+				     gtk_text_buffer_get_insert(tbuf));
     mark = gtk_text_mark_new(NULL, FALSE);
-    gtk_text_buffer_add_mark(buf, mark, &point);
-    push_backref(buf, mark, page);
+    gtk_text_buffer_add_mark(tbuf, mark, &point);
+
+    push_backref(mark, page);
 }
 
-/* Respond to Alt-, in gretl_edit */
+static GtkTextMark *back_mark;
 
-void textview_go_back (GtkTextView *tview)
+static gboolean scroll_mark_onscreen_idle (gpointer data)
 {
+    GtkTextView *tview = GTK_TEXT_VIEW(data);
     GtkTextBuffer *tbuf = gtk_text_view_get_buffer(tview);
-    GtkTextMark *mark;
+
+    if (back_mark != NULL) {
+        gtk_text_view_scroll_mark_onscreen(tview, back_mark);
+	gtk_text_buffer_delete_mark(tbuf, back_mark);
+	back_mark = NULL;
+    }
+
+    return G_SOURCE_REMOVE;
+}
+
+/* Respond to Alt-comma : return to the point at which the last search
+   for a function definition was initiated.
+*/
+
+void editor_go_back (void)
+{
     int page = 0;
 
-    mark = pop_backref(tbuf, &page);
+    back_mark = pop_backref(&page);
 
-    if (mark != NULL) {
+    if (back_mark != NULL) {
+	GtkNotebook *book;
+	windata_t *vwin;
+	GtkTextView *tview;
+	GtkTextBuffer *tbuf;
 	GtkTextIter iter;
+	GtkWidget *w;
+	int cp;
 
-	/* FIXME switch page (plus view and tbuf) if needed */
-	gtk_text_buffer_get_iter_at_mark(tbuf, &iter, mark);
+	book = GTK_NOTEBOOK(get_notebook());
+	cp = gtk_notebook_get_current_page(book);
+	if (cp != page) {
+	    /* switch back to the page containing @mark */
+	    gtk_notebook_set_current_page(book, page);
+	}
+	w = gtk_notebook_get_nth_page(book, page);
+	vwin = g_object_get_data(G_OBJECT(w), "vwin");
+	tview = GTK_TEXT_VIEW(vwin->text);
+	tbuf = gtk_text_view_get_buffer(tview);
+
+	gtk_text_buffer_get_iter_at_mark(tbuf, &iter, back_mark);
 	gtk_text_buffer_place_cursor(tbuf, &iter);
-	gtk_text_view_scroll_to_mark(tview, mark, 0.0, TRUE, 0, 0.1);
-	gtk_text_buffer_delete_mark(tbuf, mark);
+	g_idle_add(scroll_mark_onscreen_idle, tview);
     }
 }
 
-/* Check whether @tview has a mark to which we can return */
+/* Check whether there's a previously set mark to which we can return */
 
-int textview_has_backref (GtkTextView *tview)
+int editor_has_backref (void)
 {
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(tview);
-    backrefs *refs = g_object_get_data(G_OBJECT(buf), "backrefs");
+    backrefs *refs = editor_refs;
 
     return (refs != NULL && refs->n_marks > 0);
 }
 
-static gboolean find_function_def (windata_t *vwin,
+static gboolean find_function_def (windata_t *target,
 				   const gchar *sigstart,
-				   int page)
+				   GtkNotebook *book,
+				   int page,
+				   windata_t *src)
 {
+    GtkTextView *tview;
     GtkTextBuffer *tbuf;
     GtkTextIter start, match;
     gboolean found = FALSE;
 
-    maybe_load_functions(vwin);
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    maybe_load_functions(target);
+    tview = GTK_TEXT_VIEW(target->text);
+    tbuf = gtk_text_view_get_buffer(tview);
     gtk_text_buffer_get_start_iter(tbuf, &start);
     found = gtk_text_iter_forward_search(&start, sigstart,
 					 GTK_TEXT_SEARCH_TEXT_ONLY,
 					 &match, NULL, NULL);
     if (found) {
+	int cp = gtk_notebook_get_current_page(book);
+	GtkTextView *orig_view = GTK_TEXT_VIEW(src->text);
+	GtkTextBuffer *orig_buf = gtk_text_view_get_buffer(orig_view);
 	GtkTextMark *targ;
 
 	/* first set a mark for going back */
-	textbuf_set_backref(tbuf, page);
+	textbuf_set_backref(orig_buf, cp);
+
+	/* switch the page, if necessary */
+	if (page != cp) {
+	    gtk_notebook_set_current_page(book, page);
+	}
 
 	/* then move to the function definition */
 	gtk_text_buffer_place_cursor(tbuf, &match);
 	targ = gtk_text_buffer_create_mark(tbuf, "targ", &match, FALSE);
-	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->text),
-				     targ, 0.05, FALSE, 0, 0);
+	gtk_text_view_scroll_mark_onscreen(tview, targ);
     }
 
     return found;
 }
 
-static gboolean find_in_notebook (GtkNotebook *book,
+static gboolean find_in_notebook (windata_t *vwin,
 				  const gchar *needle)
 {
+    GtkNotebook *book = GTK_NOTEBOOK(get_notebook());
     int np = gtk_notebook_get_n_pages(book);
     GtkWidget *tab;
-    windata_t *viewer;
+    windata_t *target;
     gboolean found = FALSE;
     int i;
 
     for (i=0; i<np && !found; i++) {
 	tab = gtk_notebook_get_nth_page(book, i);
-	viewer = g_object_get_data(G_OBJECT(tab), "vwin");
-	if (viewer->role == EDIT_HANSL) {
-	    found = find_function_def(viewer, needle, i);
+	target = g_object_get_data(G_OBJECT(tab), "vwin");
+	if (target->role == EDIT_HANSL) {
+	    found = find_function_def(target, needle, book, i, vwin);
 	    if (found) {
 		fprintf(stderr, "found '%s' on nb page %d\n", needle, i);
 	    }
@@ -212,10 +259,8 @@ static void find_funcdef_callback (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = g_object_get_data(G_OBJECT(w), "vwin");
     gchar *needle = g_object_get_data(G_OBJECT(w), "needle");
-    GtkNotebook *book = GTK_NOTEBOOK(editor_get_tabs(vwin));
 
-    book = GTK_NOTEBOOK(editor_get_tabs(vwin));
-    find_in_notebook(book, needle);
+    find_in_notebook(vwin, needle);
     gtk_widget_destroy(gtk_widget_get_toplevel(w));
 }
 
@@ -247,11 +292,10 @@ void alt_dot_find (windata_t *vwin)
     id = get_identifier_at_cursor(tbuf, &role);
 
     if (id != NULL && *id != '\0') {
-	GtkNotebook *book = GTK_NOTEBOOK(editor_get_tabs(vwin));
 	gchar *needle = get_alt_dot_needle(id);
 
 	if (needle != NULL) {
-	    find_in_notebook(book, needle);
+	    find_in_notebook(vwin, needle);
 	    g_free(needle);
 	}
     }

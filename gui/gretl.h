@@ -132,9 +132,6 @@ extern char Rcommand[MAXSTR];
 extern windata_t *mdata;
 extern GtkTargetEntry gretl_drag_targets[];
 extern PangoFontDescription *fixed_font;
-#ifdef GRETL_EDIT
-extern GtkWidget *editor;
-#endif
 
 #include "gretl_enums.h"
 
@@ -152,7 +149,6 @@ int should_ignore_rc (void);
 void about_dialog (GtkWidget *w);
 
 #ifdef GRETL_EDIT
-void set_editor (GtkWidget *w);
 gboolean open_tryfile (gboolean startup);
 #else
 gboolean open_tryfile (gboolean startup, gboolean dnd);

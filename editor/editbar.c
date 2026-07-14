@@ -17,7 +17,7 @@
  *
  */
 
-/* editbar.c: cut-down variant of toolbar.c specifically for editor mode */
+/* editbar.c: special variant of toolbar.c for gretl_edit */
 
 #include "gretl.h"
 #include "gretl_edit.h"
@@ -288,6 +288,11 @@ static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
     do_new_script(vwin->role, NULL, NULL);
 }
 
+static void go_back_callback (GtkWidget *w, windata_t *vwin)
+{
+    editor_go_back();
+}
+
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
     if (textview_use_highlighting(vwin->role)) {
@@ -433,11 +438,9 @@ static void exec_choice_popup (windata_t *vwin)
     };
     int opts[3] = {0, 1, 0};
     int nopts = 2;
-    int i, k;
+    int i, k, nh;
 
-#if 0 /* not ready yet! */
-    int nh = get_hansl_tabs_count(vwin);
-
+    nh = get_hansl_tabs_count(vwin);
     if (nh == 1) {
 	opts[1] = 1;
     } else {
@@ -445,7 +448,6 @@ static void exec_choice_popup (windata_t *vwin)
 	opts[1] = 2;
 	opts[2] = 3;
     }
-#endif
 
     if (exec_popup == NULL) {
 	exec_popup = gtk_menu_new();
@@ -516,7 +518,7 @@ static GretlToolItem editbar_items[] = {
 };
 
 static GretlToolItem go_back_item = {
-    N_("Back"), GTK_STOCK_GO_BACK, G_CALLBACK(vwin_go_back_callback), 0
+    N_("Back"), GTK_STOCK_GO_BACK, G_CALLBACK(go_back_callback), 0
 };
 
 static int n_editbar_items = G_N_ELEMENTS(editbar_items);
@@ -863,7 +865,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
     GtkWidget *w;
     int i;
 
-    if (textview_has_backref(GTK_TEXT_VIEW(vwin->text))) {
+    if (editor_has_backref()) {
 	item = &go_back_item;
 	w = gtk_menu_item_new_with_label(_(item->tip));
 	g_signal_connect(G_OBJECT(w), "activate", item->func, vwin);

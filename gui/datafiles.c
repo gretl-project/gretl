@@ -2445,16 +2445,16 @@ static void check_loaded_gfn (const char *pkgname,
            loaded from a different location.
         */
         fnpkg *pkg = get_function_package_by_filename(path, NULL);
-        GtkWidget *editor = function_package_get_editor(pkg);
+        GtkWidget *pkg_editor = function_package_get_editor(pkg);
 
-        if (editor != NULL) {
+        if (pkg_editor != NULL) {
             /* warn, don't unload the package being edited */
             gchar *msg;
 
             msg = g_strdup_printf("%s: package in new browser window may\n"
                                   "conflict with package editor", pkgname);
-            gtk_window_present(GTK_WINDOW(editor));
-            msgbox(msg, GTK_MESSAGE_WARNING, editor);
+            gtk_window_present(GTK_WINDOW(pkg_editor));
+            msgbox(msg, GTK_MESSAGE_WARNING, pkg_editor);
             g_free(msg);
         } else {
             function_package_unload_full_by_filename(path);

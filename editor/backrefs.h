@@ -20,9 +20,9 @@
 #ifndef BACKREFS_H
 #define BACKREFS_H
 
-void textview_go_back (GtkTextView *tview);
+void editor_go_back (void);
 
-int textview_has_backref (GtkTextView *tview);
+int editor_has_backref (void);
 
 void alt_dot_find (windata_t *vwin);
 

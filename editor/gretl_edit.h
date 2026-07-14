@@ -40,4 +40,14 @@ gboolean viewer_has_stderr (windata_t *vwin);
 
 void viewer_show_stderr (windata_t *vwin);
 
+void set_editor (GtkWidget *tmain, GtkWidget *tabs);
+
+GtkWidget *get_editor (void);
+
+GtkWidget *get_notebook (void);
+
+gboolean editor_exit_check (void);
+
+void editor_exit (void);
+
 #endif /* GRETL_EDIT_H */

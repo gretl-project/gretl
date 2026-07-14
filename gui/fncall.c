@@ -5050,12 +5050,12 @@ static int gui_function_pkg_register (const char *fname,
 				      const char *relpath,
 				      int modelwin)
 {
-    GtkWidget *editor;
+    GtkWidget *pkg_editor;
     fnpkg *pkg = NULL;
     int err = 0;
 
-    if (package_being_edited(pkgname, &editor)) {
-	pkg = package_editor_get_pkg(editor);
+    if (package_being_edited(pkgname, &pkg_editor)) {
+	pkg = package_editor_get_pkg(pkg_editor);
     }
 
     if (pkg == NULL) {
