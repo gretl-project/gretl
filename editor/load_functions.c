@@ -179,26 +179,7 @@ int load_functions (windata_t *vwin, gboolean all_tabs)
 void maybe_load_functions (windata_t *vwin)
 {
     if (n_user_functions() == 0) {
-	GtkTextView *tview = GTK_TEXT_VIEW(vwin->text);
-	GtkTextBuffer *tbuf = gtk_text_view_get_buffer(tview);
-	GtkTextIter start, match_start, match_end;
-
-	gtk_text_buffer_get_start_iter(tbuf, &start);
-	while (gtk_text_iter_forward_search(&start, "function ",
-					    GTK_TEXT_SEARCH_TEXT_ONLY,
-					    &match_start, &match_end,
-					    NULL)) {
-	    if (gtk_text_iter_starts_line(&match_start)) {
-		gchar *buf = textview_get_hansl(tview, 1);
-
-		if (buf != NULL) {
-		    load_functions(vwin, FALSE);
-		    g_free(buf);
-		}
-		break;
-	    }
-	    start = match_end; /* continue the search */
-	}
+	load_functions(vwin, TRUE);
     }
 }
 
