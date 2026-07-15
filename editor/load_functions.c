@@ -170,10 +170,9 @@ int load_functions (windata_t *vwin, gboolean all_tabs)
 }
 
 /* If the user starts an action associated with look-up of user
-   functions, we check if any are currently loaded. If not, and if
-   @tview contains an instance of a line-start that indicates definition
-   of a function, we'll automatically load any function definitions in
-   the current buffer.
+   functions, we check if any are currently loaded. If not, we
+   automatically load any function definitions in the current editor
+   tabs.
 */
 
 void maybe_load_functions (windata_t *vwin)
@@ -182,6 +181,10 @@ void maybe_load_functions (windata_t *vwin)
 	load_functions(vwin, TRUE);
     }
 }
+
+/* Determine whether @tview contains any function definitions, using a
+   basic heuristic.
+*/
 
 gboolean textview_has_functions (GtkTextView *tview)
 {

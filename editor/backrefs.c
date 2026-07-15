@@ -167,7 +167,7 @@ void editor_go_back (void)
 	book = GTK_NOTEBOOK(get_notebook());
 	cp = gtk_notebook_get_current_page(book);
 	if (cp != page) {
-	    /* switch back to the page containing @mark */
+	    /* switch back to the page containing @back_mark */
 	    gtk_notebook_set_current_page(book, page);
 	}
 	w = gtk_notebook_get_nth_page(book, page);
@@ -181,7 +181,7 @@ void editor_go_back (void)
     }
 }
 
-/* Check whether there's a previously set mark to which we can return */
+/* Check whether there's a previously set mark to which we can return. */
 
 int editor_has_backref (void)
 {
@@ -246,9 +246,6 @@ static gboolean find_in_notebook (windata_t *vwin,
 	target = g_object_get_data(G_OBJECT(tab), "vwin");
 	if (target->role == EDIT_HANSL) {
 	    found = find_function_def(target, needle, book, i, vwin);
-	    if (found) {
-		fprintf(stderr, "found '%s' on nb page %d\n", needle, i);
-	    }
 	}
     }
 
@@ -326,7 +323,6 @@ void add_funcdef_finder (const char *sig,
     label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), buf);
     gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
-    // set_popup_bg(label);
     gtk_container_add(GTK_CONTAINER(ebox), label);
     g_free(buf);
     g_free(fmt);
