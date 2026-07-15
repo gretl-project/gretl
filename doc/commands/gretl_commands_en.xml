@@ -12455,9 +12455,10 @@
 	developers and is available only in conjunction with the
 	<lit>install</lit>.  Its effect is that the function package in
 	question is downloaded from the <lit>staging</lit> area at
-	sourceforge rather than the public area. Packages in staging are
-	not yet approved for general use, so ignore this option unless
-	you know what you're doing.
+	sourceforge rather than the public area. The <lit>.gfn</lit> or
+	<lit>.zip</lit> filename extension must be given. Packages in
+	staging are not yet approved for general use, so ignore this
+	option unless you know what you're doing.
       </para>
     </description>
 
