@@ -46,6 +46,7 @@
 # include <gtksourceview/gtksourcelanguagemanager.h>
 # include <gtksourceview/gtksourceprintcompositor.h>
 # include <gtksourceview/gtksourcestyleschememanager.h>
+# include <gtksourceview/gtksourceiter.h>
 #endif
 
 #ifdef HAVE_GTKSV_COMPLETION
