@@ -3264,6 +3264,31 @@ static int fcast_errs_ok (MODEL *pmod)
     }
 }
 
+#if 0 /* not yet */
+
+static void log_or_level_selector (GtkWidget *vbox,
+				   gretlopt *optp)
+{
+    const char *strs[] = {
+	N_("Use log"),
+	N_("Use level (simple exponentiation)"),
+	N_("Use level (assuming normality)"),
+	NULL
+    };
+    gretlopt opts[] = {OPT_NONE, OPT_E, OPT_N};
+    combo_opts log_opts = {optp, opts, strs};
+    GtkWidget *hbox, *tmp;
+
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gretl_opts_combo(&log_opts, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+}
+
+#endif
+
 /* Note: the @pmod argument will be NULL if this dialog is
    called in relation to a system of equations.
 */
@@ -3291,6 +3316,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     GtkWidget *ibutton = NULL;
     GtkWidget *button = NULL;
     struct range_setting *rset;
+    gretlopt log_opt;
     int i, radio_val = 0;
     int ret = GRETL_CANCEL;
 
@@ -3311,6 +3337,12 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     g_signal_connect(G_OBJECT(rset->adj1), "value-changed",
                      G_CALLBACK(sync_pre_forecast), rset);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
+
+#if 0 /* not yet */
+    if (depvar_is_log(pmod)) {
+	log_or_level_selector(vbox, &log_opt);
+    }
+#endif
 
     if (!dataset_is_time_series(dataset)) {
 	/* only static forecast is available */
@@ -3427,25 +3459,21 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	   alpha value for confidence intervals
 	*/
         static const char *strs[] = {
-            N_("error bars"),
-            N_("low and high lines"),
-            N_("shaded area"),
-            NULL
+            N_("error bars"), N_("low and high lines"),
+            N_("shaded area"), NULL
         };
         static gretlopt opts[] = {
-            OPT_NONE,
-            OPT_L,
-            OPT_F
+            OPT_NONE, OPT_L, OPT_F
         };
         static combo_opts ci_opts;
         GtkWidget *combo;
-        gboolean combo_choice = 1;
+        gboolean combo_choice = TRUE;
         int deflt;
 
         if (*t2 - *t1 < 1) {
             /* one observation: can only do error bar */
             deflt = 0;
-            combo_choice = 0;
+            combo_choice = FALSE;
             *optp &= ~OPT_L;
             *optp &= ~OPT_F;
         } else {
