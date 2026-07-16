@@ -50,17 +50,28 @@
                           c == PROBIT || \
                           c == TOBIT)
 
+struct fc_params_ {
+    int t1;                /* start of forecast range */
+    int t2;                /* end of forecast range */
+    int pre_n;             /* number of pre-forecast observations to show */
+    int k;                 /* steps ahead (for recursive case) */
+    double *alpha;         /* for confidence intervals */
+    gretlopt opt;          /* option flags */
+    FcastFlags flags;      /* flags governing availability of options */
+    FcastMethod method;    /* method */
+};
+
 typedef struct Forecast_ Forecast;
 
 struct Forecast_ {
-    int method;       /* static, dynamic or auto */
-    double *yhat;     /* array of forecast values */
-    double *sderr;    /* array of forecast standard errors */
-    double *eps;      /* array of estimated forecast errors */
-    int *dvlags;      /* info on lags of dependent variable */
-    int t1;           /* start of forecast range */
-    int t2;           /* end of forecast range */
-    int model_t2;     /* end of period over which model was estimated */
+    FcastMethod method;    /* static, dynamic or auto */
+    double *yhat;          /* array of forecast values */
+    double *sderr;         /* array of forecast standard errors */
+    double *eps;           /* array of estimated forecast errors */
+    int *dvlags;           /* info on lags of dependent variable */
+    int t1;                /* start of forecast range */
+    int t2;                /* end of forecast range */
+    int model_t2;          /* end of period over which model was estimated */
 };
 
 static gretl_matrix *fcast_matrix;
@@ -2747,14 +2758,14 @@ static int fc_add_eps (Forecast *fc, int n)
     return err;
 }
 
-/* find the earlist starting point at which we have a previous
-   valid observation on the level of Z[yno] with which to
-   initialize an integrated forecast
+/* Find the earliest starting point at which we have a previous valid
+   observation on the level of series @yno with which to initialize an
+   integrated forecast.
 */
 
-static int revise_fr_start (FITRESID *fr, int yno, const double **Z,
-			    const DATASET *dset)
+static int revise_fr_start (FITRESID *fr, int yno, const DATASET *dset)
 {
+    const double *y = dset->Z[yno];
     int t, t0;
 
     if (fr->t0 == 0) {
@@ -2767,7 +2778,7 @@ static int revise_fr_start (FITRESID *fr, int yno, const double **Z,
 
     /* find first non-missing value */
     for (t=t0; t<dset->n; t++) {
-	if (!na(Z[yno][t])) {
+	if (!na(y[t])) {
 	    break;
 	}
     }
@@ -2783,12 +2794,11 @@ static int revise_fr_start (FITRESID *fr, int yno, const double **Z,
     if (fr->t1 < fr->t0) {
 	fr->t1 = fr->t0;
     }
-
     if (fr->t2 < fr->t1) {
 	fr->t2 = fr->t1;
     }
 
-    fr->fitted[t0] = Z[yno][t0];
+    fr->fitted[t0] = y[t0];
     fr->resid[t0] = 0.0;
 
     return 0;
@@ -2845,7 +2855,6 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 			   DATASET *dset, gretlopt opt)
 {
     Forecast fc;
-    const double **Z = (const double **) dset->Z;
     int yno = gretl_model_get_depvar(pmod);
     int integrate = (opt & OPT_I);
     int dummy_AR = 0;
@@ -2869,7 +2878,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     if (integrate) {
 	err = check_integrated_forecast_option(pmod, dset, &yno);
 	if (!err) {
-	    err = revise_fr_start(fr, yno, Z, dset);
+	    err = revise_fr_start(fr, yno, dset);
 	}
 	if (err) {
 	    return err;

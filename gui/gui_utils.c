@@ -2811,8 +2811,9 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
     FITRESID *fr;
+    FcastFlags flags = 0;
     int t1, t2, t2est, yno, resp;
-    int premax, pre_n, dyn_ok;
+    int premax, pre_n;
     int static_model = 0;
     gretlopt opt = OPT_NONE;
     double conf = 0.95;
@@ -2855,7 +2856,9 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	if (pre_n > 100) {
 	    pre_n = 100;
 	}
-	dyn_ok = !static_model;
+	if (!static_model) {
+	    flags |= FC_DYNAMIC_OK;
+	}
     } else {
 	if (var != NULL) {
 	    t1 = levels_order(var);
@@ -2863,13 +2866,12 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	    t1 = sys->order;
 	}
 	pre_n = 0;
-	dyn_ok = 0;
     }
 
     resp = forecast_dialog(t1, t1, &t1,
 			   t1, t2, &t2, NULL,
 			   0, premax, &pre_n,
-			   dyn_ok, &gopt, &conf,
+			   flags, &gopt, &conf,
 			   NULL, vwin->main);
     if (resp < 0) {
 	return;

@@ -3264,7 +3264,7 @@ static int fcast_errs_ok (MODEL *pmod)
     }
 }
 
-#if 0 /* not yet */
+#if 0 /* not ready yet */
 
 static void log_or_level_selector (GtkWidget *vbox,
 				   gretlopt *optp)
@@ -3289,14 +3289,17 @@ static void log_or_level_selector (GtkWidget *vbox,
 
 #endif
 
-/* Note: the @pmod argument will be NULL if this dialog is
-   called in relation to a system of equations.
+/* forecast_dialog() is called by gui_do_forecast() in library.c and
+   system_forecast_callback() in gui_utils.c. The @pmod argument will
+   be non-NULL in the former case, NULL in the latter.
+
+   The @optp argument is to do with plotting the forecast.
 */
 
 int forecast_dialog (int t1min, int t1max, int *t1,
                      int t2min, int t2max, int *t2,
-                     int *k, int pmin, int pmax, int *p,
-                     int flags, gretlopt *optp,
+                     int *k, int pmin, int pmax, int *pre_n,
+                     FcastFlags flags, gretlopt *optp,
                      double *conf, MODEL *pmod,
                      GtkWidget *parent)
 {
@@ -3316,7 +3319,6 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     GtkWidget *ibutton = NULL;
     GtkWidget *button = NULL;
     struct range_setting *rset;
-    gretlopt log_opt;
     int i, radio_val = 0;
     int ret = GRETL_CANCEL;
 
@@ -3338,8 +3340,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                      G_CALLBACK(sync_pre_forecast), rset);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
-#if 0 /* not yet */
-    if (depvar_is_log(pmod)) {
+#if 0 /* not ready yet */
+    if (series_is_log(gretl_model_get_depvar(pmod), dataset, NULL) {
 	log_or_level_selector(vbox, &log_opt);
     }
 #endif
@@ -3434,7 +3436,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = option_spinbox(p, _(pre_txt), pmin, pmax, 0, &rset->p);
+    tmp = option_spinbox(pre_n, _(pre_txt), pmin, pmax, 0, &rset->p);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
     /* get the max pre-forecast obs right */
@@ -3446,7 +3448,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                                     optp, OPT_H);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_set_sensitive(tmp, *p > 0);
+    gtk_widget_set_sensitive(tmp, *pre_n > 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (*optp & OPT_H));
     g_signal_connect(GTK_ADJUSTMENT(rset->p), "value-changed",
                      G_CALLBACK(toggle_activate_fitvals), tmp);

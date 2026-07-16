@@ -1253,7 +1253,7 @@ static int push_midas_coeff_array (const MODEL *pmod)
 
 int midas_forecast_setup (const MODEL *pmod,
 			  DATASET *dset,
-			  ForecastMethod method,
+			  FcastMethod method,
 			  char **pformula)
 {
     gretl_array *mA;

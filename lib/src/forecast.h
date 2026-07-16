@@ -24,13 +24,7 @@
 extern "C" {
 #endif
 
-typedef enum {
-    FC_AUTO_OK      = 1 << 0,
-    FC_DYNAMIC_OK   = 1 << 1,
-    FC_ADDOBS_OK    = 1 << 2,
-    FC_INTEGRATE_OK = 1 << 3,
-    FC_MEAN_OK      = 1 << 4
-} FcastFlags;
+typedef struct fc_params_ fc_params;
 
 struct FITRESID_ {
     int model_ID;   /* ID of model on which forecast is based */

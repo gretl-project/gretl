@@ -50,7 +50,7 @@ gretl_matrix *midas_list_to_vector (const int *list,
 
 int midas_forecast_setup (const MODEL *pmod,
 			  DATASET *dset,
-			  ForecastMethod method,
+			  FcastMethod method,
 			  char **pformula);
 
 MODEL midas_model (const int *list, const char *param,
