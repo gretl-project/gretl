@@ -9469,17 +9469,18 @@ contenga un percorso completo.
       trimestre, un altro per il secondo mese e l'ultimo i valori
       per il terzo mese.
     </para>
-    <para> Questi elementi devono essere in un certo ordine, ossia
-    <emphasis>prima il più recente</emphasis>. Usando di nuovo
-    l'esempio mensile/trimestrale, l'ordine deve essere mese 3, mese
-    2, mese 1. Per controintuitivo che possa sembrare questo è
-    l'ordine richiesto per formare liste di ritardi, cosa molto comune
-    nei modelli MIDAS.  </para> <para> Per una guida sul come creare
-    un dataset che contenga liste midas, consultare
-  </para>
-  <para>
-    <url>http://gretl.sourceforge.net/midas/midas_gretl.pdf</url>
-  </para>
+    <para>
+      Questi elementi devono essere in un certo ordine, ossia
+      <emphasis>prima il più recente</emphasis>. Usando di nuovo
+      l'esempio mensile/trimestrale, l'ordine deve essere mese 3, mese
+      2, mese 1. Per controintuitivo che possa sembrare questo è
+      l'ordine richiesto per formare liste di ritardi, cosa molto
+      comune nei modelli MIDAS.  </para> <para> Per una guida sul come
+      creare un dataset che contenga liste midas, consultare
+    </para>
+    <para>
+      <url>http://gretl.sourceforge.net/midas/midas_gretl.pdf</url>
+    </para>
   </description>
 </command>
 
@@ -12225,6 +12226,11 @@ del comando <cmdref targ="set"/>.
 	<flag>--boxplot</flag>
 	<effect>boxplot per tutte le unità</effect>
       </option>
+        <option>
+	  <flag>--font</flag>
+	  <optparm>fontspec</optparm>
+	  <effect>vedi sotto</effect>
+        </option>
       <option>
 	<flag>--output</flag>
 	<optparm>nomefile</optparm>
@@ -12263,8 +12269,9 @@ del comando <cmdref targ="set"/>.
     </code>
     <para>
       L'opzione <opt>output=</opt><repl>filename</repl> è usata per
-      controllare forma e destinazione dell'output; per dettagli,
-      vedi il comando <cmdref targ="gnuplot"/>.
+      controllare forma e destinazione dell'output; per dettagli su
+      questa opzione e anche l'opzione <opt>font</opt>, vedi il
+      comando <cmdref targ="gnuplot"/>.
     </para>
 
   </description>
@@ -12650,29 +12657,53 @@ del comando <cmdref targ="set"/>.
 	L'opzione <opt>staging</opt> è pensata per gli sviluppatori ed
 	è disponibile solo insieme all'azione <lit>install</lit>
 	applicata a un pacchetto di funzioni. Il suo effetto è che il
-	pacchetto in questione viene scaricato
-	dall'area <lit>staging</lit> di sourceforge anziché dall'area
-	pubblica. I pacchetti in staging non sono ancora approvati per
-	l'uso generale, quindi questa opzione è rivolta a chi sa quel
-	che fa.
+	pacchetto in questione viene scaricato dall'area
+	<lit>staging</lit> di sourceforge anziché dall'area
+	pubblica. Il nome del pacchetto deve essere completo di
+	estensione (<lit>.gfn</lit> oppure <lit>.zip</lit>). I
+	pacchetti in staging non sono ancora approvati per l'uso
+	generale, quindi questa opzione è rivolta a chi sa quel che
+	fa.
       </para>
   </description>
 
   <gui-access>
     <menu-path>/File/Pacchetti/Sul server</menu-path>
   </gui-access>
-
 </command>
+
+  <command name="pkg-assign" section="Programming"
+	   label="Must assign" context="gui">
+    <description>
+      <para>
+        Perché insistere che un utente debba per forza assegnare un
+	valore di ritorno alle funzioni pubbliche di un pacchetto, nel
+	contesto GUI?
+      </para>
+      <para>
+	Il punto è che alcune funzioni hanno l'unico scopo di fornire
+	un risultato, sotto forma di serie, matrice o altro, senza
+	mostrare alcun output stampato o visualizzare un grafico. Per
+	tali funzioni, se l'utente fa clic su <quote>OK</quote> senza
+	assegnare con precisione il valore di ritorno, non accadrà
+	nulla, e questo potrebbe essere fonte di
+	confusione. Impostando il flag <quote>must assign</quote>,
+	si comunica di fatto all'utente di <emphasis>non</emphasis>
+	aspettarsi nulla dalla funzione in questione, se non il suo
+	valore di ritorno.
+      </para>
+    </description>
+  </command>
 
 <command name="pkg-depends" section="Programming"
 	 label="Dependencies" context="gui">
   <description>
     <para>
       Ciò che intendiamo come <quote>dipendenze</quote> sono i
-      pacchetti da cui il vostro pacchetto dipende per le
-      funzionare, che ovviamente devono essere installati e caricati
-      affinché il vostro funzioni correttamente. In questa finestra
-      di dialogo, se ne possono indicare fino a quattro.
+      pacchetti da cui il vostro pacchetto dipende per le funzionare,
+      che ovviamente devono essere installati e caricati affinché il
+      vostro funzioni correttamente. In questa finestra di dialogo, se
+      ne possono indicare fino a quattro.
     </para>
     <para>
       Ed esempio, immaginate che il vostro pacchetto usi delle
