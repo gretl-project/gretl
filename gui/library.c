@@ -1921,6 +1921,7 @@ int out_of_sample_info (int add_ok, int *t2)
 void gui_do_forecast (GtkAction *action, gpointer p)
 {
     static gretlopt gopt = OPT_P | OPT_H;
+    gretlopt fopt = OPT_NONE;
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
@@ -1933,7 +1934,6 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     int recursive = 0, k = 1, *kptr;
     int dt2 = dataset->n - 1;
     int st2 = dataset->n - 1;
-    gretlopt opt = OPT_NONE;
     double conf = 0.95;
     FITRESID *fr;
     PRN *prn = NULL;
@@ -2007,9 +2007,9 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     if (resp == 1) {
-        opt = OPT_D;
+        fopt = OPT_D;
     } else if (resp == 2) {
-        opt = OPT_S;
+        fopt = OPT_S;
     } else if (resp == 3) {
         recursive = 1;
     }
@@ -2017,13 +2017,12 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     if (gopt & OPT_I) {
         /* transfer OPT_I (integrate forecast) from graph
            to general options */
-        opt |= OPT_I;
+        fopt |= OPT_I;
         gopt &= ~OPT_I;
     }
-
     if (gopt & OPT_M) {
         /* OPT_M (show interval for mean): copy to opt */
-        opt |= OPT_M;
+        fopt |= OPT_M;
     }
 
     if (recursive) {
@@ -2034,12 +2033,12 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         ntolabel(startobs, t1, dataset);
         ntolabel(endobs, t2, dataset);
         lib_command_sprintf("fcast %s %s%s", startobs, endobs,
-                            print_flags(opt, FCAST));
+                            print_flags(fopt, FCAST));
         if (parse_lib_command()) {
             return;
         }
         fr = get_forecast(pmod, t1, t2, pre_n, dataset,
-                          opt, &err);
+                          fopt, &err);
         if (!err) {
             record_lib_command();
         }

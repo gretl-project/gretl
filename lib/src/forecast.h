@@ -24,8 +24,6 @@
 extern "C" {
 #endif
 
-typedef struct fc_params_ fc_params;
-
 struct FITRESID_ {
     int model_ID;   /* ID of model on which forecast is based */
     int asymp;      /* 0/1 flag for asymptotic estimator */

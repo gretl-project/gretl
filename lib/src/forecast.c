@@ -50,17 +50,6 @@
                           c == PROBIT || \
                           c == TOBIT)
 
-struct fc_params_ {
-    int t1;                /* start of forecast range */
-    int t2;                /* end of forecast range */
-    int pre_n;             /* number of pre-forecast observations to show */
-    int k;                 /* steps ahead (for recursive case) */
-    double *alpha;         /* for confidence intervals */
-    gretlopt opt;          /* option flags */
-    FcastFlags flags;      /* flags governing availability of options */
-    FcastMethod method;    /* method */
-};
-
 typedef struct Forecast_ Forecast;
 
 struct Forecast_ {
@@ -902,8 +891,8 @@ static int real_dpanel_fcast (double *yhat,
     return 0;
 }
 
-/* for pooled OLS, fixed effects and random effects:
-   handles both within-sample and out of sample
+/* For pooled OLS, fixed effects and random effects: handles both
+   within-sample and out of sample.
 */
 
 static int real_panel_fcast (double *yhat,
@@ -2848,8 +2837,9 @@ static int check_all_probs_option (MODEL *pmod)
     return err;
 }
 
-/* driver for various functions that compute forecasts
-   for different sorts of models */
+/* Driver for various functions that compute forecasts for different
+   sorts of models.
+*/
 
 static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 			   DATASET *dset, gretlopt opt)

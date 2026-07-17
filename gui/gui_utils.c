@@ -2806,6 +2806,7 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
 static void system_forecast_callback (GtkAction *action, gpointer p)
 {
     static gretlopt gopt = OPT_P;
+    gretlopt fopt = OPT_NONE;
     windata_t *vwin = (windata_t *) p;
     int ci = vwin->role;
     GRETL_VAR *var = NULL;
@@ -2815,7 +2816,6 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
     int t1, t2, t2est, yno, resp;
     int premax, pre_n;
     int static_model = 0;
-    gretlopt opt = OPT_NONE;
     double conf = 0.95;
     int i, err = 0;
 
@@ -2878,13 +2878,13 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
     }
 
     if (resp == 1) {
-	opt = OPT_D;
+	fopt = OPT_D;
     } else if (resp == 2) {
-	opt = OPT_S;
+	fopt = OPT_S;
     }
 
     fr = get_system_forecast(vwin->data, ci, i, t1, t2, pre_n,
-			     dataset, opt, &err);
+			     dataset, fopt, &err);
 
     if (err) {
 	gui_errmsg(err);
@@ -2896,7 +2896,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	ntolabel(obs1, t1, dataset);
 	ntolabel(obs2, t2, dataset);
 	lib_command_sprintf("fcast %s %s %s%s", obs1, obs2, dataset->varname[yno],
-			    print_flags(opt, FCAST));
+			    print_flags(fopt, FCAST));
 	record_command_verbatim();
 
 	if (bufopen(&prn)) {
