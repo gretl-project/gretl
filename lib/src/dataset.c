@@ -3271,7 +3271,8 @@ static int found_log_parent (const char *s, char *targ)
  * @dset: dataset information.
  * @i: ID number of series.
  * @parent: location to which to write the name of the
- * "parent" variable if any.
+ * "parent" variable if any; must be of length VNAMELEN
+ * or greater.
  *
  * Tries to determine if the variable with ID number @i is
  * the logarithm of some other variable.

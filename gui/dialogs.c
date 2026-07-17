@@ -3267,6 +3267,7 @@ static int fcast_errs_ok (MODEL *pmod)
 #if 0 /* not ready yet */
 
 static void log_or_level_selector (GtkWidget *vbox,
+				   const char *parent,
 				   gretlopt *optp)
 {
     const char *strs[] = {
@@ -3275,7 +3276,7 @@ static void log_or_level_selector (GtkWidget *vbox,
 	N_("Use level (assuming normality)"),
 	NULL
     };
-    gretlopt opts[] = {OPT_NONE, OPT_E, OPT_N};
+    gretlopt opts[] = {OPT_NONE, OPT_X, OPT_G};
     combo_opts log_opts = {optp, opts, strs};
     GtkWidget *hbox, *tmp;
 
@@ -3293,7 +3294,9 @@ static void log_or_level_selector (GtkWidget *vbox,
    system_forecast_callback() in gui_utils.c. The @pmod argument will
    be non-NULL in the former case, NULL in the latter.
 
-   The @optp argument is to do with plotting the forecast.
+   The @optp argument is mainly to do with plotting the forecast,
+   bit can accept OPT_I (integrate), OPT_M (mean-y) or OPT_X
+   (exponentiate log dependent variable).
 */
 
 int forecast_dialog (int t1min, int t1max, int *t1,
@@ -3341,8 +3344,12 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
 #if 0 /* not ready yet */
-    if (series_is_log(gretl_model_get_depvar(pmod), dataset, NULL) {
-	log_or_level_selector(vbox, &log_opt);
+    if (pmod != NULL) {
+	const char *parent =  gretl_model_get_data(pmod, "log-parent");
+
+	if (parent != NULL) {
+	    log_or_level_selector(vbox, parent, optp);
+	}
     }
 #endif
 
@@ -3629,7 +3636,7 @@ int add_obs_dialog (const char *blurb, int addmin,
     tmp = gtk_label_new(_("Number of observations to add:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
-    addspin = gtk_spin_button_new_with_range(1, 10000, 1);
+    addspin = gtk_spin_button_new_with_range(0, 10000, 1);
     gtk_entry_set_activates_default(GTK_ENTRY(addspin), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), addspin, TRUE, TRUE, 5);
 

@@ -1931,7 +1931,9 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     int premax = 0;
     int pre_n = 0;
     int t1min = 0;
-    int recursive = 0, k = 1, *kptr;
+    int recursive = 0;
+    int k = 1;
+    int *kptr = NULL;
     int dt2 = dataset->n - 1;
     int st2 = dataset->n - 1;
     double conf = 0.95;
@@ -1945,9 +1947,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         return;
     }
 
-    /* try to figure which options might be applicable */
-    forecast_options_for_model(pmod, dataset, &flags,
-                               &dt2, &st2);
+    /* Try to figure which options might be applicable. */
+    forecast_options_for_model(pmod, dataset, &flags, &dt2, &st2);
 
     if (flags & (FC_DYNAMIC_OK | FC_AUTO_OK)) {
         t2 = dt2;
@@ -1955,8 +1956,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         t2 = st2;
     }
 
-    /* if no out-of-sample obs are available in case of time-
-       series data, alert the user */
+    /* If no out-of-sample obs are available in case of time-
+       series data, alert the user. */
     if (t2 <= pmod->t2 && dataset_is_time_series(dataset)) {
         err = out_of_sample_info(flags & FC_ADDOBS_OK, &t2);
         if (err) {
@@ -2005,6 +2006,12 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         gopt = OPT_P | OPT_H;
         return;
     }
+
+#if 0 /* just for testing */
+    fprintf(stderr, "integrate %d, use level %d\n",
+	    gopt & OPT_I ? 1 : 0, gopt & OPT_X ? 1 : 0);
+    return;
+#endif
 
     if (resp == 1) {
         fopt = OPT_D;
