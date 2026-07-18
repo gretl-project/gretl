@@ -1918,6 +1918,31 @@ int out_of_sample_info (int add_ok, int *t2)
     return err;
 }
 
+/* Handle any option flags that were added to @gopt for convenience but
+   really belong in @fopt. OPT_M is relatively complicated since it
+   pertains to both @gopt and &fopt: we want to copy it rather than
+   shift it.
+*/
+
+static void maybe_transfer_options (gretlopt *gopt,
+				    gretlopt *fopt)
+{
+    gretlopt shift = OPT_I | OPT_M | OPT_X | OPT_G;
+    gretlopt isect = *gopt & shift;
+
+    if (isect) {
+	*fopt |= isect;  /* copy flags to @fopt */
+	isect &= ~OPT_M; /* protect OPT_M in @gopt */
+	*gopt &= ~isect; /* delete all but OPT_M */
+	if (*fopt & OPT_G) {
+	    /* debatable */
+	    *fopt |= OPT_X;
+	    *fopt &= ~OPT_G;
+	    set_optval_int(FCAST, OPT_X, 2);
+	}
+    }
+}
+
 void gui_do_forecast (GtkAction *action, gpointer p)
 {
     static gretlopt gopt = OPT_P | OPT_H;
@@ -1990,11 +2015,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         pre_n = 0;
     }
 
-    if (flags & FC_INTEGRATE_OK) {
-        kptr = NULL;
-    } else {
-        kptr = &k;
-    }
+    kptr = (flags & FC_INTEGRATE_OK)? NULL : &k;
 
     resp = forecast_dialog(t1min, t2, &t1,
                            0, t2, &t2, kptr,
@@ -2003,6 +2024,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
                            pmod, vwin_toplevel(vwin));
 
     if (canceled(resp)) {
+	/* reinstate the default value */
         gopt = OPT_P | OPT_H;
         return;
     }
@@ -2021,16 +2043,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         recursive = 1;
     }
 
-    if (gopt & OPT_I) {
-        /* transfer OPT_I (integrate forecast) from graph
-           to general options */
-        fopt |= OPT_I;
-        gopt &= ~OPT_I;
-    }
-    if (gopt & OPT_M) {
-        /* OPT_M (show interval for mean): copy to opt */
-        fopt |= OPT_M;
-    }
+    maybe_transfer_options(&gopt, &fopt);
 
     if (recursive) {
         fr = recursive_OLS_k_step_fcast(pmod, dataset,
@@ -2058,17 +2071,15 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     if (!err) {
-        int ols_special = 0;
+        int ols_special = dataset_is_cross_section(dataset) &&
+	    gretl_is_simple_OLS(pmod);
         int width = 78;
 
         if (recursive) {
             err = text_print_fit_resid(fr, dataset, prn);
         } else {
-            if (dataset_is_cross_section(dataset)) {
-                ols_special = gretl_is_simple_OLS(pmod);
-            }
             if (LIMDEP(pmod->ci) || ols_special) {
-                /* don't generate plot via text_print_forecast() */
+                /* don't generate a plot via text_print_forecast() */
                 gopt &= ~OPT_P;
             } else {
                 gopt |= OPT_P;
@@ -2078,9 +2089,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         }
 
         if (ols_special) {
-            err = plot_simple_fcast_bands(pmod, fr,
-                                          dataset,
-                                          gopt);
+            err = plot_simple_fcast_bands(pmod, fr, dataset, gopt);
             gopt |= OPT_P;
         }
         if (!err && (gopt & OPT_P)) {
@@ -2094,7 +2103,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
                                 FCAST, fr);
     }
 
-    /* don't remember the "mean" option */
+    /* OPT_M may have been passed for plotting: don't
+       remember it */
     gopt &= ~OPT_M;
 }
 

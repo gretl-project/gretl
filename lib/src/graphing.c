@@ -6494,8 +6494,8 @@ static void print_filledcurve_line (const char *title,
     fputs(use_alpha ? "\n" : ", \\\n", fp);
 }
 
-/* note: if @opt includes OPT_H, that says to show fitted
-   values for the pre-forecast range
+/* Note: if @opt includes OPT_H, that says to show fitted values for the
+   pre-forecast range.
 */
 
 int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
@@ -6516,13 +6516,12 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     int t1, yhmin;
     int t, n, err = 0;
 
-    /* note: yhmin is the first obs at which to start plotting y-hat */
+    /* @yhmin is the first obs at which to start plotting y-hat */
     if (do_errs) {
         t1 = fr->t0;
         yhmin = (opt & OPT_H)? fr->t0 : fr->t1;
     } else {
         t1 = (fr->t0 >= 0)? fr->t0 : 0;
-        /* was: yhmin = t1; */
         yhmin = (opt & OPT_H)? t1 : fr->t1;
     }
 
@@ -6840,7 +6839,7 @@ int plot_simple_fcast_bands (const MODEL *pmod,
     int xv, t1, yhmin;
     int t, n, err = 0;
 
-    /* note: yhmin is the first obs at which to start plotting y-hat */
+    /* @yhmin is the first obs at which to start plotting y-hat */
     t1 = fr->t0;
     yhmin = (opt & OPT_H)? fr->t0 : fr->t1;
 
