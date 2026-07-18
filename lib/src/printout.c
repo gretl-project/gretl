@@ -3187,8 +3187,8 @@ static int fr_print_fc_stats (const FITRESID *fr, gretlopt opt,
 	return E_MISSDATA;
     }
 
-    m = forecast_stats(fr->actual, fr->fitted, t1, t2, &n_used,
-		       opt, &err);
+    m = forecast_stats(fr->actual, fr->fitted, t1, t2,
+		       &n_used, opt, &err);
 
     if (!err) {
 	err = print_fcast_stats_matrix(m, n_used, opt, prn);
@@ -3364,6 +3364,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     int obslen, pmax = fr->pmax;
     int errpmax = fr->pmax;
     int quiet = (opt & OPT_Q);
+    int unlog = (opt & OPT_X);
     int ywidth;
     double *maxerr = NULL;
     double conf = 100 * (1 - fr->alpha);
@@ -3390,7 +3391,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     if (do_errs) {
 	double a2 = fr->alpha / 2;
 
-	tval = (fr->asymp)? normal_critval(a2) : student_critval(fr->df, a2);
+	tval = fr->asymp ? normal_critval(a2) : student_critval(fr->df, a2);
 
 	if (!quiet) {
 	    if (fr->asymp) {
@@ -3439,15 +3440,24 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     }
 
     for (t=fr->t0; t<=fr->t2; t++) {
-	print_obs_marker(t, dset, obslen, prn);
-	fcast_print_x(fr->actual[t], ywidth + 2, pmax, prn);
+	double yt = fr->actual[t];
+	double yht = fr->fitted[t];
+	double lo, hi;
 
-	if (na(fr->fitted[t])) {
+	if (unlog) {
+	    yt = exp(yt);
+	    yhat = exp(yht);
+	}
+
+	print_obs_marker(t, dset, obslen, prn);
+	fcast_print_x(yt, ywidth + 2, pmax, prn);
+
+	if (na(yht)) {
 	    pputc(prn, '\n');
 	    continue;
 	}
 
-	fcast_print_x(fr->fitted[t], 15, pmax, prn);
+	fcast_print_x(yht, 15, pmax, prn);
 
 	if (do_errs) {
 	    if (na(fr->sderr[t])) {
@@ -3455,9 +3465,11 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 	    } else {
 		fcast_print_x(fr->sderr[t], 15, errpmax, prn);
 		maxerr[t] = tval * fr->sderr[t];
-		fcast_print_x(fr->fitted[t] - maxerr[t], 15, pmax, prn);
+		lo = fr->fitted[t] - maxerr[t];
+		hi = fr->fitted[t] + maxerr[t];
+		fcast_print_x(unlog ? exp(lo) : lo, 15, pmax, prn);
 		pputs(prn, " - ");
-		fcast_print_x(fr->fitted[t] + maxerr[t], 10, pmax, prn);
+		fcast_print_x(unlog ? exp(hi) : hi, 10, pmax, prn);
 	    }
 	}
 	pputc(prn, '\n');
