@@ -2029,12 +2029,6 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         return;
     }
 
-#if 0 /* just for testing */
-    fprintf(stderr, "integrate %d, use level %d\n",
-	    gopt & OPT_I ? 1 : 0, gopt & OPT_X ? 1 : 0);
-    return;
-#endif
-
     if (resp == 1) {
         fopt = OPT_D;
     } else if (resp == 2) {

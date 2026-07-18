@@ -29,7 +29,7 @@ struct FITRESID_ {
     int asymp;      /* 0/1 flag for asymptotic estimator */
     int std;        /* 0/1 flag for standardized residuals */
     int model_t1;   /* start of model estimation range */
-    int method;     /* one of the ForecastMethod options */
+    FcastMethod method; /* one of the FcastMethod options */
     double *actual; /* array of values of dependent variable */
     double *fitted; /* array of fitted values */
     double *resid;  /* array of residuals */

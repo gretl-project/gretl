@@ -3264,7 +3264,9 @@ static int fcast_errs_ok (MODEL *pmod)
     }
 }
 
-#if 0 /* not ready yet */
+#define LOG2LEVEL 0 /* not yet */
+
+#if LOG2LEVEL
 
 static void log_or_level_selector (GtkWidget *vbox,
 				   const char *parent,
@@ -3343,7 +3345,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                      G_CALLBACK(sync_pre_forecast), rset);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
-#if 0 /* not ready yet */
+#if LOG2LEVEL
     if (pmod != NULL) {
 	const char *parent =  gretl_model_get_data(pmod, "log-parent");
 
