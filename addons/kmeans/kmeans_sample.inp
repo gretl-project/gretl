@@ -1,6 +1,7 @@
 clear
 set verbose off
 set seed 34
+
 include kmeans.gfn
 
 # Select an example to run

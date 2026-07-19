@@ -10,6 +10,7 @@ public = kmeans_fit kmeans_predict kmeans_plot kmeans_summary \
     kmeans_sil_samples kmeans_sil_score kmeans_sil_plot
 help = kmeans.pdf
 sample-script = kmeans_sample.inp
+depends = PairPlot
 
 gui-main = kmeansGUI
 bundle-plot = GUI_kmeans_plot

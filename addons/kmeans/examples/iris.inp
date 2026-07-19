@@ -5,7 +5,7 @@ open iris.gdt
 list L = 1 .. 4
 matrix X = {L}
 bundle b = kmeans(X, 3, _(init="hw", verbosity=2))
-series sphat = b.clustid
+series sphat = b.cluster_id
 xtab species sphat
 
 # experiment using species as initial clusters

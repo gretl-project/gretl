@@ -269,7 +269,9 @@ Table~\ref{tab:fit-return}.
 \begin{table}[htbp]
   \centering
   \begin{tabular}{llp{0.6\textwidth}}
-    \dtk{between_distance} & scalar & TBD \\
+    \dtk{within_variation} & scalar & sum of within-cluster variation \\
+    \dtk{total_variation} & scalar & sum of variation around the global
+                                     mean \\
     \texttt{centroids} & matrix & holds the optimized centroids, $K
                                   \times n$.\\
     \dtk{cluster_id} & matrix & $m$-vector recording for each data-point
@@ -320,8 +322,8 @@ void kmeans_screeplot (matrix scree, string filename[null], bundle opts[null])
 \end{verbatim}
   Produces a so-called scree plot, showing total within-cluster distance
   as a function of the number of assumed clusters, from 1 to some
-  maximum value of $K$.  Adding a cluster is bound to reduce
-  within-cluster distance, but if the plot shows an ``elbow'' where the
+  maximum value of $K$.  Adding a cluster is bound to reduce the
+  within-cluster variation, but if the plot shows an ``elbow'' where the
   slope becomes markedly flatter this gives an informal indication of
   the most appropriate number of clusters.
 
