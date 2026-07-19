@@ -499,7 +499,7 @@ static void tex_xtab_heading (const Xtab *tab, PRN *prn)
     /* fix any underscores in series names */
     for (k=0; k<2; k++) {
 	targ = k == 0 ? s1 : s2;
-	src = k == 0 ? tab->rvarname : tab->cvarname;
+	src = k == 0 ? tab->rname : tab->cname;
 	for (i=0, j=8; src[i]; i++, j++) {
 	    if (src[i] == '_') {
 		strcat(targ, "\\_");
@@ -601,13 +601,13 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	totals = 0;
     }
 
-    if (*tab->rvarname != '\0' && *tab->cvarname != '\0') {
+    if (tab->rname != NULL && tab->cname != NULL) {
 	pputc(prn, '\n');
 	if (tex) {
 	    tex_xtab_heading(tab, prn);
 	} else {
 	    pprintf(prn, _("Cross-tabulation of %s (rows) against %s (columns)"),
-		    tab->rvarname, tab->cvarname);
+		    tab->rname, tab->cname);
 	    pputs(prn, "\n\n");
 	}
     } else {
@@ -3364,7 +3364,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     int obslen, pmax = fr->pmax;
     int errpmax = fr->pmax;
     int quiet = (opt & OPT_Q);
-    int unlog = (opt & OPT_X);
+    int unlog = 0; /* not yet: = (opt & OPT_X) */
     int ywidth;
     double *maxerr = NULL;
     double conf = 100 * (1 - fr->alpha);
@@ -3446,7 +3446,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 
 	if (unlog) {
 	    yt = exp(yt);
-	    yht = exp(yht);    /* Marcin: was yhat, Allin, please check */
+	    yht = exp(yht);
 	}
 
 	print_obs_marker(t, dset, obslen, prn);
