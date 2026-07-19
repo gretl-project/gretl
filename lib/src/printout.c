@@ -3446,7 +3446,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 
 	if (unlog) {
 	    yt = exp(yt);
-	    yhat = exp(yht);
+	    yht = exp(yht);    /* Marcin: was yhat, Allin, please check */
 	}
 
 	print_obs_marker(t, dset, obslen, prn);
