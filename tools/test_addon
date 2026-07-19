@@ -8,10 +8,11 @@ rm -f test.out
 
 for f in *.inp ; do
   if [ "x$f" != "xpkg.inp" ] ; then
-    if $GRETLCLI -b $f >> test.out ; then 
+    if $GRETLCLI -b $f >> test.out ; then
        echo "$f: OK"
     else
-       echo "$f: failed"
+	   exit_status=$?
+       echo "$f: got exit status $exit_status"
        break
     fi
   fi
@@ -22,7 +23,8 @@ if [ -d examples ] ; then
     if $GRETLCLI -b $f >> test.out ; then 
        echo "$f: OK"
     else
-       echo "$f: failed"
+	   exit_status=$?
+	   echo "$f: got exit status $exit_status"
        break
     fi
   done
