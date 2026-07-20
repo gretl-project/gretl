@@ -11,7 +11,7 @@ for f in *.inp ; do
     if $GRETLCLI -b $f >> test.out ; then
        echo "$f: OK"
     else
-	   exit_status=$?
+       exit_status=$?
        echo "$f: got exit status $exit_status"
        break
     fi
@@ -23,8 +23,8 @@ if [ -d examples ] ; then
     if $GRETLCLI -b $f >> test.out ; then 
        echo "$f: OK"
     else
-	   exit_status=$?
-	   echo "$f: got exit status $exit_status"
+       exit_status=$?
+       echo "$f: got exit status $exit_status"
        break
     fi
   done

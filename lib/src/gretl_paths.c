@@ -1652,7 +1652,13 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
 
         if (ipath != NULL && *ipath != '\0') {
             gretl_build_path(fullname, ipath, fname, NULL);
-            goto test_open;
+	    if (gretl_test_fopen(fullname, "r") == 0) {
+		return 0;
+	    } else {
+		/* on failure, try ignoring @ipath? */
+		*fullname = '\0';
+		strncat(fullname, fname, MAXLEN - 1);
+	    }
         }
     }
 
