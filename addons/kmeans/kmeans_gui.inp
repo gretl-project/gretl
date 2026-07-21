@@ -7,20 +7,14 @@ function string get_metric (const int distance)
 end function
 
 function void kmeans_distances_print (const bundle b)
-    between_dist = b.total_distance - b.within_distance
-    between_pc = 100 * between_dist / b.total_distance
+    between_variation = b.total_variation - b.within_variation
+    between_pc = 100 * between_variation / b.total_variation
 
-    if metric_is_euclidean(b.metric)
-        printf "  Total sum of squares: %g\n", b.total_distance
-        printf "  Within-cluster sum of squares: %g\n", b.within_distance
-        printf "  Between-cluster sum of squares: %g\n", between_dist
-        printf "  Between as percent of total: %.3f\n", between_pc
-    else
-        printf "  Total distance from global centroid: %g\n", b.total_distance
-        printf "  Total within-cluster distance: %g\n", b.within_distance
-        printf "  Between-cluster distance: %g\n", between_dist
-        printf "  Between as percent of total: %.1f\n", between_pc
-    endif
+    printf "\nResults:\n"
+    printf "  Total variation: %g\n", b.total_variation
+    printf "  Within-cluster variation: %g\n", b.within_variation
+    printf "  Between-cluster variation: %g\n", between_variation
+    printf "  Between as percent of total: %.3f\n", between_pc
     printf "\n"
 end function
 
