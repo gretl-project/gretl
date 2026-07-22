@@ -15752,11 +15752,9 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
                     tdi.xnum = e->vnum;
                     tdi.xval = e->v.xvec;
                 } else if (e->t == LIST) {
+                    tdi.xlist = e->v.ivec;
                     if (gretl_is_midas_list(e->v.ivec, p->dset)) {
-                        tdi.xlist = e->v.ivec;
                         tdi.xmidas = 1;
-                    } else {
-                        tdi.xlist = e->v.ivec;
                     }
                 } else if (!null_node(e)) {
                     p->err = e_types(e);
