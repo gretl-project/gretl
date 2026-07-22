@@ -161,7 +161,7 @@ static struct gui_help_item gui_help_items[] = {
     { BWFILTER,       "bwfilter" },
     { POLYWEIGHTS,    "polyweights" },
     { EMAFILTER,      "ema-filter" },
-    { X12AHELP,       "x12a" },
+    { X13AHELP,       "x13a" },
     { MAILHELP,       "mailer" },
     { LOESS,          "loess" },
     { NADARWAT,       "nadarwat" },
