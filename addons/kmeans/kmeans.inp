@@ -181,7 +181,9 @@ function void call_ASA136 (const matrix X, bundle *self)
     # other components?
 end function
 
-function void print_draw_info (int d, int dmax, const bundle b)
+function void print_draw_info (int d, int dmax,
+                               const bundle b,
+                               int iters)
     if dmax > 9
         printf "draw %02d: ", d
     else
@@ -190,7 +192,8 @@ function void print_draw_info (int d, int dmax, const bundle b)
     if b.error
         printf "failed\n"
     else
-        printf "total within variation = %g\n", b.within_variation
+        printf "within variation = %g (%d iterations)\n",
+          b.within_variation, iters
     endif
 end function
 
@@ -271,25 +274,26 @@ function bundle kmeans_fit (const list xlist,
     endif
 
     string save_init = self.init
+    scalar iters = 0
 
     if save_init == "pc" || save_init == "user"
-        bundle b = compute_kmeans(self, features)
+        bundle b = compute_kmeans(self, features, &iters)
         scalar self.within_variation = b.within_variation
         matrix self.centroids = b.centroids
         matrix cluster_id = b.cluster_id
         matrix distances = b.distances
         if self.verbosity == 2
-            printf "%s init: total within distance = %g\n",
-              save_init == "pc" ? "PC" : "user", b.within_distance
+            printf "%s init: within variation = %g (%d iterations)\n",
+              save_init == "pc" ? "pc" : "user", b.within_variation, iters
         endif
         # hand off to random for n_draws > 0
         self.init = "random"
     endif
 
     loop d=1..self.n_draws
-        bundle b = compute_kmeans(self, features)
+        bundle b = compute_kmeans(self, features, &iters)
         if self.verbosity == 2
-            print_draw_info(d, self.n_draws, b)
+            print_draw_info(d, self.n_draws, b, iters)
         endif
         if b.error
             n_errors++
@@ -366,7 +370,8 @@ function void kmeans_summary (const bundle kmb)
 end function
 
 function bundle compute_kmeans (const bundle self,
-                                const matrix features)
+                                const matrix features,
+                                scalar *iters)
     /* Actual computation of k-means. Identify optimal clusters and
        return a bundle.
     */
@@ -377,7 +382,7 @@ function bundle compute_kmeans (const bundle self,
     scalar this_distance
     scalar Model.error = FALSE
 
-    loop iter = 1..self.max_iter
+    loop i = 1..self.max_iter
         matrix all_dists = distance(features, self.metric, centroids)
         matrix cluster_id = iminr(all_dists)
 
@@ -394,9 +399,10 @@ function bundle compute_kmeans (const bundle self,
         delta = this_distance - prev_distance
         # FIXME shouldn't this be proportional?
         if delta <= 0 && abs(delta) < self.tolerance
+            iters = i
             if self.verbosity > 2
-                printf "Converged after %d iterations (within total distance = %.5f).",
-                  iter, this_distance
+                printf "Converged after %d iterations (within distance = %.5f).",
+                  i, this_distance
                 flush
             endif
             break
@@ -467,7 +473,7 @@ function matrix kmeans_scree (const list xlist "Features",
             if opts.verbosity == 2
                 kmeans_summary(model)
             endif
-            results[k,] = {k, model.within_distance}
+            results[k,] = {k, model.within_variation}
         endloop
         cnamset(results, "clusters distance")
     endif

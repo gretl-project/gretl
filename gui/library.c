@@ -5709,9 +5709,9 @@ static void display_tx_output (const char *fname, int graph_ok,
     }
 }
 
-static void x12a_help (void)
+static void x13a_help (void)
 {
-    show_gui_help(X12AHELP);
+    show_gui_help(X13AHELP);
 }
 
 static void real_do_tramo_x12a (int v, int tramo)
@@ -5804,7 +5804,6 @@ void run_x12a_script (const gchar *buf)
     }
 
     err = func(outfile, buf);
-
     if (err) {
         gui_errmsg(err);
     }
