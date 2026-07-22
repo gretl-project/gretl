@@ -507,6 +507,53 @@ static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
 #endif
 }
 
+static int VAR_check_lists (GRETL_VAR *v)
+{
+    int *LL[3] = {v->ylist, v->xlist, v->rlist};
+    int err = 0;
+    int i, vi;
+
+    if (LL[1] || LL[2]) {
+	for (i=1; i<=LL[0][0] && !err; i++) {
+	    vi = LL[0][i];
+	    if (LL[1] && in_gretl_list(LL[1], vi)) {
+		err = E_INVARG;
+	    } else if (LL[2] && in_gretl_list(LL[2], vi)) {
+		err = E_INVARG;
+	    }
+	}
+	if (!err && LL[1] && LL[2]) {
+	    for (i=1; i<=LL[1][0] && !err; i++) {
+		vi = LL[1][i];
+		if (in_gretl_list(LL[2], vi)) {
+		    err = E_INVARG;
+		}
+	    }
+	}
+	if (err && v->ci == VECM) {
+	    gretl_errmsg_set(_("ylist, xlist and rxlist must be disjoint"));
+	} else if (err) {
+	    gretl_errmsg_set(_("ylist and xlist must be disjoint"));
+	}
+    }
+
+    for (i=0; i<3 && !err; i++) {
+	int dup = 0;
+
+	if (LL[i]) {
+	    dup = gretl_list_duplicates(LL[i], 0);
+	    if (dup >= 0) {
+		err = E_INVARG;
+		gretl_errmsg_sprintf(_("duplicate term %d in %s"), dup,
+				     i == 0 ? "ylist" :
+				     i == 1 ? "xlist" : "rxlist");
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* Split the user-supplied list, if need be, and construct the lists of
    endogenous and (possibly) exogenous vars.  Note that deterministic
    terms are handled separately, via option flags.
@@ -560,6 +607,10 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
     if (!err && (v->ylist == NULL || v->ylist[0] < 1)) {
         /* re-test after (possibly) losing const */
         err = E_ARGS;
+    }
+
+    if (!err) {
+	err = VAR_check_lists(v);
     }
 
 #if VDEBUG
