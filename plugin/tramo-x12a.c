@@ -56,6 +56,7 @@ const char *x11_save_strings[] = {
     "d11", /* seasonally adjusted */
     "d12", /* trend/cycle */
     "d13", /* irregular */
+    "fct", /* forecast */
     NULL
 };
 
@@ -63,6 +64,7 @@ const char *x13_seats_save_strings[] = {
     "s11", /* seasonally adjusted */
     "s12", /* trend/cycle */
     "s13", /* irregular */
+    "fct", /* forecast */
     NULL
 };
 
@@ -109,6 +111,7 @@ static void x13a_opts_init (x13a_opts *xopt)
     xopt->output = 0;       /* type of deseas() return series */
     xopt->verbose = 0;      /* deseas() verbosity level (0, 1 or 2) */
     xopt->save_spc = 0;     /* add record of spc content */
+    xopt->fcast = 0;        /* automatic forecast */
     xopt->critical = NADBL; /* for use with outliers */
     xopt->savelist = NULL;  /* ?? */
     xopt->aspec = NULL;     /* optional user arima spec */
@@ -234,9 +237,9 @@ static void toggle_edit_script (GtkToggleButton *b, tx_request *request)
     int i;
 
     if (s) {
-        *request->popt |= OPT_S;
+        request->opt |= OPT_S;
     } else {
-        *request->popt &= ~OPT_S;
+        request->opt &= ~OPT_S;
     }
 
     for (i=0; i<4; i++) {
@@ -249,6 +252,11 @@ void sensitize_tx_entry (GtkToggleButton *b, GtkWidget *w)
     gtk_widget_set_sensitive(w, button_is_active(b));
 }
 
+void toggle_fcast_option (GtkToggleButton *b, tx_request *request)
+{
+    request->xopt.fcast = button_is_active(b);
+}
+
 void update_tx_savename (GtkEntry *entry, char *name)
 {
     strcpy(name, gtk_entry_get_text(entry));
@@ -259,15 +267,16 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
     const gchar *save_strs[] = {
         N_("Seasonally adjusted series"),
         N_("Trend/cycle"),
-        N_("Irregular")
+        N_("Irregular"),
+	N_("Forecast")
     };
     gretlopt save_opts[] = {
-        OPT_A, OPT_B, OPT_C
+        OPT_A, OPT_B, OPT_C, OPT_D
     };
     int save_codes[] = {
-        TX_SA, TX_TR, TX_IR
+        TX_SA, TX_TR, TX_IR, TX_FC
     };
-    GtkWidget *tmp, *hb, *b[3], *chk[4];
+    GtkWidget *tmp, *hb, *b[3], *chk[5];
     GtkWidget *rx, *rs;
     GtkWidget *tbl;
     GSList *group;
@@ -343,9 +352,11 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
     tbl = gtk_table_new(3, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
 
+    /* FIXME below: change < 3 to < 4, when ready */
+
     for (i=0; i<3; i++) {
-        /* buttons plus entries for saving series */
-        gboolean active = (*request->popt & save_opts[i])? TRUE : FALSE;
+        /* buttons plus entries for saving output */
+        gboolean active = (request->opt & save_opts[i])? TRUE : FALSE;
         GtkWidget *entry;
         int idx = save_codes[i];
 
@@ -364,6 +375,10 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
         g_object_set_data(G_OBJECT(chk[i]), "entry", entry);
         g_signal_connect(G_OBJECT(chk[i]), "toggled",
                          G_CALLBACK(sensitize_tx_entry), entry);
+	if (i == 3) {
+	    g_signal_connect(G_OBJECT(chk[i]), "toggled",
+			     G_CALLBACK(toggle_fcast_option), request);
+	}
         g_signal_connect(G_OBJECT(GTK_EDITABLE(entry)), "changed",
                          G_CALLBACK(update_tx_savename),
                          request->opts[idx].savename);
@@ -374,17 +389,17 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
 
-    chk[3] = gtk_check_button_new_with_label(_("Generate graph"));
-    gtk_box_pack_start(vbox, chk[3], FALSE, FALSE, 0);
-    request->opts[TRIGRAPH].check = chk[3];
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[3]),
-                                 (*request->popt & OPT_G)? TRUE : FALSE);
+    chk[i] = gtk_check_button_new_with_label(_("Generate graph"));
+    gtk_box_pack_start(vbox, chk[i], FALSE, FALSE, 0);
+    request->opts[TRIGRAPH].check = chk[i];
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[i]),
+                                 (request->opt & OPT_G)? TRUE : FALSE);
 
     tmp = gtk_check_button_new_with_label(_("Show full output"));
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
     request->opts[TEXTOUT].check = tmp;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
-                                 (*request->popt & OPT_Q)? FALSE : TRUE);
+                                 (request->opt & OPT_Q)? FALSE : TRUE);
 
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
@@ -433,37 +448,54 @@ static void tx_errbox (tx_request *request)
     gtk_widget_destroy(w);
 }
 
+static int check_for_vname_error (const char *vname,
+				  tx_request *request,
+				  GtkWidget *w)
+{
+    int err = 0;
+
+    if (*vname == '\0') {
+	err = 1;
+    } else {
+	err = check_varname(vname);
+    }
+    if (err) {
+	GtkWidget *entry, *book;
+
+	entry = g_object_get_data(G_OBJECT(w), "entry");
+	book = g_object_get_data(G_OBJECT(entry), "book");
+	if (book != NULL) {
+	    gint pg = GPOINTER_TO_INT
+		(g_object_get_data(G_OBJECT(entry), "output-page"));
+
+	    gtk_notebook_set_current_page(GTK_NOTEBOOK(book), pg);
+	}
+	tx_errbox(request);
+	gtk_widget_grab_focus(entry);
+    }
+
+    return err;
+}
+
 static int check_savevars (tx_request *request)
 {
-    int imax = request->prog == X13A ? TX_IR : TX_LN;
-    int i, err = 0;
+    int err = 0;
+    int i, j = 0;
 
-    for (i=0; i<=imax && !err; i++) {
-        GtkWidget *w = request->opts[i].check;
+    for (i=0; i<TRIGRAPH && !err; i++) {
+        GtkWidget *w = request->opts[j].check;
 
+	if (i == TX_LN && request->prog == X13A) {
+	    continue;
+	} else if (i == TX_FC && request->prog != X13A) {
+	    continue;
+	}
         if (w != NULL && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-            const char *vname = request->opts[i].savename;
+            const char *vname = request->opts[j].savename;
 
-            if (*vname == '\0') {
-                err = 1;
-            } else {
-                err = check_varname(vname);
-            }
-            if (err) {
-                GtkWidget *entry, *book;
-
-                entry = g_object_get_data(G_OBJECT(w), "entry");
-                book = g_object_get_data(G_OBJECT(entry), "book");
-                if (book != NULL) {
-                    gint pg = GPOINTER_TO_INT
-                        (g_object_get_data(G_OBJECT(entry), "output-page"));
-
-                    gtk_notebook_set_current_page(GTK_NOTEBOOK(book), pg);
-                }
-                tx_errbox(request);
-                gtk_widget_grab_focus(entry);
-            }
+	    err = check_for_vname_error(vname, request, w);
         }
+	j++;
     }
 
     return err;
@@ -570,9 +602,7 @@ static void get_seats_command (char *seats, const char *tramo)
     }
 }
 
-/* try to avoid collision of date and graph key, which
-   defaults to right top
-*/
+/* Try to avoid collision of date and graph key. */
 
 static void set_keypos (const double *x, int t1, int t2,
                         FILE *fp)
@@ -722,15 +752,13 @@ static int graph_series (const DATASET *dset, tx_request *req)
     return finalize_plot_input_file(fp);
 }
 
-static void copy_variable (DATASET *targ, int targv,
-                           DATASET *src, int srcv)
+static void copy_tx_series (DATASET *targ, int targv,
+			    DATASET *src, int srcv)
 {
     const char *vlabel;
-    int t;
+    size_t sz = targ->n * sizeof(double);
 
-    for (t=0; t<targ->n; t++) {
-        targ->Z[targv][t] = src->Z[srcv][t];
-    }
+    memcpy(targ->Z[targv], src->Z[srcv], sz);
 
     strcpy(targ->varname[targv], src->varname[srcv]);
     vlabel = series_get_label(src, srcv);
@@ -787,10 +815,10 @@ static void clear_x13a_files (const char *path, const char *vname)
     gretl_remove(fname);
 }
 
-/* Peek into output/x.out and see if it contains evidence
-   that SEATS worked OK but did not find any evidence of
-   seasonality, in which case return 1. If we can't open
-   x.out, or can't find such evidence, return 0.
+/* Peek into output/x.out and see if it contains evidence that SEATS
+   worked OK but did not find any evidence of seasonality, in which case
+   return 1. If we can't open x.out, or can't find such evidence, return
+   0.
 */
 
 static int seats_no_seasonal (const char *path)
@@ -833,6 +861,10 @@ static const char *addstr (tx_request *request)
     }
 }
 
+/* This is called from write_tx_data(), the back-end for X-13ARIMA
+   and TRAMO functionality in the gretl GUI.
+*/
+
 static int add_series_from_file (const char *path, int src,
                                  DATASET *dset, int targv,
                                  tx_request *request)
@@ -859,7 +891,7 @@ static int add_series_from_file (const char *path, int src,
     } else {
         tramo_got_irfin = 1;
         gretl_build_path(sfname, path, "graph", "series",
-                             tramo_save_strings[src], NULL);
+			 tramo_save_strings[src], NULL);
     }
 
     fp = gretl_fopen(sfname, "r");
@@ -1040,9 +1072,10 @@ static int grab_tramo_output_series (double *y, const double *x,
     return err;
 }
 
-/* Grabber for X-13ARIMA output: either a single selected series or
-   the seasonally adjusted series plus a matrix holding sa, trend
-   and irregular.
+/* Grabber for X-13ARIMA output: either a single selected series or the
+   seasonally adjusted series plus a matrix holding sa, trend and
+   irregular. This is called only by adjust_series(), the back-end for
+   the user-level function deseas().
 */
 
 static int grab_x13_output_series (double *y, const double *x,
@@ -1258,7 +1291,7 @@ static void set_opts (tx_request *request)
 
     request->savevars = 0;
 
-    *request->popt &= ~(OPT_A | OPT_B | OPT_C | OPT_D | OPT_G);
+    request->opt &= ~(OPT_A | OPT_B | OPT_C | OPT_D | OPT_G);
 
     for (i=0; i<TX_MAXOPT; i++) {
         w = request->opts[i].check;
@@ -1267,16 +1300,16 @@ static void set_opts (tx_request *request)
             if (i < TRIGRAPH) {
                 request->savevars++;
                 if (i == 0) {
-                    *request->popt |= OPT_A;
+                    request->opt |= OPT_A;
                 } else if (i == 1) {
-                    *request->popt |= OPT_B;
+                    request->opt |= OPT_B;
                 } else if (i == 2) {
-                    *request->popt |= OPT_C;
+                    request->opt |= OPT_C;
                 } else if (i == 3) {
-                    *request->popt |= OPT_D;
+                    request->opt |= OPT_D;
                 }
             } else if (i == TRIGRAPH) {
-                *request->popt |= OPT_G;
+                request->opt |= OPT_G;
             }
         } else {
             request->opts[i].save = 0;
@@ -1533,7 +1566,6 @@ static int write_spc_file (const char *fname,
         save_strings = x11_save_strings;
         fputs("x11{", fp);
     }
-
     if (savelist[0] > 0) {
         if (savelist[0] == 1) {
             fprintf(fp, " save=%s ", save_strings[savelist[1]]);
@@ -1545,8 +1577,11 @@ static int write_spc_file (const char *fname,
             fputs(") ", fp);
         }
     }
-
     fputs("}\n", fp);
+
+    if (xopt->fcast) {
+	fputs("forecast{ save=( fct ) }\n", fp);
+    }
 
     gretl_pop_c_numeric_locale();
 
@@ -1605,9 +1640,9 @@ static int save_vars_to_dataset (DATASET *dset,
         if (request->opts[varlist[i]].save) {
             v = series_index(dset, tmpset->varname[i]);
             if (v < dset->v) {
-                copy_variable(dset, v, tmpset, i);
+                copy_tx_series(dset, v, tmpset, i);
             } else {
-                copy_variable(dset, j++, tmpset, i);
+                copy_tx_series(dset, j++, tmpset, i);
             }
         }
     }
@@ -1813,7 +1848,7 @@ int exec_tx_script (char *outname, const gchar *buf)
 int write_tx_data (char *fname,
                    int varnum,
                    DATASET *dset,
-                   gretlopt *opt,
+                   gretlopt *popt,
 		   int tramo,
                    int *warning,
                    GtkWindow *mainwin,
@@ -1847,7 +1882,7 @@ int write_tx_data (char *fname,
     }
 
     request.pd = dset->pd;
-    request.popt = opt;
+    request.opt = *popt;
 
     /* show dialog and get option settings */
     doit = tx_dialog(&request, mainwin);
@@ -1862,14 +1897,7 @@ int write_tx_data (char *fname,
         return 0;
     }
 
-#if 0
-    if (request.prog == TRAMO_SEATS) {
-        print_tramo_options(&request, stderr);
-        return 1;
-    }
-#endif
-
-    if (*opt & OPT_S) {
+    if (*popt & OPT_S) {
         savescript = 1;
     } else {
         /* create little temporary dataset */
@@ -1956,7 +1984,7 @@ int write_tx_data (char *fname,
         if (request.prog == TRAMO_ONLY) {
             /* no graph offered */
             request.opts[TRIGRAPH].save = 0;
-            *opt |= OPT_T;
+            *popt |= OPT_T;
         }
     }
 
@@ -1964,11 +1992,11 @@ int write_tx_data (char *fname,
         goto bailout;
     }
 
-    /* save vars locally if needed; graph if wanted */
     if (savelist[0] > 0) {
+	/* save vars locally if needed; graph if wanted */
         const char *path = request.prog == X13A ? fname : workdir;
 
-        copy_variable(tmpset, 0, dset, varnum);
+        copy_tx_series(tmpset, 0, dset, varnum);
 
         for (i=1; i<=savelist[0]; i++) {
             err = add_series_from_file(path, savelist[i], tmpset,
@@ -1989,24 +2017,24 @@ int write_tx_data (char *fname,
                 if (err) {
                     fprintf(stderr, "graph_series() failed\n");
                 } else {
-                    *opt |= OPT_G;
+                    *popt |= OPT_G;
                 }
             } else {
-                *opt &= ~OPT_G;
+                *popt &= ~OPT_G;
             }
         }
 
         if (request.prog == X13A) {
             if (request.opts[TEXTOUT].save) {
-                *opt &= ~OPT_Q;
+                *popt &= ~OPT_Q;
             } else {
-                *opt |= OPT_Q;
+                *popt |= OPT_Q;
             }
         }
     }
 
-    /* now save the local vars to main dataset, if wanted */
     if (!err && request.savevars > 0) {
+	/* now save the local vars to main dataset, if wanted */
         err = save_vars_to_dataset(dset, tmpset, savelist,
                                    &request);
     }
