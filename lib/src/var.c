@@ -507,12 +507,17 @@ static void VECM_fill_Y (GRETL_VAR *v, const DATASET *dset,
 #endif
 }
 
-static int VAR_check_lists (GRETL_VAR *v)
+/* Check that we have no series duplicated in a VAR specification */
+
+static int VAR_check_lists (GRETL_VAR *v, const DATASET *dset)
 {
     int *LL[3] = {v->ylist, v->xlist, v->rlist};
     int err = 0;
     int i, vi;
 
+    /* check for any series included in more than one
+       of v->ylist, v->xlist, v->rlist
+    */
     if (LL[1] || LL[2]) {
 	for (i=1; i<=LL[0][0] && !err; i++) {
 	    vi = LL[0][i];
@@ -538,13 +543,15 @@ static int VAR_check_lists (GRETL_VAR *v)
     }
 
     for (i=0; i<3 && !err; i++) {
+	/* check for any within-list duplicates */
 	int dup = 0;
 
 	if (LL[i]) {
 	    dup = gretl_list_duplicates(LL[i], 0);
 	    if (dup >= 0) {
 		err = E_INVARG;
-		gretl_errmsg_sprintf(_("duplicate term %d in %s"), dup,
+		gretl_errmsg_sprintf(_("duplicate term %s in %s"),
+				     dset->varname[dup],
 				     i == 0 ? "ylist" :
 				     i == 1 ? "xlist" : "rxlist");
 	    }
@@ -610,7 +617,7 @@ static int VAR_make_lists (GRETL_VAR *v, const int *list,
     }
 
     if (!err) {
-	err = VAR_check_lists(v);
+	err = VAR_check_lists(v, dset);
     }
 
 #if VDEBUG
