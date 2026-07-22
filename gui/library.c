@@ -5583,12 +5583,12 @@ void do_freq_dist (void)
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
-/* If we got a non-null warning message from X-12-ARIMA,
+/* If we got a non-null warning message from X-13ARIMA,
    pull it out of the .err file and display it in a
    warning (or error) dialog box.
 */
 
-static void display_x12a_warning (const char *fname,
+static void display_x13a_warning (const char *fname,
                                   int err)
 {
     char *errfile = gretl_strdup(fname);
@@ -5746,7 +5746,7 @@ static void real_do_tramo_x12a (int v, int tramo)
     set_plugin_dialog_open(1);
     err = write_tx_data(outfile, v, dataset, &opt, tramo,
                         &warning, GTK_WINDOW(mdata->main),
-                        x12a_help);
+                        x13a_help);
     set_plugin_dialog_open(0);
 
     dataset->t1 = save_t1;
@@ -5754,7 +5754,7 @@ static void real_do_tramo_x12a (int v, int tramo)
 
     if (err) {
         if (has_suffix(outfile, ".err")) {
-            display_x12a_warning(outfile, 1);
+            display_x13a_warning(outfile, 1);
             return;
         } else {
             gui_errmsg(err);
@@ -5762,7 +5762,7 @@ static void real_do_tramo_x12a (int v, int tramo)
         graph_ok = 0;
     } else if (warning) {
         /* got a warning from x12a */
-        display_x12a_warning(outfile, 0);
+        display_x13a_warning(outfile, 0);
     } else if (opt & OPT_S) {
         /* created x12a spec file for editing */
         view_file(outfile, 1, 0, 78, 370, EDIT_X12A);

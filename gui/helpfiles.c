@@ -2672,7 +2672,7 @@ void display_gnuplot_help (void)
     }
 }
 
-void display_x12a_help (void)
+void display_x13a_help (void)
 {
     char fname[FILENAME_MAX];
     int err;
