@@ -358,6 +358,24 @@ void gretl_win32_init (int debug, int ignore_rc)
     set_gretl_startdir();
 }
 
+static gboolean open_windows_clipboard (void)
+{
+    HWND mainw = NULL;
+    gboolean ret;
+
+#if GTK_MAJOR_VERSION > 2
+    mainw = GDK_WINDOW_HWND(gtk_widget_get_window(mdata->main));
+#else
+    mainw = GDK_WINDOW_HWND(mdata->main->window);
+#endif
+    ret = OpenClipboard(mainw);
+    if (!ret) {
+	errbox(_("Cannot open the clipboard"));
+    }
+
+    return ret;
+}
+
 static int real_buf_to_clipboard (char *buf, int fmt)
 {
     char *modbuf = NULL;
@@ -370,8 +388,7 @@ static int real_buf_to_clipboard (char *buf, int fmt)
 	return 0;
     }
 
-    if (!OpenClipboard(NULL)) {
-	errbox(_("Cannot open the clipboard"));
+    if (open_windows_clipboard()) {
 	return 1;
     }
 
@@ -462,22 +479,11 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
 int emf_to_clipboard (char *emfname)
 {
-    HWND mainw;
     HENHMETAFILE hemfclip;
     HENHMETAFILE hemf = NULL;
     HANDLE htest;
 
-#if GTK_MAJOR_VERSION > 2
-    mainw = GDK_WINDOW_HWND(gtk_widget_get_window(mdata->main));
-#else
-    mainw = GDK_WINDOW_HWND(mdata->main->window);
-#endif
-    if (mainw == NULL) {
-	errbox("Got NULL HWND");
-	return 1;
-    }
-
-    if (!OpenClipboard(mainw)) {
+    if (!open_windows_clipboard()) {
 	errbox(_("Cannot open the clipboard"));
 	return 1;
     }
