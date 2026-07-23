@@ -6334,9 +6334,7 @@ int plot_corrmat (VMatrix *corr, const DATASET *dset, gretlopt opt)
     return finalize_plot_input_file(fp);
 }
 
-/* print the y-axis data in the context of a forecast
-   with errors plot
-*/
+/* Print the y-axis data for a forecast with errors plot. */
 
 static void fcast_print_y_data (const double *x,
                                 const double *y,
@@ -6386,33 +6384,37 @@ enum {
 };
 
 static void print_confband_data (const double *x,
-                                 const double *y,
+				 const FITRESID *fr,
                                  const double *e,
                                  int t0, int t1, int t2,
                                  const DATASET *dset,
                                  int mode, FILE *fp)
 {
+    const double *y = fr->fitted;
     int i, t, n = t2 - t0 + 1;
-    double xt;
+    double lo, hi;
 
     for (i=0; i<n; i++) {
         t = t0 + i;
-        xt = x[t];
         if (t < t1 || na(y[t]) || na(e[t])) {
             if (mode == CONF_LOW || mode == CONF_HIGH) {
-                fprintf(fp, "%.10g %s\n", xt, GPNA);
+                fprintf(fp, "%.10g %s\n", x[t], GPNA);
             } else {
-                fprintf(fp, "%.10g %s %s\n", xt, GPNA, GPNA);
+                fprintf(fp, "%.10g %s %s\n", x[t], GPNA, GPNA);
             }
-        } else if (mode == CONF_FILL) {
-            fprintf(fp, "%.10g %.10g %.10g\n", xt, y[t] - e[t], y[t] + e[t]);
-        } else if (mode == CONF_LOW) {
-            fprintf(fp, "%.10g %.10g\n", xt, y[t] - e[t]);
-        } else if (mode == CONF_HIGH) {
-            fprintf(fp, "%.10g %.10g\n", xt, y[t] + e[t]);
         } else {
-            fprintf(fp, "%.10g %.10g %.10g\n", xt, y[t], e[t]);
-        }
+	    lo = y[t] - e[t];
+	    hi = y[t] + e[t];
+	    if (mode == CONF_FILL) {
+		fprintf(fp, "%.10g %.10g %.10g\n", x[t], lo, hi);
+	    } else if (mode == CONF_LOW) {
+		fprintf(fp, "%.10g %.10g\n", x[t], lo);
+	    } else if (mode == CONF_HIGH) {
+		fprintf(fp, "%.10g %.10g\n", x[t], hi);
+	    } else {
+		fprintf(fp, "%.10g %.10g %.10g\n", x[t], y[t], e[t]);
+	    }
+	}
         if (dataset_is_panel(dset) && ((t+1) % dset->pd == 0)) {
             /* hack, 2024-02-28 */
             if (mode == CONF_LOW || mode == CONF_HIGH) {
@@ -6651,8 +6653,8 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 
     if (use_fill && !use_alpha) {
         if (do_errs) {
-            print_confband_data(obs, fr->fitted, maxerr,
-                                t1, yhmin, t2, dset, CONF_FILL, fp);
+            print_confband_data(obs, fr, maxerr, t1, yhmin, t2,
+				dset, CONF_FILL, fp);
         }
         if (depvar_present) {
             fcast_print_y_data(obs, fr->actual, t1, t1, t2, dset, fp);
@@ -6665,16 +6667,16 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
         fcast_print_y_data(obs, fr->fitted, t1, yhmin, t2, dset, fp);
         if (do_errs) {
             if (use_fill && use_alpha) {
-                print_confband_data(obs, fr->fitted, maxerr,
-                                    t1, yhmin, t2, dset, CONF_FILL, fp);
+                print_confband_data(obs, fr, maxerr, t1, yhmin, t2,
+				    dset, CONF_FILL, fp);
             } else if (use_lines) {
-                print_confband_data(obs, fr->fitted, maxerr,
-                                    t1, yhmin, t2, dset, CONF_LOW, fp);
-                print_confband_data(obs, fr->fitted, maxerr,
-                                    t1, yhmin, t2, dset, CONF_HIGH, fp);
+                print_confband_data(obs, fr, maxerr, t1, yhmin, t2,
+				    dset, CONF_LOW, fp);
+                print_confband_data(obs, fr, maxerr, t1, yhmin, t2,
+				    dset, CONF_HIGH, fp);
             } else {
-                print_confband_data(obs, fr->fitted, maxerr,
-                                    t1, yhmin, t2, dset, CONF_BARS, fp);
+                print_confband_data(obs, fr, maxerr, t1, yhmin, t2,
+				    dset, CONF_BARS, fp);
             }
         }
     }

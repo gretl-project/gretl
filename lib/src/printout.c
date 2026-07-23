@@ -3201,6 +3201,8 @@ static int fr_print_fc_stats (const FITRESID *fr, gretlopt opt,
 
 #define SIGMA_MIN 1.0e-18
 
+
+
 int text_print_fit_resid (const FITRESID *fr,
 			  const DATASET *dset,
 			  PRN *prn)
@@ -3364,7 +3366,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     int obslen, pmax = fr->pmax;
     int errpmax = fr->pmax;
     int quiet = (opt & OPT_Q);
-    int unlog = 0; /* not yet: = (opt & OPT_X) */
+    int log2lev = (opt & OPT_X);
     int ywidth;
     double *maxerr = NULL;
     double conf = 100 * (1 - fr->alpha);
@@ -3441,23 +3443,18 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 
     for (t=fr->t0; t<=fr->t2; t++) {
 	double yt = fr->actual[t];
-	double yht = fr->fitted[t];
+	double ft = fr->fitted[t];
 	double lo, hi;
-
-	if (unlog) {
-	    yt = exp(yt);
-	    yht = exp(yht);
-	}
 
 	print_obs_marker(t, dset, obslen, prn);
 	fcast_print_x(yt, ywidth + 2, pmax, prn);
 
-	if (na(yht)) {
+	if (na(ft)) {
 	    pputc(prn, '\n');
 	    continue;
 	}
 
-	fcast_print_x(yht, 15, pmax, prn);
+	fcast_print_x(ft, 15, pmax, prn);
 
 	if (do_errs) {
 	    if (na(fr->sderr[t])) {
@@ -3465,11 +3462,16 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 	    } else {
 		fcast_print_x(fr->sderr[t], 15, errpmax, prn);
 		maxerr[t] = tval * fr->sderr[t];
-		lo = fr->fitted[t] - maxerr[t];
-		hi = fr->fitted[t] + maxerr[t];
-		fcast_print_x(unlog ? exp(lo) : lo, 15, pmax, prn);
+		if (log2lev) {
+		    lo = exp(log(ft) - maxerr[t]);
+		    hi = exp(log(ft) + maxerr[t]);
+		} else {
+		    lo = ft - maxerr[t];
+		    hi = ft + maxerr[t];
+		}
+		fcast_print_x(lo, 15, pmax, prn);
 		pputs(prn, " - ");
-		fcast_print_x(unlog ? exp(hi) : hi, 10, pmax, prn);
+		fcast_print_x(hi, 10, pmax, prn);
 	    }
 	}
 	pputc(prn, '\n');
@@ -3487,7 +3489,6 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     }
 
     /* do we really want a plot for non-time series? */
-
     if ((opt & OPT_P) && fr->nobs > 0) {
 	err = plot_fcast_errs(fr, maxerr, dset, opt);
     }
