@@ -1935,7 +1935,7 @@ static void maybe_transfer_options (gretlopt *gopt,
 	isect &= ~OPT_M; /* protect OPT_M in @gopt */
 	*gopt &= ~isect; /* delete all but OPT_M */
 	if (*fopt & OPT_G) {
-	    /* debatable */
+	    /* debatable! */
 	    *fopt |= OPT_X;
 	    *fopt &= ~OPT_G;
 	    set_optval_int(FCAST, OPT_X, 2);

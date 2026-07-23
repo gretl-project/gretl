@@ -222,7 +222,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
 static FITRESID *fit_resid_new_for_model (const MODEL *pmod,
 					  const DATASET *dset,
 					  int t1, int t2, int pre_n,
-					  int *err)
+					  gretlopt opt, int *err)
 {
     FITRESID *fr;
 
@@ -255,6 +255,7 @@ static FITRESID *fit_resid_new_for_model (const MODEL *pmod,
     fr->model_t1 = pmod->t1;
 
     fr->asymp = ASYMPTOTIC_MODEL(pmod->ci);
+    fr->opt = opt;
 
     return fr;
 }
@@ -367,7 +368,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset,
     }
 
     fr = fit_resid_new_for_model(pmod, dset, pmod->t1, pmod->t2,
-				 0, err);
+				 0, OPT_NONE, err);
     if (*err) {
 	return NULL;
     }
@@ -2845,8 +2846,10 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 			   DATASET *dset, gretlopt opt)
 {
     Forecast fc;
+    const double *y = NULL;
     int yno = gretl_model_get_depvar(pmod);
     int integrate = (opt & OPT_I);
+    int expon = (opt & OPT_X);
     int dummy_AR = 0;
     int DM_errs = 0;
     int dyn_errs = 0;
@@ -2978,23 +2981,32 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
 
     same_data = same_dataset(pmod, dset);
+    y = dset->Z[yno];
 
     for (t=0; t<fr->nobs; t++) {
 	if (t >= fr->t1 && t <= fr->t2) {
+	    /* in the forecast range */
 	    if (!na(fr->fitted[t])) {
 		nf++;
+	    } else if (expon) {
+		/* FIXME case of OPT_M ? */
+		fr->fitted[t] = exp(fr->fitted[t]);
 	    }
 	} else if (same_data && t >= fr->t0 && t <= fr->t2 &&
 		   t >= pmod->t1 && t <= pmod->t2) {
+	    /* within sample observations */
 	    if (integrate) {
 		fr->fitted[t] = fr->fitted[t-1] + pmod->yhat[t];
 		fr->resid[t] = fr->resid[t-1] + pmod->uhat[t];
+	    } else if (expon) {
+		fr->fitted[t] = exp(pmod->yhat[t]);
+		fr->resid[t] = exp(y[t]) - fr->fitted[t];
 	    } else {
 		fr->fitted[t] = pmod->yhat[t];
 		fr->resid[t] = pmod->uhat[t];
 	    }
 	}
-	fr->actual[t] = dset->Z[yno][t];
+	fr->actual[t] = expon ? exp(y[t]) : y[t];
     }
 
     if (nf == 0) {
@@ -3053,7 +3065,7 @@ gretl_matrix *matrix_forecast (MODEL *pmod,
         *err = E_DATA;
     } else {
         n = X->rows;
-        fr = fit_resid_new_for_model(pmod, NULL, 0, n, 0, err);
+        fr = fit_resid_new_for_model(pmod, NULL, 0, n, 0, OPT_NONE, err);
     }
 
     if (!*err) {
@@ -3379,7 +3391,7 @@ FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
 	return NULL;
     }
 
-    fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, err);
+    fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, opt, err);
 
     if (!*err) {
 	*err = real_get_fcast(fr, pmod, dset, opt);
@@ -4443,7 +4455,7 @@ recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
         }
     }
 
-    fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, err);
+    fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, OPT_NONE, err);
     if (*err) {
 	free(y);
 	free(llist);

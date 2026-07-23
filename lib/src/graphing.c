@@ -6385,26 +6385,40 @@ enum {
 
 static void print_confband_data (const double *x,
 				 const FITRESID *fr,
-                                 const double *e,
+                                 const double *me,
                                  int t0, int t1, int t2,
                                  const DATASET *dset,
                                  int mode, FILE *fp)
 {
-    const double *y = fr->fitted;
+    const double *yhat = fr->fitted;
+    int fix_ci = (fr->opt & OPT_X);
     int i, t, n = t2 - t0 + 1;
-    double lo, hi;
+    double lo, hi, lyh;
+
+    /* In the "fix_ci" case the @yhat values are exponentiated versions
+       of log forecasts. To obtain the limits of the confidence
+       intervals we need to take the log of @yhat, subtract and add the
+       maximum error @me, which is in log terms, then exponentiate the
+       result.
+     */
 
     for (i=0; i<n; i++) {
         t = t0 + i;
-        if (t < t1 || na(y[t]) || na(e[t])) {
+        if (t < t1 || na(yhat[t]) || na(me[t])) {
             if (mode == CONF_LOW || mode == CONF_HIGH) {
                 fprintf(fp, "%.10g %s\n", x[t], GPNA);
             } else {
                 fprintf(fp, "%.10g %s %s\n", x[t], GPNA, GPNA);
             }
         } else {
-	    lo = y[t] - e[t];
-	    hi = y[t] + e[t];
+	    if (fix_ci) {
+		lyh = log(yhat[t]);
+		lo = exp(lyh - me[t]);
+		hi = exp(lyh + me[t]);
+	    } else {
+		lo = yhat[t] - me[t];
+		hi = yhat[t] + me[t];
+	    }
 	    if (mode == CONF_FILL) {
 		fprintf(fp, "%.10g %.10g %.10g\n", x[t], lo, hi);
 	    } else if (mode == CONF_LOW) {
@@ -6412,7 +6426,7 @@ static void print_confband_data (const double *x,
 	    } else if (mode == CONF_HIGH) {
 		fprintf(fp, "%.10g %.10g\n", x[t], hi);
 	    } else {
-		fprintf(fp, "%.10g %.10g %.10g\n", x[t], y[t], e[t]);
+		fprintf(fp, "%.10g %.10g %.10g\n", x[t], yhat[t], me[t]);
 	    }
 	}
         if (dataset_is_panel(dset) && ((t+1) % dset->pd == 0)) {
