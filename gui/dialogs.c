@@ -3348,7 +3348,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
 #if LOG2LEVEL
     if (pmod != NULL) {
-	const char *parent =  gretl_model_get_data(pmod, "log-parent");
+	const char *parent = gretl_model_get_data(pmod, "log-parent");
 
 	if (parent != NULL) {
 	    log_or_level_selector(vbox, parent, optp);
