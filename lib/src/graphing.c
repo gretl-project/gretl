@@ -2593,7 +2593,7 @@ FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err)
 	    /* --output=display specified */
 	    interactive = 1;
 	} else if (outspec != NULL) {
-	    /* --output=filename or --buffer=starvar specified */
+	    /* --output=filename or --buffer=strvar specified */
 	    interactive = 0;
 	} else if (flags & GPT_ICON) {
 	    interactive = 1;
@@ -6395,12 +6395,12 @@ static void print_confband_data (const double *x,
     int i, t, n = t2 - t0 + 1;
     double lo, hi, lyh;
 
-    /* In the "fix_ci" case the @yhat values are exponentiated versions
-       of log forecasts. To obtain the limits of the confidence
-       intervals we need to take the log of @yhat, subtract and add the
-       maximum error @me, which is in log terms, then exponentiate the
-       result.
-     */
+    /* In the "fix_ci" case the @yhat values are the result of
+       exponentiating log forecasts. To obtain the limits of the
+       confidence intervals we need to take the log of @yhat, subtract
+       and add the maximum error @me (which is in log terms), then
+       exponentiate the result.
+    */
 
     for (i=0; i<n; i++) {
         t = t0 + i;
@@ -6426,6 +6426,7 @@ static void print_confband_data (const double *x,
 	    } else if (mode == CONF_HIGH) {
 		fprintf(fp, "%.10g %.10g\n", x[t], hi);
 	    } else {
+		/* CONF_BARS */
 		fprintf(fp, "%.10g %.10g %.10g\n", x[t], yhat[t], me[t]);
 	    }
 	}
@@ -6565,6 +6566,9 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
         } else if (n > 150) {
             use_fill = 1;
         }
+	if ((fr->opt & OPT_X) && !use_fill && !use_lines) {
+	    use_fill = 1;
+	}
     }
 
     if (use_fill) {
@@ -6572,11 +6576,13 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
         use_alpha = 1;
 #else
         ptype = PLOT_BAND;
+	set_effective_plot_ci(FCAST);
 #endif
     }
 
     obs = gretl_plotx(dset, OPT_NONE);
     if (obs == NULL) {
+	reset_effective_plot_ci();
         return E_ALLOC;
     }
 
@@ -6586,6 +6592,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 
     fp = open_plot_input_file(ptype, flags, &err);
     if (err) {
+	reset_effective_plot_ci();
         return err;
     }
 

@@ -1495,6 +1495,32 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
     }
 }
 
+/* Write to @label a string to identify the series subject to forecast
+   in @fr, allowing for the possibility that the forecast was originally
+   for a series in log form and has been exponentiated.
+*/
+
+static void make_depvar_label (char *label,
+			       const FITRESID *fr,
+			       const DATASET *dset)
+{
+    char parent[VNAMELEN] = {0};
+
+    if (fr->opt & OPT_X) {
+	int v = current_series_index(dset, fr->depvar);
+
+	if (v > 0) {
+	    series_is_log(dset, v, parent);
+	}
+    }
+
+    if (*parent != '\0') {
+	maybe_trim_varname(label, parent);
+    } else {
+	maybe_trim_varname(label, fr->depvar);
+    }
+}
+
 static int fit_resid_head (const FITRESID *fr,
 			   const DATASET *dset,
 			   int obslen,
@@ -1534,7 +1560,7 @@ static int fit_resid_head (const FITRESID *fr,
     bufspace(obslen, prn);
 
     /* column 1 */
-    maybe_trim_varname(label, fr->depvar);
+    make_depvar_label(label, fr, dset);
     ywidth = strlen(label) + 1;
     if (ywidth < 13) {
 	ywidth = 13;
@@ -3307,7 +3333,7 @@ int csv_print_forecast (const FITRESID *fr, const DATASET *dset,
     }
 
     pputs(prn, "\"obs\",");
-    maybe_trim_varname(label, fr->depvar);
+    make_depvar_label(label, fr, dset);
     pprintf(prn, "\"%s\"", label);
     pprintf(prn, "%c\"%s\"", d, _("prediction"));
     if (do_errs) {
@@ -3414,7 +3440,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 
     bufspace(obslen + 1, prn);
 
-    maybe_trim_varname(label, fr->depvar);
+    make_depvar_label(label, fr, dset);
     ywidth = strlen(label) + 1;
     if (ywidth < 12) {
 	ywidth = 12;
@@ -3424,7 +3450,9 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
 
     if (do_errs) {
-	pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
+	if (!log2lev) {
+	    pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
+	}
 	pprintf(prn, _("        %g%% interval\n"), conf);
     } else {
 	pputc(prn, '\n');
@@ -3460,7 +3488,9 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 	    if (na(fr->sderr[t])) {
 		maxerr[t] = NADBL;
 	    } else {
-		fcast_print_x(fr->sderr[t], 15, errpmax, prn);
+		if (!log2lev) {
+		    fcast_print_x(fr->sderr[t], 15, errpmax, prn);
+		}
 		maxerr[t] = tval * fr->sderr[t];
 		if (log2lev) {
 		    lo = exp(log(ft) - maxerr[t]);

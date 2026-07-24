@@ -2988,9 +2988,10 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	    /* in the forecast range */
 	    if (!na(fr->fitted[t])) {
 		nf++;
-	    } else if (expon) {
-		/* FIXME case of OPT_M ? */
-		fr->fitted[t] = exp(fr->fitted[t]);
+		if (expon) {
+		    /* FIXME case of OPT_M ? */
+		    fr->fitted[t] = exp(fr->fitted[t]);
+		}
 	    }
 	} else if (same_data && t >= fr->t0 && t <= fr->t2 &&
 		   t >= pmod->t1 && t <= pmod->t2) {
