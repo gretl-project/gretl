@@ -113,7 +113,7 @@ static void x13a_opts_init (x13a_opts *xopt)
     xopt->save_spc = 0;     /* add record of spc content */
     xopt->fcast = 0;        /* automatic forecast */
     xopt->critical = NADBL; /* for use with outliers */
-    xopt->savelist = NULL;  /* ?? */
+    xopt->savelist = NULL;  /* list of output series to be saved */
     xopt->aspec = NULL;     /* optional user arima spec */
 }
 
@@ -206,6 +206,98 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 }
 
 #endif /* !WIN32 */
+
+/* temporary code as we try to enable capturing the automatic
+   forecast from X-13ARIMA
+*/
+
+static int read_fct (const char *path,
+		     tx_request *request,
+		     DATASET *dset)
+{
+    FILE *fp = NULL;
+    gretl_matrix *F = NULL;
+    char sfname[MAXLEN];
+    char obs[OBSLEN];
+    char line[512];
+    char *p;
+    double pt, lo, hi;
+    int i, d, n, ns;
+    int yr, sub, t;
+    int tmin = 0;
+    int nl = 0;
+    int err = 0;
+
+    strcpy(sfname, path);
+    p = strrchr(sfname, '.');
+    if (p != NULL) {
+	strcpy(p + 1, "fct");
+    }
+
+    fp = gretl_fopen(sfname, "r");
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't open '%s'\n", sfname);
+	return E_FOPEN;
+    }
+
+    while (fgets(line, sizeof line, fp)) {
+	nl++;
+    }
+    fprintf(stderr, "found %d lines; expecting %d forecasts\n", nl, nl - 2);
+    rewind(fp);
+
+    F = gretl_matrix_alloc(nl-2, 3);
+
+    i = n = 0;
+    while (fgets(line, sizeof line, fp) && !err) {
+	if (i == 0 && strncmp(line, "date", 4)) {
+	    fprintf(stderr, "expected but didn't find 'data'\n");
+	    err = 1;
+	} else if (i == 1 && strncmp(line, "----", 4)) {
+	    fprintf(stderr, "expected but didn't find '----'\n");
+	    err = 1;
+	} else if (i > 1) {
+	    ns = sscanf(line, "%d %lf %lf %lf", &d, &pt, &lo, &hi);
+	    if (ns != 4) {
+		fprintf(stderr, "expected 4 numeric fields but got %d\n", ns);
+		err = 1;
+	    } else {
+		yr = d / 100;
+		sub = d % 100;
+		if (dset->pd == 4) {
+		    sprintf(obs, "%d:%d", yr, sub);
+		} else {
+		    sprintf(obs, "%d:%02d", yr, sub);
+		}
+		t = merge_dateton(obs, dset);
+		if (n == 0) {
+		    tmin = t;
+		}
+		fprintf(stderr, "%s: %g %g %g (t = %d)\n", obs, pt, lo, hi, t);
+		gretl_matrix_set(F, n, 0, pt);
+		gretl_matrix_set(F, n, 1, lo);
+		gretl_matrix_set(F, n, 2, hi);
+		n++;
+	    }
+	}
+	i++;
+    }
+
+    fclose(fp);
+
+    fprintf(stderr, "got %d forecasts, starting at t = %d\n", n, tmin);
+    if (tmin >= dset->n) {
+	fprintf(stderr, " start is %d observation(s) beyond the dataset range\n",
+		tmin - dset->n + 1);
+    } else if (tmin > dset->t2) {
+	fprintf(stderr, " start is %d observation(s) beyond the sample range\n",
+		tmin - dset->t2);
+    }
+    gretl_matrix_print(F, "F");
+    gretl_matrix_free(F);
+
+    return err;
+}
 
 static void toggle_outliers (GtkToggleButton *b, tx_request *request)
 {
@@ -414,6 +506,7 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
     g_signal_connect(GTK_TOGGLE_BUTTON(b[1]), "toggled",
                      G_CALLBACK(toggle_edit_script), request);
 
+    /* default to direct execution of x13as */
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[0]), TRUE);
 }
 
@@ -861,6 +954,35 @@ static const char *addstr (tx_request *request)
     }
 }
 
+/* This is a bit of a pest: under some configurations, tramo/seats
+   outputs a series "irfin"; sometimes that is not created, but we do
+   get an "irreg".  So if we can't find the one, try looking for the
+   other.  Also the linearized series "xlin.t" is not always available.
+*/
+
+static FILE *tramo_remedial_fopen (char *sfname,
+				   const char *path,
+				   int src,
+				   int *got_irfin)
+{
+    FILE *fp = NULL;
+
+    if (src == TX_IR) {
+	/* try "irreg" instead of "irfin" */
+	gretl_build_path(sfname, path, "graph", "series",
+			 "irreg.t", NULL);
+	fp = gretl_fopen(sfname, "r");
+	*got_irfin = 0;
+    } else if (src == TX_LN) {
+	/* maybe no linearization was required? */
+	gretl_build_path(sfname, path, "graph", "series",
+			 "xorigt.t", NULL);
+	fp = gretl_fopen(sfname, "r");
+    }
+
+    return fp;
+}
+
 /* This is called from write_tx_data(), the back-end for X-13ARIMA
    and TRAMO functionality in the gretl GUI.
 */
@@ -897,45 +1019,23 @@ static int add_series_from_file (const char *path, int src,
     fp = gretl_fopen(sfname, "r");
 
     if (fp == NULL) {
-        /* couldn't open the file we wanted */
-        int gotit = 0;
-
-        /* This is a bit of a pest: under some configurations, tramo/seats
-           outputs a series "irfin"; sometimes that is not created, but
-           we do get an "irreg".  So if we can't find the one, try looking
-           for the other.  Also, the seasonally adjusted series "safin"
-           is not always available.
-        */
-        if (request->prog == TRAMO_SEATS || request->prog == TRAMO_ONLY) {
-            if (src == TX_IR) {
-                /* try "irreg" */
-                gretl_build_path(sfname, path, "graph", "series",
-                                     "irreg.t", NULL);
-                fp = gretl_fopen(sfname, "r");
-                if (fp != NULL) {
-                    gotit = 1;
-                }
-                tramo_got_irfin = 0;
-            } else if (src == TX_LN) {
-                /* maybe no linearization was required? */
-                gretl_build_path(sfname, path, "graph", "series",
-                                 "xorigt.t", NULL);
-                fp = gretl_fopen(sfname, "r");
-                if (fp != NULL) {
-                    gotit = 1;
-                }
-            } else if (src == TX_SA) {
-                /* scrub all use of seasonal series */
+        /* We couldn't open the file we wanted. */
+         if (request->prog == TRAMO_SEATS || request->prog == TRAMO_ONLY) {
+	    if (src == TX_IR || src == TX_LN) {
+		/* try a remedial step */
+		fp = tramo_remedial_fopen(sfname, path, src,
+					  &tramo_got_irfin);
+	    } else if (src == TX_SA) {
+		/* scrub all use of seasonal series */
                 request->seasonal_ok = 0;
                 if (request->opts[src].save) {
                     request->opts[src].save = 0;
                     request->savevars -= 1;
                 }
-                return 0;
-            }
-        }
-
-        if (!gotit) {
+		return 0;
+	    }
+	}
+        if (fp == NULL) {
             gretl_errmsg_sprintf(_("Couldn't open %s"), sfname);
             return 1;
         }
@@ -1298,6 +1398,7 @@ static void set_opts (tx_request *request)
         if (w != NULL && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
             request->opts[i].save = 1;
             if (i < TRIGRAPH) {
+		/* FIXME x13a and TX_FC */
                 request->savevars++;
                 if (i == 0) {
                     request->opt |= OPT_A;
@@ -1316,6 +1417,12 @@ static void set_opts (tx_request *request)
         }
     }
 }
+
+/* The function adjust_savevars() is called if and only if the task in
+   hand turns out to involve TRAMO without seasonal adjustment via
+   SEATS.  We drop references to seasonal terms but preserve reference
+   to the "linearized" series if present.
+*/
 
 static void adjust_savevars (tx_request *request,
                              int *savelist)
@@ -1437,12 +1544,12 @@ static void arima_spec_string (char *s, const guint8 *a)
 	    a[3], a[4], a[5]);
 }
 
-static int write_spc_file (const char *fname,
-                           const double *y,
-                           const char *vname,
-                           const DATASET *dset,
-                           const int *savelist,
-                           x13a_opts *xopt)
+static int write_x13a_spc_file (const char *fname,
+				const double *y,
+				const char *vname,
+				const DATASET *dset,
+				const int *savelist,
+				x13a_opts *xopt)
 {
     const char **save_strings;
     int startyr, startper;
@@ -1549,12 +1656,12 @@ static int write_spc_file (const char *fname,
     }
 
     if (xopt->airline) {
-        fputs("arima {model=(0,1,1)(0,1,1)}\n", fp);
+        fputs("arima{model=(0,1,1)(0,1,1)}\n", fp);
     } else if (xopt->aspec != NULL) {
 	char astr[32];
 
 	arima_spec_string(astr, xopt->aspec);
-	fprintf(fp, "arima {model=%s}\n", astr);
+	fprintf(fp, "arima{model=%s}\n", astr);
     } else {
         fputs("automdl{}\n", fp);
     }
@@ -1568,19 +1675,23 @@ static int write_spc_file (const char *fname,
     }
     if (savelist[0] > 0) {
         if (savelist[0] == 1) {
-            fprintf(fp, " save=%s ", save_strings[savelist[1]]);
+            fprintf(fp, "save=%s", save_strings[savelist[1]]);
         } else {
-            fputs(" save=( ", fp);
+            fputs(" save=(", fp);
             for (i=1; i<=savelist[0]; i++) {
-                fprintf(fp, "%s ", save_strings[savelist[i]]);
+                fprintf(fp, "%s", save_strings[savelist[i]]);
+		if (i < savelist[0]) {
+		    fputc(' ', fp);
+		}
             }
-            fputs(") ", fp);
+            fputc(')', fp);
         }
     }
     fputs("}\n", fp);
 
     if (xopt->fcast) {
-	fputs("forecast{ save=( fct ) }\n", fp);
+	fputs("forecast{save=(fct)}\n", fp);
+	/* add to savelist? */
     }
 
     gretl_pop_c_numeric_locale();
@@ -1832,17 +1943,17 @@ int exec_tx_script (char *outname, const gchar *buf)
    X-13ARIMA, for analysis of the series with ID number @varnum. The
    @opt pointer is filled out based on selections from a dialog box.
 
-   The @fname argument is filled out to tell the caller the name of
-   the output file from the third-party program, if available; it will
-   be an empty string if the user cancels, or if we fail to execute
-   the program in question.
+   The @fname argument is filled out to tell the caller the name of the
+   output file from the third-party program, if available; it will be an
+   empty string if the user cancels, or if we fail to execute the
+   program in question.
 
-   At present the @help_func argument is used only for X-13ARIMA,
-   for which we offer a special option, namely writing a spec file
-   for display in an editor window rather than directly executing
-   x13a commands. If that option is selected we signal the caller
-   by putting OPT_S into @opt, and we return the name of the gretl-
-   generated command file in @fname.
+   At present the @help_func argument is used only for X-13ARIMA, for
+   which we offer a special option, namely writing a spec file for
+   display in an editor window rather than directly executing x13a
+   commands. If that option is selected we signal the caller by putting
+   OPT_S into @opt, and we return the name of the gretl-generated
+   command file in @fname.
 */
 
 int write_tx_data (char *fname,
@@ -1897,7 +2008,8 @@ int write_tx_data (char *fname,
         return 0;
     }
 
-    if (*popt & OPT_S) {
+    if (request.opt & OPT_S) {
+	*popt |= OPT_S;
         savescript = 1;
     } else {
         /* create little temporary dataset */
@@ -1923,8 +2035,8 @@ int write_tx_data (char *fname,
         /* write out the .spc file for x13a */
         gretl_build_path(fname, workdir, vname, NULL);
         strcat(fname, ".spc");
-        write_spc_file(fname, dset->Z[varnum], vname, dset, savelist,
-                       &request.xopt);
+        write_x13a_spc_file(fname, dset->Z[varnum], vname, dset, savelist,
+			    &request.xopt);
     } else {
         /* TRAMO, possibly plus SEATS */
         gretl_lower(vname);
@@ -1943,8 +2055,8 @@ int write_tx_data (char *fname,
         return 0;
     }
 
-    /* now run the program(s): we try to ensure that any
-       old output files get deleted first
+    /* Now run the program(s): we try to ensure that any
+       old output files get deleted first.
     */
 
     if (request.prog == X13A) {
@@ -1969,8 +2081,8 @@ int write_tx_data (char *fname,
     }
 
     if (request.prog == X13A) {
-        /* see if we got a warning -- and if so, whether it
-           should count as an error */
+        /* See if we got a warning -- and if so, whether it
+           should count as an error. */
         gretl_build_path(fname, workdir, vname, NULL);
         strcat(fname, ".err");
         *warning = got_x13a_warning(fname, &err);
@@ -2031,6 +2143,11 @@ int write_tx_data (char *fname,
                 *popt |= OPT_Q;
             }
         }
+    }
+
+    if (request.xopt.fcast) {
+	/* just testing, for now */
+	read_fct(fname, &request, dset);
     }
 
     if (!err && request.savevars > 0) {
@@ -2386,7 +2503,7 @@ static int process_options_bundle (x13a_opts *xopt,
     return err;
 }
 
-/* implements the deseas() function */
+/* Implements the userspace function deseas() */
 
 int adjust_series (const double *x, double *y,
                    const char *vname, const DATASET *dset,
@@ -2433,7 +2550,7 @@ int adjust_series (const double *x, double *y,
         if (!err) {
             gretl_build_path(fname, workdir, vname, NULL);
             strcat(fname, ".spc");
-            write_spc_file(fname, x, vname, dset, savelist, &xopt);
+            write_x13a_spc_file(fname, x, vname, dset, savelist, &xopt);
 	    if (xopt.save_spc) {
 		save_spc_to_bundle(fname, opts);
 	    }
