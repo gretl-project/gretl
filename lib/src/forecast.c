@@ -451,13 +451,12 @@ static int detect_lag (int vy, int vx, int t1, int t2,
 }
 
 /* Makes a list to keep track of any "independent variables" that are
-   really lags of the dependent variable.  The list has as many
-   elements as the model has independent variables, and in each place
-   we either write a zero (if the coefficient does not correspond to a
-   lag of the dependent variable) or a positive integer corresponding
-   to the lag order.  However, in case the list of independent vars
-   contains no lagged dependent var, *depvar_lags is set to NULL.
-   Returns 1 on error, 0 otherwise.
+   actually lags of the dependent variable.  This list has as many
+   elements as the model has independent variables, and in each place we
+   write a zero if the regressor is not a lag of the dependent variable
+   or a positive integer recording the lag order.  However, if the list
+   of regressors contains no lags of the dependent var, the function
+   returns NULL.
 */
 
 static int *process_lagged_depvar (MODEL *pmod, const DATASET *dset)
@@ -4209,13 +4208,13 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
     return fr;
 }
 
-/* Try to determine whether adding observations to the dataset
-   (without actually adding more "real" data) can serve to extend the
-   range of out-of-sample prediction. The answer will in general be No
-   if the specification includes exogenous regressors other than
-   deterministic terms that can be extended automatically.  However,
-   if an exogenous regressor is a lag series of order p we can extend
-   it automatically for p periods.
+/* Try to determine whether adding observations to the dataset (without
+   actually adding more "real" data) can serve to extend the range of
+   out-of-sample prediction. The answer will be No if the specification
+   includes exogenous regressors other than deterministic terms that can
+   be extended automatically (trend or periodic dummies).  However, if
+   an exogenous regressor is a lag series of order p we can extend it
+   automatically for p periods.
 
    The @dvlags argument will be non-NULL only if the specification
    includes at least one lag of the dependent variable.
@@ -4224,23 +4223,31 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 static int addobs_can_help (MODEL *pmod, const int *dvlags,
 			    const DATASET *dset)
 {
-    int i, xi, ret = 1;
+    int i, vi, ret = 1;
 
     if (pmod->xlist != NULL) {
-	for (i=0; i<pmod->xlist[0]; i++) {
-	    xi = pmod->xlist[i + 1];
-	    if (xi != 0 && (dvlags == NULL || dvlags[i] == 0)) {
-		if (is_trend_variable(dset->Z[xi], dset->n)) {
-		    continue;
-		} else if (is_periodic_dummy(dset->Z[xi], dset)) {
-		    continue;
-		} else if (series_get_lag(dset, xi) &&
-			   series_get_parent_id(dset, xi)) {
-		    continue;
-		} else {
-		    ret = 1;
-		    break;
-		}
+	for (i=1; i<=pmod->xlist[0]; i++) {
+	    vi = pmod->xlist[i];
+	    if (vi == 0) {
+		/* constant, OK */
+		continue;
+	    } else if (dvlags != NULL && dvlags[i-1] != 0) {
+		/* a lag of the dependent variable, OK */
+		continue;
+	    } else if (is_trend_variable(dset->Z[vi], dset->n)) {
+		/* trend, OK */
+		continue;
+	    } else if (is_periodic_dummy(dset->Z[vi], dset)) {
+		/* a predictable dummy, OK */
+		continue;
+	    } else if (series_get_lag(dset, vi) &&
+		       series_get_parent_id(dset, vi)) {
+		/* a lagged exogenous term, OK up to a point  */
+		continue;
+	    } else {
+		/* none of the above, nothing doing */
+		ret = 0;
+		break;
 	    }
 	}
     }
