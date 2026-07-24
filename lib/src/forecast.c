@@ -4242,10 +4242,10 @@ static int addobs_can_help (MODEL *pmod, const int *dvlags,
 		continue;
 	    } else if (series_get_lag(dset, vi) &&
 		       series_get_parent_id(dset, vi)) {
-		/* a lagged exogenous term, OK up to a point  */
+		/* a lagged exogenous term, OK up to a point */
 		continue;
 	    } else {
-		/* none of the above, nothing doing */
+		/* none of the above, not OK */
 		ret = 0;
 		break;
 	    }
