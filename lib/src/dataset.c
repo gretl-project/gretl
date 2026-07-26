@@ -6631,7 +6631,10 @@ static int condense_listinfo_matrix (gretl_matrix *m,
     }
 
     if (n == m->rows) {
-	/* nothing to be done */
+	for (i=0; i<m->rows; i++) {
+	    m->val[i] = 1.0 + i;
+	}
+	/* nothing more to be done */
 	return 0;
     }
 
@@ -6662,6 +6665,8 @@ static int condense_listinfo_matrix (gretl_matrix *m,
 
     return 0;
 }
+
+/* OPT_C says the output matrix should be "condensed" */
 
 static gretl_matrix *linfo_matrix_via_labels (const int *list,
 					      const DATASET *dset,
@@ -6867,8 +6872,8 @@ static gretl_matrix *linfo_matrix_via_data (const int *list,
 
 /* Construct a matrix providing information about the relations between
    the series in @list. This will have rows equal to the number of
-   series and at least 5 columns (shown as 1-based here).  All elements
-   of the matrix are zero unless otherwise specified.
+   series and at least 5 columns (shown here as 1-based).  All elements
+   of the matrix are zero unless otherwise stated.
 
    col 1: Holds 1 if the series is "primary" (neither the square of
    another series in the list, nor the interaction of two series in the
@@ -6888,6 +6893,11 @@ static gretl_matrix *linfo_matrix_via_data (const int *list,
    (these being added as required).  If the series itself is an
    interaction term, cols 4 and 5 get the list positions of the two
    source series.
+
+   If OPT_C is passed in @opt the result will be "condensed": only rows
+   pertaining to primary series are retained, and the integer in the
+   first column of row i gives the position in the list of the i^{th}
+   primary term.
 */
 
 gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,

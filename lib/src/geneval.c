@@ -8465,9 +8465,11 @@ static NODE *list_info_node (NODE *l, NODE *r, parser *p)
         gretlopt opt = OPT_NONE;
 
         if (k & 1) {
+	    /* "condense" the result */
             opt |= OPT_C;
         }
         if (k & 2) {
+	    /* rely on data rather than just labels */
             opt |= OPT_B;
         }
         ret->v.m = list_info_matrix(list, p->dset, opt, &p->err);
