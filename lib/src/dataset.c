@@ -6615,15 +6615,17 @@ static int get_iact_column (gretl_matrix *m, int i, int *err)
    term.
 */
 
-static int condense_listinfo_matrix (gretl_matrix *m,
+static int condense_listinfo_matrix (gretl_matrix **pm,
 				     const int *list,
 				     const DATASET *dset)
 {
     gretl_matrix *mc = NULL;
+    gretl_matrix *m = *pm;
     char **S = NULL;
     double x;
     int i, j, ic, n = 0;
 
+    /* count the primary series */
     for (i=0; i<m->rows; i++) {
 	if (m->val[i] == 1) {
 	    n++;
@@ -6631,9 +6633,18 @@ static int condense_listinfo_matrix (gretl_matrix *m,
     }
 
     if (n == m->rows) {
+#if 0 /* not ready yet */
+	char **S;
+	int serr = 0;
+
 	for (i=0; i<m->rows; i++) {
 	    m->val[i] = 1.0 + i;
 	}
+	S = gretl_list_get_names_array(list, dset, &serr);
+	if (S != NULL) {
+	    gretl_matrix_set_rownames(m, S);
+	}
+#endif
 	/* nothing more to be done */
 	return 0;
     }
@@ -6648,7 +6659,7 @@ static int condense_listinfo_matrix (gretl_matrix *m,
     ic = 0;
     for (i=0; i<m->rows; i++) {
 	if (m->val[i] == 1) {
-	    gretl_matrix_set(mc, ic, 0, i+1);
+	    gretl_matrix_set(mc, ic, 0, i+1.0);
 	    for (j=1; j<m->cols; j++) {
 		x = gretl_matrix_get(m, i, j);
 		gretl_matrix_set(mc, ic, j, x);
@@ -6658,10 +6669,9 @@ static int condense_listinfo_matrix (gretl_matrix *m,
 	}
     }
 
-    gretl_matrix_reuse(m, n, m->cols);
-    gretl_matrix_copy_values(m, mc);
-    gretl_matrix_free(mc);
-    gretl_matrix_set_rownames(m, S);
+    gretl_matrix_free(*pm);
+    gretl_matrix_set_rownames(mc, S);
+    *pm = mc;
 
     return 0;
 }
@@ -6764,7 +6774,7 @@ static gretl_matrix *linfo_matrix_via_labels (const int *list,
 	gretl_matrix_free(ret);
 	ret = NULL;
     } else if (opt & OPT_C) {
-	condense_listinfo_matrix(ret, list, dset);
+	condense_listinfo_matrix(&ret, list, dset);
     } else {
 	/* convenience: attach series names to rows */
 	char **S;
@@ -6855,7 +6865,7 @@ static gretl_matrix *linfo_matrix_via_data (const int *list,
 	gretl_matrix_free(ret);
 	ret = NULL;
     } else if (opt & OPT_C) {
-	condense_listinfo_matrix(ret, list, dset);
+	condense_listinfo_matrix(&ret, list, dset);
     } else {
 	/* convenience: attach series names to rows */
 	char **S;
