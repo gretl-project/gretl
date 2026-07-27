@@ -10,7 +10,7 @@ version 2026c, in progress
   in a wider range of contexts
 - recession bars in time-series plots: extend support of
   this feature to daily data
-- enhance functiionality of ui-maker for function packages
+- enhance functionality of ui-maker for function packages
 - fix bug: GUI plot editor breaks factorized plots
 - fix bug: crash in GUI data editor on Windows
 - fix bug: correlation matrix heatmap broken if the
