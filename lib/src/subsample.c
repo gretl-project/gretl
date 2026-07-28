@@ -197,7 +197,7 @@ int write_dataset_submask (const DATASET *dset, PRN *prn)
     if (dset->submask == RESAMPLED) {
 	unsigned int seed = get_resampling_seed();
 
-	pprintf(prn, "<resample seed=\"%u\" n=\"%d\"/>\n", seed, dset->n);
+	pprintf(prn, "<resample seed=\%" G_GUINT64_FORMAT "\" n=\"%d\"/>\n", seed, dset->n);
 	ret = 1;
     } else if (complex_subsampled()) {
 	int i, n = submask_length(dset->submask);

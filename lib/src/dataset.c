@@ -3630,16 +3630,16 @@ static int compact_dataset_wrapper (const char *s, DATASET *dset,
     return err;
 }
 
-static unsigned int resample_seed;
+static uint64_t resample_seed;
 
-unsigned int get_resampling_seed (void)
+uint64_t get_resampling_seed (void)
 {
     return resample_seed;
 }
 
 /* resample the dataset by observation, with replacement */
 
-int dataset_resample (DATASET *dset, int n, unsigned int seed)
+int dataset_resample (DATASET *dset, int n, uint64_t seed)
 {
     DATASET *rset = NULL;
     char **S = NULL;

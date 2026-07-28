@@ -658,7 +658,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 	} else if (!xmlStrcmp(cur->name, (XUC) "resample")) {
 	    tmp = xmlGetProp(cur, (XUC) "seed");
 	    if (tmp != NULL) {
-		sinfo->seed = (unsigned) atoi((const char *) tmp);
+		sinfo->seed = strtoull((const char *) tmp, NULL, 10);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "n");
