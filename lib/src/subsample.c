@@ -257,7 +257,7 @@ static char *make_submask (int n)
     return mask;
 }
 
-#if 0
+#if 0 /* may be wanted again? */
 
 static void debug_print_submask (char *mask, char *msg)
 {
@@ -918,7 +918,7 @@ static char *expand_mask (const char *tmpmask,
     return expanded;
 }
 
-static int and_masks (char **pmask, const char *orig, int *err)
+static int intersect_masks (char **pmask, const char *orig, int *err)
 {
     char *mask = *pmask;
     int origlen = submask_length(orig) - 1;
@@ -929,6 +929,8 @@ static int and_masks (char **pmask, const char *orig, int *err)
     if (masklen < origlen) {
         alt = expand_mask(mask, orig, err);
         if (*err == 0) {
+	    /* avoid memory leakage */
+	    free(mask);
             *pmask = mask = alt;
         }
     }
@@ -1268,25 +1270,24 @@ count_panel_units (const char *mask, const DATASET *dset)
     return n;
 }
 
-/* construct mask for taking random sub-sample from dataset:
-   we're selecting @subn cases without replacement, and
-   there may or may not be an existing mask in place that
-   has to be respected.
+/* Construct a mask for taking a random sub-sample from @dset: we're
+   selecting @subn cases without replacement, and there may or may not
+   be an existing mask in place that has to be respected.
 */
 
 static int make_random_mask (const char *s, const char *oldmask,
 			     DATASET *dset, char *mask)
 {
-    unsigned u;
-    int targ, avail, oldn = dset->n;
-    int i, subn, cases, rejn;
+    gretl_matrix *v = NULL;
+    int oldn, subn;
+    int i, j;
     int err = 0;
 
     /* how many cases are requested? */
     subn = smpl_get_int(s, dset, 0, &err);
 
     if (subn <= 0 || subn >= dset->n) {
-	err = 1;
+	err = E_INVARG;
     } else if (oldmask != NULL) {
 	/* dataset is already sub-sampled */
 	oldn = 0;
@@ -1296,8 +1297,10 @@ static int make_random_mask (const char *s, const char *oldmask,
 	    }
 	}
 	if (subn >= oldn) {
-	    err = 1;
+	    err = E_INVARG;
 	}
+    } else {
+	oldn = dset->n;
     }
 
     if (err && err != E_PARSE) {
@@ -1305,49 +1308,42 @@ static int make_random_mask (const char *s, const char *oldmask,
 	return err;
     }
 
-    /* Which is smaller: the number of cases to be selected or the
-       complement, the number to be discarded?  For the sake of
-       efficiency we'll go for the smaller value.
+    v = gretl_zero_matrix_new(subn, 1);
+    err = fill_permutation_vector(v, oldn);
+    if (err) {
+	gretl_matrix_free(v);
+	return err;
+    }
+
+    /* At this point @v will contain @subn indices into the sub-array of
+       1s in @oldmask, or into the observations in @dset if @oldmask is
+       NULL. We need to use these to find the indices of the
+       observations that should be retained by @mask. Sorting of @v
+       might be worthwhile when @oldmask is non-NULL.
     */
-    rejn = oldn - subn;
-    if (rejn < subn) {
-	/* select @rejn observations to discard */
-	targ = rejn;
-	avail = 1;
+
+    if (oldmask == NULL) {
+	for (j=0; j<subn; j++) {
+	    i = v->val[j] - 1;
+	    mask[i] = 1;
+	}
     } else {
-	/* select @subn observations to include */
-	targ = subn;
-	avail = 0;
-    }
+	int k = 0;
 
-    for (i=0; i<dset->n; i++) {
-	if (oldmask != NULL && oldmask[i] == 0) {
-	    /* obs is already excluded, hence not selectable */
-	    mask[i] = -1;
-	} else {
-	    mask[i] = avail;
-	}
-    }
-
-    cases = 0;
-
-    while (cases < targ) {
-	u = gretl_rand_int_max(dset->n);
-	if (mask[u] == avail) {
-	    /* obs is available, not yet selected */
-	    mask[u] = !avail;
-	    cases++;
-	}
-    }
-
-    if (oldmask != NULL) {
-	/* undo the 'already excluded' coding above */
 	for (i=0; i<dset->n; i++) {
-	    if (mask[i] == -1) {
-		mask[i] = 0;
+	    if (oldmask[i] == 1) {
+		k++;
+		for (j=0; j<subn; j++) {
+		    if (v->val[j] == (double) k) {
+			mask[i] = 1;
+			break;
+		    }
+		}
 	    }
 	}
     }
+
+    gretl_matrix_free(v);
 
     return err;
 }
@@ -1792,7 +1788,11 @@ make_restriction_mask (int mode, const char *s,
 	return E_ARGS;
     }
 
-    mask = make_submask(dset->n);
+    if (oldmask != NULL && mode == SUBSAMPLE_RANDOM) {
+	mask = make_submask(fullset->n);
+    } else {
+	mask = make_submask(dset->n);
+    }
     if (mask == NULL) {
 	return E_ALLOC;
     }
@@ -1838,7 +1838,7 @@ make_restriction_mask (int mode, const char *s,
 
     /* cumulate sample restrictions, if appropriate */
     if (oldmask != NULL && mode != SUBSAMPLE_RANDOM) {
-	sn = and_masks(&mask, oldmask, &err);
+	sn = intersect_masks(&mask, oldmask, &err);
     } else {
 	sn = count_selected_cases(mask, refset);
     }
