@@ -6,6 +6,8 @@ version 2026c, in progress
 - GUI: forecast from single-equation model, support write
   and copy in CSV format
 - GUI: fix for call to function package with no arguments
+- GUI: fix for the options shown in connection with making
+  a forecast from a model
 - use of "to" in a range-of-lags expression: support this
   in a wider range of contexts
 - recession bars in time-series plots: extend support of
@@ -19,6 +21,8 @@ version 2026c, in progress
   --difference option is given
 - fix bug: potentially incorrect output from xtab when
   given string-valued series as input
+- fix bug: potential crash or memory leak with the "smpl"
+  command in certain cases of compounding restrictions
 - gretl_edit: support loading of function definitions
 - MS Windows: update doc regarding use of MS-MPI
 
