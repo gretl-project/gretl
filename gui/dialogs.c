@@ -919,7 +919,9 @@ enum {
     SET_STUDENT
 };
 
-static void set_bs_opt (GtkWidget *w, gretlopt *opt)
+/* helper function for bootstrap_dialog() */
+
+static void set_boot_opt (GtkWidget *w, gretlopt *opt)
 {
     int i = widget_get_int(w, "action");
 
@@ -1084,7 +1086,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_CI));
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_bs_opt), popt);
+                     G_CALLBACK(set_boot_opt), popt);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("Studentized confidence interval"));
@@ -1092,7 +1094,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_STUDENT));
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_bs_opt), popt);
+                     G_CALLBACK(set_boot_opt), popt);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("P-value"));
@@ -1100,7 +1102,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_PVAL));
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_bs_opt), popt);
+                     G_CALLBACK(set_boot_opt), popt);
 
     vbox_add_hsep(vbox);
 
@@ -1113,7 +1115,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_UHAT));
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_bs_opt), popt);
+                     G_CALLBACK(set_boot_opt), popt);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("Resample data \"pairs\""));
@@ -1121,7 +1123,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_PAIRS));
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_bs_opt), popt);
+                     G_CALLBACK(set_boot_opt), popt);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("Wild bootstrap"));
@@ -1129,7 +1131,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_WILD));
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_bs_opt), popt);
+                     G_CALLBACK(set_boot_opt), popt);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("Simulate normal errors"));
@@ -1137,7 +1139,7 @@ int bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
     g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(SET_NORMAL));
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(set_bs_opt), popt);
+                     G_CALLBACK(set_boot_opt), popt);
 
     vbox_add_hsep(vbox);
 
@@ -3244,11 +3246,10 @@ static void snap_to_static (GtkToggleButton *b, GtkWidget *w)
 }
 
 /* FIXME: Ideally this conditionality should be centralized in
-   lib/src/forecast.c, and worked out in proper detail. Note
-   that we don't need to worry here about estimators for which
-   forecasts are not supported at all; we're just trying to
-   screen out cases where forecast standard errors are not
-   available.
+   lib/src/forecast.c, and worked out in proper detail. Note that we
+   don't need to worry here about estimators for which forecasts are not
+   supported at all; we're just trying to screen out cases where
+   forecast standard errors are not available.
 */
 
 static int fcast_errs_ok (MODEL *pmod)
@@ -3264,9 +3265,12 @@ static int fcast_errs_ok (MODEL *pmod)
     }
 }
 
-#if 0 /* not ready yet */
+#define LOG2LEVEL 0 /* not yet: back-end isn't ready */
+
+#if LOG2LEVEL
 
 static void log_or_level_selector (GtkWidget *vbox,
+				   const char *parent,
 				   gretlopt *optp)
 {
     const char *strs[] = {
@@ -3275,7 +3279,7 @@ static void log_or_level_selector (GtkWidget *vbox,
 	N_("Use level (assuming normality)"),
 	NULL
     };
-    gretlopt opts[] = {OPT_NONE, OPT_E, OPT_N};
+    gretlopt opts[] = {OPT_NONE, OPT_X, OPT_G};
     combo_opts log_opts = {optp, opts, strs};
     GtkWidget *hbox, *tmp;
 
@@ -3293,7 +3297,9 @@ static void log_or_level_selector (GtkWidget *vbox,
    system_forecast_callback() in gui_utils.c. The @pmod argument will
    be non-NULL in the former case, NULL in the latter.
 
-   The @optp argument is to do with plotting the forecast.
+   The @optp argument is mainly to do with plotting the forecast,
+   bit can accept OPT_I (integrate), OPT_M (mean-y) or OPT_X
+   (exponentiate log dependent variable).
 */
 
 int forecast_dialog (int t1min, int t1max, int *t1,
@@ -3340,9 +3346,13 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                      G_CALLBACK(sync_pre_forecast), rset);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
-#if 0 /* not ready yet */
-    if (series_is_log(gretl_model_get_depvar(pmod), dataset, NULL) {
-	log_or_level_selector(vbox, &log_opt);
+#if LOG2LEVEL
+    if (pmod != NULL) {
+	const char *parent = gretl_model_get_data(pmod, "log-parent");
+
+	if (parent != NULL) {
+	    log_or_level_selector(vbox, parent, optp);
+	}
     }
 #endif
 
@@ -3629,7 +3639,7 @@ int add_obs_dialog (const char *blurb, int addmin,
     tmp = gtk_label_new(_("Number of observations to add:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
-    addspin = gtk_spin_button_new_with_range(1, 10000, 1);
+    addspin = gtk_spin_button_new_with_range(0, 10000, 1);
     gtk_entry_set_activates_default(GTK_ENTRY(addspin), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), addspin, TRUE, TRUE, 5);
 

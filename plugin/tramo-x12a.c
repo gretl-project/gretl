@@ -56,6 +56,7 @@ const char *x11_save_strings[] = {
     "d11", /* seasonally adjusted */
     "d12", /* trend/cycle */
     "d13", /* irregular */
+    "fct", /* forecast */
     NULL
 };
 
@@ -63,6 +64,7 @@ const char *x13_seats_save_strings[] = {
     "s11", /* seasonally adjusted */
     "s12", /* trend/cycle */
     "s13", /* irregular */
+    "fct", /* forecast */
     NULL
 };
 
@@ -109,8 +111,9 @@ static void x13a_opts_init (x13a_opts *xopt)
     xopt->output = 0;       /* type of deseas() return series */
     xopt->verbose = 0;      /* deseas() verbosity level (0, 1 or 2) */
     xopt->save_spc = 0;     /* add record of spc content */
+    xopt->fcast = 0;        /* automatic forecast */
     xopt->critical = NADBL; /* for use with outliers */
-    xopt->savelist = NULL;  /* ?? */
+    xopt->savelist = NULL;  /* list of output series to be saved */
     xopt->aspec = NULL;     /* optional user arima spec */
 }
 
@@ -204,6 +207,98 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 
 #endif /* !WIN32 */
 
+/* temporary code as we try to enable capturing the automatic
+   forecast from X-13ARIMA
+*/
+
+static int read_fct (const char *path,
+		     tx_request *request,
+		     DATASET *dset)
+{
+    FILE *fp = NULL;
+    gretl_matrix *F = NULL;
+    char sfname[MAXLEN];
+    char obs[OBSLEN];
+    char line[512];
+    char *p;
+    double pt, lo, hi;
+    int i, d, n, ns;
+    int yr, sub, t;
+    int tmin = 0;
+    int nl = 0;
+    int err = 0;
+
+    strcpy(sfname, path);
+    p = strrchr(sfname, '.');
+    if (p != NULL) {
+	strcpy(p + 1, "fct");
+    }
+
+    fp = gretl_fopen(sfname, "r");
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't open '%s'\n", sfname);
+	return E_FOPEN;
+    }
+
+    while (fgets(line, sizeof line, fp)) {
+	nl++;
+    }
+    fprintf(stderr, "found %d lines; expecting %d forecasts\n", nl, nl - 2);
+    rewind(fp);
+
+    F = gretl_matrix_alloc(nl-2, 3);
+
+    i = n = 0;
+    while (fgets(line, sizeof line, fp) && !err) {
+	if (i == 0 && strncmp(line, "date", 4)) {
+	    fprintf(stderr, "expected but didn't find 'data'\n");
+	    err = 1;
+	} else if (i == 1 && strncmp(line, "----", 4)) {
+	    fprintf(stderr, "expected but didn't find '----'\n");
+	    err = 1;
+	} else if (i > 1) {
+	    ns = sscanf(line, "%d %lf %lf %lf", &d, &pt, &lo, &hi);
+	    if (ns != 4) {
+		fprintf(stderr, "expected 4 numeric fields but got %d\n", ns);
+		err = 1;
+	    } else {
+		yr = d / 100;
+		sub = d % 100;
+		if (dset->pd == 4) {
+		    sprintf(obs, "%d:%d", yr, sub);
+		} else {
+		    sprintf(obs, "%d:%02d", yr, sub);
+		}
+		t = merge_dateton(obs, dset);
+		if (n == 0) {
+		    tmin = t;
+		}
+		fprintf(stderr, "%s: %g %g %g (t = %d)\n", obs, pt, lo, hi, t);
+		gretl_matrix_set(F, n, 0, pt);
+		gretl_matrix_set(F, n, 1, lo);
+		gretl_matrix_set(F, n, 2, hi);
+		n++;
+	    }
+	}
+	i++;
+    }
+
+    fclose(fp);
+
+    fprintf(stderr, "got %d forecasts, starting at t = %d\n", n, tmin);
+    if (tmin >= dset->n) {
+	fprintf(stderr, " start is %d observation(s) beyond the dataset range\n",
+		tmin - dset->n + 1);
+    } else if (tmin > dset->t2) {
+	fprintf(stderr, " start is %d observation(s) beyond the sample range\n",
+		tmin - dset->t2);
+    }
+    gretl_matrix_print(F, "F");
+    gretl_matrix_free(F);
+
+    return err;
+}
+
 static void toggle_outliers (GtkToggleButton *b, tx_request *request)
 {
     /* we map the on/off GUI choice to our code for x13's default, namely 3 */
@@ -234,9 +329,9 @@ static void toggle_edit_script (GtkToggleButton *b, tx_request *request)
     int i;
 
     if (s) {
-        *request->popt |= OPT_S;
+        request->opt |= OPT_S;
     } else {
-        *request->popt &= ~OPT_S;
+        request->opt &= ~OPT_S;
     }
 
     for (i=0; i<4; i++) {
@@ -249,6 +344,11 @@ void sensitize_tx_entry (GtkToggleButton *b, GtkWidget *w)
     gtk_widget_set_sensitive(w, button_is_active(b));
 }
 
+void toggle_fcast_option (GtkToggleButton *b, tx_request *request)
+{
+    request->xopt.fcast = button_is_active(b);
+}
+
 void update_tx_savename (GtkEntry *entry, char *name)
 {
     strcpy(name, gtk_entry_get_text(entry));
@@ -259,15 +359,16 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
     const gchar *save_strs[] = {
         N_("Seasonally adjusted series"),
         N_("Trend/cycle"),
-        N_("Irregular")
+        N_("Irregular"),
+	N_("Forecast")
     };
     gretlopt save_opts[] = {
-        OPT_A, OPT_B, OPT_C
+        OPT_A, OPT_B, OPT_C, OPT_D
     };
     int save_codes[] = {
-        TX_SA, TX_TR, TX_IR
+        TX_SA, TX_TR, TX_IR, TX_FC
     };
-    GtkWidget *tmp, *hb, *b[3], *chk[4];
+    GtkWidget *tmp, *hb, *b[3], *chk[5];
     GtkWidget *rx, *rs;
     GtkWidget *tbl;
     GSList *group;
@@ -343,9 +444,11 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
     tbl = gtk_table_new(3, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
 
+    /* FIXME below: change < 3 to < 4, when ready */
+
     for (i=0; i<3; i++) {
-        /* buttons plus entries for saving series */
-        gboolean active = (*request->popt & save_opts[i])? TRUE : FALSE;
+        /* buttons plus entries for saving output */
+        gboolean active = (request->opt & save_opts[i])? TRUE : FALSE;
         GtkWidget *entry;
         int idx = save_codes[i];
 
@@ -364,6 +467,10 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
         g_object_set_data(G_OBJECT(chk[i]), "entry", entry);
         g_signal_connect(G_OBJECT(chk[i]), "toggled",
                          G_CALLBACK(sensitize_tx_entry), entry);
+	if (i == 3) {
+	    g_signal_connect(G_OBJECT(chk[i]), "toggled",
+			     G_CALLBACK(toggle_fcast_option), request);
+	}
         g_signal_connect(G_OBJECT(GTK_EDITABLE(entry)), "changed",
                          G_CALLBACK(update_tx_savename),
                          request->opts[idx].savename);
@@ -374,17 +481,17 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
 
-    chk[3] = gtk_check_button_new_with_label(_("Generate graph"));
-    gtk_box_pack_start(vbox, chk[3], FALSE, FALSE, 0);
-    request->opts[TRIGRAPH].check = chk[3];
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[3]),
-                                 (*request->popt & OPT_G)? TRUE : FALSE);
+    chk[i] = gtk_check_button_new_with_label(_("Generate graph"));
+    gtk_box_pack_start(vbox, chk[i], FALSE, FALSE, 0);
+    request->opts[TRIGRAPH].check = chk[i];
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[i]),
+                                 (request->opt & OPT_G)? TRUE : FALSE);
 
     tmp = gtk_check_button_new_with_label(_("Show full output"));
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
     request->opts[TEXTOUT].check = tmp;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
-                                 (*request->popt & OPT_Q)? FALSE : TRUE);
+                                 (request->opt & OPT_Q)? FALSE : TRUE);
 
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
@@ -399,6 +506,7 @@ static void add_x13a_options (tx_request *request, GtkBox *vbox)
     g_signal_connect(GTK_TOGGLE_BUTTON(b[1]), "toggled",
                      G_CALLBACK(toggle_edit_script), request);
 
+    /* default to direct execution of x13as */
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[0]), TRUE);
 }
 
@@ -433,37 +541,54 @@ static void tx_errbox (tx_request *request)
     gtk_widget_destroy(w);
 }
 
+static int check_for_vname_error (const char *vname,
+				  tx_request *request,
+				  GtkWidget *w)
+{
+    int err = 0;
+
+    if (*vname == '\0') {
+	err = 1;
+    } else {
+	err = check_varname(vname);
+    }
+    if (err) {
+	GtkWidget *entry, *book;
+
+	entry = g_object_get_data(G_OBJECT(w), "entry");
+	book = g_object_get_data(G_OBJECT(entry), "book");
+	if (book != NULL) {
+	    gint pg = GPOINTER_TO_INT
+		(g_object_get_data(G_OBJECT(entry), "output-page"));
+
+	    gtk_notebook_set_current_page(GTK_NOTEBOOK(book), pg);
+	}
+	tx_errbox(request);
+	gtk_widget_grab_focus(entry);
+    }
+
+    return err;
+}
+
 static int check_savevars (tx_request *request)
 {
-    int imax = request->prog == X13A ? TX_IR : TX_LN;
-    int i, err = 0;
+    int err = 0;
+    int i, j = 0;
 
-    for (i=0; i<=imax && !err; i++) {
-        GtkWidget *w = request->opts[i].check;
+    for (i=0; i<TRIGRAPH && !err; i++) {
+        GtkWidget *w = request->opts[j].check;
 
+	if (i == TX_LN && request->prog == X13A) {
+	    continue;
+	} else if (i == TX_FC && request->prog != X13A) {
+	    continue;
+	}
         if (w != NULL && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-            const char *vname = request->opts[i].savename;
+            const char *vname = request->opts[j].savename;
 
-            if (*vname == '\0') {
-                err = 1;
-            } else {
-                err = check_varname(vname);
-            }
-            if (err) {
-                GtkWidget *entry, *book;
-
-                entry = g_object_get_data(G_OBJECT(w), "entry");
-                book = g_object_get_data(G_OBJECT(entry), "book");
-                if (book != NULL) {
-                    gint pg = GPOINTER_TO_INT
-                        (g_object_get_data(G_OBJECT(entry), "output-page"));
-
-                    gtk_notebook_set_current_page(GTK_NOTEBOOK(book), pg);
-                }
-                tx_errbox(request);
-                gtk_widget_grab_focus(entry);
-            }
+	    err = check_for_vname_error(vname, request, w);
         }
+	j++;
     }
 
     return err;
@@ -570,9 +695,7 @@ static void get_seats_command (char *seats, const char *tramo)
     }
 }
 
-/* try to avoid collision of date and graph key, which
-   defaults to right top
-*/
+/* Try to avoid collision of date and graph key. */
 
 static void set_keypos (const double *x, int t1, int t2,
                         FILE *fp)
@@ -722,15 +845,13 @@ static int graph_series (const DATASET *dset, tx_request *req)
     return finalize_plot_input_file(fp);
 }
 
-static void copy_variable (DATASET *targ, int targv,
-                           DATASET *src, int srcv)
+static void copy_tx_series (DATASET *targ, int targv,
+			    DATASET *src, int srcv)
 {
     const char *vlabel;
-    int t;
+    size_t sz = targ->n * sizeof(double);
 
-    for (t=0; t<targ->n; t++) {
-        targ->Z[targv][t] = src->Z[srcv][t];
-    }
+    memcpy(targ->Z[targv], src->Z[srcv], sz);
 
     strcpy(targ->varname[targv], src->varname[srcv]);
     vlabel = series_get_label(src, srcv);
@@ -787,10 +908,10 @@ static void clear_x13a_files (const char *path, const char *vname)
     gretl_remove(fname);
 }
 
-/* Peek into output/x.out and see if it contains evidence
-   that SEATS worked OK but did not find any evidence of
-   seasonality, in which case return 1. If we can't open
-   x.out, or can't find such evidence, return 0.
+/* Peek into output/x.out and see if it contains evidence that SEATS
+   worked OK but did not find any evidence of seasonality, in which case
+   return 1. If we can't open x.out, or can't find such evidence, return
+   0.
 */
 
 static int seats_no_seasonal (const char *path)
@@ -833,6 +954,39 @@ static const char *addstr (tx_request *request)
     }
 }
 
+/* This is a bit of a pest: under some configurations, tramo/seats
+   outputs a series "irfin"; sometimes that is not created, but we do
+   get an "irreg".  So if we can't find the one, try looking for the
+   other.  Also the linearized series "xlin.t" is not always available.
+*/
+
+static FILE *tramo_remedial_fopen (char *sfname,
+				   const char *path,
+				   int src,
+				   int *got_irfin)
+{
+    FILE *fp = NULL;
+
+    if (src == TX_IR) {
+	/* try "irreg" instead of "irfin" */
+	gretl_build_path(sfname, path, "graph", "series",
+			 "irreg.t", NULL);
+	fp = gretl_fopen(sfname, "r");
+	*got_irfin = 0;
+    } else if (src == TX_LN) {
+	/* maybe no linearization was required? */
+	gretl_build_path(sfname, path, "graph", "series",
+			 "xorigt.t", NULL);
+	fp = gretl_fopen(sfname, "r");
+    }
+
+    return fp;
+}
+
+/* This is called from write_tx_data(), the back-end for X-13ARIMA
+   and TRAMO functionality in the gretl GUI.
+*/
+
 static int add_series_from_file (const char *path, int src,
                                  DATASET *dset, int targv,
                                  tx_request *request)
@@ -859,51 +1013,29 @@ static int add_series_from_file (const char *path, int src,
     } else {
         tramo_got_irfin = 1;
         gretl_build_path(sfname, path, "graph", "series",
-                             tramo_save_strings[src], NULL);
+			 tramo_save_strings[src], NULL);
     }
 
     fp = gretl_fopen(sfname, "r");
 
     if (fp == NULL) {
-        /* couldn't open the file we wanted */
-        int gotit = 0;
-
-        /* This is a bit of a pest: under some configurations, tramo/seats
-           outputs a series "irfin"; sometimes that is not created, but
-           we do get an "irreg".  So if we can't find the one, try looking
-           for the other.  Also, the seasonally adjusted series "safin"
-           is not always available.
-        */
-        if (request->prog == TRAMO_SEATS || request->prog == TRAMO_ONLY) {
-            if (src == TX_IR) {
-                /* try "irreg" */
-                gretl_build_path(sfname, path, "graph", "series",
-                                     "irreg.t", NULL);
-                fp = gretl_fopen(sfname, "r");
-                if (fp != NULL) {
-                    gotit = 1;
-                }
-                tramo_got_irfin = 0;
-            } else if (src == TX_LN) {
-                /* maybe no linearization was required? */
-                gretl_build_path(sfname, path, "graph", "series",
-                                 "xorigt.t", NULL);
-                fp = gretl_fopen(sfname, "r");
-                if (fp != NULL) {
-                    gotit = 1;
-                }
-            } else if (src == TX_SA) {
-                /* scrub all use of seasonal series */
+        /* We couldn't open the file we wanted. */
+         if (request->prog == TRAMO_SEATS || request->prog == TRAMO_ONLY) {
+	    if (src == TX_IR || src == TX_LN) {
+		/* try a remedial step */
+		fp = tramo_remedial_fopen(sfname, path, src,
+					  &tramo_got_irfin);
+	    } else if (src == TX_SA) {
+		/* scrub all use of seasonal series */
                 request->seasonal_ok = 0;
                 if (request->opts[src].save) {
                     request->opts[src].save = 0;
                     request->savevars -= 1;
                 }
-                return 0;
-            }
-        }
-
-        if (!gotit) {
+		return 0;
+	    }
+	}
+        if (fp == NULL) {
             gretl_errmsg_sprintf(_("Couldn't open %s"), sfname);
             return 1;
         }
@@ -1040,9 +1172,10 @@ static int grab_tramo_output_series (double *y, const double *x,
     return err;
 }
 
-/* Grabber for X-13ARIMA output: either a single selected series or
-   the seasonally adjusted series plus a matrix holding sa, trend
-   and irregular.
+/* Grabber for X-13ARIMA output: either a single selected series or the
+   seasonally adjusted series plus a matrix holding sa, trend and
+   irregular. This is called only by adjust_series(), the back-end for
+   the user-level function deseas().
 */
 
 static int grab_x13_output_series (double *y, const double *x,
@@ -1258,31 +1391,38 @@ static void set_opts (tx_request *request)
 
     request->savevars = 0;
 
-    *request->popt &= ~(OPT_A | OPT_B | OPT_C | OPT_D | OPT_G);
+    request->opt &= ~(OPT_A | OPT_B | OPT_C | OPT_D | OPT_G);
 
     for (i=0; i<TX_MAXOPT; i++) {
         w = request->opts[i].check;
         if (w != NULL && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
             request->opts[i].save = 1;
             if (i < TRIGRAPH) {
+		/* FIXME x13a and TX_FC */
                 request->savevars++;
                 if (i == 0) {
-                    *request->popt |= OPT_A;
+                    request->opt |= OPT_A;
                 } else if (i == 1) {
-                    *request->popt |= OPT_B;
+                    request->opt |= OPT_B;
                 } else if (i == 2) {
-                    *request->popt |= OPT_C;
+                    request->opt |= OPT_C;
                 } else if (i == 3) {
-                    *request->popt |= OPT_D;
+                    request->opt |= OPT_D;
                 }
             } else if (i == TRIGRAPH) {
-                *request->popt |= OPT_G;
+                request->opt |= OPT_G;
             }
         } else {
             request->opts[i].save = 0;
         }
     }
 }
+
+/* The function adjust_savevars() is called if and only if the task in
+   hand turns out to involve TRAMO without seasonal adjustment via
+   SEATS.  We drop references to seasonal terms but preserve reference
+   to the "linearized" series if present.
+*/
 
 static void adjust_savevars (tx_request *request,
                              int *savelist)
@@ -1404,12 +1544,12 @@ static void arima_spec_string (char *s, const guint8 *a)
 	    a[3], a[4], a[5]);
 }
 
-static int write_spc_file (const char *fname,
-                           const double *y,
-                           const char *vname,
-                           const DATASET *dset,
-                           const int *savelist,
-                           x13a_opts *xopt)
+static int write_x13a_spc_file (const char *fname,
+				const double *y,
+				const char *vname,
+				const DATASET *dset,
+				const int *savelist,
+				x13a_opts *xopt)
 {
     const char **save_strings;
     int startyr, startper;
@@ -1516,12 +1656,12 @@ static int write_spc_file (const char *fname,
     }
 
     if (xopt->airline) {
-        fputs("arima {model=(0,1,1)(0,1,1)}\n", fp);
+        fputs("arima{model=(0,1,1)(0,1,1)}\n", fp);
     } else if (xopt->aspec != NULL) {
 	char astr[32];
 
 	arima_spec_string(astr, xopt->aspec);
-	fprintf(fp, "arima {model=%s}\n", astr);
+	fprintf(fp, "arima{model=%s}\n", astr);
     } else {
         fputs("automdl{}\n", fp);
     }
@@ -1533,20 +1673,26 @@ static int write_spc_file (const char *fname,
         save_strings = x11_save_strings;
         fputs("x11{", fp);
     }
-
     if (savelist[0] > 0) {
         if (savelist[0] == 1) {
-            fprintf(fp, " save=%s ", save_strings[savelist[1]]);
+            fprintf(fp, "save=%s", save_strings[savelist[1]]);
         } else {
-            fputs(" save=( ", fp);
+            fputs(" save=(", fp);
             for (i=1; i<=savelist[0]; i++) {
-                fprintf(fp, "%s ", save_strings[savelist[i]]);
+                fprintf(fp, "%s", save_strings[savelist[i]]);
+		if (i < savelist[0]) {
+		    fputc(' ', fp);
+		}
             }
-            fputs(") ", fp);
+            fputc(')', fp);
         }
     }
-
     fputs("}\n", fp);
+
+    if (xopt->fcast) {
+	fputs("forecast{save=(fct)}\n", fp);
+	/* add to savelist? */
+    }
 
     gretl_pop_c_numeric_locale();
 
@@ -1605,9 +1751,9 @@ static int save_vars_to_dataset (DATASET *dset,
         if (request->opts[varlist[i]].save) {
             v = series_index(dset, tmpset->varname[i]);
             if (v < dset->v) {
-                copy_variable(dset, v, tmpset, i);
+                copy_tx_series(dset, v, tmpset, i);
             } else {
-                copy_variable(dset, j++, tmpset, i);
+                copy_tx_series(dset, j++, tmpset, i);
             }
         }
     }
@@ -1797,23 +1943,23 @@ int exec_tx_script (char *outname, const gchar *buf)
    X-13ARIMA, for analysis of the series with ID number @varnum. The
    @opt pointer is filled out based on selections from a dialog box.
 
-   The @fname argument is filled out to tell the caller the name of
-   the output file from the third-party program, if available; it will
-   be an empty string if the user cancels, or if we fail to execute
-   the program in question.
+   The @fname argument is filled out to tell the caller the name of the
+   output file from the third-party program, if available; it will be an
+   empty string if the user cancels, or if we fail to execute the
+   program in question.
 
-   At present the @help_func argument is used only for X-13ARIMA,
-   for which we offer a special option, namely writing a spec file
-   for display in an editor window rather than directly executing
-   x13a commands. If that option is selected we signal the caller
-   by putting OPT_S into @opt, and we return the name of the gretl-
-   generated command file in @fname.
+   At present the @help_func argument is used only for X-13ARIMA, for
+   which we offer a special option, namely writing a spec file for
+   display in an editor window rather than directly executing x13a
+   commands. If that option is selected we signal the caller by putting
+   OPT_S into @opt, and we return the name of the gretl-generated
+   command file in @fname.
 */
 
 int write_tx_data (char *fname,
                    int varnum,
                    DATASET *dset,
-                   gretlopt *opt,
+                   gretlopt *popt,
 		   int tramo,
                    int *warning,
                    GtkWindow *mainwin,
@@ -1847,7 +1993,7 @@ int write_tx_data (char *fname,
     }
 
     request.pd = dset->pd;
-    request.popt = opt;
+    request.opt = *popt;
 
     /* show dialog and get option settings */
     doit = tx_dialog(&request, mainwin);
@@ -1862,14 +2008,8 @@ int write_tx_data (char *fname,
         return 0;
     }
 
-#if 0
-    if (request.prog == TRAMO_SEATS) {
-        print_tramo_options(&request, stderr);
-        return 1;
-    }
-#endif
-
-    if (*opt & OPT_S) {
+    if (request.opt & OPT_S) {
+	*popt |= OPT_S;
         savescript = 1;
     } else {
         /* create little temporary dataset */
@@ -1895,8 +2035,8 @@ int write_tx_data (char *fname,
         /* write out the .spc file for x13a */
         gretl_build_path(fname, workdir, vname, NULL);
         strcat(fname, ".spc");
-        write_spc_file(fname, dset->Z[varnum], vname, dset, savelist,
-                       &request.xopt);
+        write_x13a_spc_file(fname, dset->Z[varnum], vname, dset, savelist,
+			    &request.xopt);
     } else {
         /* TRAMO, possibly plus SEATS */
         gretl_lower(vname);
@@ -1915,8 +2055,8 @@ int write_tx_data (char *fname,
         return 0;
     }
 
-    /* now run the program(s): we try to ensure that any
-       old output files get deleted first
+    /* Now run the program(s): we try to ensure that any
+       old output files get deleted first.
     */
 
     if (request.prog == X13A) {
@@ -1941,8 +2081,8 @@ int write_tx_data (char *fname,
     }
 
     if (request.prog == X13A) {
-        /* see if we got a warning -- and if so, whether it
-           should count as an error */
+        /* See if we got a warning -- and if so, whether it
+           should count as an error. */
         gretl_build_path(fname, workdir, vname, NULL);
         strcat(fname, ".err");
         *warning = got_x13a_warning(fname, &err);
@@ -1956,7 +2096,7 @@ int write_tx_data (char *fname,
         if (request.prog == TRAMO_ONLY) {
             /* no graph offered */
             request.opts[TRIGRAPH].save = 0;
-            *opt |= OPT_T;
+            *popt |= OPT_T;
         }
     }
 
@@ -1964,11 +2104,11 @@ int write_tx_data (char *fname,
         goto bailout;
     }
 
-    /* save vars locally if needed; graph if wanted */
     if (savelist[0] > 0) {
+	/* save vars locally if needed; graph if wanted */
         const char *path = request.prog == X13A ? fname : workdir;
 
-        copy_variable(tmpset, 0, dset, varnum);
+        copy_tx_series(tmpset, 0, dset, varnum);
 
         for (i=1; i<=savelist[0]; i++) {
             err = add_series_from_file(path, savelist[i], tmpset,
@@ -1989,24 +2129,29 @@ int write_tx_data (char *fname,
                 if (err) {
                     fprintf(stderr, "graph_series() failed\n");
                 } else {
-                    *opt |= OPT_G;
+                    *popt |= OPT_G;
                 }
             } else {
-                *opt &= ~OPT_G;
+                *popt &= ~OPT_G;
             }
         }
 
         if (request.prog == X13A) {
             if (request.opts[TEXTOUT].save) {
-                *opt &= ~OPT_Q;
+                *popt &= ~OPT_Q;
             } else {
-                *opt |= OPT_Q;
+                *popt |= OPT_Q;
             }
         }
     }
 
-    /* now save the local vars to main dataset, if wanted */
+    if (request.xopt.fcast) {
+	/* just testing, for now */
+	read_fct(fname, &request, dset);
+    }
+
     if (!err && request.savevars > 0) {
+	/* now save the local vars to main dataset, if wanted */
         err = save_vars_to_dataset(dset, tmpset, savelist,
                                    &request);
     }
@@ -2358,7 +2503,7 @@ static int process_options_bundle (x13a_opts *xopt,
     return err;
 }
 
-/* implements the deseas() function */
+/* Implements the userspace function deseas() */
 
 int adjust_series (const double *x, double *y,
                    const char *vname, const DATASET *dset,
@@ -2405,7 +2550,7 @@ int adjust_series (const double *x, double *y,
         if (!err) {
             gretl_build_path(fname, workdir, vname, NULL);
             strcat(fname, ".spc");
-            write_spc_file(fname, x, vname, dset, savelist, &xopt);
+            write_x13a_spc_file(fname, x, vname, dset, savelist, &xopt);
 	    if (xopt.save_spc) {
 		save_spc_to_bundle(fname, opts);
 	    }

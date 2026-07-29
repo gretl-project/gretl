@@ -289,6 +289,7 @@ struct gretl_option gretl_opts[] = {
     { FCAST,    OPT_R, "rolling", 0 }, /* legacy alias */
     { FCAST,    OPT_O, "out-of-sample", 0 },
     { FCAST,    OPT_I, "integrate", 0 },
+    { FCAST,    OPT_X, "exponentiate", 1 },
     { FOREIGN,  OPT_D, "send-data", 1 },
     { FOREIGN,  OPT_V, "verbose", 0 },
     { FOREIGN,  OPT_F, "frame", 0 },

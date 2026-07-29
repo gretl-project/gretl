@@ -50,17 +50,6 @@
                           c == PROBIT || \
                           c == TOBIT)
 
-struct fc_params_ {
-    int t1;                /* start of forecast range */
-    int t2;                /* end of forecast range */
-    int pre_n;             /* number of pre-forecast observations to show */
-    int k;                 /* steps ahead (for recursive case) */
-    double *alpha;         /* for confidence intervals */
-    gretlopt opt;          /* option flags */
-    FcastFlags flags;      /* flags governing availability of options */
-    FcastMethod method;    /* method */
-};
-
 typedef struct Forecast_ Forecast;
 
 struct Forecast_ {
@@ -233,7 +222,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
 static FITRESID *fit_resid_new_for_model (const MODEL *pmod,
 					  const DATASET *dset,
 					  int t1, int t2, int pre_n,
-					  int *err)
+					  gretlopt opt, int *err)
 {
     FITRESID *fr;
 
@@ -266,6 +255,7 @@ static FITRESID *fit_resid_new_for_model (const MODEL *pmod,
     fr->model_t1 = pmod->t1;
 
     fr->asymp = ASYMPTOTIC_MODEL(pmod->ci);
+    fr->opt = opt;
 
     return fr;
 }
@@ -378,7 +368,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset,
     }
 
     fr = fit_resid_new_for_model(pmod, dset, pmod->t1, pmod->t2,
-				 0, err);
+				 0, OPT_NONE, err);
     if (*err) {
 	return NULL;
     }
@@ -461,13 +451,12 @@ static int detect_lag (int vy, int vx, int t1, int t2,
 }
 
 /* Makes a list to keep track of any "independent variables" that are
-   really lags of the dependent variable.  The list has as many
-   elements as the model has independent variables, and in each place
-   we either write a zero (if the coefficient does not correspond to a
-   lag of the dependent variable) or a positive integer corresponding
-   to the lag order.  However, in case the list of independent vars
-   contains no lagged dependent var, *depvar_lags is set to NULL.
-   Returns 1 on error, 0 otherwise.
+   actually lags of the dependent variable.  This list has as many
+   elements as the model has independent variables, and in each place we
+   write a zero if the regressor is not a lag of the dependent variable
+   or a positive integer recording the lag order.  However, if the list
+   of regressors contains no lags of the dependent var, the function
+   returns NULL.
 */
 
 static int *process_lagged_depvar (MODEL *pmod, const DATASET *dset)
@@ -902,8 +891,8 @@ static int real_dpanel_fcast (double *yhat,
     return 0;
 }
 
-/* for pooled OLS, fixed effects and random effects:
-   handles both within-sample and out of sample
+/* For pooled OLS, fixed effects and random effects: handles both
+   within-sample and out of sample.
 */
 
 static int real_panel_fcast (double *yhat,
@@ -2848,15 +2837,18 @@ static int check_all_probs_option (MODEL *pmod)
     return err;
 }
 
-/* driver for various functions that compute forecasts
-   for different sorts of models */
+/* Driver for various functions that compute forecasts for different
+   sorts of models.
+*/
 
 static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 			   DATASET *dset, gretlopt opt)
 {
     Forecast fc;
+    const double *y = NULL;
     int yno = gretl_model_get_depvar(pmod);
     int integrate = (opt & OPT_I);
+    int expon = (opt & OPT_X);
     int dummy_AR = 0;
     int DM_errs = 0;
     int dyn_errs = 0;
@@ -2988,23 +2980,33 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
 
     same_data = same_dataset(pmod, dset);
+    y = dset->Z[yno];
 
     for (t=0; t<fr->nobs; t++) {
 	if (t >= fr->t1 && t <= fr->t2) {
+	    /* in the forecast range */
 	    if (!na(fr->fitted[t])) {
 		nf++;
+		if (expon) {
+		    /* FIXME case of OPT_M ? */
+		    fr->fitted[t] = exp(fr->fitted[t]);
+		}
 	    }
 	} else if (same_data && t >= fr->t0 && t <= fr->t2 &&
 		   t >= pmod->t1 && t <= pmod->t2) {
+	    /* within sample observations */
 	    if (integrate) {
 		fr->fitted[t] = fr->fitted[t-1] + pmod->yhat[t];
 		fr->resid[t] = fr->resid[t-1] + pmod->uhat[t];
+	    } else if (expon) {
+		fr->fitted[t] = exp(pmod->yhat[t]);
+		fr->resid[t] = exp(y[t]) - fr->fitted[t];
 	    } else {
 		fr->fitted[t] = pmod->yhat[t];
 		fr->resid[t] = pmod->uhat[t];
 	    }
 	}
-	fr->actual[t] = dset->Z[yno][t];
+	fr->actual[t] = expon ? exp(y[t]) : y[t];
     }
 
     if (nf == 0) {
@@ -3063,7 +3065,7 @@ gretl_matrix *matrix_forecast (MODEL *pmod,
         *err = E_DATA;
     } else {
         n = X->rows;
-        fr = fit_resid_new_for_model(pmod, NULL, 0, n, 0, err);
+        fr = fit_resid_new_for_model(pmod, NULL, 0, n, 0, OPT_NONE, err);
     }
 
     if (!*err) {
@@ -3389,7 +3391,7 @@ FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
 	return NULL;
     }
 
-    fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, err);
+    fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, opt, err);
 
     if (!*err) {
 	*err = real_get_fcast(fr, pmod, dset, opt);
@@ -4206,13 +4208,13 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
     return fr;
 }
 
-/* Try to determine whether adding observations to the dataset
-   (without actually adding more "real" data) can serve to extend the
-   range of out-of-sample prediction. The answer will in general be No
-   if the specification includes exogenous regressors other than
-   deterministic terms that can be extended automatically.  However,
-   if an exogenous regressor is a lag series of order p we can extend
-   it automatically for p periods.
+/* Try to determine whether adding observations to the dataset (without
+   actually adding more "real" data) can serve to extend the range of
+   out-of-sample prediction. The answer will be No if the specification
+   includes exogenous regressors other than deterministic terms that can
+   be extended automatically (trend or periodic dummies).  However, if
+   an exogenous regressor is a lag series of order p we can extend it
+   automatically for p periods.
 
    The @dvlags argument will be non-NULL only if the specification
    includes at least one lag of the dependent variable.
@@ -4221,23 +4223,31 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 static int addobs_can_help (MODEL *pmod, const int *dvlags,
 			    const DATASET *dset)
 {
-    int i, xi, ret = 1;
+    int i, vi, ret = 1;
 
     if (pmod->xlist != NULL) {
-	for (i=0; i<pmod->xlist[0]; i++) {
-	    xi = pmod->xlist[i + 1];
-	    if (xi != 0 && (dvlags == NULL || dvlags[i] == 0)) {
-		if (is_trend_variable(dset->Z[xi], dset->n)) {
-		    continue;
-		} else if (is_periodic_dummy(dset->Z[xi], dset)) {
-		    continue;
-		} else if (series_get_lag(dset, xi) &&
-			   series_get_parent_id(dset, xi)) {
-		    continue;
-		} else {
-		    ret = 1;
-		    break;
-		}
+	for (i=1; i<=pmod->xlist[0]; i++) {
+	    vi = pmod->xlist[i];
+	    if (vi == 0) {
+		/* constant, OK */
+		continue;
+	    } else if (dvlags != NULL && dvlags[i-1] != 0) {
+		/* a lag of the dependent variable, OK */
+		continue;
+	    } else if (is_trend_variable(dset->Z[vi], dset->n)) {
+		/* trend, OK */
+		continue;
+	    } else if (is_periodic_dummy(dset->Z[vi], dset)) {
+		/* a predictable dummy, OK */
+		continue;
+	    } else if (series_get_lag(dset, vi) &&
+		       series_get_parent_id(dset, vi)) {
+		/* a lagged exogenous term, OK up to a point */
+		continue;
+	    } else {
+		/* none of the above, not OK */
+		ret = 0;
+		break;
 	    }
 	}
     }
@@ -4453,7 +4463,7 @@ recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
         }
     }
 
-    fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, err);
+    fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, OPT_NONE, err);
     if (*err) {
 	free(y);
 	free(llist);

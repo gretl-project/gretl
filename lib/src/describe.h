@@ -65,18 +65,18 @@ typedef struct FreqDist_ {
 } FreqDist;
 
 typedef struct Xtab_ {
-    char rvarname[VNAMELEN]; /* name of rows series */
-    char cvarname[VNAMELEN]; /* name of cols series */
-    char **Sr;               /* array of row string values */
-    char **Sc;               /* array of column string values */
-    int rows, cols;          /* dimensions of table */
-    double *rval, *cval;     /* row and column numeric values */
-    int *rtotal, *ctotal;    /* marginal totals */
-    int **f;                 /* array of frequencies */
-    int n, missing;          /* observation counts */
-    int t1, t2;              /* sample limits */
-    int rstrs;               /* row string-valued flag */
-    int cstrs;               /* col string-valued flag */
+    char *rname;           /* identifier of rows series */
+    char *cname;           /* identifier of cols series */
+    char **Sr;             /* array of row string values */
+    char **Sc;             /* array of column string values */
+    int rows, cols;        /* dimensions of table */
+    double *rval, *cval;   /* row and column numeric values */
+    int *rtotal, *ctotal;  /* marginal totals */
+    int **f;               /* array of frequencies */
+    int n, missing;        /* observation counts */
+    int t1, t2;            /* sample limits */
+    int rstrs;             /* row string-valued flag */
+    int cstrs;             /* col string-valued flag */
 } Xtab;
 
 /* functions follow */

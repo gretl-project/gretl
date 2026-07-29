@@ -2553,6 +2553,9 @@ void free_xtab (Xtab *tab)
 	return;
     }
 
+    free(tab->rname);
+    free(tab->cname);
+
     free(tab->rtotal);
     free(tab->ctotal);
     free(tab->rval);
@@ -2592,8 +2595,8 @@ static Xtab *xtab_new (int n, int t1, int t2)
     tab->t2 = t2;
     tab->missing = 0;
 
-    *tab->rvarname = '\0';
-    *tab->cvarname = '\0';
+    tab->rname = NULL;
+    tab->cname = NULL;
     tab->Sr = NULL;
     tab->Sc = NULL;
     tab->rstrs = 0;
@@ -2764,12 +2767,28 @@ static int xtab_col_match (Xtab *tab, int j, const char *s, double x)
     }
 }
 
+static char *xtab_dim_string (int v, const DATASET *dset,
+			      gretlopt opt)
+{
+    if (opt & OPT_T) {
+	return gretl_strdup(dset->varname[v]);
+    } else {
+	const char *s = series_get_display_name(dset, v);
+
+	if (s != NULL && *s != '\0') {
+	    return gretl_strdup(s);
+	} else {
+	    return gretl_strdup(dset->varname[v]);
+	}
+    }
+}
+
 #define complete_obs(x,y,t) (!na(x[t]) && !na(y[t]))
 
 /* crosstab struct creation functions */
 
 static Xtab *get_new_xtab (int rv, int cv, const DATASET *dset,
-			   int *err)
+			   gretlopt opt, int *err)
 {
     series_table *sti = NULL;
     series_table *stj = NULL;
@@ -2810,8 +2829,8 @@ static Xtab *get_new_xtab (int rv, int cv, const DATASET *dset,
     if (*err) goto bailout;
 
     tab->missing = (dset->t2 - dset->t1 + 1) - n;
-    strcpy(tab->rvarname, dset->varname[rv]);
-    strcpy(tab->cvarname, dset->varname[cv]);
+    tab->rname = xtab_dim_string(rv, dset, opt);
+    tab->cname = xtab_dim_string(cv, dset, opt);
 
     /* The following could be made more efficient by substituting
        sorted arrays for dset->Z[rv] and dset->Z[cv] but it's not
@@ -3152,7 +3171,7 @@ int crosstab (const int *list, const DATASET *dset,
 
     if (onelist && rowvar[0] == 2) {
 	/* the bivariate case */
-	tab = get_new_xtab(rowvar[1], rowvar[2], dset, &err);
+	tab = get_new_xtab(rowvar[1], rowvar[2], dset, opt, &err);
 	if (!err) {
 	    /* make $result matrix available */
 	    record_xtab(tab, dset, opt);
@@ -3195,7 +3214,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    /* single list case */
 	    for (j=1; j<i && !err; j++) {
 		vj = rowvar[j];
-		tab = get_new_xtab(vj, vi, dset, &err);
+		tab = get_new_xtab(vj, vi, dset, opt, &err);
 		if (!err) {
 		    print_xtab(tab, dset, opt, prn);
 		    free_xtab(tab);
@@ -3205,7 +3224,7 @@ int crosstab (const int *list, const DATASET *dset,
 	    /* double list case */
 	    for (j=1; j<=colvar[0] && !err; j++) {
 		vj = colvar[j];
-		tab = get_new_xtab(vi, vj, dset, &err);
+		tab = get_new_xtab(vi, vj, dset, opt, &err);
 		if (!err) {
 		    print_xtab(tab, dset, opt, prn);
 		    free_xtab(tab);
@@ -3238,7 +3257,7 @@ Xtab *single_crosstab (const int *list, const DATASET *dset,
 
     if (accept_as_discrete(dset, rv, 0) &&
 	accept_as_discrete(dset, cv, 0)) {
-	tab = get_new_xtab(rv, cv, dset, err);
+	tab = get_new_xtab(rv, cv, dset, opt, err);
     } else {
 	*err = E_TYPES;
     }

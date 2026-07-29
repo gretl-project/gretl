@@ -1817,6 +1817,10 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node,
  * @doc: XML document pointer.
  * @pmask: location to receive allocated mask.
  *
+ * In XML a mask is written as an array of 0s and 1s, separated
+ * by single spaces. What's written to @pmask is an array of
+ * bytes, each with value 0 or 1.
+ *
  * Returns: 0 on success, non-zero on failure.
  */
 
@@ -1849,7 +1853,7 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask)
 
 	    for (i=0; i<len; i++) {
 		mask[i] = atoi(s);
-		s += 2;
+		s += 2; /* skip to next int */
 	    }
 	    free(tmp);
 	}

@@ -706,8 +706,8 @@ static gretl_bundle *trivial_case (hw_info *hw,
 			     GRETL_TYPE_MATRIX);
     gretl_bundle_donate_data(ret, "cluster_id", clustid,
 			     GRETL_TYPE_MATRIX);
-    gretl_bundle_set_scalar(ret, "cluster_SST", csst);
-    gretl_bundle_set_scalar(ret, "global_SST", gsst);
+    gretl_bundle_set_scalar(ret, "within_variation", csst);
+    gretl_bundle_set_scalar(ret, "total_variation", gsst);
     gretl_bundle_set_string(ret, "metric", "euclidean");
 
     if (verbosity) {
@@ -1030,16 +1030,16 @@ static gretl_bundle *real_kmeans (const gretl_matrix *a,
 			     GRETL_TYPE_MATRIX);
     /* for reference, add the cluster and global SSTs */
     gSST = global_sst(&hw);
-    gretl_bundle_set_scalar(ret, "cluster_SST", SSTmin);
-    gretl_bundle_set_scalar(ret, "global_SST", gSST);
+    gretl_bundle_set_scalar(ret, "within_variation", SSTmin);
+    gretl_bundle_set_scalar(ret, "total_variation", gSST);
     gretl_bundle_set_string(ret, "metric", "euclidean");
 
     if (verbosity) {
 	double btw = gSST - SSTmin;
 
-	pprintf(prn, "Within-cluster sum of squares: %g\n", SSTmin);
-	pprintf(prn, "Total sum of squares: %g\n", gSST);
-	pprintf(prn, "Between-cluster sum of squares: %g\n", btw);
+	pprintf(prn, "Within-cluster variation: %g\n", SSTmin);
+	pprintf(prn, "Total variation: %g\n", gSST);
+	pprintf(prn, "Between-cluster variation: %g\n", btw);
 	pprintf(prn, "Between as percent of total: %.1f\n", 100 * btw / gSST);
 	pputc(prn, '\n');
     }

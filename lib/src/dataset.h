@@ -456,9 +456,9 @@ int series_record_display_name (DATASET *dset, int i,
 int series_record_label (DATASET *dset, int i,
 			 const char *s); 
 
-unsigned int get_resampling_seed (void);
+uint64_t get_resampling_seed (void);
 
-int dataset_resample (DATASET *dset, int n, unsigned int seed);
+int dataset_resample (DATASET *dset, int n, uint64_t seed);
 
 int dataset_op_from_string (const char *s);
 

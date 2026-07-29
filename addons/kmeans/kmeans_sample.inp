@@ -1,7 +1,9 @@
 clear
 set verbose off
 set seed 34
+
 include kmeans.gfn
+include PairPlot.gfn
 
 # Select an example to run
 EXAMPLE = 1

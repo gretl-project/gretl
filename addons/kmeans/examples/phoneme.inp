@@ -13,15 +13,14 @@ set stopwatch
 bundle b = kmeans(X, k, _(init="hw"))
 printf "gretl, hw init, elapsed: %gs\n", $stopwatch
 kmeans_sil_plot(b, L)
-quit
 
 # Principal Components initializer
 set stopwatch
 bundle b = kmeans(X, k, _(init="pc"))
 printf "gretl, pc init, elapsed: %gs\n", $stopwatch
 
-printf "gretl: SST, global:   %7d\n", round(b.global_SST)
-printf "gretl: SST, clusters: %7d\n", round(b.cluster_SST)
+printf "gretl: SST, global:   %7d\n", round(b.total_variation)
+printf "gretl: SST, clusters: %7d\n", round(b.within_variation)
 series phoneme_hat = b.cluster_id
 
 kmeans_crosstab(phoneme_hat, g)
@@ -44,4 +43,4 @@ foreign language=R --send-data=L
 end foreign
 
 series R_phhat = mread("hat.mat", 1)
-kmeans_crosstab(R_phhat, phoneme_hat)
+kmeans_crosstab(R_phhat, g)

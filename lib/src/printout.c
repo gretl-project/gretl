@@ -499,7 +499,7 @@ static void tex_xtab_heading (const Xtab *tab, PRN *prn)
     /* fix any underscores in series names */
     for (k=0; k<2; k++) {
 	targ = k == 0 ? s1 : s2;
-	src = k == 0 ? tab->rvarname : tab->cvarname;
+	src = k == 0 ? tab->rname : tab->cname;
 	for (i=0, j=8; src[i]; i++, j++) {
 	    if (src[i] == '_') {
 		strcat(targ, "\\_");
@@ -601,13 +601,13 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 	totals = 0;
     }
 
-    if (*tab->rvarname != '\0' && *tab->cvarname != '\0') {
+    if (tab->rname != NULL && tab->cname != NULL) {
 	pputc(prn, '\n');
 	if (tex) {
 	    tex_xtab_heading(tab, prn);
 	} else {
 	    pprintf(prn, _("Cross-tabulation of %s (rows) against %s (columns)"),
-		    tab->rvarname, tab->cvarname);
+		    tab->rname, tab->cname);
 	    pputs(prn, "\n\n");
 	}
     } else {
@@ -1495,6 +1495,32 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
     }
 }
 
+/* Write to @label a string to identify the series subject to forecast
+   in @fr, allowing for the possibility that the forecast was originally
+   for a series in log form and has been exponentiated.
+*/
+
+static void make_depvar_label (char *label,
+			       const FITRESID *fr,
+			       const DATASET *dset)
+{
+    char parent[VNAMELEN] = {0};
+
+    if (fr->opt & OPT_X) {
+	int v = current_series_index(dset, fr->depvar);
+
+	if (v > 0) {
+	    series_is_log(dset, v, parent);
+	}
+    }
+
+    if (*parent != '\0') {
+	maybe_trim_varname(label, parent);
+    } else {
+	maybe_trim_varname(label, fr->depvar);
+    }
+}
+
 static int fit_resid_head (const FITRESID *fr,
 			   const DATASET *dset,
 			   int obslen,
@@ -1534,7 +1560,7 @@ static int fit_resid_head (const FITRESID *fr,
     bufspace(obslen, prn);
 
     /* column 1 */
-    maybe_trim_varname(label, fr->depvar);
+    make_depvar_label(label, fr, dset);
     ywidth = strlen(label) + 1;
     if (ywidth < 13) {
 	ywidth = 13;
@@ -3187,8 +3213,8 @@ static int fr_print_fc_stats (const FITRESID *fr, gretlopt opt,
 	return E_MISSDATA;
     }
 
-    m = forecast_stats(fr->actual, fr->fitted, t1, t2, &n_used,
-		       opt, &err);
+    m = forecast_stats(fr->actual, fr->fitted, t1, t2,
+		       &n_used, opt, &err);
 
     if (!err) {
 	err = print_fcast_stats_matrix(m, n_used, opt, prn);
@@ -3200,6 +3226,8 @@ static int fr_print_fc_stats (const FITRESID *fr, gretlopt opt,
 }
 
 #define SIGMA_MIN 1.0e-18
+
+
 
 int text_print_fit_resid (const FITRESID *fr,
 			  const DATASET *dset,
@@ -3305,7 +3333,7 @@ int csv_print_forecast (const FITRESID *fr, const DATASET *dset,
     }
 
     pputs(prn, "\"obs\",");
-    maybe_trim_varname(label, fr->depvar);
+    make_depvar_label(label, fr, dset);
     pprintf(prn, "\"%s\"", label);
     pprintf(prn, "%c\"%s\"", d, _("prediction"));
     if (do_errs) {
@@ -3364,6 +3392,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     int obslen, pmax = fr->pmax;
     int errpmax = fr->pmax;
     int quiet = (opt & OPT_Q);
+    int log2lev = (opt & OPT_X);
     int ywidth;
     double *maxerr = NULL;
     double conf = 100 * (1 - fr->alpha);
@@ -3390,7 +3419,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     if (do_errs) {
 	double a2 = fr->alpha / 2;
 
-	tval = (fr->asymp)? normal_critval(a2) : student_critval(fr->df, a2);
+	tval = fr->asymp ? normal_critval(a2) : student_critval(fr->df, a2);
 
 	if (!quiet) {
 	    if (fr->asymp) {
@@ -3411,7 +3440,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 
     bufspace(obslen + 1, prn);
 
-    maybe_trim_varname(label, fr->depvar);
+    make_depvar_label(label, fr, dset);
     ywidth = strlen(label) + 1;
     if (ywidth < 12) {
 	ywidth = 12;
@@ -3421,7 +3450,9 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
 
     if (do_errs) {
-	pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
+	if (!log2lev) {
+	    pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
+	}
 	pprintf(prn, _("        %g%% interval\n"), conf);
     } else {
 	pputc(prn, '\n');
@@ -3439,25 +3470,38 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     }
 
     for (t=fr->t0; t<=fr->t2; t++) {
-	print_obs_marker(t, dset, obslen, prn);
-	fcast_print_x(fr->actual[t], ywidth + 2, pmax, prn);
+	double yt = fr->actual[t];
+	double ft = fr->fitted[t];
+	double lo, hi;
 
-	if (na(fr->fitted[t])) {
+	print_obs_marker(t, dset, obslen, prn);
+	fcast_print_x(yt, ywidth + 2, pmax, prn);
+
+	if (na(ft)) {
 	    pputc(prn, '\n');
 	    continue;
 	}
 
-	fcast_print_x(fr->fitted[t], 15, pmax, prn);
+	fcast_print_x(ft, 15, pmax, prn);
 
 	if (do_errs) {
 	    if (na(fr->sderr[t])) {
 		maxerr[t] = NADBL;
 	    } else {
-		fcast_print_x(fr->sderr[t], 15, errpmax, prn);
+		if (!log2lev) {
+		    fcast_print_x(fr->sderr[t], 15, errpmax, prn);
+		}
 		maxerr[t] = tval * fr->sderr[t];
-		fcast_print_x(fr->fitted[t] - maxerr[t], 15, pmax, prn);
+		if (log2lev) {
+		    lo = exp(log(ft) - maxerr[t]);
+		    hi = exp(log(ft) + maxerr[t]);
+		} else {
+		    lo = ft - maxerr[t];
+		    hi = ft + maxerr[t];
+		}
+		fcast_print_x(lo, 15, pmax, prn);
 		pputs(prn, " - ");
-		fcast_print_x(fr->fitted[t] + maxerr[t], 10, pmax, prn);
+		fcast_print_x(hi, 10, pmax, prn);
 	    }
 	}
 	pputc(prn, '\n');
@@ -3475,7 +3519,6 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     }
 
     /* do we really want a plot for non-time series? */
-
     if ((opt & OPT_P) && fr->nobs > 0) {
 	err = plot_fcast_errs(fr, maxerr, dset, opt);
     }

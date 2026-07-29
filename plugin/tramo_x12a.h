@@ -18,12 +18,13 @@
  */
 
 enum tx_objects {
-    TX_SA,    /* save seasonally adjusted series */
-    TX_TR,    /* save trend/cycle */
-    TX_IR,    /* save irregular component */
-    TX_LN,    /* save linearized series */
+    TX_SA,    /* seasonally adjusted series */
+    TX_TR,    /* trend/cycle */
+    TX_IR,    /* irregular component */
+    TX_LN,    /* linearized series */
+    TX_FC,    /* forecast */
     TRIGRAPH, /* graph showing some/all of the above */
-    TEXTOUT,  /* for full text output */
+    TEXTOUT,  /* full text output */
     TX_MAXOPT /* sentinel */
 };
 
@@ -49,6 +50,7 @@ struct _x13a_opts {
     int output;   /* which output series is wanted? */
     int verbose;  /* verbosity level */
     int save_spc; /* option to save spc file content */
+    int fcast;    /* option to generate and save forecast */
     double critical; /* critical value for outliers (vs auto) */
     int *savelist;   /* spec for series to save */
     guint8 *aspec;   /* arima spec, as array of int */
@@ -61,7 +63,7 @@ struct _tx_request {
     common_opt_info opts[TX_MAXOPT];
     char yname[VNAMELEN];
     void *gui;
-    gretlopt *popt;
+    gretlopt opt;
     int savevars;
     int pd;
     int seasonal_ok;

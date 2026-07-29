@@ -165,8 +165,8 @@ function void call_ASA136 (const matrix X, bundle *self)
     endif
     m = rows(X)
     n = cols(X)
-    self.within_distance = b.cluster_SST
-    self.total_distance = b.global_SST
+    self.within_variation = b.within_variation
+    self.total_variation = b.total_variation
     series self.cluster_id = b.cluster_id
     matrix self.centroids = b.centroids[,1:n]
     matrix dsq = zeros(m, 1)
@@ -181,7 +181,9 @@ function void call_ASA136 (const matrix X, bundle *self)
     # other components?
 end function
 
-function void print_draw_info (int d, int dmax, const bundle b)
+function void print_draw_info (int d, int dmax,
+                               const bundle b,
+                               int iters)
     if dmax > 9
         printf "draw %02d: ", d
     else
@@ -190,7 +192,8 @@ function void print_draw_info (int d, int dmax, const bundle b)
     if b.error
         printf "failed\n"
     else
-        printf "total within distance = %g\n", b.within_distance
+        printf "within variation = %g (%d iterations)\n",
+          b.within_variation, iters
     endif
 end function
 
@@ -234,7 +237,7 @@ function bundle kmeans_fit (const list xlist,
         self.init = "user"
     endif
     matrix features = {xlist}
-    scalar self.within_distance = $huge
+    scalar self.within_variation = $huge
     scalar draw_id = 1
     matrix self.cluster_id = mshape(NA, $nobs, 1)
     matrix self.distances = mshape(NA, $nobs, 1)
@@ -247,8 +250,8 @@ function bundle kmeans_fit (const list xlist,
         matrix self.centroids = meanc(features)
         matrix D = distance(features, self.metric, self.centroids)
         matrix self.distances = sumr(D)
-        scalar self.total_distance = sumc(self.distances)
-        scalar self.within_distance = self.total_distance
+        scalar self.total_variation = sumc(self.distances)
+        scalar self.within_variation = self.total_distance
     endif
 
     if self.verbosity && !metric_is_euclidean(self.metric)
@@ -260,7 +263,7 @@ function bundle kmeans_fit (const list xlist,
 
     if n_clusters == 1
         if self.verbosity
-            printf "Sum of within distances = %g\n", self.within_distance
+            printf "Sum of within-cluster variation = %g\n", self.within_variation
         endif
         return self
     endif
@@ -271,33 +274,34 @@ function bundle kmeans_fit (const list xlist,
     endif
 
     string save_init = self.init
+    scalar iters = 0
 
     if save_init == "pc" || save_init == "user"
-        bundle b = compute_kmeans(self, features)
-        scalar self.within_distance = b.within_distance
+        bundle b = compute_kmeans(self, features, &iters)
+        scalar self.within_variation = b.within_variation
         matrix self.centroids = b.centroids
         matrix cluster_id = b.cluster_id
         matrix distances = b.distances
         if self.verbosity == 2
-            printf "%s init: total within distance = %g\n",
-              save_init == "pc" ? "PC" : "user", b.within_distance
+            printf "%s init: within variation = %g (%d iterations)\n",
+              save_init == "pc" ? "pc" : "user", b.within_variation, iters
         endif
         # hand off to random for n_draws > 0
         self.init = "random"
     endif
 
     loop d=1..self.n_draws
-        bundle b = compute_kmeans(self, features)
+        bundle b = compute_kmeans(self, features, &iters)
         if self.verbosity == 2
-            print_draw_info(d, self.n_draws, b)
+            print_draw_info(d, self.n_draws, b, iters)
         endif
         if b.error
             n_errors++
             continue
         endif
         # record minimizing draw
-        if b.within_distance < self.within_distance
-            scalar self.within_distance = b.within_distance
+        if b.within_variation < self.within_variation
+            scalar self.within_variation = b.within_variation
             matrix self.centroids = b.centroids
             matrix cluster_id = b.cluster_id
             matrix distances = b.distances
@@ -313,7 +317,7 @@ function bundle kmeans_fit (const list xlist,
 
     cnameset(self.centroids, varnames(xlist))
     if self.verbosity
-        printf "minimized objective function: %g\n\n", self.within_distance
+        printf "minimized objective function: %g\n\n", self.within_variation
         print self.centroids
     endif
 
@@ -329,11 +333,11 @@ function void add_variations (const matrix features, bundle *self)
 
     matrix distances_from_mean = distance(features, self.metric, meanc(features))
     if metric_is_euclidean(self.metric)
-        self.total_distance = sumc(distances_from_mean.^2)
+        self.total_variation = sumc(distances_from_mean.^2)
     else
-        self.total_distance = sumc(distances_from_mean)
+        self.total_variation = sumc(distances_from_mean)
     endif
-    scalar self.within_distance = within_cluster_distance(self.distances,
+    scalar self.within_variation = within_cluster_distance(self.distances,
       self.cluster_id, self.metric)
 end function
 
@@ -354,33 +358,20 @@ function void kmeans_summary (const bundle kmb)
         printf "  Tolerance: %f\n", kmb.tolerance
     endif
 
-    if inbundle(kmb, "total_distance")
-        total_dist = kmb.total_distance
-        within_dist = kmb.within_distance
-    else
-        total_dist = kmb.global_SST
-        within_dist = kmb.cluster_SST
-    endif
-    between_dist = total_dist - within_dist
-    between_pc = 100 * between_dist / total_dist
+    between_variation = kmb.total_variation - kmb.within_variation
+    between_pc = 100 * between_variation / kmb.total_variation
 
     printf "\nResults:\n"
-    if metric_is_euclidean(kmb.metric)
-        printf "  Total sum of squares: %g\n", total_dist
-        printf "  Within-cluster sum of squares: %g\n", within_dist
-        printf "  Between-cluster sum of squares: %g\n", between_dist
-        printf "  Between as percent of total: %.3f\n", between_pc
-    else
-        printf "  Total distance from global centroid: %g\n", total_dis
-        printf "  Total within-cluster distance: %g\n", within_dist
-        printf "  Between cluster distance: %g\n", between_dist
-        printf "  Between as percent of total: %.1f\n", between_pc
-    endif
+    printf "  Total variation: %g\n", kmb.total_variation
+    printf "  Within-cluster variation: %g\n", kmb.within_variation
+    printf "  Between-cluster variation: %g\n", between_variation
+    printf "  Between as percent of total: %.3f\n", between_pc
     print "************************************************"
 end function
 
 function bundle compute_kmeans (const bundle self,
-                                const matrix features)
+                                const matrix features,
+                                scalar *iters)
     /* Actual computation of k-means. Identify optimal clusters and
        return a bundle.
     */
@@ -391,7 +382,7 @@ function bundle compute_kmeans (const bundle self,
     scalar this_distance
     scalar Model.error = FALSE
 
-    loop iter = 1..self.max_iter
+    loop i = 1..self.max_iter
         matrix all_dists = distance(features, self.metric, centroids)
         matrix cluster_id = iminr(all_dists)
 
@@ -408,9 +399,10 @@ function bundle compute_kmeans (const bundle self,
         delta = this_distance - prev_distance
         # FIXME shouldn't this be proportional?
         if delta <= 0 && abs(delta) < self.tolerance
+            iters = i
             if self.verbosity > 2
-                printf "Converged after %d iterations (within total distance = %.5f).",
-                  iter, this_distance
+                printf "Converged after %d iterations (within distance = %.5f).",
+                  i, this_distance
                 flush
             endif
             break
@@ -419,7 +411,7 @@ function bundle compute_kmeans (const bundle self,
     endloop
 
     matrix Model.distances = min_dists
-    scalar Model.within_distance = this_distance
+    scalar Model.within_variation = this_distance
     matrix Model.cluster_id = cluster_id
     matrix Model.centroids = centroids
 
@@ -481,7 +473,7 @@ function matrix kmeans_scree (const list xlist "Features",
             if opts.verbosity == 2
                 kmeans_summary(model)
             endif
-            results[k,] = {k, model.within_distance}
+            results[k,] = {k, model.within_variation}
         endloop
         cnamset(results, "clusters distance")
     endif
@@ -498,7 +490,7 @@ function matrix kmeans_crosstab (const series estim,
       "estim and actual must have values from 1 to k")
     k = nelem(estvals)
     string aname = argname(actual)
-    matrix P = _permute(estvals)
+    matrix P = permute(estvals)
     np = cols(P)
     series c_hat = estim
     ibest = 1
@@ -521,6 +513,7 @@ function matrix kmeans_crosstab (const series estim,
     elif ibest != np
         c_hat = replace(estim, estvals, P[,ibest])
     endif
+    setinfo c_hat --graph-name="estimated cluster"
     if aname != "" && aname != "actual"
         S = strvals(actual)
         series @aname = actual

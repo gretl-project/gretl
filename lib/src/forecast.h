@@ -24,14 +24,12 @@
 extern "C" {
 #endif
 
-typedef struct fc_params_ fc_params;
-
 struct FITRESID_ {
     int model_ID;   /* ID of model on which forecast is based */
     int asymp;      /* 0/1 flag for asymptotic estimator */
     int std;        /* 0/1 flag for standardized residuals */
     int model_t1;   /* start of model estimation range */
-    int method;     /* one of the ForecastMethod options */
+    FcastMethod method; /* one of the FcastMethod options */
     double *actual; /* array of values of dependent variable */
     double *fitted; /* array of fitted values */
     double *resid;  /* array of residuals */
@@ -47,6 +45,7 @@ struct FITRESID_ {
     int k;          /* number of steps ahead (method = FC_KSTEP only) */
     int nobs;       /* length of the arrays actual, fitted, resid */
     char depvar[VNAMELEN]; /* name of dependent variable */
+    gretlopt opt;   /* option flags applied to forecast */
 };
 
 void free_fit_resid (FITRESID *fr);

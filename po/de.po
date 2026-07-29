@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-24 08:54-0500\n"
-"PO-Revision-Date: 2026-01-28 19:12+0100\n"
+"PO-Revision-Date: 2026-07-17 15:33+0200\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.8\n"
+"X-Generator: Poedit 3.9\n"
 
 #: lib/src/addons_utils.c:187
 msgid "try"
@@ -5240,7 +5240,7 @@ msgstr "Zusammenhang ist linear"
 
 #: lib/src/gretl_model.c:4318 gui/gui_utils.c:2980
 msgid "Test for normality of residual"
-msgstr "Test auf Normalverteilung"
+msgstr "Test auf Normalverteilung der Residuen"
 
 #: lib/src/gretl_model.c:4319
 msgid "error is normally distributed"
@@ -8557,7 +8557,7 @@ msgstr "Copyright Allin Cottrell und Riccardo \"Jack\" Lucchetti"
 
 #: lib/src/printout.c:278
 msgid "Test for null hypothesis of normal distribution"
-msgstr "Test für Nullhypothese auf Normalverteilung"
+msgstr "Test für Nullhypothese der Normalverteilung"
 
 #: lib/src/printout.c:285
 msgid "Test for null hypothesis of gamma distribution"

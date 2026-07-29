@@ -3271,7 +3271,8 @@ static int found_log_parent (const char *s, char *targ)
  * @dset: dataset information.
  * @i: ID number of series.
  * @parent: location to which to write the name of the
- * "parent" variable if any.
+ * "parent" variable if any; must be of length VNAMELEN
+ * or greater.
  *
  * Tries to determine if the variable with ID number @i is
  * the logarithm of some other variable.
@@ -3629,16 +3630,16 @@ static int compact_dataset_wrapper (const char *s, DATASET *dset,
     return err;
 }
 
-static unsigned int resample_seed;
+static uint64_t resample_seed;
 
-unsigned int get_resampling_seed (void)
+uint64_t get_resampling_seed (void)
 {
     return resample_seed;
 }
 
 /* resample the dataset by observation, with replacement */
 
-int dataset_resample (DATASET *dset, int n, unsigned int seed)
+int dataset_resample (DATASET *dset, int n, uint64_t seed)
 {
     DATASET *rset = NULL;
     char **S = NULL;
@@ -6614,15 +6615,17 @@ static int get_iact_column (gretl_matrix *m, int i, int *err)
    term.
 */
 
-static int condense_listinfo_matrix (gretl_matrix *m,
+static int condense_listinfo_matrix (gretl_matrix **pm,
 				     const int *list,
 				     const DATASET *dset)
 {
     gretl_matrix *mc = NULL;
+    gretl_matrix *m = *pm;
     char **S = NULL;
     double x;
     int i, j, ic, n = 0;
 
+    /* count the primary series */
     for (i=0; i<m->rows; i++) {
 	if (m->val[i] == 1) {
 	    n++;
@@ -6630,7 +6633,19 @@ static int condense_listinfo_matrix (gretl_matrix *m,
     }
 
     if (n == m->rows) {
-	/* nothing to be done */
+#if 0 /* not ready yet */
+	char **S;
+	int serr = 0;
+
+	for (i=0; i<m->rows; i++) {
+	    m->val[i] = 1.0 + i;
+	}
+	S = gretl_list_get_names_array(list, dset, &serr);
+	if (S != NULL) {
+	    gretl_matrix_set_rownames(m, S);
+	}
+#endif
+	/* nothing more to be done */
 	return 0;
     }
 
@@ -6644,7 +6659,7 @@ static int condense_listinfo_matrix (gretl_matrix *m,
     ic = 0;
     for (i=0; i<m->rows; i++) {
 	if (m->val[i] == 1) {
-	    gretl_matrix_set(mc, ic, 0, i+1);
+	    gretl_matrix_set(mc, ic, 0, i+1.0);
 	    for (j=1; j<m->cols; j++) {
 		x = gretl_matrix_get(m, i, j);
 		gretl_matrix_set(mc, ic, j, x);
@@ -6654,13 +6669,14 @@ static int condense_listinfo_matrix (gretl_matrix *m,
 	}
     }
 
-    gretl_matrix_reuse(m, n, m->cols);
-    gretl_matrix_copy_values(m, mc);
-    gretl_matrix_free(mc);
-    gretl_matrix_set_rownames(m, S);
+    gretl_matrix_free(*pm);
+    gretl_matrix_set_rownames(mc, S);
+    *pm = mc;
 
     return 0;
 }
+
+/* OPT_C says the output matrix should be "condensed" */
 
 static gretl_matrix *linfo_matrix_via_labels (const int *list,
 					      const DATASET *dset,
@@ -6758,7 +6774,7 @@ static gretl_matrix *linfo_matrix_via_labels (const int *list,
 	gretl_matrix_free(ret);
 	ret = NULL;
     } else if (opt & OPT_C) {
-	condense_listinfo_matrix(ret, list, dset);
+	condense_listinfo_matrix(&ret, list, dset);
     } else {
 	/* convenience: attach series names to rows */
 	char **S;
@@ -6849,7 +6865,7 @@ static gretl_matrix *linfo_matrix_via_data (const int *list,
 	gretl_matrix_free(ret);
 	ret = NULL;
     } else if (opt & OPT_C) {
-	condense_listinfo_matrix(ret, list, dset);
+	condense_listinfo_matrix(&ret, list, dset);
     } else {
 	/* convenience: attach series names to rows */
 	char **S;
@@ -6866,8 +6882,8 @@ static gretl_matrix *linfo_matrix_via_data (const int *list,
 
 /* Construct a matrix providing information about the relations between
    the series in @list. This will have rows equal to the number of
-   series and at least 5 columns (shown as 1-based here).  All elements
-   of the matrix are zero unless otherwise specified.
+   series and at least 5 columns (shown here as 1-based).  All elements
+   of the matrix are zero unless otherwise stated.
 
    col 1: Holds 1 if the series is "primary" (neither the square of
    another series in the list, nor the interaction of two series in the
@@ -6887,6 +6903,11 @@ static gretl_matrix *linfo_matrix_via_data (const int *list,
    (these being added as required).  If the series itself is an
    interaction term, cols 4 and 5 get the list positions of the two
    source series.
+
+   If OPT_C is passed in @opt the result will be "condensed": only rows
+   pertaining to primary series are retained, and the integer in the
+   first column of row i gives the position in the list of the i^{th}
+   primary term.
 */
 
 gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,

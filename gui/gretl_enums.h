@@ -135,7 +135,7 @@ enum extra_cmds {
     BWFILTER,
     POLYWEIGHTS,
     EMAFILTER,
-    X12AHELP,
+    X13AHELP,
     MAILHELP,
     LOESS,
     NADARWAT,

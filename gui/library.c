@@ -1918,9 +1918,35 @@ int out_of_sample_info (int add_ok, int *t2)
     return err;
 }
 
+/* Handle any option flags that were added to @gopt for convenience but
+   really belong in @fopt. OPT_M is relatively complicated since it
+   pertains to both @gopt and &fopt: we want to copy it rather than
+   shift it.
+*/
+
+static void maybe_transfer_options (gretlopt *gopt,
+				    gretlopt *fopt)
+{
+    gretlopt shift = OPT_I | OPT_M | OPT_X | OPT_G;
+    gretlopt isect = *gopt & shift;
+
+    if (isect) {
+	*fopt |= isect;  /* copy flags to @fopt */
+	isect &= ~OPT_M; /* protect OPT_M in @gopt */
+	*gopt &= ~isect; /* delete all but OPT_M */
+	if (*fopt & OPT_G) {
+	    /* debatable! */
+	    *fopt |= OPT_X;
+	    *fopt &= ~OPT_G;
+	    set_optval_int(FCAST, OPT_X, 2);
+	}
+    }
+}
+
 void gui_do_forecast (GtkAction *action, gpointer p)
 {
     static gretlopt gopt = OPT_P | OPT_H;
+    gretlopt fopt = OPT_NONE;
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     char startobs[OBSLEN], endobs[OBSLEN];
@@ -1930,10 +1956,11 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     int premax = 0;
     int pre_n = 0;
     int t1min = 0;
-    int recursive = 0, k = 1, *kptr;
+    int recursive = 0;
+    int k = 1;
+    int *kptr = NULL;
     int dt2 = dataset->n - 1;
     int st2 = dataset->n - 1;
-    gretlopt opt = OPT_NONE;
     double conf = 0.95;
     FITRESID *fr;
     PRN *prn = NULL;
@@ -1945,9 +1972,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         return;
     }
 
-    /* try to figure which options might be applicable */
-    forecast_options_for_model(pmod, dataset, &flags,
-                               &dt2, &st2);
+    /* Try to figure which options might be applicable. */
+    forecast_options_for_model(pmod, dataset, &flags, &dt2, &st2);
 
     if (flags & (FC_DYNAMIC_OK | FC_AUTO_OK)) {
         t2 = dt2;
@@ -1955,8 +1981,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         t2 = st2;
     }
 
-    /* if no out-of-sample obs are available in case of time-
-       series data, alert the user */
+    /* If no out-of-sample obs are available in case of time-
+       series data, alert the user. */
     if (t2 <= pmod->t2 && dataset_is_time_series(dataset)) {
         err = out_of_sample_info(flags & FC_ADDOBS_OK, &t2);
         if (err) {
@@ -1989,11 +2015,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         pre_n = 0;
     }
 
-    if (flags & FC_INTEGRATE_OK) {
-        kptr = NULL;
-    } else {
-        kptr = &k;
-    }
+    kptr = (flags & FC_INTEGRATE_OK)? NULL : &k;
 
     resp = forecast_dialog(t1min, t2, &t1,
                            0, t2, &t2, kptr,
@@ -2002,29 +2024,20 @@ void gui_do_forecast (GtkAction *action, gpointer p)
                            pmod, vwin_toplevel(vwin));
 
     if (canceled(resp)) {
+	/* reinstate the default value */
         gopt = OPT_P | OPT_H;
         return;
     }
 
     if (resp == 1) {
-        opt = OPT_D;
+        fopt = OPT_D;
     } else if (resp == 2) {
-        opt = OPT_S;
+        fopt = OPT_S;
     } else if (resp == 3) {
         recursive = 1;
     }
 
-    if (gopt & OPT_I) {
-        /* transfer OPT_I (integrate forecast) from graph
-           to general options */
-        opt |= OPT_I;
-        gopt &= ~OPT_I;
-    }
-
-    if (gopt & OPT_M) {
-        /* OPT_M (show interval for mean): copy to opt */
-        opt |= OPT_M;
-    }
+    maybe_transfer_options(&gopt, &fopt);
 
     if (recursive) {
         fr = recursive_OLS_k_step_fcast(pmod, dataset,
@@ -2034,12 +2047,12 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         ntolabel(startobs, t1, dataset);
         ntolabel(endobs, t2, dataset);
         lib_command_sprintf("fcast %s %s%s", startobs, endobs,
-                            print_flags(opt, FCAST));
+                            print_flags(fopt, FCAST));
         if (parse_lib_command()) {
             return;
         }
         fr = get_forecast(pmod, t1, t2, pre_n, dataset,
-                          opt, &err);
+                          fopt, &err);
         if (!err) {
             record_lib_command();
         }
@@ -2052,17 +2065,15 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     if (!err) {
-        int ols_special = 0;
+        int ols_special = dataset_is_cross_section(dataset) &&
+	    gretl_is_simple_OLS(pmod);
         int width = 78;
 
         if (recursive) {
             err = text_print_fit_resid(fr, dataset, prn);
         } else {
-            if (dataset_is_cross_section(dataset)) {
-                ols_special = gretl_is_simple_OLS(pmod);
-            }
             if (LIMDEP(pmod->ci) || ols_special) {
-                /* don't generate plot via text_print_forecast() */
+                /* don't generate a plot via text_print_forecast() */
                 gopt &= ~OPT_P;
             } else {
                 gopt |= OPT_P;
@@ -2072,9 +2083,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         }
 
         if (ols_special) {
-            err = plot_simple_fcast_bands(pmod, fr,
-                                          dataset,
-                                          gopt);
+            err = plot_simple_fcast_bands(pmod, fr, dataset, gopt);
             gopt |= OPT_P;
         }
         if (!err && (gopt & OPT_P)) {
@@ -2088,7 +2097,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
                                 FCAST, fr);
     }
 
-    /* don't remember the "mean" option */
+    /* OPT_M may have been passed for plotting: don't
+       remember it */
     gopt &= ~OPT_M;
 }
 
@@ -5573,12 +5583,12 @@ void do_freq_dist (void)
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
-/* If we got a non-null warning message from X-12-ARIMA,
+/* If we got a non-null warning message from X-13ARIMA,
    pull it out of the .err file and display it in a
    warning (or error) dialog box.
 */
 
-static void display_x12a_warning (const char *fname,
+static void display_x13a_warning (const char *fname,
                                   int err)
 {
     char *errfile = gretl_strdup(fname);
@@ -5699,9 +5709,9 @@ static void display_tx_output (const char *fname, int graph_ok,
     }
 }
 
-static void x12a_help (void)
+static void x13a_help (void)
 {
-    show_gui_help(X12AHELP);
+    show_gui_help(X13AHELP);
 }
 
 static void real_do_tramo_x12a (int v, int tramo)
@@ -5736,7 +5746,7 @@ static void real_do_tramo_x12a (int v, int tramo)
     set_plugin_dialog_open(1);
     err = write_tx_data(outfile, v, dataset, &opt, tramo,
                         &warning, GTK_WINDOW(mdata->main),
-                        x12a_help);
+                        x13a_help);
     set_plugin_dialog_open(0);
 
     dataset->t1 = save_t1;
@@ -5744,7 +5754,7 @@ static void real_do_tramo_x12a (int v, int tramo)
 
     if (err) {
         if (has_suffix(outfile, ".err")) {
-            display_x12a_warning(outfile, 1);
+            display_x13a_warning(outfile, 1);
             return;
         } else {
             gui_errmsg(err);
@@ -5752,7 +5762,7 @@ static void real_do_tramo_x12a (int v, int tramo)
         graph_ok = 0;
     } else if (warning) {
         /* got a warning from x12a */
-        display_x12a_warning(outfile, 0);
+        display_x13a_warning(outfile, 0);
     } else if (opt & OPT_S) {
         /* created x12a spec file for editing */
         view_file(outfile, 1, 0, 78, 370, EDIT_X12A);
@@ -5794,7 +5804,6 @@ void run_x12a_script (const gchar *buf)
     }
 
     err = func(outfile, buf);
-
     if (err) {
         gui_errmsg(err);
     }

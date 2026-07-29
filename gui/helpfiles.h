@@ -45,7 +45,7 @@ void display_guide_chapter (const char *dest);
 
 void display_gnuplot_help (void);
 
-void display_x12a_help (void);
+void display_x13a_help (void);
 
 void listbox_find (gpointer unused, gpointer data);
 

@@ -145,7 +145,7 @@ struct sample_info {
     int t2;
     char *mask;
     char *restriction;
-    unsigned int seed;
+    uint64_t seed;
     int resample_n;
 };
 
