@@ -3435,8 +3435,10 @@ static int check_for_list (CMD *cmd)
 	} else {
 	    cmd->err = E_ARGS;
 	}
-    } else if (cmd->ci != VAR && cmd->ci != VECM) {
-	/* check for duplicated variables */
+    } else if (cmd->ci != VAR && cmd->ci != VECM && cmd->ci != COINT2) {
+	/* check for duplicated variables; this is handled separately
+	   for the var, vecm and johansen commands
+	*/
 	int dupv = gretl_list_duplicates(cmd->list, cmd->ci);
 
 	if (dupv >= 0) {

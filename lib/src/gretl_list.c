@@ -2564,8 +2564,8 @@ static int real_list_dup (const int *list, int start, int stop)
 
 int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 {
-    int multi = 0;
-    int start = 2;
+    int done = 0;
+    int start = 2; /* perhaps should be 1? */
     int i, ret = -1;
 
     if (ci == COINT || ci == ANOVA || ci == DELEET) {
@@ -2589,7 +2589,6 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 	    }
 	}
     } else if (ci == IVREG || ci == HECKIT || ci == EQUATION) {
-	multi = 1;
 	for (i=2; i<list[0]; i++) {
 	    if (list[i] == LISTSEP) {
 		start = i+1;
@@ -2600,30 +2599,10 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 	if (ret == -1) {
 	    ret = real_list_dup(list, 2, start - 2);
 	}
-    } else if (ci == VAR || ci == VECM || ci == COINT2) {
-	int seppos = 0;
-
-	multi = 1;
-	for (i=1; i<list[0]; i++) {
-	    if (list[i] == LISTSEP) {
-		seppos = i;
-		break;
-	    }
-	}
-	if (seppos) {
-	    /* check each sublist */
-	    ret = real_list_dup(list, 1, seppos - 1);
-	    if (ret == -1) {
-		ret = real_list_dup(list, seppos + 1, list[0]);
-	    }
-	} else {
-	    /* just one list to examine */
-	    ret = real_list_dup(list, 1, list[0]);
-	}
+	done = 1;
     } else if (ci == DPANEL) {
 	int stop = 0;
 
-	multi = 1;
 	for (i=2; i<list[0]; i++) {
 	    if (list[i] == LISTSEP) {
 		start = i;
@@ -2644,9 +2623,8 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 		ret = real_list_dup(list, stop + 1, list[0]);
 	    }
 	}
-	multi = 1;
+	done = 1;
     } else if (ci == BIPROBIT) {
-	multi = 1;
 	if (list[1] == list[2]) {
 	    ret = 1;
 	}
@@ -2662,9 +2640,10 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 		ret = real_list_dup(list, 3, start - 2);
 	    }
 	}
+	done = 1;
     }
 
-    if (!multi) {
+    if (!done) {
 	ret = real_list_dup(list, start, list[0]);
     }
 
