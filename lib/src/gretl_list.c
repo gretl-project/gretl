@@ -2665,7 +2665,6 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
     }
 
     if (!multi) {
-	start = 1; /* 2026-07-22: was = default of 2 */
 	ret = real_list_dup(list, start, list[0]);
     }
 
