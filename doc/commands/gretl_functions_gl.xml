@@ -4522,11 +4522,12 @@
 	  <argname>Y</argname>.
 	</para>
 	<para>
-	  Para obter as distancias desde un punto concreto de referencia ata
-	  cada un dos <math>n</math> puntos de datos, indica
-	  <argname>Y</argname> como unha única fila. Se o punto de referencia é
-	  o centroide no senso habitual (o vector de medias mostrais),
-	  indica <lit>meanc(X)</lit> como valor de <argname>Y</argname>.
+	  Para obter as distancias entre un punto concreto de referencia e cada
+	  un dos <math>m</math> puntos de datos, indica <argname>Y</argname>
+	  como unha única fila; entón, o resultado é un vector de dimensión
+	  <math>m</math>. Se o punto de referencia é o centroide no senso
+	  habitual (o vector de medias mostrais), indica <lit>meanc(X)</lit>
+	  como valor de <argname>Y</argname>.
 	</para>
 	<subhead>Definicións das métricas admitidas</subhead>
 	<ilist>
@@ -7278,10 +7279,18 @@
       </fnargs>
       <description>
 	<para>
-	  Se <argname>nome</argname> é unha cadea que identifica unha serie xa
-	  definida, e se está marcada como de tipo discreto, a función devolve
-	  un enteiro igual a1; noutro caso, devolve 0. Se <argname>nome</argname>
-	  non identifica unha serie, a función devolve <lit>NA</lit>.
+	  Se <argname>nome</argname> é unha cadea que identifica unha
+	  serie definida vixente, a función devolve un enteiro igual a 1 se a
+	  serie se marcou como de tipo discreto, por exemplo mediante a
+	  instrución <cmdref targ="discrete"/>; noutro caso devolve 0.
+	  Se <argname>nome</argname> non identifica unha serie, a función
+	  devolve <lit>NA</lit>.
+	</para>
+	<para>
+	  Aviso: Esta función non realiza unha comprobación sobre os valores
+	  vixentes que contén a serie: se necesitas unha comprobación máis
+	  en profundidade, deberías utilizar as funcións <fncref targ="uniq"/>
+	  ou <fncref targ="values"/>, e revisar os seus resultados.
 	</para>
       </description>
     </function>
@@ -7810,100 +7819,152 @@
 
     <function name="kmeans" section="stats" output="bundle">
       <fnargs>
-	<fnarg type="matrix">X</fnarg>
+	<fnarg type="list-or-mat">X</fnarg>
 	<fnarg type="scalar-or-matrix">centros</fnarg>
 	<fnarg optional="true" type="bundle">opcs</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Aplica o algoritmo ASA136
-	  (<cite key="hartigan-wong79">Hartigan e Wong, 1979</cite>) para atopar
-	  <math>k</math> conglomerados nos que poden situarse <math>m</math>
-	  puntos, co obxectivo de minimizar a distancia Euclídea total
-	  entre os puntos e os centroides dos conglomerados aos que
-	  pertencen.
+	  Executa o algoritmo ASA136
+	  (<cite key="hartigan-wong79">Hartigan e Wong, 1979</cite>) para
+	  atopar <math>k</math> conglomerados nos que poden situarse
+	  <math>m</math> puntos de datos, co obxectivo de minimizar
+	  a distancia Euclídea total entre os puntos e os centroides
+	  dos conglomerados aos que pertencen. Os parámetros especifícanse
+	  do seguinte xeito.
 	</para>
 	<para>
-	  Os parámetros especifícanse do seguinte xeito.
+	  <argname>X</argname>: Unha lista de <math>n</math> series ou unha
+	  matriz <by r="m" c="n"/> que contén os datos de entrada, en concreto
+	  <math>m</math> observacións sobre cada unha das <math>n</math>
+	  características. Amósase un erro cando o arranxo de datos contén
+	  algún valor ausente.
 	</para>
 	<para>
-	  <argname>X</argname>: Unha matriz <by r="m" c="n"/> que contén os
-	  <quote>puntos</quote>, en concreto <math>m</math> observacións
-	  sobre cada unha das <math>n</math> características. Amósase un erro
-	  cando esta matriz contén algún valor ausente.
-	</para>
-	<para>
-	  <argname>centros</argname>: Pode tomar unha de dúas formas:
-	  (a) un escalar (enteiro) que proporciona <math>k</math>, o número
-	  de conglomerados; ou (b) unha matriz <by r="k" c="n"/> que contén
-	  <math>k</math> centroides iniciais, que se toman como punto de
-	  comezo do algoritmo. Se <argname>centros</argname> é un escalar,
-	  o iniciador establécese automaticamente utilizando o método descrito
-	  por Hartigan e Wong: os puntos de datos ordénanse segundo sexa a
-	  distancia Euclídea desde o centroide global, polo que se seleccionan
-	  <math>k</math> puntos separados regularmente do arranxo ordenado.
-	  Podes solicitar un iniciador rápido e informal proporcionando como
-	  <argname>centros</argname> as <math>k</math> primeiras filas de
-	  <argname>X</argname>.
+	  <argname>centros</argname>: Un escalar (enteiro) que proporciona
+	  <math>k</math>, o número de conglomerados; ou unha matriz
+	  <by r="k" c="n"/> que contén <math>k</math> centroides iniciais,
+	  que se toma como punto de comezo do algoritmo.
 	</para>
 	<para>
 	  <argname>opcs</argname>: Proporciona un xeito de prover opcións
-	  para refusar o procedemento. Neste momento, admítense dúas
+	  para refusar o procedemento. Neste momento, admítense tres
 	  opcións.
 	</para>
 	<ilist>
 	  <li>
 	    <para>
-	      Baixo a chave <lit>rand_starts</lit> podes indicar un enteiro
-	      que especifique un número de puntos de inicio seleccionados
-	      aleatoriamente dos que o algoritmo vaise volver executar (por
-	      defecto, 0). A problemática das <math>k</math>-medias ofrece
-	      tipicamente múltiples óptimos locais e ASA136 non está garantido
-	      que atope o óptimo global; a posibilidade de acadar, ou de
-	      aproximarse, ao óptimo global mellora especificando un número
-	      de reinicios aleatorios.
+	      <lit>init</lit>: Unha cadea de texto que especifica un método
+	      de inicio automático: <lit>pc</lit> (Compoñentes Principais,
+	      o predeterminado) <lit>hw</lit> (Hartigan e Wong) ou
+	      <lit>random</lit> (aleatorio). Cae na conta de que se o argumento
+	      <argname>centros</argname> é unha matriz, esta opción ignórase.
+	      Mira abaixo para máis detalles.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      Baixo a chave <lit>verbosity</lit> podes indicar un valor de
-	      0 a 3 para controlar a cantidade de resultados da función que
-	      se presentan. O valor predeterminado 0 indica un funcionamento
-	      silandeiro, e os niveis de 1 a 3 indican un detalle progresivamente
-	      maior no procedemento.
+	      <lit>n_draws</lit>: Un enteiro que especifica o número de puntos
+	      de inicio seleccionados aleatoriamente para os que se vai
+	      (re)executar o algoritmo (por defecto, 8).
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>verbosity</lit>: un valor enteiro de 0 a 3 para controlar
+	      a cantidade de resultados da función que se presentan. O valor
+	      predeterminado 0 indica un funcionamento silandeiro, e os niveis
+	      de 1 a 3 indican un detalle progresivamente maior no
+	      procedemento.
 	    </para>
 	  </li>
 	</ilist>
-	<subhead>Valor que se devolve</subhead>
+
+	<subhead>Inicio</subhead>
 	<para>
-	  O valor que se devolve de <lit>kmeans</lit> é un feixe que contén
-	  tres elementos:
+	  Agás que especifiques unha matriz de <argname>centros</argname>,
+	  o inicio adopta a modalidade de seleccionar <math>k</math> das
+	  <math>m</math> observacións como candidatas a centroides. A
+	  selección pódese facer por medios determinísticos e/ou aleatorios.
+	  Aquí están algúns comentarios sobre as eleccións para <lit>init</lit>
+	  mencionadas antes.
 	</para>
 	<ilist>
 	  <li>
 	    <para>
-	      <lit>clustid</lit>: Un vector de dimensión <math>m</math> que
+	      <lit>pc</lit>: As observacións ordénanse segundo o valor da
+	      primeira Compoñente Principal de <math>n</math> características,
+	      entón selecciónanse <math>k</math> valores espazados regularmente.
+	      A idea é a de escoller centroides que están amplamente
+	      separados.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>hw</lit>: O método suxerido por Hartigan e Wong no último
+	      parágrafo do seu artigo de 1979. As observacións ordénanse
+	      segundo a distancia Euclídea cadrada desde o centroide global,
+	      entón de novo selecciónanse <math>k</math> valores espaciados
+	      regularmente.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>random</lit>: Esta opción elimina a utilización dun método
+	      determinístico. O primeiro iniciador entón consta simplemente
+	      das primeiras <lit>n_draws</lit> observacións mencionadas
+	      antes.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  A problemática das <math>k</math>-medias enfróntase habitualmente
+	  con múltiples óptimos locais e non se garante que ASA136 atope
+	  o óptimo global. Se empezas cun inicio determinístico, continúas
+	  despois con varios puntos de iniciación aleatorios e seleccionas
+	  os mellores resultados (como acontece por defecto), tes unha
+	  posibilidade razoable de acadar ou aproximarte ao óptimo global.
+	  Porén, podes axustar <lit>init</lit> e/ou <lit>n_draws</lit> para
+	  experimentar. (Resulta aceptable establecer que <lit>n_draws</lit>
+	  sexa 0, cando non especifiques que o inicio sexa
+	  <lit>random</lit>.)
+	</para>
+
+	<subhead>Valor que se devolve</subhead>
+	<para>
+	  O valor que se devolve é un feixe que contén catro elementos:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <lit>cluster_id</lit>: Un vector de dimensión <math>m</math> que
 	      contén o índice en base 1 do conglomerado ao que se asigna
 	      cada punto.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <lit>clustinfo</lit>: Unha matriz con <math>k</math> filas e
-	      <math>n</math>+2 columnas. A primeira columna contén o número
-	      de puntos incluídos en cada conglomerado; as <math>n</math>
-	      columnas seguintes conteñen o centroide do conglomerado; e
-	      a última columna contén a suma dos desvíos padrón dos puntos
-	      incluídos, desde o centroide.
+	      <lit>centroids</lit>: Unha matriz con <math>k</math> filas e
+	      <math>n</math>+2 columnas. As primeiras <math>n</math> columnas
+	      conteñen o propio centroide do conglomerado; a seguinte
+	      contén o número de observacións incluídas no conglomerado;
+	      e a última columna contén a suma dos desvíos padrón desde
+	      o centroide, dos puntos incluídos.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <lit>global_SST</lit>: A suma dos desvíos padrón dos puntos,
-	      desde o centroide global. Isto pódese comparar coa suma total
-	      da última columna de <lit>clustinfo</lit>, e indicará unha
-	      boa proposta ao ser menor cando a conglomeración sexa
-	      efectiva.
+	      <lit>within_variation</lit>: Os desvíos cadrados totais dos
+	      puntos respecto ao centroide do conglomerado ao que foron
+	      asignados.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>total_variation</lit>: Os desvíos cadrados totais dos
+	      puntos respecto ao centroide global. Isto pódese comparar
+	      con <lit>within_variation</lit>, e indicará unha boa proposta
+	      ao ser menor cando a conglomeración sexa efectiva.
 	    </para>
 	  </li>
 	</ilist>
@@ -11104,6 +11165,37 @@
 	  primeira destas ten a frecuencia (&omega;) desde 2&pi;/<math>T</math>
 	  ata &pi;, e a segunda das columnas contén a densidade espectral
 	  correspondente.
+	</para>
+      </description>
+    </function>
+
+    <function name="permute" section="math" output="matrix">
+      <fnargs>
+	<fnarg type="vector">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dado un vector v de dimensión <math>m</math>, devolve unha matriz
+	  <by r="m" c="n"/> na que <math>n = m!</math> é o número de
+	  permutacións de <math>m</math> elementos, e cada columna contén
+	  unha permutación diferente. A función subxacente é recursiva, e
+	  <math>m</math> non debe pasar de 8. Por exemplo, a invocación...
+	</para>
+	<code>
+	  permute({1,10,100})
+	</code>
+	<para>
+	  devolve
+	</para>
+	<code>
+	    1     1    10    10   100   100 
+	   10   100     1   100    10     1 
+	  100    10   100     1     1    10
+	</code>
+	<para>
+	  <seelist>
+	    <fncref targ="binperms"/>
+	  </seelist>
 	</para>
       </description>
     </function>
