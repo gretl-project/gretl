@@ -6264,7 +6264,7 @@
   </command>
 
   <command name="gretl_edit" section="Utilities" context="gui"
-    label="gretl_edit">
+    label="gretl_edit: rationale">
 
     <description>
       <para>
@@ -12455,9 +12455,10 @@
 	desarrolladores y está disponible únicamente en conjunción con
 	<lit>install</lit>. Su efecto consiste en que se descarga el paquete en
 	cuestión del área de montaje (<lit>staging</lit>) de Sourceforge en
-	lugar de hacerlo de un área pública. Los paquetes en montaje todavía
-	no están aprobados para uso general; por eso, ignora esta opción
-	a no ser que sepas lo que estás haciendo.
+	lugar de hacerlo de un área pública. Debe indicarse la extensión
+	<lit>.gfn</lit> o <lit>.zip</lit> del archivo. Los paquetes en montaje
+	todavía no están aprobados para uso general; por eso, ignora esta
+	opción a no ser que sepas lo que estás haciendo.
       </para>
     </description>
 
@@ -18028,8 +18029,8 @@
 
   </command>
 
-  <command name="x12a" section="Utilities" context="gui"
-    label="ARIMA X-12">
+  <command name="x13a" section="Utilities" context="gui"
+    label="X-13ARIMA">
 
     <description>
       <para>
@@ -18037,18 +18038,18 @@
 	que te ofrece el botón inferior de selección.
       </para>
       <para>
-	Si escoges <quote>Ejecutar directamente ARIMA-X-12 </quote> entonces
-	GRETL escribe un archivo de instrucciones para ARIMA X-12, y solicita
-	que el programa 'x12a' ejecute las instrucciones. En este caso, tienes la
+	Si escoges <quote>Ejecutar directamente ARIMA X-13</quote> entonces
+	GRETL escribe un archivo de instrucciones para ARIMA X-13, y solicita
+	que el programa 'x13a' ejecute las instrucciones. En este caso, tienes la
 	posibilidad de generar un gráfico, y/o guardar series escogidas del
 	resultado en el conjunto de datos de GRETL.
       </para>
       <para>
-	Si escoges <quote>Preparar un archivo de instrucciones de ARIMA X-12</quote>,
-	GRETL escribe un archivo de instrucciones para ARIMA X-12 (igual que en el
+	Si escoges <quote>Preparar un archivo de instrucciones de ARIMA X-13</quote>,
+	GRETL escribe un archivo de instrucciones para ARIMA X-13 (igual que en el
 	caso de arriba), pero entonces abre este archivo en una ventana del editor.
 	En esta ventana puedes hacer cambios y guardar el archivo con el nombre que tú
-	elijas. También puedes enviar el archivo para que lo ejecute 'x12a' (pulsando
+	elijas. También puedes enviar el archivo para que lo ejecute 'x13a' (pulsando
 	un clic en el botón <quote>Ejecutar</quote> en la barra de herramientas de la
 	ventana del editor) y comprobar el resultado. Pero en este caso, no tienes la
 	posibilidad de guardar los datos como series, ni de generar un gráfico

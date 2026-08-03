@@ -6264,7 +6264,7 @@
   </command>
 
   <command name="gretl_edit" section="Utilities" context="gui"
-    label="gretl_edit">
+    label="gretl_edit: rationale">
 
     <description>
       <para>
@@ -12455,7 +12455,8 @@
 	desenvolvedores e está dispoñible unicamente en conxunción con
 	<lit>install</lit>. O seu efecto consiste en que se descarga o paquete
 	de función en cuestión da área de montaxe (<lit>staging</lit>) de
-	Sourceforge en troques de facelo dunha área pública. Os paquetes
+	Sourceforge en troques de facelo dunha área pública. Debe indicarse
+	a extensión <lit>.gfn</lit> ou <lit>.zip</lit> do ficheiro. Os paquetes
 	en montaxe aínda non están aprobados para uso xeral; por iso, ignora
 	esta opción a non ser que saibas o que estás a facer.
       </para>
@@ -18028,8 +18029,8 @@
 
   </command>
 
-  <command name="x12a" section="Utilities" context="gui"
-    label="ARIMA X-12">
+  <command name="x13a" section="Utilities" context="gui"
+    label="X-13ARIMA">
 
     <description>
       <para>
@@ -18037,18 +18038,18 @@
 	que te ofrece o botón inferior de selección.
       </para>
       <para>
-	Se escolles <quote>Executar directamente ARIMA-X-12 </quote> entón
-	GRETL escribe un ficheiro de instrucións para ARIMA X-12, e solicita
-	que o programa 'x12a' execute as instrucións. Neste caso, tes a
+	Se escolles <quote>Executar directamente ARIMA X-13 </quote> entón
+	GRETL escribe un ficheiro de instrucións para ARIMA X-13, e solicita
+	que o programa 'x13a' execute as instrucións. Neste caso, tes a
 	posibilidade de xerar unha gráfica, e/ou gardar series escollidas do
 	resultado no conxunto de datos de GRETL.
       </para>
       <para>
-	Se escolles <quote>Preparar un ficheiro de instrucións de ARIMA X-12</quote>,
-	GRETL escribe un ficheiro de instrucións para ARIMA X-12 (igual que no
+	Se escolles <quote>Preparar un ficheiro de instrucións de ARIMA X-13</quote>,
+	GRETL escribe un ficheiro de instrucións para ARIMA X-13 (igual que no
 	caso de arriba), pero entón abre este ficheiro nunha xanela do editor.
 	Nesta xanela podes facer cambios e gardar o ficheiro co nome que ti
-	elixas. Tamén podes enviar o ficheiro para que o execute 'x12a' (premendo
+	elixas. Tamén podes enviar o ficheiro para que o execute 'x13a' (premendo
 	un clic no botón <quote>Executar</quote> na barra de ferramentas da
 	xanela do editor) e comprobar o resultado. Pero neste caso, non tes a
 	posibilidade de gardar os datos como series, nin de xerar unha gráfica

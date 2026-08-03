@@ -8022,7 +8022,7 @@
 	  </li>
 	  <li>
 	    <para>
-	      <lit>clustinfo</lit>: una matrice con <math>k</math>
+	      <lit>centroids</lit>: una matrice con <math>k</math>
 	      righe e <math>n</math>+2 colonne. Le prime
 	      <math>n</math> colonne contengono il centroide del
 	      cluster; quella successiva contiene il numero di punti
