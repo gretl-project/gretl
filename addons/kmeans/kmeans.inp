@@ -75,9 +75,9 @@ function bundle default_values (bool plotting)
     scalar self.error = FALSE
     scalar self.verbosity = plotting ? 0 : 1
     string self.init = "random"
-    scalar self.n_draws = 8
-    scalar self.max_iter = 128
-    scalar self.tolerance = 1e-4
+    scalar self.n_draws = 10
+    scalar self.max_iter = 300
+    scalar self.tolerance = 1.0e-4
     string self.metric = "euclidean"
     scalar self.nobs = $nobs
 
@@ -167,7 +167,7 @@ function void call_ASA136 (const matrix X, bundle *self)
     n = cols(X)
     self.within_variation = b.within_variation
     self.total_variation = b.total_variation
-    series self.cluster_id = b.cluster_id
+    matrix self.cluster_id = b.cluster_id
     matrix self.centroids = b.centroids[,1:n]
     matrix dsq = zeros(m, 1)
     loop i=1..m
