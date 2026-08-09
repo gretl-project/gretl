@@ -1,5 +1,5 @@
 clear
-# set verbose off
+set verbose off
 set seed 34
 
 include kmeans.gfn
@@ -57,18 +57,17 @@ print cluster_id -o --range=1:15
 
 
 # Scree plot
-# Evaluate within-cluster distance for k = 1 to 4 clusters
+# Evaluate within-cluster distance for k = 1 to 5 clusters
 # ==========
 smpl x --no-missing
-matrix scree = kmeans_scree(x, 4)
+matrix scree = kmeans_scree(x, 5)
 kmeans_screeplot(scree, , _(fontsize=12))
-
 
 # Predict
 # ==========
 smpl x --no-missing
 series fc_cluster = kmeans_predict(x, Model)  # predict cluster belonging
-series cluster_id = Model.cluster_id          # must equal "fc_cluster"
+series cluster_id = Model.cluster_id          # should equal "fc_cluster"
 series distances = Model.distances
 print distances cluster_id fc_cluster -o --range=1:15
 
@@ -86,9 +85,10 @@ kmeans_plot(x, Model)
 # ==================
 # Pass some user-defined parameter values, too
 bundle opt = _(max_iter = 100, n_draws = 10,
-               distance_type = "manhattan", initializer = "pca")
+               distance_type = "manhattan", initializer = "pc")
 bundle Model = kmeans_fit(x, n_clusters, opt)
 
 # Plot distinct clusters and tweak the plot
-scalar Model.transparency_level = 120  # this is an option supported by PairPlot
+# transparency_level is an option supported by PairPlot
+scalar Model.transparency_level = 120
 kmeans_plot(x, Model)

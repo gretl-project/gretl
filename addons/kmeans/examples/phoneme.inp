@@ -1,34 +1,29 @@
 set verbose off
 include kmeans.gfn
 
-open phoneme_small.gdtb -q
+open phoneme_small.gdtb --frompkg=kmeans -q
 list L = x1 .. x255
 matrix X = {L}
 k = nelem(values(g))
 n = nelem(L)
 scalar tm
 
-# Hartigan and Wong initializer
-set stopwatch
-bundle b = kmeans(X, k, _(init="hw"))
-printf "gretl, hw init, elapsed: %gs\n", $stopwatch
-kmeans_sil_plot(b, L)
-
 # Principal Components initializer
-set stopwatch
 bundle b = kmeans(X, k, _(init="pc"))
 printf "gretl, pc init, elapsed: %gs\n", $stopwatch
-
 printf "gretl: SST, global:   %7d\n", round(b.total_variation)
 printf "gretl: SST, clusters: %7d\n", round(b.within_variation)
-series phoneme_hat = b.cluster_id
 
+series phoneme_hat = b.cluster_id
 kmeans_crosstab(phoneme_hat, g)
+kmeans_sil_plot(b, L)
 
 bundle f = $sysinfo.foreign
 if !f.Rbin && !f.Rlib
-	quit
+    quit
 endif
+
+# compare with R, if present
 
 foreign language=R --send-data=L
 	X <- gretldata
