@@ -19,7 +19,7 @@
 	<option>
 	  <flag>--auto</flag>
 	  <optparm>criterio</optparm>
-	  <effect>stepwise <quote>in avanti</quote>, solo OLS</effect>
+	  <effect>stepwise "in avanti", solo OLS</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
@@ -41,6 +41,7 @@
       <examples>
         <example>add 5 7 9</example>
         <example>add xx yy zz --quiet</example>
+	<example>add xlist --auto=BIC</example>
       </examples>
     </usage>
 
@@ -1881,8 +1882,8 @@
 	  <effect>cancella solo il dataset</effect>
 	</option>
 	<option>
-	  <flag>--other</flag>
-	  <effect>cancella tutto fuorché il dataset</effect>
+	  <flag>--functions</flag>
+	  <effect>cancella solo le funzioni</effect>
 	</option>
 	<option>
           <flag>--all</flag>
@@ -2680,10 +2681,6 @@
 	  <effect>specifica un metodo di aggregazione</effect>
 	</option>
 	<option>
-	  <flag>--interpolate</flag>
-	  <effect>interpola i dati a bassa frequenza</effect>
-	</option>
-	<option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati tranne che in caso di errore</effect>
 	</option>
@@ -2875,6 +2872,7 @@
       </options>
       <examples>
         <example>dataset addobs 24</example>
+        <example>dataset addobs 2 --panel-time</example>
         <example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
@@ -4499,6 +4497,7 @@
       <options>
 	<option>
           <flag>--send-data</flag>
+          <optparm optional="true">list</optparm>
           <effect>pre-carica il dataset attuale</effect>
 	</option>
 	<option>
@@ -9860,7 +9859,8 @@ contenga un percorso completo.
 	</option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>matrice di covarianza QML</effect>
+	  <optparm optional="true">hac</optparm>
+	  <effect>matrice di covarianza QML o HAC</effect>
 	</option>
 	<option>
 	  <flag>--cluster</flag>
@@ -10362,7 +10362,7 @@ contenga un percorso completo.
 
   </command>
 
-  <command name="modtest" section="Tests" label="Test LM">
+  <command name="modtest" section="Tests" label="Test LM" context="cli">
 
     <usage>
       <arguments>
@@ -11405,12 +11405,17 @@ del comando <cmdref targ="set"/>.
 	<flag>--www</flag>
 	<effect>usa un database sul server di gretl</effect>
       </option>
+      <option>
+	<flag>--odbc</flag>
+	<effect>usa un database ODBC</effect>
+      </option>
       <optnote>Si veda oltre per le opzioni specifiche per i fogli elettronici</optnote>
     </options>
     <examples>
       <example>open data4-1</example>
       <example>open voter.dta</example>
-      <example>open fedbog --www</example>
+      <example>open fedbog.bin --www</example>
+      <example>open dbnomics</example>
     </examples>
   </usage>
 
@@ -13420,7 +13425,7 @@ del comando <cmdref targ="set"/>.
   
 </command>
 
-<command name="pvalue" section="Utilities" label="Calcola p-value" context="cli">
+<command name="pvalue" section="Statistics" label="Calcola p-value" context="cli">
   
   <usage>
     <arguments>
@@ -13931,6 +13936,10 @@ del comando <cmdref targ="set"/>.
 	<effect>cambia maiuscolo/minuscolo per tutte le serie (vedi sotto)</effect>
       </option>
     </options>
+    <examples>
+      <example>rename x2 income</example>
+      <example>rename --case=lower</example>
+    </examples>
   </usage>
 
   <description>
@@ -15702,7 +15711,7 @@ del comando <cmdref targ="set"/>.
       </option>
     </options>
     <examples>
-      <example>setinfo x1 --description "Descrizione di x1"</example>
+      <example>setinfo x1 --description="Descrizione di x1"</example>
       <example>setinfo y --graph-name="Nome nei grafici"</example>
       <example>setinfo z --discrete</example>
     </examples>
@@ -16078,7 +16087,7 @@ del comando <cmdref targ="set"/>.
     </arguments>
     <examples>
       <example>! ls -al</example>
-      <example>! notepad</example>
+      <example>! dir c:\users</example>
       <example>launch notepad</example>
       <example>launch emacs myfile.txt</example>
     </examples>
@@ -16607,10 +16616,6 @@ del comando <cmdref targ="set"/>.
 	<optparm>nome-matrice</optparm>
 	<effect>vedi sotto</effect>
       </option>
-      <option>
-        <flag>--compat</flag>
-        <effect>compatibilità gdtb, vedi sotto</effect>
-      </option>
     </options>
   </usage>
 
@@ -16643,13 +16648,6 @@ del comando <cmdref targ="set"/>.
       è binario. Il primo è la scelta tipica per dati di dimensione
       moderata (fino a qualche centinaio di kilobyte); per dataset
       grandi, il formato binario è molto più efficiente.
-    </para>
-    <para>
-      A partire dalla versione 2021a, il formato <lit>gdtb</lit> è
-      stato modificato in modo da velocizzare la lettura e scrittura
-      di file molto grandi. Per salvare col vecchio formato, così che
-      il file sia leggibile con versioni precedenti di gretl, si deve
-      usare l'opzione <opt>compat</opt>.
     </para>
     <para>
       Quando si salva in formato nativo, l'opzione
@@ -17535,7 +17533,7 @@ del comando <cmdref targ="set"/>.
 	numeri ID o nomi di serie, o come numeri di colonna nel caso
 	in cui l'input sia una matrice.
        </para>
-       <para contesto="cli">
+       <para context="cli">
 	 Vedi anche <cmdref targ="scatters"/> per produrre grafici a
 	 dispersione multipli, e <cmdref targ="gridplot"/> per un modo
 	 più flessibile di combinare grafici in una griglia.
@@ -18349,8 +18347,8 @@ del comando <cmdref targ="set"/>.
 
   </command>
 
-  <command name="x12a" section="Utilities" context="gui"
-	   label="X-12-ARIMA">
+  <command name="x13a" section="Utilities" context="gui"
+	   label="X-13ARIMA">
 
     <description>
       <para>
@@ -18358,22 +18356,22 @@ del comando <cmdref targ="set"/>.
 	inferiore di bottoni radio.
       </para>
       <para>
-	Selezionando <quote>Esegui X-12-ARIMA direttamente</quote>
-	gretl scriverà un file di comandi per X-12-ARIMA e chiamerà il
-	programmma x12aper eseguirli. In questo caso, è possibile
+	Selezionando <quote>Esegui X-13ARIMA direttamente</quote>
+	gretl scriverà un file di comandi per X-13ARIMA e chiamerà il
+	programma x13a per eseguirli. In questo caso, è possibile
 	produrre un grafico e/o salvare le serie di output nel dataset
 	di gretl.
       </para>
       <para>
 	Selezionando invece <quote>Scrivi file di comandi
-	X-12-ARIMA</quote> gretl scriverà un file di comandi per
-	X-12-ARIMA, come sopra, ma poi questo file verrà aperto in una
+	X-13ARIMA</quote> gretl scriverà un file di comandi per
+	X-13ARIMA, come sopra, ma poi questo file verrà aperto in una
 	finestra di editor, così da poter apportare modifiche e
 	salvarlo col nome voluto. Sarà anche possibile mandarlo in
-	esecuzione con x12a (cliccando il bottone <quote>Run</quote>
+	esecuzione con x13a (cliccando il bottone <quote>Run</quote>
 	sulla barra degli strumenti dell'editor) e visualizzarne
 	l'output. In questo caso, tuttavia, non c'è possibilità di
-	salvare i dati prodotti o di di produrre grafici.
+	salvare i dati prodotti o di produrre grafici.
       </para>
     </description>
   </command>
@@ -18492,10 +18490,10 @@ del comando <cmdref targ="set"/>.
 	<example>xtab 1 ; 2 3 4</example>
 	<example>xtab --matrix=A</example>
 	<example>xtab 1 2 --tex="xtab.tex"</example>
+	<demos>
+	  <demo>ooballot.inp</demo>
+	</demos>
       </examples>
-      <demos>
-	<demo>ooballot.inp</demo>
-      </demos>
     </usage>
 
     <description context="cli">
