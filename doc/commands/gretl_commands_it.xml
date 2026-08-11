@@ -3490,6 +3490,10 @@
 	  <effect>aggiunge equazioni nei livelli</effect>
         </option>
         <option>
+	  <flag>--collapse</flag>
+	  <effect>vedi sotto</effect>
+        </option>
+        <option>
 	  <flag>--time-dummies</flag>
 	  <effect>aggiunge variabili dummy temporali</effect>
         </option>
@@ -3553,6 +3557,13 @@
 	può essere utilizzata con la funzione <lit>GMMlevel</lit> per
 	specificare strumenti di tipo GMM per le equazioni nei
 	livelli.
+      </para>
+      <para context="cli">
+	L'opzione <opt>collapse</opt> può essere usata per limitare la
+	proliferazione degli strumenti <quote>di tipo GMM</quote>, che
+	può costituire un problema con questo stimatore. Il suo
+	effetto è di ridurre tali strumenti da uno per ritardo per
+	osservazione a uno per ritardo.
       </para>
       <para context="gui">
 	Per quanto riguarda la gestione degli strumenti, si consulti
@@ -6482,6 +6493,11 @@
 	  <flag>--height</flag>
 	  <optparm>h</optparm>
 	  <effect>altezza in pixel [600]</effect>
+	</option>
+	<option>
+	  <flag>--title</flag>
+	  <optparm>stringa tra virgolette</optparm>
+	  <effect>aggiunge un titolo generale</effect>
 	</option>
 	<option>
 	  <flag>--rows</flag>
@@ -12231,6 +12247,11 @@ del comando <cmdref targ="set"/>.
 	<effect>boxplot per tutte le unità</effect>
       </option>
       <option>
+	<flag>--font</flag>
+	<optparm>fontspec</optparm>
+	<effect>vedi sotto</effect>
+      </option>
+      <option>
 	<flag>--output</flag>
 	<optparm>nomefile</optparm>
 	<effect>ridireziona l'output</effect>
@@ -12267,9 +12288,10 @@ del comando <cmdref targ="set"/>.
       smpl full
     </code>
     <para>
-      L'opzione <opt>output=</opt><repl>filename</repl> è usata per
-      controllare forma e destinazione dell'output; per dettagli,
-      vedi il comando <cmdref targ="gnuplot"/>.
+      L'opzione <opt>output=</opt><repl>filename</repl> può essere
+      usata per controllare forma e destinazione dell'output. Per
+      dettagli su questa opzione e anche sull'opzione <opt>font</opt>,
+      si veda il comando <cmdref targ="gnuplot"/>.
     </para>
 
   </description>
@@ -12477,6 +12499,10 @@ del comando <cmdref targ="set"/>.
 <flag>--plot</flag>
 <optparm>modalità o nome del file</optparm>
 <effect>si veda oltre</effect>
+</option>
+<option>
+<flag>--silent</flag>
+<effect>non stampa l'output</effect>
 </option>
 </options>
 </usage>
@@ -17031,9 +17057,13 @@ del comando <cmdref targ="set"/>.
 	<optparm>filename</optparm>
 	<effect>invia l'output al file specificato</effect>
       </option>
+      <option>
+	<flag>--complete</flag>
+	<effect>specifico per &latex;, vedi sotto</effect>
+      </option>
     </options>
   </usage>
-  
+
   <description>
     <para>
       Va eseguito dopo la stima di un modello.  Stampa il modello
@@ -17345,6 +17375,10 @@ del comando <cmdref targ="set"/>.
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
 	  <effect>standard error clusterizzati</effect>
+	</option>
+	<option>
+	  <flag>--matrix-diff</flag>
+	  <effect>calcola il test di Hausman con il metodo della differenza di matrici</effect>
 	</option>
 	<option>
  	  <flag>--liml</flag>
