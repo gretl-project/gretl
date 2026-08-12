@@ -3265,7 +3265,7 @@ static int fcast_errs_ok (MODEL *pmod)
     }
 }
 
-#define LOG2LEVEL 0 /* not yet: back-end isn't ready */
+#define LOG2LEVEL 0 /* not yet */
 
 #if LOG2LEVEL
 
@@ -3274,12 +3274,11 @@ static void log_or_level_selector (GtkWidget *vbox,
 				   gretlopt *optp)
 {
     const char *strs[] = {
-	N_("Use log"),
-	N_("Use level (simple exponentiation)"),
-	N_("Use level (assuming normality)"),
+	N_("Forecast %s"), /* FIXME varnames */
+	N_("Forecast %s"),
 	NULL
     };
-    gretlopt opts[] = {OPT_NONE, OPT_X, OPT_G};
+    gretlopt opts[] = {OPT_NONE, OPT_X};
     combo_opts log_opts = {optp, opts, strs};
     GtkWidget *hbox, *tmp;
 

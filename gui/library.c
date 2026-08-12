@@ -1918,28 +1918,18 @@ int out_of_sample_info (int add_ok, int *t2)
     return err;
 }
 
-/* Handle any option flags that were added to @gopt for convenience but
-   really belong in @fopt. OPT_M is relatively complicated since it
-   pertains to both @gopt and &fopt: we want to copy it rather than
-   shift it.
+/* Handle any option flags that were added to @gopt but also belong in
+   @fopt.
 */
 
-static void maybe_transfer_options (gretlopt *gopt,
-				    gretlopt *fopt)
+static void maybe_copy_options (gretlopt *gopt,
+                                gretlopt *fopt)
 {
-    gretlopt shift = OPT_I | OPT_M | OPT_X | OPT_G;
-    gretlopt isect = *gopt & shift;
+    gretlopt to_copy = OPT_I | OPT_M | OPT_X | OPT_G;
+    gretlopt isect = *gopt & to_copy;
 
     if (isect) {
 	*fopt |= isect;  /* copy flags to @fopt */
-	isect &= ~OPT_M; /* protect OPT_M in @gopt */
-	*gopt &= ~isect; /* delete all but OPT_M */
-	if (*fopt & OPT_G) {
-	    /* debatable! */
-	    *fopt |= OPT_X;
-	    *fopt &= ~OPT_G;
-	    set_optval_int(FCAST, OPT_X, 2);
-	}
     }
 }
 
@@ -2037,7 +2027,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         recursive = 1;
     }
 
-    maybe_transfer_options(&gopt, &fopt);
+    maybe_copy_options(&gopt, &fopt);
 
     if (recursive) {
         fr = recursive_OLS_k_step_fcast(pmod, dataset,
@@ -9786,6 +9776,7 @@ static int gui_exec_callback (ExecState *s, void *ptr,
     } else if (ci == SETOBS) {
         set_sample_label(dataset);
         mark_dataset_as_modified();
+        dataset_menubar_state(TRUE);
     } else if (ci == SMPL) {
         set_sample_label(dataset);
     } else if (ci == DATAMOD || ci == LABELS || ci == DATA) {
