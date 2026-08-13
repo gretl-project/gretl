@@ -455,6 +455,15 @@ int main (int argc, char *argv[])
     cli_read_rc();
 #endif /* WIN32 */
 
+    /* gretl4py case: set dotdir as specified in GRETL4PY_DOTDIR */
+    const char *gretl4py_dotdir = getenv("GRETL4PY_DOTDIR");
+    if (gretl4py_dotdir != NULL) {
+        err = gretl_set_path_by_name("dotdir", gretl4py_dotdir);
+        if (err) {
+            fputs("gretl4py_dotdir: error setting dotdir\n", stderr);
+        }
+    }
+
     /* allocate memory for model */
     model = allocate_working_model();
     if (model == NULL) {
