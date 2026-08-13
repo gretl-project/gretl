@@ -1912,6 +1912,12 @@ static void make_files_toolbar (windata_t *vwin)
         maybe_add_gfn_filter(vwin, hbox);
     }
 
+    if (vwin->role == FUNC_FILES) {
+        GtkWidget *lbl = gtk_label_new("<- click for more packages");
+        gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+        ;
+    }
+
     vwin_add_winlist(vwin);
     if (vwin->role != ADDONS_FILES) {
         /* there aren't enough addons to warrant this */
