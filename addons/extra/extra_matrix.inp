@@ -251,4 +251,72 @@ end function
 
 #############
 
+function scalar is_anticlockwise(matrix p, matrix q, matrix r)
+    # Helper function to determine the orientation of three ordered points
+    # Uses the cross product to check if the turn from p->q to q->r is counterclockwise
+    # Cross product: (q-p) × (r-q)
+    # Negative value indicates counterclockwise orientation
+    scalar val = (q[2] - p[2]) * (r[1] - q[1]) - (q[1] - p[1]) * (r[2] - q[2])
+    # Returns 1 if counterclockwise (val < 0), 0 otherwise
+    return sgn(val) == -1
+end function
+
+function matrix convex_hull(const matrix P)
+
+    # Convex hull function using the Jarvis march (gift wrapping) algorithm
+    # Input: P - matrix where each row is a 2D point [x, y]
+    # Output: matrix containing the points on the convex hull in order
+
+    errorif(cols(P) != 2, "convex_hull: imput matrix should have 2 columns")
+    scalar n = rows(P)
+
+    # Edge case: need at least 3 points to form a hull
+    if n < 3
+        ret = {}
+    else
+
+        # Preserve row labels (point names) if they exist
+        strings labs = rnameget(P)
+        scalar has_labs = nelem(labs) > 0
+        matrix sel = zeros(n, 1)
+
+        # Find the leftmost point - guaranteed to be on the hull
+        scalar lmost = iminc(P[,1])
+        scalar p = lmost
+
+        scalar k = 1
+
+        # Jarvis march main loop: wrap around the point set until returning to start
+        loop while p != lmost || k == 1
+            # Record the current hull point
+            sel[k++] = p
+
+            # Start with the next point in cyclic order (candidate for next hull point)
+            scalar q = (p % n) + 1
+
+            # Find the point that makes the most counterclockwise turn from p
+            loop i = 1..n
+                # If point i is more counterclockwise than current candidate q,
+                # then i becomes the new candidate
+                if is_anticlockwise(P[p,], P[i,], P[q,])
+                    q = i
+                endif
+            endloop
+
+            # Move to the next hull point
+            p = q
+        endloop
+
+        # Trim the selection vector to actual hull size and extract hull points
+        sel = sel[1:k-1]
+        ret = P[sel,]
+
+        # Restore row labels if they were present in input
+        if has_labs
+            rnameset(ret, labs[sel])
+        endif
+    endif
+
+    return ret
+end function
 

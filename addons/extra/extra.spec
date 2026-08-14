@@ -8,7 +8,8 @@ min-version = @VERSION@
 data-requirement = no-data-ok
 public = gap_filler winsor nearPSD zeroifclose \
   eliminate duplicate truncnorm scores2x2 WSRcritical WSRpvalue \
-  powerset onemode drill combinations qformvech splitfname multi_instrings mat2latex \
-  correspondence fracorder put_outofsmpl drawbootres combine get_settings
+  powerset onemode drill combinations qformvech splitfname multi_instrings \
+  mat2latex correspondence fracorder put_outofsmpl drawbootres combine \
+  get_settings convex_hull
 help = extra.pdf
 sample-script = extra_sample.inp
