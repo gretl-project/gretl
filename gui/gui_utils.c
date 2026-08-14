@@ -385,6 +385,7 @@ void mark_dataset_as_modified (void)
 {
     data_status |= MODIFIED_DATA;
     set_sample_label(dataset);
+    dataset_menubar_state(TRUE);
 
     if (session_file_is_open()) {
 	mark_session_changed();

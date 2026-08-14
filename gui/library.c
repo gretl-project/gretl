@@ -9774,9 +9774,7 @@ static int gui_exec_callback (ExecState *s, void *ptr,
                               (s->cmd->opt & OPT_G))) {
         register_graph();
     } else if (ci == SETOBS) {
-        set_sample_label(dataset);
         mark_dataset_as_modified();
-        dataset_menubar_state(TRUE);
     } else if (ci == SMPL) {
         set_sample_label(dataset);
     } else if (ci == DATAMOD || ci == LABELS || ci == DATA) {
