@@ -175,6 +175,31 @@ static void urlinfo_set_url (urlinfo *u, const char *url)
     strncat(u->url, url, URLLEN - 1);
 }
 
+/* Bounds-checked replacement for strcat(u->url, s): appends @s to
+   u->url only if it fits within the fixed-size URLLEN buffer. If
+   the append would overflow, u->err is set (and the offending
+   string is not appended) instead of corrupting adjacent fields
+   of the urlinfo struct or the surrounding stack frame.
+*/
+static void urlinfo_append (urlinfo *u, const char *s)
+{
+    size_t curlen, addlen;
+
+    if (u->err || s == NULL) {
+        return;
+    }
+
+    curlen = strlen(u->url);
+    addlen = strlen(s);
+
+    if (curlen + addlen >= URLLEN) {
+        u->err = E_TOOLONG;
+        return;
+    }
+
+    strcat(u->url, s);
+}
+
 static void urlinfo_finalize (urlinfo *u, char **getbuf, int *err)
 {
     if (u->fp != NULL) {
@@ -404,30 +429,30 @@ static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
                                 const char *series,
                                 int filter)
 {
-    strcat(u->url, "?opt=");
-    strcat(u->url, print_option(opt));
+    urlinfo_append(u, "?opt=");
+    urlinfo_append(u, print_option(opt));
 
     if (fname != NULL) {
         if (opt == GRAB_FILE || opt == GRAB_FUNC ||
             opt == GRAB_FUNC_INFO || opt == FUNC_FULLNAME) {
-            strcat(u->url, "&fname=");
+            urlinfo_append(u, "&fname=");
         } else {
-            strcat(u->url, "&dbase=");
+            urlinfo_append(u, "&dbase=");
         }
-        strcat(u->url, fname);
+        urlinfo_append(u, fname);
     }
 
     if (series != NULL) {
-        strcat(u->url, "&series=");
-        strcat(u->url, series);
+        urlinfo_append(u, "&series=");
+        urlinfo_append(u, series);
     }
 
     if (filter > 0) {
         char fstr[12];
 
         sprintf(fstr, "%d", filter);
-        strcat(u->url, "&filter=");
-        strcat(u->url, fstr);
+        urlinfo_append(u, "&filter=");
+        urlinfo_append(u, fstr);
     }
 }
 
@@ -680,25 +705,25 @@ static int retrieve_url (const char *hostname,
     urlinfo_init(&u, hostname, saveopt, localfile, opt);
 
     if (is_db_transaction(opt)) {
-        strcat(u.url, datacgi);
+        urlinfo_append(&u, datacgi);
     } else if (opt == GRAB_FOREIGN || opt == QUERY_SF) {
-        strcat(u.url, fname);
+        urlinfo_append(&u, fname);
     } else if (opt == GRAB_PDF) {
-        strcat(u.url, manual_path);
-        strcat(u.url, fname);
+        urlinfo_append(&u, manual_path);
+        urlinfo_append(&u, fname);
     } else if (opt == GRAB_PKG) {
 	if (strstr(fname, "addons")) {
-	    strcat(u.url, addons_path);
+	    urlinfo_append(&u, addons_path);
 	} else {
-	    strcat(u.url, dataset_path);
+	    urlinfo_append(&u, dataset_path);
 	}
-        strcat(u.url, fname);
+        urlinfo_append(&u, fname);
     } else if (opt == GRAB_FILE) {
-        strcat(u.url, updatecgi);
+        urlinfo_append(&u, updatecgi);
     } else if (opt == LIST_PKGS) {
-        strcat(u.url, datapkg_list);
+        urlinfo_append(&u, datapkg_list);
     } else {
-        strcat(u.url, datacgi);
+        urlinfo_append(&u, datacgi);
     }
 
     if (opt != GRAB_PDF && opt != GRAB_FOREIGN &&
@@ -706,6 +731,16 @@ static int retrieve_url (const char *hostname,
         opt != LIST_PKGS) {
         /* a gretl-server download */
         urlinfo_set_params(&u, opt, fname, dbseries, filter);
+    }
+
+    if (u.err) {
+        /* @fname (or another component) was too long to fit in the
+           fixed-size URL buffer: bail out now rather than proceeding
+           with a truncated URL or, worse, an overflowed one.
+        */
+        err = u.err;
+        urlinfo_finalize(&u, getbuf, &err);
+        return err;
     }
 
 #if WDEBUG
@@ -748,12 +783,12 @@ int get_update_info (char **saver, int verbose)
     int err = 0;
 
     urlinfo_init(&u, sfweb, SAVE_TO_BUFFER, NULL, 0);
-    strcat(u.url, updatecgi);
+    urlinfo_append(&u, updatecgi);
 
     if (verbose) {
-        strcat(u.url, "?opt=MANUAL_QUERY");
+        urlinfo_append(&u, "?opt=MANUAL_QUERY");
     } else {
-        strcat(u.url, "?opt=QUERY");
+        urlinfo_append(&u, "?opt=QUERY");
     }
 
     err = curl_get(&u);
@@ -796,7 +831,7 @@ int upload_function_package (const char *login, const char *pass,
     }
 
     urlinfo_init(&u, gretlhost, saveopt, NULL, UPLOAD);
-    strcat(u.url, datacgi);
+    urlinfo_append(&u, datacgi);
 
     err = common_curl_setup(&curl);
     if (err) {
@@ -1368,9 +1403,13 @@ int retrieve_public_file (const char *uri, char *localname)
             err = E_DATA;
         } else {
             tmp = regularize_resource_string(s + 1);
-            /* save to user's dotdir by default */
-            strcat(localname, gretl_dotdir());
-            strcat(localname, tmp);
+            /* save to user's dotdir by default; @localname is
+               documented to hold MAXLEN bytes when passed in
+               empty, so guard against a URI whose final path
+               segment is long enough to overflow it
+            */
+            g_strlcat(localname, gretl_dotdir(), MAXLEN);
+            g_strlcat(localname, tmp, MAXLEN);
             free(tmp);
         }
     }
