@@ -609,6 +609,11 @@ int package_make_zipfile (const char *gfnname,
 	return E_DATA;
     }
 
+    if (strlen(gfnname) >= sizeof pkgbase) {
+	gretl_errmsg_set(_("Path name is too long"));
+	return E_DATA;
+    }
+
     /* determine the common path to files for packaging,
        and also the name of the package
     */
