@@ -79,6 +79,88 @@ static int getoct (char *p, int width)
     return result;
 }
 
+/* Reject any tar entry name that could cause extraction to escape the
+   intended target directory: an empty name, an absolute path, a path
+   containing a ".." component, or a name that references a Windows
+   drive letter. The last case covers not only the drive-rooted form
+   "C:\foo" (which g_path_is_absolute() already classifies as
+   absolute) but also the drive-relative form "C:foo", which is not
+   flagged as absolute by glib yet is resolved by the Windows CRT
+   against that drive's own current directory, independent of the
+   process's chdir() into the extraction directory.
+*/
+
+static int tar_name_is_unsafe (const char *name)
+{
+    const char *s;
+
+    if (name == NULL || *name == '\0') {
+	return 1;
+    }
+
+    if (g_path_is_absolute(name)) {
+	return 1;
+    }
+
+    if (name[1] == ':') {
+	/* drive-letter reference, rooted or relative */
+	return 1;
+    }
+
+    for (s = name; *s != '\0'; s++) {
+	if (s[0] == '.' && s[1] == '.' &&
+	    (s == name || s[-1] == '/' || s[-1] == '\\') &&
+	    (s[2] == '\0' || s[2] == '/' || s[2] == '\\')) {
+	    /* ".." path component */
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+/* Parse the (up to 12-character) octal 'size' field of a tar header
+   into a 64-bit accumulator, with explicit overflow and range
+   checking. A 12-digit octal field can encode values far beyond what
+   fits into a plain (32-bit) int, which is the type used downstream
+   for the "remaining bytes to copy" counter; parsing it via the
+   unchecked getoct() above can silently overflow to a negative value,
+   which then becomes a huge byte count when passed to fwrite(). Here
+   we accumulate in a 64-bit type (large enough that 12 octal digits
+   can never overflow it) and reject the header outright, via *err,
+   if any character is not a valid octal digit/space/NUL or if the
+   resulting size does not fit in a non-negative 32-bit int.
+*/
+
+static gint64 get_tar_size (const char *p, int width, int *err)
+{
+    gint64 result = 0;
+    unsigned char c;
+
+    *err = 0;
+
+    while (width--) {
+	c = (unsigned char) *p++;
+	if (c == ' ') {
+	    continue;
+	}
+	if (c == 0) {
+	    break;
+	}
+	if (c < '0' || c > '7') {
+	    *err = 1;
+	    break;
+	}
+	result = result * 8 + (c - '0');
+    }
+
+    if (!*err && (result < 0 || result > G_MAXINT)) {
+	*err = 1;
+    }
+
+    return result;
+}
+
 static int untar (gzFile in)
 {
     union tar_buffer buffer;
@@ -103,12 +185,26 @@ static int untar (gzFile in)
 	}
 
 	if (getheader == 1) {
+            size_t namelen;
+
 	    if (len == 0 || buffer.header.name[0] == '\0') {
 		break;
 	    }
 	    tarmode = getoct(buffer.header.mode, 8);
 	    tartime = (time_t) getoct(buffer.header.mtime, 12);
-	    strcpy(fname, buffer.header.name);
+            /* buffer.header.name is a fixed 100-byte field that need
+               not be NUL-terminated if it fills the whole width, so
+               bound the copy explicitly rather than relying on strcpy
+               to find a terminator within (or beyond) that field.
+            */
+            namelen = strnlen(buffer.header.name, sizeof buffer.header.name);
+            memcpy(fname, buffer.header.name, namelen);
+            fname[namelen] = '\0';
+	    if (tar_name_is_unsafe(fname)) {
+		gretl_errmsg_sprintf("Invalid tar entry name '%s'", fname);
+		err = E_DATA;
+		break;
+	    }
 
 	    switch (buffer.header.typeflag) {
 	    case DIRTYPE:
@@ -116,7 +212,18 @@ static int untar (gzFile in)
 		break;
 	    case REGTYPE:
 	    case AREGTYPE:
-		remaining = getoct(buffer.header.size, 12);
+		{
+		    int size_err = 0;
+		    gint64 size64 = get_tar_size(buffer.header.size, 12, &size_err);
+
+		    if (size_err) {
+			gretl_errmsg_set("gretl_untar: invalid or oversized "
+					  "file size in tar header");
+			err = E_DATA;
+			break;
+		    }
+		    remaining = (int) size64;
+		}
 		if (remaining) {
 		    outfile = gretl_fopen(fname, "wb");
 		    if (outfile == NULL) {
