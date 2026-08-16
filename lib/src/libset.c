@@ -2684,15 +2684,21 @@ static int set_string_setvar (char *targ, const char *s, int len)
     *targ = '\0';
 
     if (*s == '"') {
+        /* @s is quoted */
 	const char *p = strchr(s+1, '"');
+        int n;
 
 	if (p == NULL) {
 	    return E_PARSE;
-	} else {
-	    strncat(targ, s+1, p-s-1);
-	}
+        } else {
+            n = p - s - 1;
+            if (n > len) {
+                n = len;
+            }
+            strncat(targ, s+1, n);
+        }
     } else {
-	strncat(targ, s, len);
+        strncat(targ, s, len);
     }
 
     return 0;

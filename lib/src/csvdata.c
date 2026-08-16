@@ -1963,7 +1963,8 @@ void import_na_init (void)
 {
     const char *s = get_csv_na_read_string();
 
-    strcpy(import_na, s);
+    *import_na = '\0';
+    strncat(import_na, s, sizeof(import_na) - 1);
 }
 
 /* Returns 1 if the string @s should be counted as representing a
@@ -3915,10 +3916,15 @@ gretl_matrix *import_csv_as_matrix (const char *fname, int *err)
     } else if (!*err) {
         char fullname[FILENAME_MAX];
 
-        strcpy(fullname, fname);
-        gretl_maybe_prepend_dir(fullname);
-        *err = real_import_csv(fullname, NULL, NULL, NULL,
-                               NULL, NULL, &m, opt, prn);
+        if (strlen(fname) >= sizeof fullname) {
+            gretl_errmsg_set(_("Filename is too long"));
+            *err = E_DATA;
+        } else {
+            strcpy(fullname, fname);
+            gretl_maybe_prepend_dir(fullname);
+            *err = real_import_csv(fullname, NULL, NULL, NULL,
+                                   NULL, NULL, &m, opt, prn);
+        }
     }
 
     gretl_print_destroy(prn);
