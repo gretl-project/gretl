@@ -207,19 +207,34 @@ static int bad_date_string (const char *s)
     return err;
 }
 
-static void maybe_unquote_label (char *targ, const char *src)
-{
-    if (*src == '"' || *src == '\'') {
-        int n;
+/* Copy (and if applicable, unquote) @src into @targ, a buffer of size
+   @targlen. The content is only ever written if it is known to fit,
+   including the terminating NUL: if the label content (after stripping
+   a matching pair of quotes, when present) is too long for @targlen,
+   nothing is written to @targ and 1 is returned so the caller can treat
+   this as "no match" rather than risking a buffer overflow. Returns 0
+   on success (when @targ was filled in).
+*/
 
-        strcpy(targ, src + 1);
-        n = strlen(targ);
-        if (n > 0 && (targ[n-1] == '"' || targ[n-1] == '\'')) {
-            targ[n-1] = '\0';
-        }
-    } else {
-        strcpy(targ, src);
+static int maybe_unquote_label (char *targ, const char *src, int targlen)
+{
+    int quoted = (*src == '"' || *src == '\'');
+    const char *content = quoted ? src + 1 : src;
+    int n = strlen(content);
+
+    if (quoted && n > 0 && (content[n-1] == '"' || content[n-1] == '\'')) {
+        /* the closing quote is not part of the label content */
+        n--;
     }
+    if (n >= targlen) {
+        /* content (minus quotes) won't fit in @targ: bail out */
+        return 1;
+    }
+
+    memcpy(targ, content, n);
+    targ[n] = '\0';
+
+    return 0;
 }
 
 static int get_dot_pos (const char *s)
@@ -245,7 +260,12 @@ static int match_obs_marker (const char *s, const DATASET *dset)
     fprintf(stderr, "dateton: checking '%s' against marker strings\n", s);
 #endif
 
-    maybe_unquote_label(test, s);
+    if (maybe_unquote_label(test, s, sizeof test)) {
+        /* the (unquoted) label content can't fit in test[], so it
+           cannot match any marker string of length < OBSLEN
+	*/
+        return -1;
+    }
 
     for (t=0; t<dset->n; t++) {
         if (!strcmp(test, dset->S[t])) {
@@ -1174,6 +1194,12 @@ static int real_write_data (const char *fname, int *list,
         goto write_exit;
     }
 
+    if (strlen(fname) >= MAXLEN) {
+        gretl_errmsg_sprintf(_("filename too long (%d bytes)"),
+                             (int) strlen(fname));
+        err = E_DATA;
+        goto write_exit;
+    }
     strcpy(datfile, fname);
 
     /* open file for output */
@@ -1516,6 +1542,10 @@ int gretl_get_data (const char *fname, DATASET *dset,
                     gretlopt opt, PRN *prn)
 {
     char tmp[MAXLEN] = {0};
+
+    if (fname == NULL || strlen(fname) >= sizeof tmp) {
+        return E_DATA;
+    }
 
     strcpy(tmp, fname);
     return gretl_seek_data(tmp, dset, opt, prn);
