@@ -3309,7 +3309,7 @@ octave_varname (char *name, const char *s, int nnum, int v)
     } else {
         sprintf(nstr, "%d", nnum);
         len = strlen(nstr);
-        tr = VNAMELEN - len;
+        tr = VNAMELEN - len - 1; /* leave room for the NUL terminator */
 
         if (tr > 0) {
             strncat(name, s, tr);
