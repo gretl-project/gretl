@@ -3217,8 +3217,8 @@ char *gretl_utf8_replace_char (const char *targ, const char *src,
  *
  * Performs sscanf() on @src, using a conversion specifier
  * which allows for writing up to VNAMELEN-1 bytes into
- * @targ (stopping at white space); @targ therefore be at
- * least VNAMELEN bytes long. No checking is done for the
+ * @targ (stopping at white space); @targ must therefore be
+ * at least VNAMELEN bytes long. No checking is done for the
  * validity of the scanned string as a gretl identifier.
  *
  * Returns: the return value from sscanf().

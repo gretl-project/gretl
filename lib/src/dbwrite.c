@@ -349,9 +349,14 @@ append_db_data_with_replacement (const char *idxname,
 	char idxcpy[FILENAME_MAX];
 	char bincpy[FILENAME_MAX];
 
+	if (strlen(idxname) + 4 >= FILENAME_MAX ||
+	    strlen(binname) + 4 >= FILENAME_MAX) {
+	    err = E_DATA;
+	    goto bailout;
+	}
+
 	strcpy(idxcpy, idxname);
 	strcat(idxcpy, ".cpy");
-
 	strcpy(bincpy, binname);
 	strcat(bincpy, ".cpy");
 
@@ -485,6 +490,17 @@ open_db_files (const char *fname, char *idxname, char *binname,
     char imode[3] = "w";
     char bmode[3] = "wb";
     char *p;
+
+    /* Guard against overflow of the fixed-size @base buffer (and of
+       @idxname/@binname, which are copied from it with added
+       suffixes): reject filenames that would not leave room for the
+       longest suffix we append below (".idx"/".bin").
+    */
+    if (strlen(fname) >= sizeof base - 4) {
+	gretl_errmsg_sprintf(_("Filename too long, %d bytes"),
+			     (int) strlen(fname));
+	return 1;
+    }
 
     strcpy(base, fname);
     p = strrchr(base, '.');

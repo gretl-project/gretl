@@ -2051,7 +2051,7 @@ static int db_delete_series (const char *line, const int *list,
 	    /* odd lines contain varnames */
 	    print = 1;
 	    if (snames != NULL) {
-		sscanf(s, "%s", series);
+		gretl_scan_varname(s, series);
 		for (j=0; j<ns; j++) {
 		    if (!strcmp(series, snames[j])) {
 			print = 0;
