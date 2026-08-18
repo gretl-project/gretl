@@ -175,31 +175,6 @@ static void urlinfo_set_url (urlinfo *u, const char *url)
     strncat(u->url, url, URLLEN - 1);
 }
 
-/* Bounds-checked replacement for strcat(u->url, s): appends @s to
-   u->url only if it fits within the fixed-size URLLEN buffer. If
-   the append would overflow, u->err is set (and the offending
-   string is not appended) instead of corrupting adjacent fields
-   of the urlinfo struct or the surrounding stack frame.
-*/
-static void urlinfo_append (urlinfo *u, const char *s)
-{
-    size_t curlen, addlen;
-
-    if (u->err || s == NULL) {
-        return;
-    }
-
-    curlen = strlen(u->url);
-    addlen = strlen(s);
-
-    if (curlen + addlen >= URLLEN) {
-        u->err = E_TOOLONG;
-        return;
-    }
-
-    strcat(u->url, s);
-}
-
 static void urlinfo_finalize (urlinfo *u, char **getbuf, int *err)
 {
     if (u->fp != NULL) {
@@ -424,36 +399,75 @@ static const char *print_option (int opt)
     return NULL;
 }
 
-static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
-                                const char *fname,
-                                const char *series,
-                                int filter)
-{
-    urlinfo_append(u, "?opt=");
-    urlinfo_append(u, print_option(opt));
+/* Bounds-checked append of @src onto u->url (a fixed URLLEN-byte
+   buffer). Returns 0 on success, or E_DATA if @src would not fit,
+   in which case u->url is left unmodified. This guards against
+   overflow of u->url when @src is an attacker-controlled string
+   (e.g. a package or file name) of unbounded length.
+*/
 
-    if (fname != NULL) {
+static int urlinfo_append (urlinfo *u, const char *src)
+{
+    size_t curlen, srclen;
+
+    if (src == NULL) {
+        return 0;
+    }
+
+    curlen = strlen(u->url);
+    srclen = strlen(src);
+
+    if (curlen + srclen >= URLLEN) {
+        gretl_errmsg_set("retrieve_url: name too long");
+        return E_DATA;
+    }
+
+    strcat(u->url, src);
+    return 0;
+}
+
+static int urlinfo_set_params (urlinfo *u, CGIOpt opt,
+			       const char *fname,
+			       const char *series,
+			       int filter)
+{
+    int err;
+
+    err = urlinfo_append(u, "?opt=");
+    if (!err) {
+	err = urlinfo_append(u, print_option(opt));
+    }
+
+    if (!err && fname != NULL) {
         if (opt == GRAB_FILE || opt == GRAB_FUNC ||
             opt == GRAB_FUNC_INFO || opt == FUNC_FULLNAME) {
-            urlinfo_append(u, "&fname=");
+	    err = urlinfo_append(u, "&fname=");
         } else {
-            urlinfo_append(u, "&dbase=");
+	    err = urlinfo_append(u, "&dbase=");
         }
-        urlinfo_append(u, fname);
+	if (!err) {
+	    err = urlinfo_append(u, fname);
+	}
     }
 
-    if (series != NULL) {
-        urlinfo_append(u, "&series=");
-        urlinfo_append(u, series);
+    if (!err && series != NULL) {
+	err = urlinfo_append(u, "&series=");
+	if (!err) {
+	    err = urlinfo_append(u, series);
+	}
     }
 
-    if (filter > 0) {
+    if (!err && filter > 0) {
         char fstr[12];
 
         sprintf(fstr, "%d", filter);
-        urlinfo_append(u, "&filter=");
-        urlinfo_append(u, fstr);
+	err = urlinfo_append(u, "&filter=");
+	if (!err) {
+	    err = urlinfo_append(u, fstr);
+	}
     }
+
+    return err;
 }
 
 #ifdef _WIN32
@@ -663,7 +677,7 @@ static int curl_get (urlinfo *u)
 
 /* grab data from an internet host.
 
-   @host: name of host to access.
+   @hostname: name of host to access.
 
    @opt: specifies the task; see the CGIOpt enumeration.
 
@@ -705,42 +719,43 @@ static int retrieve_url (const char *hostname,
     urlinfo_init(&u, hostname, saveopt, localfile, opt);
 
     if (is_db_transaction(opt)) {
-        urlinfo_append(&u, datacgi);
+	err = urlinfo_append(&u, datacgi);
     } else if (opt == GRAB_FOREIGN || opt == QUERY_SF) {
-        urlinfo_append(&u, fname);
+        err = urlinfo_append(&u, fname);
     } else if (opt == GRAB_PDF) {
-        urlinfo_append(&u, manual_path);
-        urlinfo_append(&u, fname);
+	err = urlinfo_append(&u, manual_path);
+	if (!err) {
+	    err = urlinfo_append(&u, fname);
+	}
     } else if (opt == GRAB_PKG) {
 	if (strstr(fname, "addons")) {
-	    urlinfo_append(&u, addons_path);
+	    err = urlinfo_append(&u, addons_path);
 	} else {
-	    urlinfo_append(&u, dataset_path);
+	    err = urlinfo_append(&u, dataset_path);
 	}
-        urlinfo_append(&u, fname);
+	if (!err) {
+	    err = urlinfo_append(&u, fname);
+	}
     } else if (opt == GRAB_FILE) {
-        urlinfo_append(&u, updatecgi);
+	err = urlinfo_append(&u, updatecgi);
     } else if (opt == LIST_PKGS) {
-        urlinfo_append(&u, datapkg_list);
+	err = urlinfo_append(&u, datapkg_list);
     } else {
-        urlinfo_append(&u, datacgi);
+	err = urlinfo_append(&u, datacgi);
     }
 
-    if (opt != GRAB_PDF && opt != GRAB_FOREIGN &&
-        opt != GRAB_PKG && opt != QUERY_SF &&
-        opt != LIST_PKGS) {
-        /* a gretl-server download */
-        urlinfo_set_params(&u, opt, fname, dbseries, filter);
+    if (!err) {
+	if (opt != GRAB_PDF && opt != GRAB_FOREIGN &&
+	    opt != GRAB_PKG && opt != QUERY_SF &&
+	    opt != LIST_PKGS) {
+	    /* a gretl-server download */
+	    err = urlinfo_set_params(&u, opt, fname, dbseries, filter);
+	}
     }
 
-    if (u.err) {
-        /* @fname (or another component) was too long to fit in the
-           fixed-size URL buffer: bail out now rather than proceeding
-           with a truncated URL or, worse, an overflowed one.
-        */
-        err = u.err;
-        urlinfo_finalize(&u, getbuf, &err);
-        return err;
+    if (err) {
+	fprintf(stderr, "retrieve_url: urlinfo_append failed\n");
+	return err;
     }
 
 #if WDEBUG
@@ -783,16 +798,17 @@ int get_update_info (char **saver, int verbose)
     int err = 0;
 
     urlinfo_init(&u, sfweb, SAVE_TO_BUFFER, NULL, 0);
-    urlinfo_append(&u, updatecgi);
+    err = urlinfo_append(&u, updatecgi);
 
-    if (verbose) {
-        urlinfo_append(&u, "?opt=MANUAL_QUERY");
-    } else {
-        urlinfo_append(&u, "?opt=QUERY");
+    if (!err) {
+	err = urlinfo_append(&u, verbose ? "?opt=MANUAL_QUERY"
+			     : "?opt=QUERY");
     }
 
-    err = curl_get(&u);
-    urlinfo_finalize(&u, saver, &err);
+    if (!err) {
+	err = curl_get(&u);
+	urlinfo_finalize(&u, saver, &err);
+    }
 
     return err;
 }
@@ -831,9 +847,11 @@ int upload_function_package (const char *login, const char *pass,
     }
 
     urlinfo_init(&u, gretlhost, saveopt, NULL, UPLOAD);
-    urlinfo_append(&u, datacgi);
+    err = urlinfo_append(&u, datacgi);
+    if (!err) {
+	err = common_curl_setup(&curl);
+    }
 
-    err = common_curl_setup(&curl);
     if (err) {
         return err;
     }
