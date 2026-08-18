@@ -1913,9 +1913,9 @@ static void make_files_toolbar (windata_t *vwin)
     }
 
     if (vwin->role == FUNC_FILES) {
-        GtkWidget *lbl = gtk_label_new("<- click for more packages");
+        GtkWidget *lbl = gtk_label_new("\u2190 click for more packages");
+
         gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
-        ;
     }
 
     vwin_add_winlist(vwin);
