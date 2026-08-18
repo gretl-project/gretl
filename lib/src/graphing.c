@@ -6427,7 +6427,11 @@ static void print_confband_data (const double *x,
 		fprintf(fp, "%.10g %.10g\n", x[t], hi);
 	    } else {
 		/* CONF_BARS */
-		fprintf(fp, "%.10g %.10g %.10g\n", x[t], yhat[t], me[t]);
+		if (fix_ci) {
+		    fprintf(fp, "%.10g %.10g %.10g %.10g\n", x[t], yhat[t], lo, hi);
+		} else {
+		    fprintf(fp, "%.10g %.10g %.10g\n", x[t], yhat[t], me[t]);
+		}
 	    }
 	}
         if (dataset_is_panel(dset) && ((t+1) % dset->pd == 0)) {
@@ -6528,6 +6532,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     int use_lines = 0;
     int use_alpha = 0;
     int do_errs = (maxerr != NULL);
+    int expon = (fr->opt & OPT_X);
     gchar *cistr = NULL;
     int t2 = fr->t2;
     int t1, yhmin;
@@ -6566,9 +6571,6 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
         } else if (n > 150) {
             use_fill = 1;
         }
-	if ((fr->opt & OPT_X) && !use_fill && !use_lines) {
-	    use_fill = 1;
-	}
     }
 
     if (use_fill) {
@@ -6655,7 +6657,10 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
                 fprintf(fp, ", \\\n'-' using 1:2 title '%s' w lines, \\\n",
                         cistr);
                 fputs("'-' using 1:2 notitle '%s' w lines lt 3\n", fp);
-            } else {
+            } else if (expon) {
+                fprintf(fp, ", \\\n'-' using 1:2:3:4 title '%s' w errorbars\n",
+                        cistr);
+	    } else {
                 fprintf(fp, ", \\\n'-' using 1:2:3 title '%s' w errorbars\n",
                         cistr);
             }

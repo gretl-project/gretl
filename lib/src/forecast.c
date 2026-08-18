@@ -700,8 +700,8 @@ static void transcribe_to_matrix (gretl_matrix *fc,
     }
 }
 
-/* specific to "dpanel": handles both within-sample
-   and out of sample forecasts
+/* Specific to "dpanel": handles both within-sample and out of sample
+   forecasts.
 */
 
 static int real_dpanel_fcast (double *yhat,
