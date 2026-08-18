@@ -3265,39 +3265,35 @@ static int fcast_errs_ok (MODEL *pmod)
     }
 }
 
-#define LOG2LEVEL 0 /* not yet */
-
-#if LOG2LEVEL
-
 static void log_or_level_selector (GtkWidget *vbox,
 				   const char *parent,
+				   const MODEL *pmod,
 				   gretlopt *optp)
 {
-    const char *strs[] = {
-	N_("Forecast %s"), /* FIXME varnames */
-	N_("Forecast %s"),
-	NULL
-    };
+    const char *strs[3] = {NULL, NULL, NULL};
     gretlopt opts[] = {OPT_NONE, OPT_X};
     combo_opts log_opts = {optp, opts, strs};
     GtkWidget *hbox, *tmp;
 
+    strs[0] = gretl_model_get_depvar_name(pmod, dataset);
+    strs[1] = parent;
+
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Variable to forecast"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tmp = gretl_opts_combo(&log_opts, 0);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 }
-
-#endif
 
 /* forecast_dialog() is called by gui_do_forecast() in library.c and
    system_forecast_callback() in gui_utils.c. The @pmod argument will
    be non-NULL in the former case, NULL in the latter.
 
    The @optp argument is mainly to do with plotting the forecast,
-   bit can accept OPT_I (integrate), OPT_M (mean-y) or OPT_X
+   but can accept OPT_I (integrate), OPT_M (mean-y) or OPT_X
    (exponentiate log dependent variable).
 */
 
@@ -3325,6 +3321,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     GtkWidget *button = NULL;
     struct range_setting *rset;
     int i, radio_val = 0;
+    int log2lev = 0;
     int ret = GRETL_CANCEL;
 
     rset = rset_new(0, NULL, pmod, t1, t2, _("gretl: forecast"),
@@ -3345,15 +3342,14 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                      G_CALLBACK(sync_pre_forecast), rset);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
-#if LOG2LEVEL
     if (pmod != NULL) {
 	const char *parent = gretl_model_get_data(pmod, "log-parent");
 
 	if (parent != NULL) {
-	    log_or_level_selector(vbox, parent, optp);
+	    log_or_level_selector(vbox, parent, pmod, optp);
+	    log2lev = 1;
 	}
     }
-#endif
 
     if (!dataset_is_time_series(dataset)) {
 	/* only static forecast is available */
@@ -3507,7 +3503,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
         if (conf != NULL) {
             dialog_add_confidence_selector(rset->dlg, conf, NULL);
-            if (combo_choice && (flags & FC_MEAN_OK)) {
+            if (combo_choice && (flags & FC_MEAN_OK) && !log2lev) {
                 confidence_scope_selector(rset->dlg, optp);
                 if (gretl_is_simple_OLS(pmod)) {
                     /* ols: y 0 x */

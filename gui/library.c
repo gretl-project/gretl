@@ -1918,23 +1918,26 @@ int out_of_sample_info (int add_ok, int *t2)
     return err;
 }
 
-/* Handle any option flags that were added to @gopt but also belong in
-   @fopt.
+/* Handle any option flags that were added to @gopt (because related to
+   graphing) but are also pertinent to the forecast itself (@fopt).
+   This applies to OPT_I (integration), OPT_M (construct interval for
+   mean) and OPT_X (exponentiate a log forecast).
 */
 
 static void maybe_copy_options (gretlopt *gopt,
                                 gretlopt *fopt)
 {
-    gretlopt to_copy = OPT_I | OPT_M | OPT_X | OPT_G;
+    gretlopt to_copy = OPT_I | OPT_M | OPT_X;
     gretlopt isect = *gopt & to_copy;
 
     if (isect) {
-	*fopt |= isect;  /* copy flags to @fopt */
+	*fopt |= isect; /* copy flags to @fopt */
     }
 }
 
 void gui_do_forecast (GtkAction *action, gpointer p)
 {
+    /* by default: produce a plot, show some pre-forecast data */
     static gretlopt gopt = OPT_P | OPT_H;
     gretlopt fopt = OPT_NONE;
     windata_t *vwin = (windata_t *) p;
@@ -2020,8 +2023,10 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     if (resp == 1) {
+	/* --dynamic */
         fopt = OPT_D;
     } else if (resp == 2) {
+	/* --static */
         fopt = OPT_S;
     } else if (resp == 3) {
         recursive = 1;
@@ -2087,8 +2092,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
                                 FCAST, fr);
     }
 
-    /* OPT_M may have been passed for plotting: don't
-       remember it */
+    /* OPT_M may have been passed for plotting: don't remember it */
     gopt &= ~OPT_M;
 }
 
