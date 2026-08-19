@@ -954,14 +954,14 @@ void gretl_insert_builtin_string (const char *name, const char *s)
 		u = g_locale_to_utf8(s, -1, NULL, &bytes, NULL);
 		if (u != NULL) {
 		    m = strlen(u);
-		    if (u[m-1] == SLASH) {
+		    if (m > 0 && u[m-1] == SLASH) {
 			u[m-1] = '\0';
 		    }
 		}
 		built_ins[i].s = u;
 	    } else {
 		m = strlen(s);
-		if (s[m-1] == SLASH) {
+		if (m > 0 && s[m-1] == SLASH) {
 		    /* drop trailing dir separator for paths */
 		    built_ins[i].s = g_strndup(s, m - 1);
 		} else {
