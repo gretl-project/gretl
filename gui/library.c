@@ -9937,6 +9937,18 @@ static int script_delete_function_package (const char *action,
     int delfile = 0;
     int err;
 
+    if (strchr(param, '/') != NULL || strchr(param, '\\') != NULL ||
+        strstr(param, "..") != NULL) {
+        /* reject anything that is not a plain package name: this
+           guards against path-traversal via a script-supplied
+           "pkg <name> remove/unload" command
+        */
+        if (prn != NULL) {
+            pprintf(prn, _("Invalid package name '%s'\n"), param);
+        }
+        return E_DATA;
+    }
+
     if (!strcmp(action, "remove")) {
         delfile = 1;
     }

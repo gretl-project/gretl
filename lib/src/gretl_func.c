@@ -2185,6 +2185,12 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
             fn_param *param = &fun->params[n++];
 
             if (gretl_xml_get_prop_as_string(cur, "name", &field)) {
+		if (strlen(field) >= FN_NAMELEN) {
+		    gretl_errmsg_set(_("Identifier exceeds the maximum of 31 characters"));
+		    free(field);
+		    err = E_DATA;
+		    break;
+		}
                 param->name = field;
             } else {
                 err = E_DATA;
@@ -8230,6 +8236,9 @@ static int parse_function_param (char *s, fn_param *param, int i)
     if (len == 0) {
         gretl_errmsg_sprintf(_("parameter %d: name is missing"), i + 1);
         err = E_PARSE;
+    } else if (len >= VNAMELEN) {
+	gretl_errmsg_set(_("Identifier exceeds the maximum of 31 characters"));
+	err = E_PARSE;
     } else {
         name = gretl_strndup(s, len);
         if (name == NULL) {
@@ -11542,6 +11551,16 @@ int uninstall_function_package (const char *package, gretlopt opt,
     gchar *pkgname = NULL;
     char *p, fname[MAXLEN];
     int err;
+
+    if (strchr(package, '/') != NULL || strchr(package, '\\') != NULL ||
+        strstr(package, "..") != NULL) {
+        /* reject anything that is not a plain package name: this
+           guards against path-traversal via a script-supplied
+           "pkg <name> remove/unload" command
+        */
+        gretl_errmsg_sprintf(_("Invalid package name '%s'"), package);
+        return E_DATA;
+    }
 
     if (has_suffix(package, ".gfn")) {
         gfnname = g_strdup(package);
