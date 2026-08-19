@@ -2737,6 +2737,14 @@ int check_set_R_home (void)
 #endif
 	lp = g_strdup_printf("%s/lib/%s", Rhome, libname);
 	err = (lstat(lp, &buf) != 0);
+	if (!err && strlen(Rhome) >= sizeof RHOME) {
+	    /* R_HOME is too long to store safely in our fixed-size
+	       buffer: treat it as unusable rather than overflow RHOME
+	    */
+	    fprintf(stderr, "R_HOME value is too long (%d bytes), ignoring\n",
+		    (int) strlen(Rhome));
+	    err = 1;
+	}
 	if (err) {
 	    /* needs correcting */
 	    do_setenv = 1;

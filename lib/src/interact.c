@@ -1280,9 +1280,13 @@ do_outfile_command (gretlopt opt, const char *fname,
     } else {
         char outname[FILENAME_MAX];
         const char *targ;
-        FILE *fp;
+        FILE *fp = NULL;
 
-        /* switch to workdir if needed */
+	if (strlen(fname) >= sizeof outname) {
+	    gretl_errmsg_set(_("Filename is too long"));
+	    return E_INVARG;
+	}
+	/* switch to workdir if needed */
         strcpy(outname, fname);
         gretl_maybe_prepend_dir(outname);
         if (opt & OPT_A) {
@@ -1314,7 +1318,8 @@ do_outfile_command (gretlopt opt, const char *fname,
             fclose(fp);
             remove(outname);
         } else {
-            strcpy(of_name, targ);
+	    *of_name = '\0';
+	    strncat(of_name, targ, sizeof of_name - 1);
         }
     }
 
@@ -2736,6 +2741,10 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
 
         if (param != NULL) {
             /* the legacy mechanism */
+            if (strlen(param) >= sizeof fname) {
+                gretl_errmsg_sprintf(_("'%s': filename is too long"), param);
+                return E_INVARG;
+            }
             strcpy(fname, param);
         } else if (opt & OPT_U) {
             /* try for --output=filename, and if found let
@@ -2744,6 +2753,10 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
             const char *s = get_optval_string(ci, OPT_U);
 
             if (s != NULL && *s != '\0') {
+                if (strlen(s) >= sizeof fname) {
+                    gretl_errmsg_sprintf(_("'%s': filename is too long"), s);
+                    return E_INVARG;
+                }
                 strcpy(fname, s);
                 if (has_suffix(fname, ".rtf")) {
                     opt |= OPT_R;

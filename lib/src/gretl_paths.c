@@ -867,19 +867,25 @@ static int try_open_file (char *targ, const char *finddir,
     char tmp[MAXLEN];
     int err, found = 0;
 
-    strcpy(tmp, finddir);
-    strcat(tmp, dname);
-    strcat(tmp, SLASHSTR);
-    strcat(tmp, targ);
+    g_strlcpy(tmp, finddir, sizeof tmp);
+    g_strlcat(tmp, dname, sizeof tmp);
+    g_strlcat(tmp, SLASHSTR, sizeof tmp);
+    g_strlcat(tmp, targ, sizeof tmp);
 
     err = gretl_test_fopen(tmp, "r");
 
-    if (err && (flags & ADD_GDT)) {
+    /* Only attempt to append a suffix (".gdt", or ".gdtb" via the
+       extra "b") if there is guaranteed room left in @tmp: this
+       guards against maybe_add_suffix()'s own unchecked strcat()
+       running past the end of the fixed-size buffer when @tmp is
+       already (close to) full.
+    */
+    if (err && (flags & ADD_GDT) && strlen(tmp) + 5 < sizeof tmp) {
         if (maybe_add_suffix(tmp, ".gdt")) {
             err = gretl_test_fopen(tmp, "r");
             if (err) {
                 /* try .gdtb also */
-                strcat(tmp, "b");
+                g_strlcat(tmp, "b", sizeof tmp);
                 err = gretl_test_fopen(tmp, "r");
             }
         }
@@ -895,12 +901,13 @@ static int try_open_file (char *targ, const char *finddir,
 
 static void make_finddir (char *targ, const char *src)
 {
-    int n = strlen(src);
+    int n;
 
-    strcpy(targ, src);
+    g_strlcpy(targ, src, MAXLEN);
+    n = strlen(targ);
 
-    if (targ[n-1] != SLASH) {
-        strcat(targ, SLASHSTR);
+    if (n > 0 && targ[n-1] != SLASH) {
+        g_strlcat(targ, SLASHSTR, MAXLEN);
     }
 }
 
@@ -912,8 +919,8 @@ static int got_subdir (const char *topdir, const gchar *dname)
         char tmp[MAXLEN];
         GDir *sub;
 
-        strcpy(tmp, topdir);
-        strcat(tmp, dname);
+        g_strlcpy(tmp, topdir, sizeof tmp);
+        g_strlcat(tmp, dname, sizeof tmp);
         sub = gretl_opendir(tmp);
         if (sub != NULL) {
             g_dir_close(sub);
@@ -1588,16 +1595,24 @@ static int get_gfn_special (char *fname)
 	/* no extra path elements */
         char *p, pkgname[64];
         char *pkgpath;
+        size_t len;
 
-        *pkgname = '\0';
-        strncat(pkgname, fname, 63);
-        p = strstr(pkgname, ".gfn");
-        *p = '\0';
-        pkgpath = gretl_function_package_get_path(pkgname, PKG_ALL);
-        if (pkgpath != NULL) {
-            strcpy(fname, pkgpath);
-            free(pkgpath);
-            ok = 1;
+        /* Locate the ".gfn" suffix in the full, untruncated @fname
+           first: searching for it only after copying into the
+           fixed-size @pkgname buffer risks chopping the suffix off
+           for names longer than the buffer, which would leave us
+           with nothing to find and a NULL to dereference below.
+        */
+        p = strstr(fname, ".gfn");
+        if (p != NULL && (len = p - fname) < sizeof pkgname) {
+            memcpy(pkgname, fname, len);
+            pkgname[len] = '\0';
+            pkgpath = gretl_function_package_get_path(pkgname, PKG_ALL);
+            if (pkgpath != NULL) {
+                strcpy(fname, pkgpath);
+                free(pkgpath);
+                ok = 1;
+            }
         }
     }
 
@@ -3321,13 +3336,16 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
         strncat(val, line + strlen(key) + 3, MAXLEN - 1);
         gretl_strstrip(val);
         if (!strcmp(key, "gretldir")) {
+            *cpaths->gretldir = '\0';
             strncat(cpaths->gretldir, val, MAXLEN - 1);
 #ifndef WIN32
         } else if (!strcmp(key, "gnuplot")) {
+            *cpaths->gnuplot = '\0';
             strncat(cpaths->gnuplot, val, MAXLEN - 1);
 #endif
         } else if (!strcmp(key, "workdir") || !strcmp(key, "userdir")) {
             /* "userdir" is a legacy thing */
+            *cpaths->workdir = '\0';
             strncat(cpaths->workdir, val, MAXLEN - 1);
         } else if (!strcmp(key, "no_dotdir")) {
             cpaths->no_dotdir = rc_bool(val);
@@ -3342,32 +3360,45 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
         } else if (!strcmp(key, "lcnumeric")) {
 	    set_lcnumeric(LANG_AUTO, rc_bool(val));
         } else if (!strcmp(key, "dbproxy")) {
+            *dbproxy = '\0';
             strncat(dbproxy, val, PROXLEN - 1);
         } else if (!strcmp(key, "useproxy")) {
             *use_proxy = rc_bool(val);
         } else if (!strcmp(key, "x12a")) {
+            *cpaths->x12a = '\0';
             strncat(cpaths->x12a, val, MAXLEN - 1);
         } else if (!strcmp(key, "tramo")) {
+            *cpaths->tramo = '\0';
             strncat(cpaths->tramo, val, MAXLEN - 1);
         } else if (!strcmp(key, "Rbin")) {
+            *cpaths->rbinpath = '\0';
             strncat(cpaths->rbinpath, val, MAXLEN - 1);
         } else if (!strcmp(key, "Rlib")) {
+            *cpaths->rlibpath = '\0';
             strncat(cpaths->rlibpath, val, MAXLEN - 1);
         } else if (!strcmp(key, "ox")) {
+            *cpaths->oxlpath = '\0';
             strncat(cpaths->oxlpath, val, MAXLEN - 1);
         } else if (!strcmp(key, "octave")) {
+            *cpaths->octpath = '\0';
             strncat(cpaths->octpath, val, MAXLEN - 1);
         } else if (!strcmp(key, "stata")) {
+            *cpaths->statapath = '\0';
             strncat(cpaths->statapath, val, MAXLEN - 1);
         } else if (!strcmp(key, "python")) {
+            *cpaths->pypath = '\0';
             strncat(cpaths->pypath, val, MAXLEN - 1);
         } else if (!strcmp(key, "julia")) {
+            *cpaths->jlpath = '\0';
             strncat(cpaths->jlpath, val, MAXLEN - 1);
 	} else if (!strcmp(key, "lpsolve")) {
+	    *cpaths->lppath = '\0';
 	    strncat(cpaths->lppath, val, MAXLEN - 1);
         } else if (!strcmp(key, "mpiexec")) {
+            *cpaths->mpiexec = '\0';
             strncat(cpaths->mpiexec, val, MAXLEN - 1);
         } else if (!strcmp(key, "mpi_hosts")) {
+            *cpaths->mpi_hosts = '\0';
             strncat(cpaths->mpi_hosts, val, MAXLEN - 1);
         } else if (!strcmp(key, "mpi_pref")) {
 #ifdef HAVE_MPI
@@ -3376,6 +3407,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
             ;
 #endif
         } else if (!strcmp(key, "Png_font")) {
+            *cpaths->pngfont = '\0';
             strncat(cpaths->pngfont, val, 128 - 1);
         } else if (!strcmp(key, "Gp_extra_colors")) {
             rc_set_gp_extra_colors(val);

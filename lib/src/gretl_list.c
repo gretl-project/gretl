@@ -508,8 +508,8 @@ int *gretl_list_from_string (const char *str, int *err)
     int *list;
     int n = 0;
 
-    if (str == NULL) {
-	*err = E_DATA;
+    if (str == NULL || *str == '\0') {
+	*err = E_INVARG;
 	return NULL;
     }
 

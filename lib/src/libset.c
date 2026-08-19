@@ -1314,6 +1314,9 @@ static int set_logfile (const char *s)
 	gretl_insert_builtin_string("logfile", "");
     } else if (!strcmp(s, "stdout") || !strcmp(s, "stderr")) {
 	gretl_insert_builtin_string("logfile", s);
+    } else if (strlen(s) >= FILENAME_MAX) {
+	gretl_errmsg_set(_("set logfile: filename is too long"));
+	return E_INVARG;
     } else {
         char outname[FILENAME_MAX];
 
@@ -1324,7 +1327,7 @@ static int set_logfile (const char *s)
 	if (!err) {
 	    gretl_insert_builtin_string("logfile", outname);
 	} else {
-	    gretl_errmsg_sprintf("Couldn't write to %s", outname);
+	    gretl_errmsg_sprintf(_("Couldn't write to %s"), outname);
 	    err = E_FOPEN;
 	}
     }

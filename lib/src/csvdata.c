@@ -284,7 +284,9 @@ static int csvdata_add_cols_list (csvdata *c, const char *s,
                                   gretlopt opt)
 {
     int delimited = (opt & OPT_L);
-    int *list, *clist = NULL, *wlist = NULL;
+    int *list = NULL;
+    int *clist = NULL;
+    int *wlist = NULL;
     int i, n, m = 0;
     int err = 0;
 
