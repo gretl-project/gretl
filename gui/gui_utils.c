@@ -887,7 +887,7 @@ gboolean do_open_data (windata_t *fwin, int code)
 {
     int append = (code == APPEND_DATA);
     char *fname = get_tryfile();
-    char tmp[MAXLEN];
+    char tmp[FILENAME_MAX];
     GretlFileType ftype;
     int append_type = SIMPLE_APPEND;
     gretlopt aopt = OPT_NONE;

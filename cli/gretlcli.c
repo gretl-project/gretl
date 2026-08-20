@@ -61,8 +61,8 @@ extern void initialize_readline (void);
 #define ENDRUN (NC + 1)
 #define RUNLOOP (NC + 2)
 
-char datafile[MAXLEN];
-char cmdfile[MAXLEN];
+char datafile[FILENAME_MAX];
+char cmdfile[FILENAME_MAX];
 FILE *fb;
 int batch;
 int runit;
@@ -579,7 +579,7 @@ static void handle_datafile (char *filearg, char *runfile,
                              DATASET *dset, PRN *prn,
                              PRN *cmdprn)
 {
-    char given_file[MAXLEN];
+    char given_file[FILENAME_MAX];
     int load_datafile = 1;
     int ftype, err = 0;
 

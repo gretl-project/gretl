@@ -1280,7 +1280,7 @@ char *retrieve_file_content (const char *fname, const char *codeset,
 	*err = E_DATA;
 #endif
     } else {
-	char fullname[MAXLEN] = {0};
+	char fullname[FILENAME_MAX] = {0};
 
 	strcpy(fullname, fname);
 	gretl_addpath(fullname, 0);

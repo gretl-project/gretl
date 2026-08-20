@@ -3760,8 +3760,8 @@ int gretl_is_pkzip_file (const char *fname)
  * Attempts to determine the type of a file to be opened in gretl:
  * data file (of various formats), or command script. If OPT_P
  * is given, the @fname argument must be an array of length
- * at least %MAXLEN: a path may be prepended and in some cases
- * an extension may be appended.
+ * at least FILENAME_MAX (libgretl.h): a path may be prepended
+ * and in some cases an extension may be appended.
  *
  * Returns: integer code indicating the type of file.
  */

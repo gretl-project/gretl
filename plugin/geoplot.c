@@ -1198,7 +1198,7 @@ static gretl_matrix *map2dat (mapinfo *mi,
 {
     gretl_matrix *ret = NULL;
     int non_std = 0;
-    char infile[MAXLEN];
+    char infile[FILENAME_MAX];
 
     if (mi->mapfile != NULL) {
 	strcpy(infile, mi->mapfile);
