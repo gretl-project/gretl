@@ -4220,8 +4220,8 @@ int get_observation_number (const char *s, const DATASET *dset)
     strncat(test, (*s == '"')? s + 1 : s, OBSLEN - 1);
 
     n = strlen(test);
-    if (test[n-1] == '"') {
-        test[n-1] = '\0';
+    if (n > 0 && test[n-1] == '"') {
+	test[n-1] = '\0';
     }
 
     if (dataset_has_markers(dset)) {
@@ -5418,6 +5418,7 @@ int *vector_to_midas_list (const gretl_matrix *v,
                            int *err)
 {
     char vname[VNAMELEN];
+    char numstr[32];
     int *list = NULL;
     int origv = dset->v;
     int i;
@@ -5426,6 +5427,21 @@ int *vector_to_midas_list (const gretl_matrix *v,
     if (gretl_vector_get_length(v) != sample_size(dset) * f_ratio) {
         *err = E_DATA;
         return NULL;
+    }
+
+    /* Guard against sprintf overflowing @vname below, and (further
+       down) dset->varname[k], which is also VNAMELEN bytes: in both
+       loops the largest value ever appended to @prefix is f_ratio
+       itself (as "i+1" in the first loop, "f_ratio-i" in the
+       second), so it suffices to check that @prefix plus the
+       decimal representation of f_ratio, plus the terminating NUL,
+       fits within VNAMELEN before applying sprintf.
+    */
+    snprintf(numstr, sizeof numstr, "%d", f_ratio);
+    if (strlen(prefix) + strlen(numstr) >= VNAMELEN) {
+	gretl_errmsg_set(_("The constructed series name is too long"));
+	*err = E_INVARG;
+	return NULL;
     }
 
     /* check names for collisions first */
@@ -9012,6 +9028,7 @@ gretl_matrix *felogit_rec_loglik (int t, int T,
             ret->val[j+1] = B * rj;
         }
     } else {
+	/* recursion */
         gretl_matrix *tmp1 = felogit_rec_loglik(t, T-1, U, xi);
         gretl_matrix *tmp2 = felogit_rec_loglik(t-1, T-1, U, xi);
         double xij, UT = U->val[T-1];

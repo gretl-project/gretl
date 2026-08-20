@@ -15910,6 +15910,18 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             }
         }
         if (!p->err) {
+            /* @t < 0 or @T exceeding the size of @U or @X would make
+               felogit_rec_loglik() read out of bounds; @t > @T is a
+               legitimate case handled internally (returns a zero
+               vector) so it is not rejected here. Added from Claude
+	       2026-08-20.
+            */
+            if (U == NULL || X == NULL || t < 0 ||
+                T > gretl_vector_get_length(U) || T > X->rows) {
+                p->err = E_INVARG;
+            }
+        }
+	if (!p->err) {
             ret = aux_matrix_node(p);
             ret->v.m = felogit_rec_loglik(t, T, U, X);
         }

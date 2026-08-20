@@ -3247,6 +3247,12 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
     PRN *prn = NULL;
     int err = 0;
 
+    if (2 * strlen(fname) >= sizeof fullname) {
+        gretl_errmsg_sprintf("Filename too long, %d bytes",
+                             (int) strlen(fname));
+        return E_DATA;
+    }
+
     if (control & 1) {
         gretl_build_path(fullname, gretl_dotdir(), fname, NULL);
     } else {

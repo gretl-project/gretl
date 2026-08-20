@@ -4538,7 +4538,10 @@ void series_set_parent (DATASET *dset, int i,
 			const char *parent)
 {
     if (i > 0 && i < dset->v) {
-	strcpy(dset->varinfo[i]->parent, parent);
+	char *targ = dset->varinfo[i]->parent;
+
+	*targ = '\0';
+	strncat(targ, parent, VNAMELEN - 1);
     }
 }
 

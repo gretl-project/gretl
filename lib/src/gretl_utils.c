@@ -916,17 +916,27 @@ int ls_criteria (MODEL *pmod)
 static char *
 real_format_obs (char *obs, int maj, int min, int pd, char sep)
 {
-    if (pd >= 10) {
-        int pdp = pd / 10, minlen = 2;
-        char fmt[18];
+    int n;
 
-        while ((pdp = pdp / 10)) minlen++;
-        sprintf(fmt, "%%d%c%%0%dd", sep, minlen);
-        sprintf(obs, fmt, maj, min);
+    if (pd >= 10) {
+	int pdp = pd / 10, minlen = 2;
+	char fmt[18];
+ 
+	while ((pdp = pdp / 10)) minlen++;
+	sprintf(fmt, "%%d%c%%0%dd", sep, minlen);
+        n = snprintf(obs, OBSLEN, fmt, maj, min);
     } else {
-        sprintf(obs, "%d%c%d", maj, sep, min);
+        n = snprintf(obs, OBSLEN, "%d%c%d", maj, sep, min);
     }
 
+    if (n < 0 || n >= OBSLEN) {
+        /* The formatted observation string does not fit into the
+           #OBSLEN-sized target buffer: signal failure rather than
+           silently truncating or overflowing it.
+        */
+        return NULL;
+    }
+ 
     return obs;
 }
 
@@ -940,7 +950,7 @@ real_format_obs (char *obs, int maj, int min, int pd, char sep)
  * Prints to @obs the gretl-type date string representing
  * the observation given by @maj, @min and @pd.
  *
- * Returns: @obs.
+ * Returns: @obs on success or NULL on invalid input.
  */
 
 char *format_obs (char *obs, int maj, int min, int pd)
@@ -954,6 +964,14 @@ static int get_stobs_maj_min (char *stobs, int structure,
     int dotc = 0;
     char *p = stobs;
     int err = 0;
+
+    if (stobs == NULL || *stobs == '\0') {
+        /* Empty starting-obs string is never valid: reject it here,
+           before any structure- or pd-dependent branch, and before
+           any length-based indexing below.
+        */
+        return 1;
+    }    
 
     while (*p) {
         if (*p == ':') {
@@ -1142,7 +1160,12 @@ static int process_starting_obs (const char *stobs_in, int pd,
                         structure = SPECIAL_TIME_SERIES;
                     }
                 }
-                real_format_obs(stobs, maj, min, pd, '.');
+                if (real_format_obs(stobs, maj, min, pd, '.') == NULL) {
+                    /* The starting obs, as formatted for this frequency,
+                       is too long for a valid gretl observation string.
+                    */
+                    return invalid_stobs(stobs_in);
+                }
                 if (structure == STRUCTURE_UNKNOWN &&
                     recognized_ts_frequency(pd)) {
                     structure = TIME_SERIES;
@@ -2189,23 +2212,31 @@ int gretl_copy_file (const char *src, const char *dest)
 static int maybe_unload_function_package (const char *s,
                                           PRN *prn)
 {
-    char *p, pkgname[FN_NAMELEN+4];
-    const char *path;
-    fnpkg *pkg;
+    char pkgname[FN_NAMELEN+4];
+    char *p;
     int done = 0;
 
     *pkgname = '\0';
     strncat(pkgname, s, FN_NAMELEN+3);
     p = strrchr(pkgname, '.');
-    *p = '\0';
 
-    pkg = get_function_package_by_name(pkgname);
-
-    if (pkg != NULL) {
-        path = get_function_package_path_by_name(pkgname);
-        if (path != NULL) {
-            function_package_unload_full_by_filename(path);
-            done = 1;
+    /* Note: @p will be NULL if @s was long enough that truncation
+       to FN_NAMELEN+3 bytes cut off the ".gfn" suffix; in that
+       case there's no valid package name to look up, so just
+       fall through to "not loaded" below.
+    */
+    if (p != NULL) {
+	fnpkg *pkg = NULL;
+	const char *path;
+	
+        *p = '\0';
+        pkg = get_function_package_by_name(pkgname);    
+	if (pkg != NULL) {
+	    path = get_function_package_path_by_name(pkgname);
+	    if (path != NULL) {
+		function_package_unload_full_by_filename(path);
+		done = 1;
+	    }
         }
     }
 
