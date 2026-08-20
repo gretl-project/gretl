@@ -675,7 +675,7 @@ static int curl_get (urlinfo *u)
     return err;
 }
 
-/* grab data from an internet host.
+/* retrieve_url_full: grab data from an internet host.
 
    @hostname: name of host to access.
 
@@ -694,16 +694,21 @@ static int curl_get (urlinfo *u)
    written, or NULL. The content will be allocated here, if
    applicable.
 
-   Exactly one of @localfile and @getbuf should be non-NULL.
+   @datalen: pointer to accept the length of the data obtained,
+   or NULL if this is not required.
+
+   Note that exactly one of @localfile and @getbuf should be
+   non-NULL.
 */
 
-static int retrieve_url (const char *hostname,
-                         CGIOpt opt,
-                         const char *fname,
-                         const char *dbseries,
-                         const char *localfile,
-                         int filter,
-                         char **getbuf)
+static int retrieve_url_full (const char *hostname,
+			      CGIOpt opt,
+			      const char *fname,
+			      const char *dbseries,
+			      const char *localfile,
+			      int filter,
+			      char **getbuf,
+			      size_t *datalen)
 {
     int saveopt = SAVE_NONE;
     urlinfo u = {0};
@@ -769,7 +774,24 @@ static int retrieve_url (const char *hostname,
     err = curl_get(&u);
     urlinfo_finalize(&u, getbuf, &err);
 
+    if (datalen != NULL) {
+	*datalen = u.datalen;
+    }
+
     return err;
+}
+
+static int retrieve_url (const char *hostname,
+                         CGIOpt opt,
+                         const char *fname,
+                         const char *dbseries,
+                         const char *localfile,
+                         int filter,
+                         char **getbuf)
+{
+    return retrieve_url_full(hostname, opt, fname,
+			     dbseries, localfile,
+			     filter, getbuf, NULL);
 }
 
 /* public interfaces follow */
@@ -1314,7 +1336,8 @@ int retrieve_remote_files_package (const char *pkgname,
 
 int retrieve_remote_db_data (const char *dbname,
                              const char *varname,
-                             char **getbuf)
+                             char **getbuf,
+			     size_t *datalen)
 {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     CGIOpt opt = GRAB_NBO_DATA;
@@ -1322,8 +1345,8 @@ int retrieve_remote_db_data (const char *dbname,
     CGIOpt opt = GRAB_DATA;
 #endif
 
-    return retrieve_url(gretlhost, opt, dbname, varname,
-                        NULL, 0, getbuf);
+    return retrieve_url_full(gretlhost, opt, dbname, varname,
+			     NULL, 0, getbuf, datalen);
 }
 
 /**

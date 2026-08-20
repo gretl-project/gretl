@@ -165,12 +165,18 @@ int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo,
     int t, t2, err;
     int v = sinfo->v;
     dbnumber x;
-    size_t offset;
+    size_t offset = 0;
+    size_t datalen = 0;
+    guint64 nobs_wanted, bytes_wanted;
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     netfloat nf;
+    const size_t itemsize = sizeof nf.frac + sizeof nf.exp;
+#else
+    const size_t itemsize = sizeof(dbnumber);
 #endif
 
-    err = retrieve_remote_db_data(dbbase, sinfo->varname, &getbuf);
+    err = retrieve_remote_db_data(dbbase, sinfo->varname,
+				  &getbuf, &datalen);
     if (err) {
 	free(getbuf);
 	return E_FOPEN;
@@ -178,7 +184,29 @@ int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo,
 
     t2 = (sinfo->t2 > 0)? sinfo->t2 : sinfo->nobs - 1;
 
-    offset = 0L;
+    /* sinfo->t1 and t2 (and hence the number of observations we are
+       about to copy out of getbuf) come from sinfo->nobs, which was
+       parsed from a separately-fetched, untrusted .idx file; getbuf
+       and datalen come from a distinct HTTP response and may be
+       much shorter than that. Validate the required size against
+       the number of bytes actually received before copying anything.
+       The count and byte total are computed using widened 64-bit
+       arithmetic throughout (rather than plain size_t, which may be
+       only 32 bits wide) so that a huge or corrupt observation count
+       cannot wrap around to a small value and defeat the check.
+    */
+
+    if (t2 >= sinfo->t1) {
+	nobs_wanted = (guint64) t2 - (guint64) sinfo->t1 + 1;
+	bytes_wanted = nobs_wanted * (guint64) itemsize;
+
+	if (bytes_wanted > (guint64) datalen) {
+	    free(getbuf);
+	    gretl_errmsg_set(_("Database data: buffer shorter than expected"));
+	    return DB_PARSE_ERROR;
+	}
+    }
+
     for (t=sinfo->t1; t<=t2; t++) {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	/* go via network byte order */

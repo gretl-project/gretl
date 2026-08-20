@@ -1866,10 +1866,20 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask)
 	    err = 1;
 	} else {
 	    char *s = (char *) tmp;
+	    size_t rem = strlen(s);
 
 	    for (i=0; i<len; i++) {
+		if (rem == 0) {
+		    /* declared "length" exceeds the actual number of
+		       tokens present in the text content: bail out
+		       rather than reading past the string buffer
+		    */
+		    err = 1;
+		    break;
+		}
 		mask[i] = atoi(s);
 		s += 2; /* skip to next int */
+		rem = (rem > 2)? (rem - 2) : 0;
 	    }
 	    free(tmp);
 	}

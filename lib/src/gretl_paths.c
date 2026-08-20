@@ -1347,8 +1347,8 @@ static void print_script_dirs (void)
  * gretl_addpath:
  * @fname: on input, the initially given file name; on output
  * a path may be prepended and/or a suffix may be appended.
- * This variable must be of size at least #MAXLEN bytes to allow
- * for possible additions.
+ * This variable must be of size at least #FILENAME_MAX bytes
+ * (as defined in libgretl.h) to allow for possible additions.
  * @script: if non-zero, assume the file we're looking for
  * is a hansl script.
  *
@@ -1364,12 +1364,13 @@ static void print_script_dirs (void)
 
 char *gretl_addpath (char *fname, int script)
 {
-    char orig[MAXLEN];
+    char orig[FILENAME_MAX];
     char *test;
     int found = 0;
     int err;
 
-    if (fname == NULL || strlen(fname) >= MAXLEN) {
+    if (fname == NULL || *fname == '\0' ||
+	strlen(fname) >= sizeof orig) {
 	return NULL;
     }
 
@@ -3652,13 +3653,37 @@ int gretl_path_compose (char *targ, int len,
     }
 }
 
-/* Code borrowed from GLib (gfileutils.c) and adapted to
-   write to an input char * (@targ) instead of returning
-   a newly allocated string. The code is also somewhat
-   simplified by the assumption that if the platform is
-   not MS Windows the directory separator is always '/':
-   this is a safe assumption for the platforms supported
-   by gretl.
+static int strcat_bounded (char *dest, const char *src)
+{
+    size_t len = strlen(dest) + strlen(src);
+
+    if (len >= FILENAME_MAX) {
+	fprintf(stderr, "strcat_bounded: FILENAME_MAX would be exceeded\n");
+	return 1;
+    } else {
+	strcat(dest, src);
+	return 0;
+    }
+}
+
+static int strncat_bounded (char *dest, const char *src, size_t n)
+{
+    size_t len = strlen(dest) + n;
+
+    if (len >= FILENAME_MAX) {
+	fprintf(stderr, "strncat_bounded: FILENAME_MAX would be exceeded\n");
+	return 1;
+    } else {
+	strncat(dest, src, n);
+	return 0;
+    }
+}
+
+/* Code borrowed from GLib (gfileutils.c) and adapted to write to an
+   input char * (@targ) instead of returning a newly allocated
+   string. The code is also somewhat simplified by the assumption that
+   if the platform is not MS Windows the directory separator is always
+   '/': this is a safe assumption for the platforms supported by gretl.
 */
 
 #ifdef G_OS_WIN32
@@ -3673,10 +3698,11 @@ static void real_build_path_win32 (char *targ,
     const gchar *next_element;
     const gchar *last_trailing = NULL;
     gchar current_separator = '\\';
+    int err = 0;
 
     next_element = first_element;
 
-    while (1) {
+    while (!err) {
         const gchar *element;
         const gchar *start;
         const gchar *end;
@@ -3719,28 +3745,32 @@ static void real_build_path_win32 (char *targ,
             if (last_trailing <= start) {
                 single_element = element;
             }
-            strncat(targ, element, start - element);
+	    err = strncat_bounded(targ, element, start - element);
             have_leading = TRUE;
         } else {
             single_element = NULL;
         }
 
-        if (end == start) {
+	if (err) {
+	    break;
+	} else if (end == start) {
             continue;
         }
 
         if (!is_first) {
-            strncat(targ, &current_separator, 1);
+            err = strncat_bounded(targ, &current_separator, 1);
         }
-        strncat(targ, start, end - start);
+	if (!err) {
+	    err = strncat_bounded(targ, start, end - start);
+	}
         is_first = FALSE;
     }
 
     if (single_element) {
         *targ = '\0';
-        strcat(targ, single_element);
+        strcat_bounded(targ, single_element);
     } else if (last_trailing) {
-        strcat(targ, last_trailing);
+        strcat_bounded(targ, last_trailing);
     }
 }
 
@@ -3755,10 +3785,11 @@ static void real_build_path (char *targ,
     const gchar *single_element = NULL;
     const gchar *next_element;
     const gchar *last_trailing = NULL;
+    int err = 0;
 
     next_element = first_element;
 
-    while (1) {
+    while (!err) {
         const gchar *element;
         const gchar *start;
         const gchar *end;
@@ -3793,25 +3824,27 @@ static void real_build_path (char *targ,
         if (!have_leading) {
             /* If the leading and trailing separator strings are in the
                same element and overlap, the result is exactly that
-               element
+               element.
             */
             if (last_trailing <= start) {
                 single_element = element;
             }
-            strncat(targ, element, start - element);
+            err = strncat_bounded(targ, element, start - element);
             have_leading = TRUE;
         } else {
             single_element = NULL;
         }
 
-        if (end == start) {
+	if (err) {
+	    break;
+	} else if (end == start) {
             continue;
         }
 
         if (!is_first) {
-            strcat(targ, "/");
+            err = strcat_bounded(targ, "/");
         }
-        strncat(targ, start, end - start);
+        err = strncat_bounded(targ, start, end - start);
         is_first = FALSE;
     }
 
@@ -3827,12 +3860,14 @@ static void real_build_path (char *targ,
 
 /**
  * gretl_build_path:
- * @targ: target string to write to (must be pre-allocated).
+ * @targ: target string to write to. Must be pre-allocated on
+ * the stack or heap with size >= FILENAME_MAX as defined
+ * in libgretl.h.
  * @first_element: first component of path.
  *
  * Writes to @targ a path composed of @first_element
- * plus any additional string arguments supplied before
- * a terminating NULL. An appropriate separator is inserted
+ * plus any additional string arguments supplied before the
+ * required terminating NULL. An appropriate separator is inserted
  * between the components of the path.
  *
  * Returns: the target string, @targ.

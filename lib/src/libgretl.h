@@ -33,6 +33,9 @@
 # include <stdio.h>
 #endif
 
+#undef FILENAME_MAX
+#define FILENAME_MAX 1024
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>

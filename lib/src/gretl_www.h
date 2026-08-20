@@ -56,7 +56,8 @@ int retrieve_remote_files_package (const char *pkgname,
 
 int retrieve_remote_db_data (const char *dbname,
 			     const char *varname,
-			     char **getbuf);
+			     char **getbuf,
+			     size_t *datalen);
 
 int retrieve_manfile (const char *fname, const char *localname);
 

@@ -2796,8 +2796,8 @@ static char *get_quoted_arg (const char *s, int *err)
     return ret;
 }
 
-/* If @prn is non-NULL we're called via the "set" command.
-   Otherwise we're called by the gretl session apparatus.
+/* If @prn is non-NULL we're called via the "set" command. Otherwise
+   we're called by the gretl GUI session apparatus.
 */
 
 static int real_libset_read_script (const char *fname,
