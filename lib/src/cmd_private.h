@@ -78,7 +78,7 @@ struct ExecState_ {
 };
 
 struct OpenOp_ {
-    char fname[MAXLEN];
+    char fname[FILENAME_MAX];
     int quiet;
     int http;
     int dbdata;

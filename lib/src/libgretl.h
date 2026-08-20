@@ -34,6 +34,11 @@
 #endif
 
 #undef FILENAME_MAX
+/* On MS Windows FILENAME_MAX is 260; on Linux it's typically
+   4096; and on macOS we read that it's typically 1024. Here
+   we define it to a value that should be big enough for
+   most purposes but is not too wasteful of stack space.
+*/
 #define FILENAME_MAX 1024
 
 #include <stdlib.h>

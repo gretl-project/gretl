@@ -166,8 +166,8 @@ windata_t *mdata;
 DATASET *dataset;
 MODEL *model;
 
-char datafile[MAXLEN];
-char scriptfile[MAXLEN];
+char datafile[FILENAME_MAX];
+char scriptfile[FILENAME_MAX];
 
 int data_status, orig_vars;
 float gui_scale;
@@ -411,7 +411,7 @@ static void real_nls_init (void)
 
 static void real_nls_init (void)
 {
-    char localedir[MAXSTR];
+    char localedir[FILENAME_MAX];
 
     gretl_build_path(localedir, gretl_home(), "locale", NULL);
     record_win32_locale(setlocale(LC_ALL, ""));

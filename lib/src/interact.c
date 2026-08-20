@@ -1404,7 +1404,7 @@ static int do_pca (int *list, DATASET *dset, gretlopt opt, PRN *prn)
 static void query_package (const char *pkgname,
                            gretlopt opt, PRN *prn)
 {
-    char path[MAXLEN];
+    char path[FILENAME_MAX];
     fnpkg *pkg = NULL;
     int err = 0;
 
@@ -3448,7 +3448,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     char *line = s->line;
     MODEL *model = s->model;
     PRN *prn = s->prn;
-    char readfile[MAXLEN];
+    char readfile[FILENAME_MAX];
     int *listcpy = NULL;
     int err = 0;
 

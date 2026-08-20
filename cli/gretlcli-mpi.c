@@ -215,7 +215,7 @@ static int file_get_line (ExecState *s, const char *fname)
 static void nls_init (void)
 {
 # if defined(WIN32) && defined(PKGBUILD)
-    char localedir[MAXLEN];
+    char localedir[FILENAME_MAX];
 
     gretl_build_path(localedir, gretl_home(), "locale", NULL);
 # else
@@ -654,7 +654,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
-    char runfile[MAXLEN];
+    char runfile[FILENAME_MAX];
     int renumber = 0;
     int err = 0;
 

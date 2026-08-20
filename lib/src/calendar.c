@@ -230,10 +230,16 @@ int julian_ymd_bits_from_epoch_day (guint32 ed, int *y,
 {
     int x = 4716;
     int p = 1461;
-    int f = ed + JDN_ADJ + 1401;
-    int e = 4 * f + 3;
-    int g = (e % p)/4;
-    int h = 5 * g + 2;
+    int f, e, g, h;
+
+    if (!g_date_valid_julian(ed)) {
+	return E_INVARG;
+    }
+
+    f = ed + JDN_ADJ + 1401;
+    e = 4 * f + 3;
+    g = (e % p)/4;
+    h = 5 * g + 2;
 
     /* The addition of JDN_ADJ above translates from our
        "epoch day" to Julian Day Number; the addition of 1401
@@ -309,7 +315,7 @@ char *ymd_extended_from_epoch_day (guint32 ed, int julian, int *err)
 	if (ret == NULL) {
 	    myerr = E_ALLOC;
 	} else {
-	    sprintf(ret, "%04d-%02d-%02d", y, m, d);
+	    snprintf(ret, 12, "%04d-%02d-%02d", y, m, d);
 	}
     }
 

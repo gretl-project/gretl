@@ -6557,7 +6557,7 @@ static void plain_print_package_info (const fnpkg *pkg,
     has_examples = pkg_has_examples(pkg);
 
     if (has_examples || pkg_has_datafiles(pkg)) {
-        char resdir[MAXLEN];
+        char resdir[FILENAME_MAX];
         char **resources;
         int n_res = 0;
 
@@ -7332,7 +7332,7 @@ static char *sample_script_from_xml (const char *pkgname, int *err)
 {
     char *ret = NULL;
     gchar *gfnname = NULL;
-    char fullname[MAXLEN];
+    char fullname[FILENAME_MAX];
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
 
@@ -11549,7 +11549,8 @@ int uninstall_function_package (const char *package, gretlopt opt,
 {
     gchar *gfnname = NULL;
     gchar *pkgname = NULL;
-    char *p, fname[MAXLEN];
+    char fname[FILENAME_MAX];
+    char *p;
     int err;
 
     if (strchr(package, '/') != NULL || strchr(package, '\\') != NULL ||

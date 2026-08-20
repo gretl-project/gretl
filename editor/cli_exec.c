@@ -412,11 +412,10 @@ static int grab_stata_log (exec_info *ei)
 
 static void trash_stata_log (void)
 {
-    const char *wdir = gretl_workdir();
-    char *logname = gretl_build_path((char *) wdir, "gretltmp.log");
+    char logname[FILENAME_MAX];
 
+    gretl_build_path(logname, gretl_workdir(), "gretltmp.log", NULL);
     gretl_remove(logname);
-    free(logname);
 }
 
 /* function called on completion of script execution */

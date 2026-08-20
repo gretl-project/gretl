@@ -5717,7 +5717,7 @@ static void real_do_tramo_x12a (int v, int tramo)
     int save_t2 = dataset->t2;
     int (*write_tx_data) (char *, int, DATASET *, gretlopt *,
                           int, int *, GtkWindow *, void *);
-    char outfile[MAXLEN] = {0};
+    char outfile[FILENAME_MAX] = {0};
     int warning = 0;
     int graph_ok = 1;
     int err = 0;
@@ -5789,7 +5789,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 void run_x12a_script (const gchar *buf)
 {
     int (*func) (char *, const gchar *);
-    char outfile[MAXLEN] = {0};
+    char outfile[FILENAME_MAX] = {0};
     int err = 0;
 
     func = gui_get_plugin_function("exec_tx_script");
@@ -9319,7 +9319,7 @@ static void clean_up_varlabels (DATASET *dset)
     }
 }
 
-static int ok_run_file (char *runfile, int *is_gfn)
+static int ok_run_file (char *runfile, gchar **gfnpath)
 {
     FILE *fp;
     char myline[32];
@@ -9330,18 +9330,17 @@ static int ok_run_file (char *runfile, int *is_gfn)
     if (fp == NULL && !g_path_is_absolute(runfile) &&
         strstr(runfile, ".gfn") != NULL) {
         /* try for ad hoc gfn file location */
-        gchar *path = gfn_browser_get_alt_path();
+        gchar *alt = gfn_browser_get_alt_path();
 
-        if (path != NULL) {
-            gchar *tmp = g_strdup(runfile);
+        if (alt != NULL) {
+	    char tmp[FILENAME_MAX];
+	    int err;
 
-            gretl_build_path(runfile, path, tmp, NULL);
-            fp = gretl_fopen(runfile, "r");
-            g_free(tmp);
-            g_free(path);
-            if (fp != NULL) {
-                fclose(fp);
-                *is_gfn = 1;
+            gretl_build_path(tmp, alt, runfile, NULL);
+            err = gretl_test_fopen(tmp, "r");
+	    g_free(alt);
+            if (err == 0) {
+		*gfnpath = g_strdup(tmp);
                 return 1;
             }
         }
@@ -9493,12 +9492,14 @@ int execute_script (char *runfile, const char *buf,
 
     if (runfile != NULL) {
         /* we'll get commands from file */
-        int file_is_gfn = 0;
+	gchar *gfnpath = NULL;
 
-        if (!ok_run_file(runfile, &file_is_gfn)) {
+        if (!ok_run_file(runfile, &gfnpath)) {
             return -1;
-        } else if (file_is_gfn) {
-            return include_gfn(runfile, OPT_NONE, prn);
+        } else if (gfnpath != NULL) {
+            exec_err = include_gfn(gfnpath, OPT_NONE, prn);
+	    g_free(gfnpath);
+	    return exec_err;
         } else {
             fb = gretl_fopen(runfile, "r");
         }
@@ -9933,7 +9934,8 @@ static int script_delete_function_package (const char *action,
 {
     gchar *gfnname = NULL;
     gchar *pkgname = NULL;
-    char *p, fname[MAXLEN];
+    char fname[FILENAME_MAX];
+    char *p;
     int delfile = 0;
     int err;
 
@@ -10023,7 +10025,7 @@ static int script_renumber_series (const int *list,
 
 static int script_open_session_file (CMD *cmd)
 {
-    char myfile[MAXLEN] = {0};
+    char myfile[FILENAME_MAX] = {0};
     int err;
 
     err = get_full_filename(cmd->param, myfile, OPT_NONE);
@@ -10264,7 +10266,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
-    char runfile[MAXLEN];
+    char runfile[FILENAME_MAX];
     char *buf = NULL;
     int ppos = -1;
     int err = 0;

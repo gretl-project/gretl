@@ -52,7 +52,7 @@
 
 #define DB_DEBUG 0
 
-static char saved_db_name[MAXLEN];
+static char saved_db_name[FILENAME_MAX];
 static int saved_db_type;
 
 const char *get_db_name (void)

@@ -40,7 +40,7 @@ static const char *addon_names[] = {
 static int n_addons = (G_N_ELEMENTS(addon_names)) - 1;
 
 typedef struct addon_basics_ {
-    char path[MAXLEN];
+    char path[FILENAME_MAX];
     char *version;
     char *date;
     char *descrip;
@@ -384,7 +384,7 @@ char *gretl_addon_get_path (const char *addon)
 
 char *get_addon_examples_dir (const char *addon)
 {
-    char epath[MAXLEN];
+    char epath[FILENAME_MAX];
     char *s, *path = gretl_addon_get_path(addon);
     char *ret = NULL;
 

@@ -246,7 +246,7 @@ static int find_pkg_in_dir (const char *targ,
 			    char **gfn, char **pdf)
 {
     const gchar *basename;
-    char fullname[MAXLEN];
+    char fullname[FILENAME_MAX];
     char test[128];
     int found = 0;
 

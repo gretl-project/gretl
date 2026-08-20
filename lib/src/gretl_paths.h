@@ -49,23 +49,23 @@ typedef struct ConfigPaths_ ConfigPaths;
 */
 
 struct ConfigPaths_ {
-    char gretldir[MAXLEN];
-    char workdir[MAXLEN];
+    char gretldir[FILENAME_MAX];
+    char workdir[FILENAME_MAX];
 #if !defined(WIN32) || !defined(PKGBUILD)
-    char gnuplot[MAXLEN];
+    char gnuplot[FILENAME_MAX];
 #endif
-    char x12a[MAXLEN];
-    char tramo[MAXLEN];
-    char rbinpath[MAXLEN];
-    char rlibpath[MAXLEN];
-    char oxlpath[MAXLEN];
-    char octpath[MAXLEN];
-    char statapath[MAXLEN];
-    char pypath[MAXLEN];
-    char jlpath[MAXLEN];
-    char lppath[MAXLEN];
-    char mpiexec[MAXLEN];
-    char mpi_hosts[MAXLEN];
+    char x12a[FILENAME_MAX];
+    char tramo[FILENAME_MAX];
+    char rbinpath[FILENAME_MAX];
+    char rlibpath[FILENAME_MAX];
+    char oxlpath[FILENAME_MAX];
+    char octpath[FILENAME_MAX];
+    char statapath[FILENAME_MAX];
+    char pypath[FILENAME_MAX];
+    char jlpath[FILENAME_MAX];
+    char lppath[FILENAME_MAX];
+    char mpiexec[FILENAME_MAX];
+    char mpi_hosts[FILENAME_MAX];
     char pngfont[128];
     int no_dotdir;
 };

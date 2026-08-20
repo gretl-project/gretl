@@ -2245,7 +2245,7 @@ void open_db_index (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     gchar *fname = NULL, *dbdir = NULL;
-    char dbfile[MAXLEN];
+    char dbfile[FILENAME_MAX];
     int action = NATIVE_SERIES;
     int idx = 0;
 
@@ -3120,7 +3120,7 @@ static void get_local_object_status (const char *fname,
 				     const char **status,
 				     time_t remtime)
 {
-    char fullname[MAXLEN];
+    char fullname[FILENAME_MAX];
     struct stat fbuf;
     char **dirs;
     SearchType stype;

@@ -106,8 +106,8 @@ extern int data_status;
 extern float gui_scale;
 
 /* global filenames */
-extern char datafile[MAXLEN];
-extern char scriptfile[MAXLEN];
+extern char datafile[MAXSTR];
+extern char scriptfile[MAXSTR];
 
 /* global option-related vars */
 extern int winsize;

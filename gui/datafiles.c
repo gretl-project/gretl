@@ -673,7 +673,7 @@ static int read_file_descriptions (windata_t *win, gpointer p)
 
 static void show_datafile_info (GtkWidget *w, gpointer data)
 {
-    char fullname[MAXLEN];
+    char fullname[FILENAME_MAX];
     windata_t *vwin = (windata_t *) data;
     file_collection *collection;
     char *descrip;
@@ -711,7 +711,7 @@ void browser_open_data (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     file_collection *collection;
-    char tmp[MAXLEN];
+    char tmp[FILENAME_MAX];
     gchar *filename;
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
@@ -2541,7 +2541,7 @@ read_fn_files_in_dir (GDir *dir, const char *path,
                       int *nfn)
 {
     const gchar *basename;
-    char fullname[MAXLEN];
+    char fullname[FILENAME_MAX];
 
     /* Look first for a gfn file in its own subdir, as in
        functions/foo/foo.gfn. That way if a package has been updated to
