@@ -2191,7 +2191,7 @@ const char *gretl_rbin_path (void)
     static int checked;
 
     if (!checked) {
-        win32_R_path(paths.rbinpath, REXE);
+        win32_R_path(paths.rbinpath, REXE, sizeof paths.rbinpath);
         checked = 1;
     }
 #endif
@@ -2209,7 +2209,7 @@ const char *gretl_rlib_path (void)
     static int checked;
 
     if (!checked) {
-	win32_R_path(paths.rlibpath, RLIB);
+	win32_R_path(paths.rlibpath, RLIB, sizeof paths.rlibpath);
         checked = 1;
     }
 #endif
@@ -2350,7 +2350,8 @@ void win32_set_gretldir (void)
         char tmp[PLEN];
         int err;
 
-        err = read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", tmp);
+        err = read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir",
+			   tmp, sizeof tmp);
         if (!err) {
             strcpy(paths.gretldir, tmp);
             slash_terminate(paths.gretldir);
@@ -2723,9 +2724,8 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
 
 #ifdef WIN32
 
-/* MS Windows variants of defaults for any paths that
-   we need that were not found in the Windows registry
-   (or network config file).
+/* MS Windows variants of defaults for any paths that we need that were
+   not found in the Windows registry (or network config file).
 */
 
 static void load_default_workdir (char *targ)
@@ -2760,9 +2760,9 @@ static void load_default_path (char *targ)
     } else if (targ == paths.tramo) {
         sprintf(targ, "%s\\tramo\\tramo.exe", progfiles);
     } else if (targ == paths.rbinpath) {
-        win32_R_path(targ, REXE);
+        win32_R_path(targ, REXE, PLEN);
     } else if (targ == paths.rlibpath) {
-        win32_R_path(targ, RLIB);
+        win32_R_path(targ, RLIB, PLEN);
     } else if (targ == paths.oxlpath) {
         sprintf(targ, "%s\\OxMetrics8\\Ox\\bin\\oxl.exe", progfiles);
     } else if (targ == paths.octpath) {

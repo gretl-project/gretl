@@ -44,7 +44,8 @@ enum {
 void set_windebug (int s);
 
 int read_reg_val (HKEY tree, const char *base,
-		  char *keyname, char *keyval);
+		  char *keyname, char *keyval,
+		  size_t keyval_len);
 
 const char *get_gretlnet_filename (void);
 
@@ -88,9 +89,9 @@ int win32_write_access (const char *path);
 
 int win32_remove (const char *path);
 
-int R_home_from_registry (char *s);
+int R_home_from_registry (char *s, size_t slen);
 
-int win32_R_path (char *s, int which);
+int win32_R_path (char *s, int which, size_t slen);
 
 int win32_check_for_program (const char *prog);
 

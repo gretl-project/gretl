@@ -196,15 +196,15 @@ char viewps[MAXSTR] = "gv";
 char Rcommand[MAXSTR] = "xterm -e R";
 #endif
 
-static char tryfile[MAXLEN];
+static char tryfile[MAXSTR];
 
 void set_tryfile (const char *fname)
 {
     tryfile[0] = '\0';
     if (!strncmp(fname, "file://", 7)) {
-        strncat(tryfile, fname + 7, MAXLEN - 1);
+        strncat(tryfile, fname + 7, sizeof tryfile - 1);
     } else {
-        strncat(tryfile, fname, MAXLEN - 1);
+        strncat(tryfile, fname, sizeof tryfile - 1);
     }
 }
 

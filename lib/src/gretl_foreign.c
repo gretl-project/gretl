@@ -2619,7 +2619,7 @@ int check_set_R_home (void)
 {
     const char *path = gretl_rlib_path();
     const char *orig = path;
-    char tmp[MAX_PATH];
+    char tmp[FILENAME_MAX];
     int err = 0;
 
     if (RHOME[0] != '\0') {
@@ -2636,10 +2636,10 @@ int check_set_R_home (void)
 	err = 0;
     }
 
-    err = R_home_from_registry(tmp);
+    err = R_home_from_registry(tmp, sizeof tmp);
     if (!err) {
 	strcpy(RHOME, tmp);
-	err = win32_R_path(tmp, RLIB);
+	err = win32_R_path(tmp, RLIB, sizeof tmp);
 	path = tmp;
     }
 
