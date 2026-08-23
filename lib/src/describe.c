@@ -1419,10 +1419,9 @@ double doornik_chisq (double skew, double xkurt, int n)
     return x2;
 }
 
-static int
-series_get_moments (int t1, int t2, const double *x,
-		    double *skew, double *xkurt,
-		    int *pn)
+int series_get_skew_kurt (int t1, int t2, const double *x,
+			  double *skew, double *xkurt,
+			  int *pn)
 {
     double dev, s[4] = {0.0};
     int t, n = 0;
@@ -8953,7 +8952,7 @@ static int skew_kurt_test (const double *x, int t1, int t2,
 
     *test = *pval = NADBL;
 
-    err = series_get_moments(t1, t2, x, &skew, &xkurt, &n);
+    err = series_get_skew_kurt(t1, t2, x, &skew, &xkurt, &n);
 
     if (!err) {
 	if (opt & OPT_J) {

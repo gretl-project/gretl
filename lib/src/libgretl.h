@@ -294,7 +294,7 @@ typedef enum {
     FC_DYNAMIC_OK   = 1 << 1,
     FC_ADDOBS_OK    = 1 << 2,
     FC_INTEGRATE_OK = 1 << 3,
-    FC_MEAN_OK      = 1 << 4
+    FC_EXPON_OK     = 1 << 4
 } FcastFlags;
 
 #ifndef CMPLX

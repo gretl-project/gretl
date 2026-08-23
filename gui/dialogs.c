@@ -3149,35 +3149,6 @@ void dialog_add_iters_spin (GtkWidget *dlg, int *iters)
     }
 }
 
-static void fcast_toggle_scope (GtkComboBox *cb, gretlopt *optp)
-{
-    gint i = gtk_combo_box_get_active(cb);
-
-    if (i == 1) {
-        *optp |= OPT_M;
-    } else {
-        *optp &= ~OPT_M;
-    }
-}
-
-static void confidence_scope_selector (GtkWidget *dlg, gretlopt *optp)
-{
-    GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
-    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
-    GtkWidget *lbl, *combo;
-
-    lbl = gtk_label_new(_("Show interval for"));
-    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
-    combo = gtk_combo_box_text_new();
-    combo_box_append_text(combo, _("actual Y"));
-    combo_box_append_text(combo, _("mean Y"));
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
-    g_signal_connect(G_OBJECT(combo), "changed",
-                     G_CALLBACK(fcast_toggle_scope), optp);
-    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-}
-
 static void toggle_opt_I (GtkToggleButton *b, gretlopt *optp)
 {
     if (gtk_toggle_button_get_active(b)) {
@@ -3321,7 +3292,6 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     GtkWidget *button = NULL;
     struct range_setting *rset;
     int i, radio_val = 0;
-    int log2lev = 0;
     int ret = GRETL_CANCEL;
 
     rset = rset_new(0, NULL, pmod, t1, t2, _("gretl: forecast"),
@@ -3342,17 +3312,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                      G_CALLBACK(sync_pre_forecast), rset);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
-    if (pmod != NULL) {
-	const char *parent = gretl_model_get_data(pmod, "log-parent");
-
-	if (parent != NULL) {
-	    log_or_level_selector(vbox, parent, pmod, optp);
-	    log2lev = 1;
-	}
-    }
-
     if (!dataset_is_time_series(dataset)) {
-	/* only static forecast is available */
+	/* only a static forecast is available */
 	deflt = 2;
 	goto skip_ts_options;
     }
@@ -3360,11 +3321,20 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
 
-    if (flags & FC_INTEGRATE_OK) {
-        ibutton = forecast_integrate_option(pmod, vbox, optp);
-    } else if (pmod != NULL && pmod->ci == OLS) {
-        /* allow the "recursive" option */
-        nopts++;
+    if (pmod != NULL) {
+	if (flags & FC_INTEGRATE_OK) {
+	    ibutton = forecast_integrate_option(pmod, vbox, optp);
+	} else if (flags & FC_EXPON_OK) {
+	    const char *parent = gretl_model_get_data(pmod, "log-parent");
+
+	    if (parent != NULL) {
+		/* offer to exponentiate a log-forecast */
+		log_or_level_selector(vbox, parent, pmod, optp);
+	    }
+	} else if (pmod->ci == OLS) {
+	    /* allow the "recursive" option */
+	    nopts++;
+	}
     }
     if (!(flags & (FC_AUTO_OK | FC_DYNAMIC_OK))) {
         /* default to static forecast */
@@ -3503,7 +3473,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
         if (conf != NULL) {
             dialog_add_confidence_selector(rset->dlg, conf, NULL);
-            if (combo_choice && (flags & FC_MEAN_OK) && !log2lev) {
+#if 0
+            if (combo_choice && (flags & FC_MEAN_OK) && !expon) {
                 confidence_scope_selector(rset->dlg, optp);
                 if (gretl_is_simple_OLS(pmod)) {
                     /* ols: y 0 x */
@@ -3511,6 +3482,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                     combo_choice = 0;
                 }
             }
+#endif
         }
         if (!combo_choice) {
             gtk_widget_set_sensitive(combo, FALSE);

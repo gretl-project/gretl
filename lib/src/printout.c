@@ -3392,7 +3392,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     int obslen, pmax = fr->pmax;
     int errpmax = fr->pmax;
     int quiet = (opt & OPT_Q);
-    int log2lev = (opt & OPT_X);
+    int expon = (opt & OPT_X);
     int ywidth;
     double *maxerr = NULL;
     double conf = 100 * (1 - fr->alpha);
@@ -3450,7 +3450,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
 
     if (do_errs) {
-	if (!log2lev) {
+	if (!expon) {
 	    pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
 	}
 	pprintf(prn, _("        %g%% interval\n"), conf);
@@ -3488,11 +3488,11 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 	    if (na(fr->sderr[t])) {
 		maxerr[t] = NADBL;
 	    } else {
-		if (!log2lev) {
+		if (!expon) {
 		    fcast_print_x(fr->sderr[t], 15, errpmax, prn);
 		}
 		maxerr[t] = tval * fr->sderr[t];
-		if (log2lev) {
+		if (expon) {
 		    lo = exp(log(ft) - maxerr[t]);
 		    hi = exp(log(ft) + maxerr[t]);
 		} else {

@@ -141,6 +141,10 @@ int gretl_moments (int t1, int t2, const double *x,
 		   double *xbar, double *sd,
 		   double *skew, double *kurt, int k);
 
+int series_get_skew_kurt (int t1, int t2, const double *x,
+			  double *skew, double *xkurt,
+			  int *pn);
+
 double *gretl_sorted_series (int v, const DATASET *dset,
 			     gretlopt opt, int *n,
 			     int *err);

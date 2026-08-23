@@ -1918,16 +1918,16 @@ int out_of_sample_info (int add_ok, int *t2)
     return err;
 }
 
-/* Handle any option flags that were added to @gopt (because related to
-   graphing) but are also pertinent to the forecast itself (@fopt).
-   This applies to OPT_I (integration), OPT_M (construct interval for
-   mean) and OPT_X (exponentiate a log forecast).
+/* Handle any option flags that were added to @gopt (because related
+   to graphing) but are also pertinent to the forecast itself (@fopt).
+   This applies to OPT_I (integration) and OPT_X (exponentiate a log
+   forecast).
 */
 
 static void maybe_copy_options (gretlopt *gopt,
                                 gretlopt *fopt)
 {
-    gretlopt to_copy = OPT_I | OPT_M | OPT_X;
+    gretlopt to_copy = OPT_I | OPT_X;
     gretlopt isect = *gopt & to_copy;
 
     if (isect) {
@@ -1938,7 +1938,7 @@ static void maybe_copy_options (gretlopt *gopt,
 void gui_do_forecast (GtkAction *action, gpointer p)
 {
     /* by default: produce a plot, show some pre-forecast data */
-    static gretlopt gopt = OPT_P | OPT_H;
+    gretlopt gopt = OPT_P | OPT_H;
     gretlopt fopt = OPT_NONE;
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
@@ -2061,7 +2061,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 
     if (!err) {
         int ols_special = dataset_is_cross_section(dataset) &&
-	    gretl_is_simple_OLS(pmod);
+	    gretl_is_simple_OLS(pmod) && !(gopt & OPT_X);
         int width = 78;
 
         if (recursive) {
@@ -2091,9 +2091,6 @@ void gui_do_forecast (GtkAction *action, gpointer p)
                                 _("gretl: forecasts"),
                                 FCAST, fr);
     }
-
-    /* OPT_M may have been passed for plotting: don't remember it */
-    gopt &= ~OPT_M;
 }
 
 void do_bootstrap (GtkAction *action, gpointer p)
