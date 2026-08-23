@@ -1132,7 +1132,7 @@ MODEL stepwise_omit (MODEL *pmod,
             do_overall_test(pmod, &model);
         }
         dset->t1 = save_t1;
-        dset->t1 = save_t2;
+        dset->t2 = save_t2;
     }
 
     free(xlist);
