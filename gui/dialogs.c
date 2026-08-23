@@ -3149,59 +3149,6 @@ void dialog_add_iters_spin (GtkWidget *dlg, int *iters)
     }
 }
 
-static void toggle_opt_I (GtkToggleButton *b, gretlopt *optp)
-{
-    if (gtk_toggle_button_get_active(b)) {
-        *optp |= OPT_I;
-    } else {
-        *optp &= ~OPT_I;
-    }
-}
-
-static GtkWidget *forecast_integrate_option (const MODEL *pmod,
-                                             GtkWidget *vbox,
-                                             gretlopt *optp)
-{
-    GtkWidget *button = NULL;
-
-    if (pmod != NULL) {
-        GtkWidget *w, *tbl, *hbox;
-        GSList *group;
-        const char *s;
-        int dv, dvp;
-
-        dv = gretl_model_get_depvar(pmod);
-        is_standard_diff(dv, dataset, &dvp);
-
-        hbox = gtk_hbox_new(FALSE, 5);
-        tbl = gtk_table_new(2, 2, FALSE);
-        gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-
-        w = gtk_label_new(_("Produce forecast for"));
-        gtk_table_attach_defaults(GTK_TABLE(tbl), w, 0, 1, 0, 1);
-
-        s = dataset->varname[dv];
-        w = gtk_radio_button_new_with_label(NULL, s);
-        gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, 0, 1);
-
-        group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
-        s = dataset->varname[dvp];
-        w = gtk_radio_button_new_with_label(group, s);
-        g_signal_connect(G_OBJECT(w), "toggled",
-                         G_CALLBACK(toggle_opt_I), optp);
-        gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, 1, 2);
-        button = w;
-
-        gtk_box_pack_start(GTK_BOX(hbox), tbl, FALSE, FALSE, 5);
-        gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-        vbox_add_hsep(vbox);
-    }
-
-    /* FIXME else */
-
-    return button;
-}
-
 static void flip_sensitivity (GtkToggleButton *b, GtkWidget *w)
 {
     gtk_widget_set_sensitive(w, gtk_toggle_button_get_active(b));
@@ -3236,27 +3183,55 @@ static int fcast_errs_ok (MODEL *pmod)
     }
 }
 
-static void log_or_level_selector (GtkWidget *vbox,
-				   const char *parent,
-				   const MODEL *pmod,
-				   gretlopt *optp)
+static GtkWidget *depvar_form_selector (GtkWidget *vbox,
+					FcastFlags flags,
+					const MODEL *pmod,
+					gretlopt *optp)
 {
     const char *strs[3] = {NULL, NULL, NULL};
-    gretlopt opts[] = {OPT_NONE, OPT_X};
-    combo_opts log_opts = {optp, opts, strs};
-    GtkWidget *hbox, *tmp;
+    gretlopt opts[] = {OPT_NONE, OPT_NONE};
+    combo_opts depvar_opts = {optp, opts, strs};
+    GtkWidget *hbox, *tmp, *depvar_combo;
+    int dv, altv = 0;
 
-    strs[0] = gretl_model_get_depvar_name(pmod, dataset);
-    strs[1] = parent;
+    opts[0] = OPT_NONE;
+    dv = gretl_model_get_depvar(pmod);
+    if (flags & FC_EXPON_OK) {
+	/* log to level option */
+	opts[1] = OPT_X;
+	is_standard_log(dv, dataset, &altv);
+    } else {
+	/* integrating option */
+	opts[1] = OPT_I;
+	is_standard_diff(dv, dataset, &altv);
+    }
+
+    strs[0] = dataset->varname[dv];
+    strs[1] = dataset->varname[altv];
 
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new(_("Variable to forecast"));
+    tmp = gtk_label_new(_("Produce forecast for"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    tmp = gretl_opts_combo(&log_opts, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    depvar_combo = gretl_opts_combo(&depvar_opts, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), depvar_combo, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    return depvar_combo;
+}
+
+static void toggle_ci_choice (GtkComboBox *depvar_combo,
+			      gpointer data)
+{
+    GtkWidget *ci_combo = data;
+
+    if (gtk_combo_box_get_active(depvar_combo) == 1) {
+	gtk_combo_box_set_active(GTK_COMBO_BOX(ci_combo), 1);
+	gtk_widget_set_sensitive(GTK_WIDGET(ci_combo), FALSE);
+    } else {
+	gtk_widget_set_sensitive(GTK_WIDGET(ci_combo), TRUE);
+    }
 }
 
 /* forecast_dialog() is called by gui_do_forecast() in library.c and
@@ -3288,8 +3263,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     GtkWidget *tmp;
     GtkWidget *vbox, *hbox, *bbox;
     GtkWidget *sbutton = NULL;
-    GtkWidget *ibutton = NULL;
     GtkWidget *button = NULL;
+    GtkWidget *depvar_combo = NULL;
     struct range_setting *rset;
     int i, radio_val = 0;
     int ret = GRETL_CANCEL;
@@ -3322,15 +3297,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
 
     if (pmod != NULL) {
-	if (flags & FC_INTEGRATE_OK) {
-	    ibutton = forecast_integrate_option(pmod, vbox, optp);
-	} else if (flags & FC_EXPON_OK) {
-	    const char *parent = gretl_model_get_data(pmod, "log-parent");
-
-	    if (parent != NULL) {
-		/* offer to exponentiate a log-forecast */
-		log_or_level_selector(vbox, parent, pmod, optp);
-	    }
+	if (flags & (FC_INTEGRATE_OK | FC_EXPON_OK)) {
+	    depvar_combo = depvar_form_selector(vbox, flags, pmod, optp);
 	} else if (pmod->ci == OLS) {
 	    /* allow the "recursive" option */
 	    nopts++;
@@ -3392,20 +3360,24 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                           GINT_TO_POINTER(i));
         if (!opt_ok) {
             gtk_widget_set_sensitive(button, FALSE);
+#if 0	    
             if (ibutton != NULL) {
                 /* integrate option makes dynamic option available */
                 g_signal_connect(G_OBJECT(ibutton), "toggled",
                                  G_CALLBACK(flip_sensitivity),
                                  button);
             }
+#endif	    
         }
     }
 
+#if 0    
     if (ibutton != NULL && sbutton != NULL && !(flags & FC_DYNAMIC_OK)) {
         g_signal_connect(G_OBJECT(ibutton), "toggled",
                          G_CALLBACK(snap_to_static),
                          sbutton);
     }
+#endif    
 
     /* pre-forecast obs spin button */
     tmp = gtk_hseparator_new();
@@ -3433,7 +3405,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     if (pmod == NULL || fcast_errs_ok(pmod)) {
 	/* Applicable only if forecast standard errors can be
 	   produced: offer selection of plotting style and
-	   alpha value for confidence intervals
+	   alpha value for confidence intervals.
 	*/
         static const char *strs[] = {
             N_("error bars"), N_("low and high lines"),
@@ -3443,14 +3415,15 @@ int forecast_dialog (int t1min, int t1max, int *t1,
             OPT_NONE, OPT_L, OPT_F
         };
         static combo_opts ci_opts;
-        GtkWidget *combo;
-        gboolean combo_choice = TRUE;
+        GtkWidget *ci_combo;
+        gboolean ci_choice = TRUE;
+	int simple_ols;
         int deflt;
 
         if (*t2 - *t1 < 1) {
             /* one observation: can only do error bar */
             deflt = 0;
-            combo_choice = FALSE;
+            ci_choice = FALSE;
             *optp &= ~OPT_L;
             *optp &= ~OPT_F;
         } else {
@@ -3467,25 +3440,32 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         hbox = gtk_hbox_new(FALSE, 0);
         tmp = gtk_label_new(_("Plot confidence interval using"));
         gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-        combo = gretl_opts_combo(&ci_opts, deflt);
-        gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+        ci_combo = gretl_opts_combo(&ci_opts, deflt);
+        gtk_box_pack_start(GTK_BOX(hbox), ci_combo, FALSE, FALSE, 5);
         gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+
+	simple_ols = gretl_is_simple_OLS(pmod);
+
+	if (depvar_combo != NULL && simple_ols) {
+	    g_signal_connect(G_OBJECT(depvar_combo), "changed",
+			     G_CALLBACK(toggle_ci_choice), ci_combo);
+	}
 
         if (conf != NULL) {
             dialog_add_confidence_selector(rset->dlg, conf, NULL);
 #if 0
-            if (combo_choice && (flags & FC_MEAN_OK) && !expon) {
+            if (ci_choice && (flags & FC_MEAN_OK) && !expon) {
                 confidence_scope_selector(rset->dlg, optp);
                 if (gretl_is_simple_OLS(pmod)) {
                     /* ols: y 0 x */
-                    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 1);
-                    combo_choice = 0;
+                    gtk_combo_box_set_active(GTK_COMBO_BOX(ci_combo), 1);
+                    ci_choice = 0;
                 }
             }
 #endif
         }
-        if (!combo_choice) {
-            gtk_widget_set_sensitive(combo, FALSE);
+        if (!ci_choice) {
+            gtk_widget_set_sensitive(ci_combo, FALSE);
         }
     }
 
