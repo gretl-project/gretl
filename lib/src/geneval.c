@@ -2639,12 +2639,23 @@ static NODE *string_mult (NODE *l, NODE *r, parser *p)
         if (!p->err && k == 0) {
             ret->v.str = gretl_strdup("");
         } else if (!p->err) {
-            int i, n = strlen(s);
+	    size_t n = strlen(s);
+	    gint64 sz64 = k * n + 1;
+	    int i;
 
-            ret->v.str = calloc(k * n + 1, 1);
-            for (i=0; i<k; i++) {
-                strcat(ret->v.str, s);
-            }
+	    if (sz64 > (gint64) (INT_MAX / 2)) {
+		/* avoid potential wrap-around and overflow */
+		p->err = E_INVARG;
+	    } else {
+		ret->v.str = calloc(k * n + 1, 1);
+		if (ret->v.str == NULL) {
+		    p->err = E_ALLOC;
+		} else {
+		    for (i=0; i<k; i++) {
+			strcat(ret->v.str, s);
+		    }
+		}
+	    }
         }
     }
 
