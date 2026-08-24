@@ -338,7 +338,7 @@ static void print_beta_or_alpha (const GRETL_VAR *jvar, int k,
     gretl_matrix *c = (job == V_BETA)? jv->Beta : jv->Alpha;
     int rows = gretl_matrix_rows(c);
     int vnorm = libset_get_int(VECM_NORM);
-    char xstr[32], tmp[NAMETRUNC];
+    char xstr[32], tmp[SHORTLEN];
     int n, namelen = 8;
     int i, j, row;
     double x, y;
@@ -449,7 +449,7 @@ static int print_long_run_matrix (const GRETL_VAR *jvar,
 {
     JohansenInfo *jv = jvar->jinfo;
     gretl_matrix *Pi;
-    char tmp[NAMETRUNC];
+    char tmp[SHORTLEN];
     const char *vname;
     int firstlen = 10;
     int namelen;
