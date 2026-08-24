@@ -3149,20 +3149,6 @@ void dialog_add_iters_spin (GtkWidget *dlg, int *iters)
     }
 }
 
-static void flip_sensitivity (GtkToggleButton *b, GtkWidget *w)
-{
-    gtk_widget_set_sensitive(w, gtk_toggle_button_get_active(b));
-}
-
-static void snap_to_static (GtkToggleButton *b, GtkWidget *w)
-{
-    gboolean s = gtk_toggle_button_get_active(b);
-
-    if (!s) {
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
-    }
-}
-
 /* FIXME: Ideally this conditionality should be centralized in
    lib/src/forecast.c, and worked out in proper detail. Note that we
    don't need to worry here about estimators for which forecasts are not
@@ -3239,6 +3225,28 @@ static GtkWidget *depvar_form_selector (GtkWidget *vbox,
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     return depvar_combo;
+}
+
+static void snap_to_static (GtkComboBox *depvar_combo,
+			    GtkWidget *button)
+{
+    if (gtk_combo_box_get_active(depvar_combo) == 0) {
+	/* possible integrated forecast not selected, so
+	   force-select the "static" button */
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+    }
+}
+
+static void set_dynamic_ok (GtkComboBox *depvar_combo,
+			    GtkWidget *button)
+{
+    if (gtk_combo_box_get_active(depvar_combo) == 1) {
+	/* integrated forecast selected */
+	gtk_widget_set_sensitive(button, TRUE);
+    } else {
+	/* using differenced forecast : FIXME */
+	gtk_widget_set_sensitive(button, FALSE);
+    }
 }
 
 static void set_ci_choice (GtkComboBox *depvar_combo,
@@ -3391,24 +3399,20 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                           GINT_TO_POINTER(i));
         if (!opt_ok) {
             gtk_widget_set_sensitive(button, FALSE);
-#if 0
-            if (ibutton != NULL) {
-                /* integrate option makes dynamic option available */
-                g_signal_connect(G_OBJECT(ibutton), "toggled",
-                                 G_CALLBACK(flip_sensitivity),
-                                 button);
+            if (flags & FC_INTEGRATE_OK) {
+                /* If the integrate option is selected, a dynamic
+		   forecast should be feasible */
+		g_signal_connect(G_OBJECT(depvar_combo), "changed",
+				 G_CALLBACK(set_dynamic_ok), button);
             }
-#endif
         }
     }
 
-#if 0
-    if (ibutton != NULL && sbutton != NULL && !(flags & FC_DYNAMIC_OK)) {
-        g_signal_connect(G_OBJECT(ibutton), "toggled",
-                         G_CALLBACK(snap_to_static),
-                         sbutton);
+    if (flags & FC_INTEGRATE_OK && !(flags & FC_DYNAMIC_OK) &&
+	sbutton != NULL) {
+        g_signal_connect(G_OBJECT(depvar_combo), "changed",
+                         G_CALLBACK(snap_to_static), sbutton);
     }
-#endif
 
     /* pre-forecast obs spin button */
     tmp = gtk_hseparator_new();
