@@ -3183,16 +3183,27 @@ static int fcast_errs_ok (MODEL *pmod)
     }
 }
 
+static void depvar_opt_changed (GtkComboBox *box,
+				gretlopt *optp)
+{
+    gretlopt opt = widget_get_int(box, "opt");
+
+    if (gtk_combo_box_get_active(GTK_COMBO_BOX(box)) > 0) {
+	*optp |= opt;
+    } else {
+	*optp &= ~opt;
+    }
+}
+
 static GtkWidget *depvar_form_selector (GtkWidget *vbox,
 					FcastFlags flags,
 					const MODEL *pmod,
 					gretlopt *optp)
 {
-    const char *strs[3] = {NULL, NULL, NULL};
+    const char *strs[3];
     gretlopt opts[] = {OPT_NONE, OPT_NONE};
-    combo_opts depvar_opts = {optp, opts, strs};
     GtkWidget *hbox, *tmp, *depvar_combo;
-    int dv, altv = 0;
+    int i, dv, altv = 0;
 
     opts[0] = OPT_NONE;
     dv = gretl_model_get_depvar(pmod);
@@ -3208,13 +3219,22 @@ static GtkWidget *depvar_form_selector (GtkWidget *vbox,
 
     strs[0] = dataset->varname[dv];
     strs[1] = dataset->varname[altv];
+    strs[2] = NULL;
 
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Produce forecast for"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    depvar_combo = gretl_opts_combo(&depvar_opts, 0);
+
+    depvar_combo = gtk_combo_box_text_new();
+    for (i=0; strs[i] != NULL; i++) {
+	combo_box_append_text(depvar_combo, strs[i]);
+    }
+    widget_set_int(depvar_combo, "opt", opts[1]);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(depvar_combo), 0);
+    g_signal_connect(G_OBJECT(depvar_combo), "changed",
+		     G_CALLBACK(depvar_opt_changed), optp);
     gtk_box_pack_start(GTK_BOX(hbox), depvar_combo, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
@@ -3287,6 +3307,10 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                      G_CALLBACK(sync_pre_forecast), rset);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 
+    if (flags & FC_EXPON_OK) {
+	depvar_combo = depvar_form_selector(vbox, flags, pmod, optp);
+    }
+
     if (!dataset_is_time_series(dataset)) {
 	/* only a static forecast is available */
 	deflt = 2;
@@ -3296,8 +3320,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
 
-    if (pmod != NULL) {
-	if (flags & (FC_INTEGRATE_OK | FC_EXPON_OK)) {
+    if (pmod != NULL && depvar_combo == NULL) {
+	if (flags & FC_INTEGRATE_OK) {
 	    depvar_combo = depvar_form_selector(vbox, flags, pmod, optp);
 	} else if (pmod->ci == OLS) {
 	    /* allow the "recursive" option */
@@ -3360,24 +3384,24 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                           GINT_TO_POINTER(i));
         if (!opt_ok) {
             gtk_widget_set_sensitive(button, FALSE);
-#if 0	    
+#if 0
             if (ibutton != NULL) {
                 /* integrate option makes dynamic option available */
                 g_signal_connect(G_OBJECT(ibutton), "toggled",
                                  G_CALLBACK(flip_sensitivity),
                                  button);
             }
-#endif	    
+#endif
         }
     }
 
-#if 0    
+#if 0
     if (ibutton != NULL && sbutton != NULL && !(flags & FC_DYNAMIC_OK)) {
         g_signal_connect(G_OBJECT(ibutton), "toggled",
                          G_CALLBACK(snap_to_static),
                          sbutton);
     }
-#endif    
+#endif
 
     /* pre-forecast obs spin button */
     tmp = gtk_hseparator_new();
@@ -3417,7 +3441,6 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         static combo_opts ci_opts;
         GtkWidget *ci_combo;
         gboolean ci_choice = TRUE;
-	int simple_ols;
         int deflt;
 
         if (*t2 - *t1 < 1) {
@@ -3444,12 +3467,13 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         gtk_box_pack_start(GTK_BOX(hbox), ci_combo, FALSE, FALSE, 5);
         gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
-	simple_ols = gretl_is_simple_OLS(pmod);
-
+#if 1
+	int simple_ols = gretl_is_simple_OLS(pmod);
 	if (depvar_combo != NULL && simple_ols) {
 	    g_signal_connect(G_OBJECT(depvar_combo), "changed",
 			     G_CALLBACK(toggle_ci_choice), ci_combo);
 	}
+#endif
 
         if (conf != NULL) {
             dialog_add_confidence_selector(rset->dlg, conf, NULL);
