@@ -6637,7 +6637,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
         }
         if (depvar_present) {
             fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1, \\\n",
-                    fr->depvar);
+                    fr->ylabel);
         }
         fprintf(fp, "'-' using 1:2 title '%s' w lines lt 2\n", _("forecast"));
     } else {
@@ -6647,7 +6647,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
                 dataset_is_time_series(dset) ? "lines" : "points";
 
             fprintf(fp, "'-' using 1:2 title '%s' w %s, \\\n",
-                    fr->depvar, wstr);
+                    fr->ylabel, wstr);
         }
         fprintf(fp, "'-' using 1:2 title '%s' w lines", _("forecast"));
         if (do_errs) {
@@ -6849,7 +6849,7 @@ static void print_x_ordered_data (const double *x, const double *y,
 
 /* Plotting routine for a simple regression where we want to show
    actual and forecast y, plus confidence bands, against x.
-   We use lines to indicate the confidence bands.
+   In this case We use lines to indicate the confidence bands.
 */
 
 int plot_simple_fcast_bands (const MODEL *pmod,
@@ -6912,7 +6912,7 @@ int plot_simple_fcast_bands (const MODEL *pmod,
     gnuplot_missval_string(fp);
 
     fprintf(fp, "set xlabel '%s'\n", dset->varname[xv]);
-    fprintf(fp, "set ylabel '%s'\n", fr->depvar);
+    fprintf(fp, "set ylabel '%s'\n", fr->ylabel);
 
     fputs("set key left top\n", fp);
     fputs("plot \\\n", fp);
@@ -6926,10 +6926,10 @@ int plot_simple_fcast_bands (const MODEL *pmod,
         cistr = g_strdup_printf(_("%g percent interval"), a);
     }
 
-    fputs("'-' using 1:2 notitle w points, \\\n", fp);
+    fprintf(fp, "'-' using 1:2 title '%s' w points, \\\n", _("actual"));
     fprintf(fp, "'-' using 1:2 title '%s' w lp, \\\n", _("fitted"));
     fprintf(fp, "'-' using 1:2 title '%s' w lines, \\\n", cistr);
-    fputs("'-' using 1:2 notitle '%s' w lines lt 3\n", fp);
+    fputs("'-' using 1:2 notitle w lines lt 3\n", fp);
     g_free(cistr);
 
     gretl_push_c_numeric_locale();

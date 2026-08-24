@@ -5110,8 +5110,8 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     if (namelen < 8) {
         namelen = 8;
-    } else if (namelen > NAMETRUNC) {
-        namelen = NAMETRUNC;
+    } else if (namelen > SHORTLEN) {
+        namelen = SHORTLEN;
     }
 
     /* figure appropriate column separation */
@@ -5152,7 +5152,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     k = 0;
     for (i=0; i<nc; i++) {
-        char tmp[NAMETRUNC];
+        char tmp[SHORTLEN];
         int namepad;
 
         if (separator_wanted(i, seppos, &sepstr, pmod)) {

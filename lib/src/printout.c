@@ -1495,38 +1495,12 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
     }
 }
 
-/* Write to @label a string to identify the series subject to forecast
-   in @fr, allowing for the possibility that the forecast was originally
-   for a series in log form and has been exponentiated.
-*/
-
-static void make_depvar_label (char *label,
-			       const FITRESID *fr,
-			       const DATASET *dset)
-{
-    char parent[VNAMELEN] = {0};
-
-    if (fr->opt & OPT_X) {
-	int v = current_series_index(dset, fr->depvar);
-
-	if (v > 0) {
-	    series_is_log(dset, v, parent);
-	}
-    }
-
-    if (*parent != '\0') {
-	maybe_trim_varname(label, parent);
-    } else {
-	maybe_trim_varname(label, fr->depvar);
-    }
-}
-
 static int fit_resid_head (const FITRESID *fr,
 			   const DATASET *dset,
 			   int obslen,
 			   PRN *prn)
 {
-    char label[32];
+    char colhead[32];
     char obs1[OBSLEN], obs2[OBSLEN];
     int kstep = fr->method == FC_KSTEP;
     int ywidth;
@@ -1560,20 +1534,19 @@ static int fit_resid_head (const FITRESID *fr,
     bufspace(obslen, prn);
 
     /* column 1 */
-    make_depvar_label(label, fr, dset);
-    ywidth = strlen(label) + 1;
+    ywidth = strlen(fr->ylabel) + 1;
     if (ywidth < 13) {
 	ywidth = 13;
     }
-    pprintf(prn, "%*s", ywidth, label);
+    pprintf(prn, "%*s", ywidth, fr->ylabel);
 
     /* column 2 */
-    strcpy(label, (kstep)? _("forecast") : _("fitted"));
-    pprintf(prn, "%*s", UTF_WIDTH(label, 13), label);
+    strcpy(colhead, (kstep)? _("forecast") : _("fitted"));
+    pprintf(prn, "%*s", UTF_WIDTH(colhead, 13), colhead);
 
     /* column 3 */
-    strcpy(label, (kstep)? _("error") : _("residual"));
-    pprintf(prn, "%*s", UTF_WIDTH(label, 13), label);
+    strcpy(colhead, (kstep)? _("error") : _("residual"));
+    pprintf(prn, "%*s", UTF_WIDTH(colhead, 13), colhead);
 
     pputs(prn, "\n\n");
 
@@ -2014,7 +1987,7 @@ char *maybe_trim_varname (char *targ, const char *src)
 {
     int srclen = strlen(src);
 
-    if (srclen < NAMETRUNC) {
+    if (srclen < SHORTLEN) {
 	strcpy(targ, src);
     } else {
 	const char *p = strrchr(src, '_');
@@ -2023,14 +1996,14 @@ char *maybe_trim_varname (char *targ, const char *src)
 
 	if (p != NULL && isdigit(*(p+1)) && strlen(p) < 4) {
 	    /* preserve lag identifier? */
-	    int snip = srclen - NAMETRUNC + 2;
+	    int snip = srclen - SHORTLEN + 2;
 	    int fore = p - src;
 
 	    strncat(targ, src, fore - snip);
 	    strcat(targ, "~");
 	    strcat(targ, p);
 	} else {
-	    strncat(targ, src, NAMETRUNC - 2);
+	    strncat(targ, src, SHORTLEN - 2);
 	    strcat(targ, "~");
 	}
     }
@@ -2052,8 +2025,8 @@ int max_namelen_in_list (const int *list, const DATASET *dset)
 	}
     }
 
-    if (n >= NAMETRUNC) {
-	n = NAMETRUNC - 1;
+    if (n >= SHORTLEN) {
+	n = SHORTLEN - 1;
     }
 
     return n;
@@ -3313,7 +3286,6 @@ int csv_print_forecast (const FITRESID *fr, const DATASET *dset,
     int do_errs = (fr->sderr != NULL);
     double conf = 100 * (1 - fr->alpha);
     double cval = 0;
-    char label[32];
     char d = ',';
     int t, err = 0;
 
@@ -3333,8 +3305,7 @@ int csv_print_forecast (const FITRESID *fr, const DATASET *dset,
     }
 
     pputs(prn, "\"obs\",");
-    make_depvar_label(label, fr, dset);
-    pprintf(prn, "\"%s\"", label);
+    pprintf(prn, "\"%s\"", fr->ylabel);
     pprintf(prn, "%c\"%s\"", d, _("prediction"));
     if (do_errs) {
 	pprintf(prn, "%c\"%s\"", d, _("std. error"));
@@ -3397,7 +3368,6 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     double *maxerr = NULL;
     double conf = 100 * (1 - fr->alpha);
     double tval = 0;
-    char label[32];
     int t, err = 0;
 
     if (opt & OPT_T) {
@@ -3440,12 +3410,11 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 
     bufspace(obslen + 1, prn);
 
-    make_depvar_label(label, fr, dset);
-    ywidth = strlen(label) + 1;
+    ywidth = strlen(fr->ylabel) + 1;
     if (ywidth < 12) {
 	ywidth = 12;
     }
-    pprintf(prn, "%*s", ywidth, label);
+    pprintf(prn, "%*s", ywidth, fr->ylabel);
 
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
 

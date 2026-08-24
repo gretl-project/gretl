@@ -5274,7 +5274,7 @@ void print_summary_single (const Summary *s,
 static void summary_print_varname (const char *src,
 				   int len, PRN *prn)
 {
-    char vname[NAMETRUNC];
+    char vname[SHORTLEN];
 
     maybe_trim_varname(vname, src);
     pprintf(prn, "%-*s", len, vname);

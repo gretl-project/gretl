@@ -193,6 +193,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
     f->sderr = NULL;
 
     *f->depvar = '\0';
+    *f->ylabel = '\0';
 
     f->actual = malloc(n * sizeof *f->actual);
     f->fitted = malloc(n * sizeof *f->fitted);
@@ -2883,6 +2884,30 @@ static double log2lev (FITRESID *fr, int t)
     }
 }
 
+/* Write to @label (which should be of length SHORTLEN or greater) a
+   string to identify the series subject to forecast in @fr, allowing
+   for the possibility that the forecast was originally for a series in
+   log form and has been exponentiated.
+*/
+
+static void fr_set_ylabel (FITRESID *fr, const DATASET *dset)
+{
+    if (fr->opt & OPT_X) {
+	char parent[VNAMELEN] = {0};
+	int v = current_series_index(dset, fr->depvar);
+
+	if (v > 0) {
+	    series_is_log(dset, v, parent);
+	}
+	if (*parent != '\0') {
+	    maybe_trim_varname(fr->ylabel, parent);
+	    return;
+	}
+    }
+
+    maybe_trim_varname(fr->ylabel, fr->depvar);
+}
+
 /* Driver for various functions that compute forecasts for different
    sorts of models.
 */
@@ -3067,6 +3092,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     } else {
 	fit_resid_set_dec_places(fr);
 	strcpy(fr->depvar, dset->varname[yno]);
+	fr_set_ylabel(fr, dset);
 	fr->df = pmod->dfd;
     }
 

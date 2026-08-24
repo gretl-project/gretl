@@ -20,7 +20,7 @@
 /* printout.h for gretl */
 
 #define GRETL_MP_DIGITS 12
-#define NAMETRUNC 18
+#define SHORTLEN 18
 
 void session_time (PRN *prn);
 
