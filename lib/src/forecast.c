@@ -186,6 +186,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
     f->sigma = NADBL;
     f->alpha = 0.05;
     f->a0 = NADBL;
+    f->a0meth = 0;
 
     f->actual = NULL;
     f->fitted = NULL;
@@ -2858,12 +2859,14 @@ static int add_expon_factor (FITRESID *fr, MODEL *pmod)
 	return 1;
     } else if (normpv > 0.05) {
 	/* normality not rejected */
+	fr->a0meth = 1;
 	fr->a0 = exp(pmod->sigma * pmod->sigma / 2.0);
     } else {
 	/* Duan's smearing estimator */
 	double sum = 0.0;
 	int t;
 
+	fr->a0meth = 2;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!na(pmod->uhat[t])) {
 		sum += exp(pmod->uhat[t]);

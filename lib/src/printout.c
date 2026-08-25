@@ -3402,6 +3402,12 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 	}
     }
 
+    if (fr->a0meth == 1) {
+	pprintf(prn, " (%s)\n", _("Normal correction"));
+    } else if (fr->a0meth == 2) {
+	pprintf(prn, " (%s)\n", _("Smearing correction"));
+    }
+
     obslen = max_obs_marker_length(dset);
 
     if (!quiet) {
