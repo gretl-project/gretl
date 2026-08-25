@@ -159,7 +159,17 @@ int *gretl_list_new (int nterms)
 	return NULL;
     }
 
-    list = malloc((nterms + 1) * sizeof *list);
+    /* Guard against overflow in the size calculation below: @nterms
+       may originate from attacker-controlled input (e.g. a braced
+       list range such as "{0-1200000000}" parsed elsewhere), so
+       verify that (nterms + 1) * sizeof *list cannot wrap a size_t
+       before handing it to malloc().
+    */
+    if ((size_t) nterms > SIZE_MAX / sizeof *list - 1) {
+	return NULL;
+    }
+
+    list = malloc(((size_t) nterms + 1) * sizeof *list);
 
     if (list != NULL) {
 	list[0] = nterms;
@@ -508,8 +518,8 @@ int *gretl_list_from_string (const char *str, int *err)
     int *list;
     int n = 0;
 
-    if (str == NULL) {
-	*err = E_DATA;
+    if (str == NULL || *str == '\0') {
+	*err = E_INVARG;
 	return NULL;
     }
 
@@ -926,6 +936,24 @@ char *gretl_list_to_compact_string (const int *list,
 	    vprev = vi;
 	}
     }
+
+    if (v0 < 0) {
+	/* degenerate case: no "real" (non-zero) series ID was found
+	   in the list, e.g. it consists entirely of duplicated
+	   zeros (the constant). The "almost complete", ".." and
+	   numeric-ID branches below all assume that at least one
+	   real series ID is present, so fall back to the plain,
+	   uncompacted rendering instead.
+	*/
+	buf = gretl_list_to_string(list, dset, err);
+	if (*err) {
+	    return buf;
+	} else if (argstyle) {
+	    return gretl_charsub(g_strchug(buf), ' ', ',');
+	} else {
+	    return g_strchug(buf);
+	}
+    }    
 
     if (cpos > 0) {
 	/* delete the constant */

@@ -79,6 +79,42 @@ static int transcribe_gsf_data (GsfInput *input, GsfOutput *output)
     return 0;
 }
 
+/* Reject zip/tree entry names that could be used to escape the
+   intended extraction directory ("zip-slip"): absolute paths,
+   any ".." path component, or a Windows drive-relative path such
+   as "C:foo" (no separator required after the colon).
+*/
+
+static int gsf_entry_name_is_unsafe (const char *name)
+{
+    const char *p;
+
+    if (name == NULL || *name == '\0') {
+	return 1;
+    }
+
+    /* absolute path, Unix- or Windows-style */
+    if (name[0] == '/' || name[0] == '\\') {
+	return 1;
+    }
+
+    /* Windows drive-relative, e.g. "C:foo" or "C:\foo" */
+    if (name[1] == ':') {
+	return 1;
+    }
+
+    /* any ".." path component */
+    for (p=name; *p != '\0'; p++) {
+	if (p[0] == '.' && p[1] == '.' &&
+	    (p == name || p[-1] == '/' || p[-1] == '\\') &&
+	    (p[2] == '\0' || p[2] == '/' || p[2] == '\\')) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int clone_gsf_tree (GsfInput *input, GsfOutput *output)
 {
     int err = 0;
@@ -103,8 +139,14 @@ static int clone_gsf_tree (GsfInput *input, GsfOutput *output)
 		err = 1;
 		break;
 	    }
-
 	    name = gsf_infile_name_by_index(in, i);
+	    if (gsf_entry_name_is_unsafe(name)) {
+		gretl_errmsg_sprintf(_("Invalid archive entry name '%s'"),
+				     name != NULL ? name : "");
+		g_object_unref(G_OBJECT(src));
+		err = 1;
+		break;
+	    }
 	    is_dir = gsf_is_dir(src);
 #if ZDEBUG
 	    fprintf(stderr, "clone_gsf_tree: i = %d (%s, %s)\n", i, name,
@@ -606,6 +648,11 @@ int package_make_zipfile (const char *gfnname,
 
     if (!has_suffix(gfnname, ".gfn")) {
 	gretl_errmsg_set(_("Input must have extension \".gfn\""));
+	return E_DATA;
+    }
+
+    if (strlen(gfnname) >= sizeof pkgbase) {
+	gretl_errmsg_set(_("Path name is too long"));
 	return E_DATA;
     }
 

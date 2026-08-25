@@ -274,13 +274,13 @@ RCVAR rc_vars[] = {
       LISTSET, sizeof graph_theme, TAB_PLOTS, NULL },
 #if !defined(G_OS_WIN32) || !defined(PKGBUILD)
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot,
-      MACHSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
+      MACHSET | BROWSER, sizeof paths.gnuplot, TAB_PROGS, NULL },
 #endif
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand,
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef G_OS_WIN32
     { "Rbin", N_("Path to R.exe"), NULL, paths.rbinpath,
-      MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
+      MACHSET | BROWSER, sizeof paths.rbinpath, TAB_PROGS, NULL },
 #endif
     { "latex", N_("Command to compile TeX files"), NULL, latex,
       MACHSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
@@ -2838,8 +2838,7 @@ int read_win32_config (int debug, int ignore_rc)
 	if ((rcvar->flags & MACHSET) && strcmp(rcvar->key, "gretldir")) {
 	    regerr = read_reg_val(HKEY_LOCAL_MACHINE,
 				  get_reg_base(rcvar->key),
-				  rcvar->key,
-				  value);
+				  rcvar->key, value, sizeof value);
 	}
 
 	if (debug && *value != '\0') {

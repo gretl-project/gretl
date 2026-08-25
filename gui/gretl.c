@@ -166,8 +166,8 @@ windata_t *mdata;
 DATASET *dataset;
 MODEL *model;
 
-char datafile[MAXLEN];
-char scriptfile[MAXLEN];
+char datafile[FILENAME_MAX];
+char scriptfile[FILENAME_MAX];
 
 int data_status, orig_vars;
 float gui_scale;
@@ -196,15 +196,15 @@ char viewps[MAXSTR] = "gv";
 char Rcommand[MAXSTR] = "xterm -e R";
 #endif
 
-static char tryfile[MAXLEN];
+static char tryfile[MAXSTR];
 
 void set_tryfile (const char *fname)
 {
     tryfile[0] = '\0';
     if (!strncmp(fname, "file://", 7)) {
-        strncat(tryfile, fname + 7, MAXLEN - 1);
+        strncat(tryfile, fname + 7, sizeof tryfile - 1);
     } else {
-        strncat(tryfile, fname, MAXLEN - 1);
+        strncat(tryfile, fname, sizeof tryfile - 1);
     }
 }
 
@@ -411,7 +411,7 @@ static void real_nls_init (void)
 
 static void real_nls_init (void)
 {
-    char localedir[MAXSTR];
+    char localedir[FILENAME_MAX];
 
     gretl_build_path(localedir, gretl_home(), "locale", NULL);
     record_win32_locale(setlocale(LC_ALL, ""));
@@ -1884,16 +1884,6 @@ GtkActionEntry main_entries[] = {
     { "DBNbrowse", NULL, N_("Browse..."), NULL, NULL, G_CALLBACK(show_files) },
     { "DBNseries", NULL, N_("Specific series..."), NULL, NULL, G_CALLBACK(dbnomics_specific_series) },
 
-    { "Packages", NULL, N_("_Function packages"), NULL, NULL, NULL },
-    { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
-    { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
-    { "InstallPkg", NULL, N_("Install local package..."), NULL, NULL, G_CALLBACK(install_pkg_callback) },
-    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_gfn_callback) },
-    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
-    { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
-    { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
-    { "AddonResources", NULL, N_("_Resource from addon"), NULL, NULL, NULL },
-
     { "Quit", GTK_STOCK_QUIT, NULL, NULL, NULL,  G_CALLBACK(menu_exit_check)},
 
     /* Tools */
@@ -2120,6 +2110,17 @@ GtkActionEntry main_entries[] = {
     { "gmm", NULL, N_("_GMM"), NULL, NULL, G_CALLBACK(gretl_callback) },
     { "system", NULL, N_("_Simultaneous equations"), NULL, NULL, G_CALLBACK(gretl_callback) },
     { "KFgui", NULL, N_("State space model"), NULL, NULL, G_CALLBACK(gfn_menu_callback) },
+
+    /* Packages */
+    { "Packages", NULL, N_("_Packages"), NULL, NULL, NULL },
+    { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
+    { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
+    { "InstallPkg", NULL, N_("Install from file..."), NULL, NULL, G_CALLBACK(install_pkg_callback) },
+    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_gfn_callback) },
+    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
+    { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
+    { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
+    { "AddonResources", NULL, N_("_Resource from addon"), NULL, NULL, NULL },
 
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },

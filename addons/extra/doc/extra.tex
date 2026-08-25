@@ -44,7 +44,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{September 2024}
+\date{August 2026}
 
 \author{The \noun{gretl} team\thanks{Currently coordinated by Sven
 Schreiber.}}
@@ -90,6 +90,12 @@ matrix with an NA value.
 
 \emph{Nota bene}: The recursive algorithm used may be a little slow if
 the number of elements of $x$ is large.
+
+\subsection{convex\_hull}
+\ArgRet{\texttt{const matrix P}}{matrix} This function finds the
+convex hull for a cloud of 2-dimensional points, contained in the
+2-column matrix $P$, using the so-called ``Jarvis march'' algorithm.
+
 
 \subsection{drawbootres}
 

@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -129,7 +129,7 @@ static int get_db_series_names (const char *idxname, char ***pnames,
 	    }
 	    j++;
 	}
-    }    
+    }
 
     fclose(fp);
 
@@ -146,11 +146,11 @@ static int get_db_series_names (const char *idxname, char ***pnames,
 /* Given a list of variables to be appended to a gretl database,
    check that there is not already a variable in the database
    with the same name as any of those in the list.  Return 0
-   if no duplicates, -1 on failure, or the positive number 
+   if no duplicates, -1 on failure, or the positive number
    of duplicated variables.
 */
 
-static int 
+static int
 check_for_db_duplicates (const int *list, const DATASET *dset,
 			 const char *idxname, int *err)
 {
@@ -158,7 +158,7 @@ check_for_db_duplicates (const int *list, const DATASET *dset,
     int i, j, v, oldv = 0;
     int ret = 0;
 
-#if DB_DEBUG   
+#if DB_DEBUG
     printlist(list, "check_for_db_duplicates: input save list");
 #endif
 
@@ -183,7 +183,7 @@ check_for_db_duplicates (const int *list, const DATASET *dset,
 }
 
 static int output_db_var (int v, const DATASET *dset,
-			  FILE *fidx, FILE *fbin) 
+			  FILE *fidx, FILE *fbin)
 {
     char stobs[OBSLEN], endobs[OBSLEN];
     const char *vlabel;
@@ -250,7 +250,7 @@ static int output_db_var (int v, const DATASET *dset,
     return 0;
 }
 
-static int write_old_bin_chunk (long offset, int nvals, 
+static int write_old_bin_chunk (long offset, int nvals,
 				FILE *fin, FILE *fout)
 {
     int i, err = 0;
@@ -261,13 +261,13 @@ static int write_old_bin_chunk (long offset, int nvals,
     for (i=0; i<nvals && !err; i++) {
 	if (fread(&val, sizeof val, 1, fin) != 1) {
 	    err = 1;
-	} 
+	}
 	if (!err) {
 	    if (fwrite(&val, sizeof val, 1, fout) != 1) {
 		err = 1;
 	    }
 	}
-    } 
+    }
 
     return err;
 }
@@ -286,14 +286,14 @@ static void list_delete_element (int *list, int m)
 
 /* writing to a previously existing database, replacing any existing
    variables with the same name as "new" ones, but otherwise
-   preserving the existing content 
+   preserving the existing content
 */
 
-static int 
-append_db_data_with_replacement (const char *idxname, 
+static int
+append_db_data_with_replacement (const char *idxname,
 				 const char *binname,
-				 int *list, 
-				 const DATASET *dset) 
+				 int *list,
+				 const DATASET *dset)
 {
     FILE *fidx = NULL, *fbin = NULL;
     char **oldnames = NULL;
@@ -311,7 +311,7 @@ append_db_data_with_replacement (const char *idxname,
     if (mask == NULL) {
 	err = E_ALLOC;
 	goto bailout;
-    }	
+    }
 
     newlist = gretl_list_copy(list);
     if (newlist == NULL) {
@@ -329,7 +329,7 @@ append_db_data_with_replacement (const char *idxname,
 		list_delete_element(newlist, v);
 #if DB_DEBUG
 		fprintf(stderr, "match: var %d and old db var %d\n", v, j);
-#endif    
+#endif
 		mask[j] = 1;
 		nrep++;
 		break;
@@ -338,20 +338,25 @@ append_db_data_with_replacement (const char *idxname,
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "write_db_data_with_replacement: replicated vars = %d\n", 
+    fprintf(stderr, "write_db_data_with_replacement: replicated vars = %d\n",
 	    nrep);
     printlist(list, "full var list");
     printlist(newlist, "new var list");
-#endif    
+#endif
 
     /* handle replacement variables first */
     if (nrep > 0) {
 	char idxcpy[FILENAME_MAX];
 	char bincpy[FILENAME_MAX];
 
+	if (strlen(idxname) + 4 >= FILENAME_MAX ||
+	    strlen(binname) + 4 >= FILENAME_MAX) {
+	    err = E_DATA;
+	    goto bailout;
+	}
+
 	strcpy(idxcpy, idxname);
 	strcat(idxcpy, ".cpy");
-
 	strcpy(bincpy, binname);
 	strcat(bincpy, ".cpy");
 
@@ -368,7 +373,7 @@ append_db_data_with_replacement (const char *idxname,
 	    int nobs;
 
 	    fp = fq = NULL;
-	    
+
 	    fp = gretl_fopen(idxcpy, "r");
 	    if (fp == NULL) {
 		err = E_FOPEN;
@@ -393,14 +398,14 @@ append_db_data_with_replacement (const char *idxname,
 		if (fbin == NULL) {
 		    err = E_FOPEN;
 		}
-	    }	    
+	    }
 
 	    i = 0;
 	    while (fgets(line1, sizeof line1, fp) && !err) {
 		if (*line1 == '#' || string_is_blank(line1)) {
 		    if (*line1 == '#') {
 			fputs(line1, fidx);
-		    }	
+		    }
 		    continue;
 		}
 		if (fgets(line2, sizeof line2, fp) == NULL) {
@@ -476,7 +481,7 @@ append_db_data_with_replacement (const char *idxname,
     return err;
 }
 
-static int 
+static int
 open_db_files (const char *fname, char *idxname, char *binname,
 	       FILE **fidx, FILE **fbin, int *append)
 {
@@ -485,6 +490,17 @@ open_db_files (const char *fname, char *idxname, char *binname,
     char imode[3] = "w";
     char bmode[3] = "wb";
     char *p;
+
+    /* Guard against overflow of the fixed-size @base buffer (and of
+       @idxname/@binname, which are copied from it with added
+       suffixes): reject filenames that would not leave room for the
+       longest suffix we append below (".idx"/".bin").
+    */
+    if (strlen(fname) >= sizeof base - 4) {
+	gretl_errmsg_sprintf(_("Filename too long, %d bytes"),
+			     (int) strlen(fname));
+	return 1;
+    }
 
     strcpy(base, fname);
     p = strrchr(base, '.');
@@ -513,7 +529,7 @@ open_db_files (const char *fname, char *idxname, char *binname,
 
     strcpy(binname, base);
     strcat(binname, ".bin");
-    
+
     *fbin = gretl_fopen(binname, bmode);
     if (*fbin == NULL) {
 	gretl_errmsg_sprintf(_("Couldn't open %s for writing"), binname);
@@ -524,15 +540,15 @@ open_db_files (const char *fname, char *idxname, char *binname,
 	return 1;
     }
 
-    fprintf(stderr, "Opened database index '%s' in mode '%s'\n", 
+    fprintf(stderr, "Opened database index '%s' in mode '%s'\n",
 	    idxname, imode);
-    fprintf(stderr, "Opened database binary '%s' in mode '%s'\n", 
+    fprintf(stderr, "Opened database binary '%s' in mode '%s'\n",
 	    binname, bmode);
 
     return 0;
 }
 
-/* screen out any empty series, after discounting missing 
+/* screen out any empty series, after discounting missing
    obsservations
 */
 
@@ -594,7 +610,7 @@ static int *make_db_save_list (const int *list, const DATASET *dset,
  */
 
 int write_db_data (const char *fname, const int *list, gretlopt opt,
-		   const DATASET *dset) 
+		   const DATASET *dset)
 {
     char idxname[FILENAME_MAX];
     char binname[FILENAME_MAX];
@@ -620,7 +636,7 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
 	return E_PDWRONG;
     }
 
-    if (open_db_files(fname, idxname, binname, 
+    if (open_db_files(fname, idxname, binname,
 		      &fidx, &fbin, &append)) {
 	return 1;
     }
@@ -661,8 +677,8 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
 		goto bailout;
 	    }
 	    mylist = dlist;
-	} 
-    } 
+	}
+    }
 
     if (!append) {
 	const char *s = get_optval_string(STORE, OPT_E);

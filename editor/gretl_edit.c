@@ -76,7 +76,7 @@ static GOptionEntry options[] = {
 windata_t *mdata;
 static GtkWidget *editor;
 static GtkWidget *notebook;
-char scriptfile[MAXLEN];
+char scriptfile[MAXSTR];
 float gui_scale;
 
 /* defaults for some options */
@@ -165,7 +165,7 @@ static void real_nls_init (void)
 
 static void real_nls_init (void)
 {
-    char localedir[MAXSTR];
+    char localedir[FILENAME_MAX];
 
     gretl_build_path(localedir, gretl_home(), "locale", NULL);
     record_win32_locale(setlocale(LC_ALL, ""));

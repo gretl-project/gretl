@@ -6,12 +6,10 @@ list L = 1 .. 4
 matrix X = {L}
 bundle b = kmeans(X, 3, _(init="hw", verbosity=2))
 series sphat = b.cluster_id
-xtab species sphat
+kmeans_crosstab(sphat, species)
 
 # experiment using species as initial clusters
 printf "\n"
-matrix C0 = zeros(3, 4)
-C0[1,] = meanc(X[1:50,])
-C0[2,] = meanc(X[50:100,])
-C0[3,] = meanc(X[51:150,])
-bundle b = kmeans(X, C0, _(verbosity=2))
+matrix C0 = meanc(X[1:50,]) | meanc(X[51:100,]) | meanc(X[101:150,])
+print C0
+bundle b = kmeans(X, C0, _(verbosity=2, init="pc"))

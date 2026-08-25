@@ -2237,7 +2237,7 @@ static gboolean insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
 static void open_script_link (GtkTextTag *tag)
 {
-    char fullname[MAXLEN] = {0};
+    char fullname[FILENAME_MAX] = {0};
     gchar *fname = NULL;
     int err;
 

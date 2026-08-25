@@ -2619,7 +2619,7 @@ int check_set_R_home (void)
 {
     const char *path = gretl_rlib_path();
     const char *orig = path;
-    char tmp[MAX_PATH];
+    char tmp[FILENAME_MAX];
     int err = 0;
 
     if (RHOME[0] != '\0') {
@@ -2636,10 +2636,10 @@ int check_set_R_home (void)
 	err = 0;
     }
 
-    err = R_home_from_registry(tmp);
+    err = R_home_from_registry(tmp, sizeof tmp);
     if (!err) {
 	strcpy(RHOME, tmp);
-	err = win32_R_path(tmp, RLIB);
+	err = win32_R_path(tmp, RLIB, sizeof tmp);
 	path = tmp;
     }
 
@@ -2737,6 +2737,14 @@ int check_set_R_home (void)
 #endif
 	lp = g_strdup_printf("%s/lib/%s", Rhome, libname);
 	err = (lstat(lp, &buf) != 0);
+	if (!err && strlen(Rhome) >= sizeof RHOME) {
+	    /* R_HOME is too long to store safely in our fixed-size
+	       buffer: treat it as unusable rather than overflow RHOME
+	    */
+	    fprintf(stderr, "R_HOME value is too long (%d bytes), ignoring\n",
+		    (int) strlen(Rhome));
+	    err = 1;
+	}
 	if (err) {
 	    /* needs correcting */
 	    do_setenv = 1;

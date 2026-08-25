@@ -9,8 +9,8 @@ include PairPlot.gfn
 EXAMPLE = 1
 
 if EXAMPLE == 1
-    open credscore.gdt --quiet
-    list x = Age Income Avgexp
+    open iris.gdt --quiet
+    list x = 1..4
     scalar n_clusters = 3
 
 elif EXAMPLE == 2
@@ -21,14 +21,10 @@ elif EXAMPLE == 2
     n_clusters = 2
 
 elif EXAMPLE == 3
-    open iris.gdt --quiet
-    list x = 1..4
-    scalar n_clusters = 3
-
-elif EXAMPLE == 4
     open denmark --quiet
     list x = LRM LRY
     x = diff(x)
+    smpl +1 ;
     n_clusters = 2
 endif
 
@@ -38,8 +34,7 @@ smpl x --no-missing
 # ============================
 bundle Model = kmeans_fit(x, n_clusters)
 print Model
-kmeans_summary(Model)  # Print summary of estimation
-
+kmeans_summary(Model) # Print summary of estimation
 
 # Silhouette samples
 # ==================
@@ -53,7 +48,7 @@ print sil_samples -o --range=1:15
 # Silhouette plot
 kmeans_sil_plot(Model, x, _(height=750))
 
-print Model.centroids                   # print centroids
+print Model.centroids
 series cluster_id = Model.cluster_id
 # Look for eventual gaps for observations for which some of the input variables
 # are missing
@@ -61,19 +56,18 @@ smpl full
 print cluster_id -o --range=1:15
 
 
-# Scree plot using standard values and distance metrics
-# Evaluate "inertia" for 1 to 4 clusters
+# Scree plot
+# Evaluate within-cluster distance for k = 1 to 5 clusters
 # ==========
 smpl x --no-missing
-matrix scree = kmeans_scree(x, 4)
-kmeans_screeplot(scree, , _(fontsize=14))
-
+matrix scree = kmeans_scree(x, 5)
+kmeans_screeplot(scree, , _(fontsize=12))
 
 # Predict
 # ==========
 smpl x --no-missing
 series fc_cluster = kmeans_predict(x, Model)  # predict cluster belonging
-series cluster_id = Model.cluster_id          # must equal "fc_cluster"
+series cluster_id = Model.cluster_id          # should equal "fc_cluster"
 series distances = Model.distances
 print distances cluster_id fc_cluster -o --range=1:15
 
@@ -91,9 +85,10 @@ kmeans_plot(x, Model)
 # ==================
 # Pass some user-defined parameter values, too
 bundle opt = _(max_iter = 100, n_draws = 10,
-               distance_type = "manhattan", initializer = "pca")
+               distance_type = "manhattan", initializer = "pc")
 bundle Model = kmeans_fit(x, n_clusters, opt)
 
 # Plot distinct clusters and tweak the plot
-scalar Model.transparency_level = 120  # this is an option supported by PairPlot
+# transparency_level is an option supported by PairPlot
+scalar Model.transparency_level = 120
 kmeans_plot(x, Model)

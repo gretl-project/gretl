@@ -1223,19 +1223,28 @@ int gretl_xml_child_get_string (xmlNodePtr node, xmlDocPtr doc,
     return ret;
 }
 
-
 #define SMALLVAL(x) (x > -1e-40 && x < 1e-40)
+
+/* Sanity ceiling on the element count read from a <count>/<size> XML
+   attribute in a data/session/function-package file. This bounds the
+   allocation requested so that a crafted file cannot force a
+   multi-gigabyte (or, on ILP32 builds, size_t-overflowing) malloc
+   just by declaring an implausible count.
+*/
+#define XML_ARRAY_MAXLEN 100000000
 
 static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 				  GretlType type,
 				  int *nelem, int *err)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "count");
+    char *test = NULL;
     int *ivals = NULL;
     double *xvals = NULL;
     cmplx *cvals = NULL;
     void *ptr = NULL;
     int nread = 0;
+    long ln;
     int i, n = 0;
 
     *nelem = 0;
@@ -1243,14 +1252,21 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
     if (tmp == NULL) {
 	tmp = xmlGetProp(node, (XUC) "size");
     }
-
     if (tmp == NULL) {
 	fprintf(stderr, "gretl_xml_get_array: didn't find count\n");
 	*err = E_DATA;
 	return NULL;
     }
 
-    n = atoi((const char *) tmp);
+    errno = 0;
+    ln = strtol((const char *) tmp, &test, 10);
+    if (errno || test == (const char *) tmp || ln <= 0 ||
+        ln > XML_ARRAY_MAXLEN) {
+        n = 0;
+    } else {
+        n = (int) ln;
+    }
+
     free(tmp);
 
     if (n <= 0) {
@@ -1850,10 +1866,20 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask)
 	    err = 1;
 	} else {
 	    char *s = (char *) tmp;
+	    size_t rem = strlen(s);
 
 	    for (i=0; i<len; i++) {
+		if (rem == 0) {
+		    /* declared "length" exceeds the actual number of
+		       tokens present in the text content: bail out
+		       rather than reading past the string buffer
+		    */
+		    err = 1;
+		    break;
+		}
 		mask[i] = atoi(s);
 		s += 2; /* skip to next int */
+		rem = (rem > 2)? (rem - 2) : 0;
 	    }
 	    free(tmp);
 	}
@@ -2938,6 +2964,14 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
     i = 1;
     while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (XUC) "variable")) {
+            if (i >= dset->v) {
+		/* there are more <variable> elements than specified
+		   by @count: stop before writing out of bounds
+                */
+		gretl_errmsg_set(_("Number of variables does not match declaration"));
+		err = E_DATA;
+		break;
+	    }
 	    tmp = xmlGetProp(cur, (XUC) "name");
 	    if (tmp != NULL) {
 		if (strcmp((char *) tmp, "catch") && strcmp((char *) tmp, "const")) {

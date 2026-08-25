@@ -36,6 +36,7 @@ struct FITRESID_ {
     double *sderr;  /* array of forecast standard errors (or NULL) */
     double sigma;   /* standard error of regression */
     double alpha;   /* for confidence intervals */
+    double a0;      /* correction factor for log-to-level forecasts */
     int pmax;       /* if positive, suggested number of decimal places
                        for use in printing */
     int df;         /* degrees of freedom for model */

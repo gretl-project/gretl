@@ -54,28 +54,31 @@
 # define PLUGIN_SFX "gretl-gtk2"
 #endif
 
+/* local alias for ease of typing */
+#define PLEN FILENAME_MAX
+
 struct INTERNAL_PATHS {
-    char gretldir[MAXLEN];
-    char dotdir[MAXLEN];
-    char workdir[MAXLEN];
-    char gnuplot[MAXLEN];
-    char plotfile[MAXLEN];
-    char plugpath[MAXLEN];
-    char binbase[MAXLEN+4];
-    char x12a[MAXLEN];
-    char x12adir[MAXLEN];
-    char tramo[MAXLEN];
-    char tramodir[MAXLEN];
-    char rbinpath[MAXLEN];
-    char rlibpath[MAXLEN];
-    char oxlpath[MAXLEN];
-    char octpath[MAXLEN];
-    char statapath[MAXLEN];
-    char pypath[MAXLEN];
-    char jlpath[MAXLEN];
-    char lppath[MAXLEN];
-    char mpiexec[MAXLEN];
-    char mpi_hosts[MAXLEN];
+    char gretldir[PLEN];
+    char dotdir[PLEN];
+    char workdir[PLEN];
+    char gnuplot[PLEN];
+    char plotfile[PLEN];
+    char plugpath[PLEN];
+    char binbase[PLEN+4];
+    char x12a[PLEN];
+    char x12adir[PLEN];
+    char tramo[PLEN];
+    char tramodir[PLEN];
+    char rbinpath[PLEN];
+    char rlibpath[PLEN];
+    char oxlpath[PLEN];
+    char octpath[PLEN];
+    char statapath[PLEN];
+    char pypath[PLEN];
+    char jlpath[PLEN];
+    char lppath[PLEN];
+    char mpiexec[PLEN];
+    char mpi_hosts[PLEN];
     char pngfont[128];
 };
 
@@ -125,7 +128,7 @@ static const char *helpfiles[] = {
 
 const char *helpfile_path (int id, int cli, int en)
 {
-    static char hpath[MAXLEN+19];
+    static char hpath[PLEN+19];
     int i = -1;
 
     *hpath = '\0';
@@ -827,25 +830,25 @@ int gretl_is_xml_file (const char *fname)
  * Creates a path string by prepending @path, plus an appropriate
  * separator if needed, to @file.  The result is written back into
  * @file: this variable is assumed to have storage for at least
- * #MAXLEN characters.
+ * #FILENAME_MAX (libgretl.h) characters.
  *
  * Returns: 0 on success, or 1 if the final path string would
- * exceed #MAXLEN characters (including nul-termination).
+ * exceed #FILENAME_MAX characters (including nul-termination).
  */
 
 int gretl_path_prepend (char *file, const char *path)
 {
     int n = strlen(file) + strlen(path) + 1;
-    char temp[MAXLEN];
+    char temp[PLEN];
 
-    if (n > MAXLEN) {
+    if (n > PLEN) {
         return 1;
     }
 
     strcpy(temp, path);
     n = strlen(temp);
 
-    if (temp[n-1] != SLASH && n < MAXLEN - 1) {
+    if (temp[n-1] != SLASH && n < PLEN - 1) {
         strcat(temp, SLASHSTR);
     }
 
@@ -864,22 +867,28 @@ enum {
 static int try_open_file (char *targ, const char *finddir,
                           const gchar *dname, int flags)
 {
-    char tmp[MAXLEN];
+    char tmp[PLEN];
     int err, found = 0;
 
-    strcpy(tmp, finddir);
-    strcat(tmp, dname);
-    strcat(tmp, SLASHSTR);
-    strcat(tmp, targ);
+    g_strlcpy(tmp, finddir, sizeof tmp);
+    g_strlcat(tmp, dname, sizeof tmp);
+    g_strlcat(tmp, SLASHSTR, sizeof tmp);
+    g_strlcat(tmp, targ, sizeof tmp);
 
     err = gretl_test_fopen(tmp, "r");
 
-    if (err && (flags & ADD_GDT)) {
+    /* Only attempt to append a suffix (".gdt", or ".gdtb" via the
+       extra "b") if there is guaranteed room left in @tmp: this
+       guards against maybe_add_suffix()'s own unchecked strcat()
+       running past the end of the fixed-size buffer when @tmp is
+       already (close to) full.
+    */
+    if (err && (flags & ADD_GDT) && strlen(tmp) + 5 < sizeof tmp) {
         if (maybe_add_suffix(tmp, ".gdt")) {
             err = gretl_test_fopen(tmp, "r");
             if (err) {
                 /* try .gdtb also */
-                strcat(tmp, "b");
+                g_strlcat(tmp, "b", sizeof tmp);
                 err = gretl_test_fopen(tmp, "r");
             }
         }
@@ -895,12 +904,13 @@ static int try_open_file (char *targ, const char *finddir,
 
 static void make_finddir (char *targ, const char *src)
 {
-    int n = strlen(src);
+    int n;
 
-    strcpy(targ, src);
+    g_strlcpy(targ, src, PLEN);
+    n = strlen(targ);
 
-    if (targ[n-1] != SLASH) {
-        strcat(targ, SLASHSTR);
+    if (n > 0 && targ[n-1] != SLASH) {
+        g_strlcat(targ, SLASHSTR, PLEN);
     }
 }
 
@@ -909,11 +919,11 @@ static int got_subdir (const char *topdir, const gchar *dname)
     int ret = 0;
 
     if (strcmp(dname, ".") && strcmp(dname, "..")) {
-        char tmp[MAXLEN];
+        char tmp[PLEN];
         GDir *sub;
 
-        strcpy(tmp, topdir);
-        strcat(tmp, dname);
+        g_strlcpy(tmp, topdir, sizeof tmp);
+        g_strlcat(tmp, dname, sizeof tmp);
         sub = gretl_opendir(tmp);
         if (sub != NULL) {
             g_dir_close(sub);
@@ -932,7 +942,7 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
 {
     GDir *dir;
     const gchar *dname;
-    char finddir[MAXLEN];
+    char finddir[PLEN];
     int found = 0;
 
     /* make find target */
@@ -953,7 +963,7 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
 
 static char *search_dir (char *fname, const char *topdir, int flags)
 {
-    char orig[MAXLEN];
+    char orig[PLEN];
     int err;
 
     strcpy(orig, fname);
@@ -1011,7 +1021,7 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
     char **dirs = NULL;
     const char *subdir;
     const char *wd;
-    char dirname[MAXLEN];
+    char dirname[PLEN];
 
     *n_dirs = 0;
 
@@ -1340,8 +1350,8 @@ static void print_script_dirs (void)
  * gretl_addpath:
  * @fname: on input, the initially given file name; on output
  * a path may be prepended and/or a suffix may be appended.
- * This variable must be of size at least #MAXLEN bytes to allow
- * for possible additions.
+ * This variable must be of size at least #FILENAME_MAX bytes
+ * (as defined in libgretl.h) to allow for possible additions.
  * @script: if non-zero, assume the file we're looking for
  * is a hansl script.
  *
@@ -1357,12 +1367,13 @@ static void print_script_dirs (void)
 
 char *gretl_addpath (char *fname, int script)
 {
-    char orig[MAXLEN];
+    char orig[FILENAME_MAX];
     char *test;
     int found = 0;
     int err;
 
-    if (fname == NULL || strlen(fname) >= MAXLEN) {
+    if (fname == NULL || *fname == '\0' ||
+	strlen(fname) >= sizeof orig) {
 	return NULL;
     }
 
@@ -1412,7 +1423,7 @@ char *gretl_addpath (char *fname, int script)
 
     if (!found) {
         const char *gpath = gretl_home();
-        char trydir[MAXLEN];
+        char trydir[PLEN];
 
         strcpy(fname, orig);
 
@@ -1566,10 +1577,10 @@ static int substitute_homedir (char *fname)
         int len = strlen(fname);
         int homelen = strlen(homedir);
 
-        if (len + homelen > MAXLEN) {
+        if (len + homelen > PLEN) {
             err = 1;
         } else {
-            char tmp[MAXLEN];
+            char tmp[PLEN];
 
             strcpy(tmp, homedir);
             strcat(tmp, fname + 1);
@@ -1588,16 +1599,24 @@ static int get_gfn_special (char *fname)
 	/* no extra path elements */
         char *p, pkgname[64];
         char *pkgpath;
+        size_t len;
 
-        *pkgname = '\0';
-        strncat(pkgname, fname, 63);
-        p = strstr(pkgname, ".gfn");
-        *p = '\0';
-        pkgpath = gretl_function_package_get_path(pkgname, PKG_ALL);
-        if (pkgpath != NULL) {
-            strcpy(fname, pkgpath);
-            free(pkgpath);
-            ok = 1;
+        /* Locate the ".gfn" suffix in the full, untruncated @fname
+           first: searching for it only after copying into the
+           fixed-size @pkgname buffer risks chopping the suffix off
+           for names longer than the buffer, which would leave us
+           with nothing to find and a NULL to dereference below.
+        */
+        p = strstr(fname, ".gfn");
+        if (p != NULL && (len = p - fname) < sizeof pkgname) {
+            memcpy(pkgname, fname, len);
+            pkgname[len] = '\0';
+            pkgpath = gretl_function_package_get_path(pkgname, PKG_ALL);
+            if (pkgpath != NULL) {
+                strcpy(fname, pkgpath);
+                free(pkgpath);
+                ok = 1;
+            }
         }
     }
 
@@ -1607,7 +1626,7 @@ static int get_gfn_special (char *fname)
 /**
  * get_full_filename:
  * @fname: input filename.
- * @fullname: filename to be filled out: must be at least #MAXLEN bytes.
+ * @fullname: filename to be filled out: must be at least #FILENAME_MAX bytes.
  * @opt: if OPT_S, treat as a script; if OPT_I we're responding
  * to the "include" command; if OPT_W, pass @fname through as is.
  *
@@ -1630,7 +1649,7 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
         return E_DATA;
     }
 
-    strncat(fullname, fname, MAXLEN - 1);
+    strncat(fullname, fname, PLEN - 1);
 
     if (opt & OPT_W) {
         /* remote database: just use original name */
@@ -1657,7 +1676,7 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
 	    } else {
 		/* on failure, try ignoring @ipath? */
 		*fullname = '\0';
-		strncat(fullname, fname, MAXLEN - 1);
+		strncat(fullname, fname, PLEN - 1);
 	    }
         }
     }
@@ -1764,7 +1783,7 @@ static void set_gretl_binbase (const char *path)
 
 static int set_extra_dot_paths (void)
 {
-    char dirname[MAXLEN+128];
+    char dirname[PLEN+128];
     size_t n;
     int err = 0;
 
@@ -1843,11 +1862,11 @@ static void set_builtin_path_strings (int update)
     }
 
     if (*paths.tramo != '\0') {
-        char s[MAXLEN];
+        char s[PLEN];
         int n;
 
         *s = '\0';
-        strncat(s, paths.tramo, MAXLEN - 1);
+        strncat(s, paths.tramo, PLEN - 1);
         n = strlen(s);
 #ifdef WIN32
         if (n >= 9 && !strcmp(s + n - 9, "tramo.exe")) {
@@ -1871,7 +1890,7 @@ const char *gretl_home (void)
         char *chk = getenv("GRETL_HOME");
 
         if (chk != NULL) {
-            strncat(paths.gretldir, chk, MAXLEN-2);
+            strncat(paths.gretldir, chk, PLEN-2);
         }
     }
 
@@ -1884,7 +1903,7 @@ const char *gretl_home (void)
 
 const char *gretl_bindir (void)
 {
-    static char bindir[MAXLEN];
+    static char bindir[PLEN];
 
     if (*bindir == '\0') {
         char *p;
@@ -1918,7 +1937,7 @@ const char *gretl_plugin_path (void)
 
         if (epath != NULL) {
             *paths.plugpath = '\0';
-            strncat(paths.plugpath, epath, MAXLEN - 2);
+            strncat(paths.plugpath, epath, PLEN - 2);
             slash_terminate(paths.plugpath);
         }
 
@@ -1962,7 +1981,7 @@ const char *gretl_workdir (void)
 
 static const char *win32_default_workdir (void)
 {
-    static char default_workdir[MAXLEN];
+    static char default_workdir[PLEN];
     char *base = mydocs_path();
     const char *retval = NULL;
 
@@ -1986,7 +2005,7 @@ static const char *win32_default_workdir (void)
 
 static const char *regular_default_workdir (void)
 {
-    static char default_workdir[MAXLEN];
+    static char default_workdir[PLEN];
     char *home = getenv("HOME");
     const char *retval = NULL;
 
@@ -2172,7 +2191,7 @@ const char *gretl_rbin_path (void)
     static int checked;
 
     if (!checked) {
-        win32_R_path(paths.rbinpath, REXE);
+        win32_R_path(paths.rbinpath, REXE, sizeof paths.rbinpath);
         checked = 1;
     }
 #endif
@@ -2190,7 +2209,7 @@ const char *gretl_rlib_path (void)
     static int checked;
 
     if (!checked) {
-	win32_R_path(paths.rlibpath, RLIB);
+	win32_R_path(paths.rlibpath, RLIB, sizeof paths.rlibpath);
         checked = 1;
     }
 #endif
@@ -2320,7 +2339,7 @@ void win32_set_gretldir (void)
     pkgdir = g_win32_get_package_installation_directory_of_module(NULL);
 
     if (pkgdir != NULL) {
-        strncat(paths.gretldir, pkgdir, MAXLEN - 1);
+        strncat(paths.gretldir, pkgdir, PLEN - 1);
         slash_terminate(paths.gretldir);
         g_free(pkgdir);
     }
@@ -2328,10 +2347,11 @@ void win32_set_gretldir (void)
 # ifdef PKGBUILD
     if (*paths.gretldir == '\0') {
         /* try the registry? */
-        char tmp[MAXLEN];
+        char tmp[PLEN];
         int err;
 
-        err = read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", tmp);
+        err = read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir",
+			   tmp, sizeof tmp);
         if (!err) {
             strcpy(paths.gretldir, tmp);
             slash_terminate(paths.gretldir);
@@ -2372,7 +2392,7 @@ static void check_gretldir (char *config_path)
     FILE *fp;
     int gotit = 0;
 
-    sprintf(testname, "%sCOPYING", paths.gretldir);
+    gretl_build_path(testname, paths.gretldir, "COPYING", NULL);
     fp = gretl_fopen(testname, "r");
 
     if (fp != NULL) {
@@ -2491,7 +2511,7 @@ void set_gretl_plugin_path (const char *path)
 {
     if (path != NULL) {
         *paths.plugpath = '\0';
-        strncat(paths.plugpath, path, MAXLEN - 2);
+        strncat(paths.plugpath, path, PLEN - 2);
         slash_terminate(paths.plugpath);
     }
 }
@@ -2532,7 +2552,7 @@ int gretl_set_path_by_name (const char *name, const char *path)
 
     if (targ != NULL) {
         *targ = '\0';
-        strncat(targ, path, MAXLEN - 2);
+        strncat(targ, path, PLEN - 2);
         if (builtin) {
             gretl_insert_builtin_string(name, targ);
         }
@@ -2704,9 +2724,8 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt)
 
 #ifdef WIN32
 
-/* MS Windows variants of defaults for any paths that
-   we need that were not found in the Windows registry
-   (or network config file).
+/* MS Windows variants of defaults for any paths that we need that were
+   not found in the Windows registry (or network config file).
 */
 
 static void load_default_workdir (char *targ)
@@ -2741,9 +2760,9 @@ static void load_default_path (char *targ)
     } else if (targ == paths.tramo) {
         sprintf(targ, "%s\\tramo\\tramo.exe", progfiles);
     } else if (targ == paths.rbinpath) {
-        win32_R_path(targ, REXE);
+        win32_R_path(targ, REXE, PLEN);
     } else if (targ == paths.rlibpath) {
-        win32_R_path(targ, RLIB);
+        win32_R_path(targ, RLIB, PLEN);
     } else if (targ == paths.oxlpath) {
         sprintf(targ, "%s\\OxMetrics8\\Ox\\bin\\oxl.exe", progfiles);
     } else if (targ == paths.octpath) {
@@ -2803,7 +2822,7 @@ static void load_default_workdir (char *targ)
         if (home != NULL) {
             strcpy(targ, home);
         } else {
-            gretl_path_compose(targ, MAXLEN, paths.gretldir, "user/");
+            gretl_path_compose(targ, PLEN, paths.gretldir, "user/");
         }
     }
 }
@@ -3287,7 +3306,7 @@ static void handle_use_cwd (int use_cwd, ConfigPaths *cpaths)
 
         if (cwd != NULL) {
             *cpaths->workdir = '\0';
-            strncat(cpaths->workdir, cwd, MAXLEN - 2);
+            strncat(cpaths->workdir, cwd, PLEN - 2);
             slash_terminate(cpaths->workdir);
             g_free(cwd);
         }
@@ -3303,7 +3322,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
                                  char *dbproxy, int *use_proxy,
                                  int *updated, gchar **gptheme)
 {
-    char line[MAXLEN], key[32], val[MAXLEN];
+    char line[PLEN], key[32], val[PLEN];
 
     while (fgets(line, sizeof line, fp) != NULL) {
         if (*line == '#') {
@@ -3318,17 +3337,20 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
         }
         *val = '\0';
         /* get the string that follows " = " */
-        strncat(val, line + strlen(key) + 3, MAXLEN - 1);
+        strncat(val, line + strlen(key) + 3, PLEN - 1);
         gretl_strstrip(val);
         if (!strcmp(key, "gretldir")) {
-            strncat(cpaths->gretldir, val, MAXLEN - 1);
+            *cpaths->gretldir = '\0';
+            strncat(cpaths->gretldir, val, PLEN - 1);
 #ifndef WIN32
         } else if (!strcmp(key, "gnuplot")) {
-            strncat(cpaths->gnuplot, val, MAXLEN - 1);
+            *cpaths->gnuplot = '\0';
+            strncat(cpaths->gnuplot, val, PLEN - 1);
 #endif
         } else if (!strcmp(key, "workdir") || !strcmp(key, "userdir")) {
             /* "userdir" is a legacy thing */
-            strncat(cpaths->workdir, val, MAXLEN - 1);
+            *cpaths->workdir = '\0';
+            strncat(cpaths->workdir, val, PLEN - 1);
         } else if (!strcmp(key, "no_dotdir")) {
             cpaths->no_dotdir = rc_bool(val);
         } else if (!strcmp(key, "shellok")) {
@@ -3342,33 +3364,46 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
         } else if (!strcmp(key, "lcnumeric")) {
 	    set_lcnumeric(LANG_AUTO, rc_bool(val));
         } else if (!strcmp(key, "dbproxy")) {
+            *dbproxy = '\0';
             strncat(dbproxy, val, PROXLEN - 1);
         } else if (!strcmp(key, "useproxy")) {
             *use_proxy = rc_bool(val);
         } else if (!strcmp(key, "x12a")) {
-            strncat(cpaths->x12a, val, MAXLEN - 1);
+            *cpaths->x12a = '\0';
+            strncat(cpaths->x12a, val, PLEN - 1);
         } else if (!strcmp(key, "tramo")) {
-            strncat(cpaths->tramo, val, MAXLEN - 1);
+            *cpaths->tramo = '\0';
+            strncat(cpaths->tramo, val, PLEN - 1);
         } else if (!strcmp(key, "Rbin")) {
-            strncat(cpaths->rbinpath, val, MAXLEN - 1);
+            *cpaths->rbinpath = '\0';
+            strncat(cpaths->rbinpath, val, PLEN - 1);
         } else if (!strcmp(key, "Rlib")) {
-            strncat(cpaths->rlibpath, val, MAXLEN - 1);
+            *cpaths->rlibpath = '\0';
+            strncat(cpaths->rlibpath, val, PLEN - 1);
         } else if (!strcmp(key, "ox")) {
-            strncat(cpaths->oxlpath, val, MAXLEN - 1);
+            *cpaths->oxlpath = '\0';
+            strncat(cpaths->oxlpath, val, PLEN - 1);
         } else if (!strcmp(key, "octave")) {
-            strncat(cpaths->octpath, val, MAXLEN - 1);
+            *cpaths->octpath = '\0';
+            strncat(cpaths->octpath, val, PLEN - 1);
         } else if (!strcmp(key, "stata")) {
-            strncat(cpaths->statapath, val, MAXLEN - 1);
+            *cpaths->statapath = '\0';
+            strncat(cpaths->statapath, val, PLEN - 1);
         } else if (!strcmp(key, "python")) {
-            strncat(cpaths->pypath, val, MAXLEN - 1);
+            *cpaths->pypath = '\0';
+            strncat(cpaths->pypath, val, PLEN - 1);
         } else if (!strcmp(key, "julia")) {
-            strncat(cpaths->jlpath, val, MAXLEN - 1);
+            *cpaths->jlpath = '\0';
+            strncat(cpaths->jlpath, val, PLEN - 1);
 	} else if (!strcmp(key, "lpsolve")) {
-	    strncat(cpaths->lppath, val, MAXLEN - 1);
+	    *cpaths->lppath = '\0';
+	    strncat(cpaths->lppath, val, PLEN - 1);
         } else if (!strcmp(key, "mpiexec")) {
-            strncat(cpaths->mpiexec, val, MAXLEN - 1);
+            *cpaths->mpiexec = '\0';
+            strncat(cpaths->mpiexec, val, PLEN - 1);
         } else if (!strcmp(key, "mpi_hosts")) {
-            strncat(cpaths->mpi_hosts, val, MAXLEN - 1);
+            *cpaths->mpi_hosts = '\0';
+            strncat(cpaths->mpi_hosts, val, PLEN - 1);
         } else if (!strcmp(key, "mpi_pref")) {
 #ifdef HAVE_MPI
             set_mpi_variant(val);
@@ -3376,6 +3411,7 @@ void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
             ;
 #endif
         } else if (!strcmp(key, "Png_font")) {
+            *cpaths->pngfont = '\0';
             strncat(cpaths->pngfont, val, 128 - 1);
         } else if (!strcmp(key, "Gp_extra_colors")) {
             rc_set_gp_extra_colors(val);
@@ -3620,13 +3656,37 @@ int gretl_path_compose (char *targ, int len,
     }
 }
 
-/* Code borrowed from GLib (gfileutils.c) and adapted to
-   write to an input char * (@targ) instead of returning
-   a newly allocated string. The code is also somewhat
-   simplified by the assumption that if the platform is
-   not MS Windows the directory separator is always '/':
-   this is a safe assumption for the platforms supported
-   by gretl.
+static int strcat_bounded (char *dest, const char *src)
+{
+    size_t len = strlen(dest) + strlen(src);
+
+    if (len >= FILENAME_MAX) {
+	fprintf(stderr, "strcat_bounded: FILENAME_MAX would be exceeded\n");
+	return 1;
+    } else {
+	strcat(dest, src);
+	return 0;
+    }
+}
+
+static int strncat_bounded (char *dest, const char *src, size_t n)
+{
+    size_t len = strlen(dest) + n;
+
+    if (len >= FILENAME_MAX) {
+	fprintf(stderr, "strncat_bounded: FILENAME_MAX would be exceeded\n");
+	return 1;
+    } else {
+	strncat(dest, src, n);
+	return 0;
+    }
+}
+
+/* Code borrowed from GLib (gfileutils.c) and adapted to write to an
+   input char * (@targ) instead of returning a newly allocated
+   string. The code is also somewhat simplified by the assumption that
+   if the platform is not MS Windows the directory separator is always
+   '/': this is a safe assumption for the platforms supported by gretl.
 */
 
 #ifdef G_OS_WIN32
@@ -3641,10 +3701,11 @@ static void real_build_path_win32 (char *targ,
     const gchar *next_element;
     const gchar *last_trailing = NULL;
     gchar current_separator = '\\';
+    int err = 0;
 
     next_element = first_element;
 
-    while (1) {
+    while (!err) {
         const gchar *element;
         const gchar *start;
         const gchar *end;
@@ -3687,28 +3748,32 @@ static void real_build_path_win32 (char *targ,
             if (last_trailing <= start) {
                 single_element = element;
             }
-            strncat(targ, element, start - element);
+	    err = strncat_bounded(targ, element, start - element);
             have_leading = TRUE;
         } else {
             single_element = NULL;
         }
 
-        if (end == start) {
+	if (err) {
+	    break;
+	} else if (end == start) {
             continue;
         }
 
         if (!is_first) {
-            strncat(targ, &current_separator, 1);
+            err = strncat_bounded(targ, &current_separator, 1);
         }
-        strncat(targ, start, end - start);
+	if (!err) {
+	    err = strncat_bounded(targ, start, end - start);
+	}
         is_first = FALSE;
     }
 
     if (single_element) {
         *targ = '\0';
-        strcat(targ, single_element);
+        strcat_bounded(targ, single_element);
     } else if (last_trailing) {
-        strcat(targ, last_trailing);
+        strcat_bounded(targ, last_trailing);
     }
 }
 
@@ -3723,10 +3788,11 @@ static void real_build_path (char *targ,
     const gchar *single_element = NULL;
     const gchar *next_element;
     const gchar *last_trailing = NULL;
+    int err = 0;
 
     next_element = first_element;
 
-    while (1) {
+    while (!err) {
         const gchar *element;
         const gchar *start;
         const gchar *end;
@@ -3748,7 +3814,7 @@ static void real_build_path (char *targ,
             start++;
         }
 
-        end = start + strlen (start);
+        end = start + strlen(start);
         while (end >= start + 1 && end[-1] == '/') {
             end--;
         }
@@ -3761,25 +3827,27 @@ static void real_build_path (char *targ,
         if (!have_leading) {
             /* If the leading and trailing separator strings are in the
                same element and overlap, the result is exactly that
-               element
+               element.
             */
             if (last_trailing <= start) {
                 single_element = element;
             }
-            strncat(targ, element, start - element);
+            err = strncat_bounded(targ, element, start - element);
             have_leading = TRUE;
         } else {
             single_element = NULL;
         }
 
-        if (end == start) {
+	if (err) {
+	    break;
+	} else if (end == start) {
             continue;
         }
 
         if (!is_first) {
-            strcat(targ, "/");
+            err = strcat_bounded(targ, "/");
         }
-        strncat(targ, start, end - start);
+        err = strncat_bounded(targ, start, end - start);
         is_first = FALSE;
     }
 
@@ -3795,12 +3863,14 @@ static void real_build_path (char *targ,
 
 /**
  * gretl_build_path:
- * @targ: target string to write to (must be pre-allocated).
+ * @targ: target string to write to. Must be pre-allocated on
+ * the stack or heap with size >= FILENAME_MAX as defined
+ * in libgretl.h.
  * @first_element: first component of path.
  *
  * Writes to @targ a path composed of @first_element
- * plus any additional string arguments supplied before
- * a terminating NULL. An appropriate separator is inserted
+ * plus any additional string arguments supplied before the
+ * required terminating NULL. An appropriate separator is inserted
  * between the components of the path.
  *
  * Returns: the target string, @targ.

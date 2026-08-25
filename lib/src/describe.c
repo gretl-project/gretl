@@ -1419,10 +1419,9 @@ double doornik_chisq (double skew, double xkurt, int n)
     return x2;
 }
 
-static int
-series_get_moments (int t1, int t2, const double *x,
-		    double *skew, double *xkurt,
-		    int *pn)
+int series_get_skew_kurt (int t1, int t2, const double *x,
+			  double *skew, double *xkurt,
+			  int *pn)
 {
     double dev, s[4] = {0.0};
     int t, n = 0;
@@ -1869,8 +1868,10 @@ FreqDist *get_string_freq (int v, const DATASET *dset,
     for (t=dset->t1; t<=dset->t2; t++) {
 	if (!na(x[t])) {
 	    i = x[t] - 1;
-	    ss[i].n += 1;
-	    n++;
+	    if (i >= 0 && i < ns) {
+		ss[i].n += 1;
+		n++;
+	    }
 	}
     }
 
@@ -2725,15 +2726,23 @@ static int xtab_get_data (Xtab *tab, int v, int cols,
 	    if (S != NULL) {
 		for (i=0; i<nv; i++) {
 		    k = u->val[i] - 1;
+		    if (k < 0 || k >= ns) {
+			/* the series' numeric codes are inconsistent
+			   with its attached string table
+			*/
+			err = E_DATA;
+			break;
+		    }
 		    S[i] = gretl_strdup(S0[k]);
 		}
 	    }
 	} else {
 	    S = strings_array_dup(S0, ns);
 	}
-	if (S == NULL) {
+	if (!err && S == NULL) {
 	    err = E_ALLOC;
-	} else {
+	}
+	if (!err) {
 	    *ttarg = 1;
 	    *itarg = nv;
 	    *Starg = S;
@@ -2752,7 +2761,7 @@ static int xtab_get_data (Xtab *tab, int v, int cols,
 static int xtab_row_match (Xtab *tab, int i, const char *s, double x)
 {
     if (tab->rstrs) {
-	return strcmp(s, tab->Sr[i]) == 0;
+	return s != NULL && strcmp(s, tab->Sr[i]) == 0;
     } else {
 	return x == tab->rval[i];
     }
@@ -2761,7 +2770,7 @@ static int xtab_row_match (Xtab *tab, int i, const char *s, double x)
 static int xtab_col_match (Xtab *tab, int j, const char *s, double x)
 {
     if (tab->cstrs) {
-	return strcmp(s, tab->Sc[j]) == 0;
+	return s != NULL && strcmp(s, tab->Sc[j]) == 0;
     } else {
 	return x == tab->cval[j];
     }
@@ -8943,7 +8952,7 @@ static int skew_kurt_test (const double *x, int t1, int t2,
 
     *test = *pval = NADBL;
 
-    err = series_get_moments(t1, t2, x, &skew, &xkurt, &n);
+    err = series_get_skew_kurt(t1, t2, x, &skew, &xkurt, &n);
 
     if (!err) {
 	if (opt & OPT_J) {

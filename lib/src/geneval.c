@@ -2639,12 +2639,23 @@ static NODE *string_mult (NODE *l, NODE *r, parser *p)
         if (!p->err && k == 0) {
             ret->v.str = gretl_strdup("");
         } else if (!p->err) {
-            int i, n = strlen(s);
+	    size_t n = strlen(s);
+	    gint64 sz64 = k * n + 1;
+	    int i;
 
-            ret->v.str = calloc(k * n + 1, 1);
-            for (i=0; i<k; i++) {
-                strcat(ret->v.str, s);
-            }
+	    if (sz64 > (gint64) (INT_MAX / 2)) {
+		/* avoid potential wrap-around and overflow */
+		p->err = E_INVARG;
+	    } else {
+		ret->v.str = calloc(k * n + 1, 1);
+		if (ret->v.str == NULL) {
+		    p->err = E_ALLOC;
+		} else {
+		    for (i=0; i<k; i++) {
+			strcat(ret->v.str, s);
+		    }
+		}
+	    }
         }
     }
 
@@ -15910,6 +15921,18 @@ static NODE *eval_nargs_func (NODE *t, NODE *n, parser *p)
             }
         }
         if (!p->err) {
+            /* @t < 0 or @T exceeding the size of @U or @X would make
+               felogit_rec_loglik() read out of bounds; @t > @T is a
+               legitimate case handled internally (returns a zero
+               vector) so it is not rejected here. Added from Claude
+	       2026-08-20.
+            */
+            if (U == NULL || X == NULL || t < 0 ||
+                T > gretl_vector_get_length(U) || T > X->rows) {
+                p->err = E_INVARG;
+            }
+        }
+	if (!p->err) {
             ret = aux_matrix_node(p);
             ret->v.m = felogit_rec_loglik(t, T, U, X);
         }

@@ -92,67 +92,72 @@ static void win32_record_last_error (void)
 /* returns 0 on success */
 
 int read_reg_val (HKEY tree, const char *base,
-		  char *keyname, char *keyval)
+		  char *keyname, char *keyval,
+		  size_t keyval_len)
 {
     unsigned long datalen = MAXLEN;
     gchar *regpath;
-    LSTATUS ret;
+    LSTATUS ls;
     HKEY regkey;
-    int enc_err = 0;
+    int err = 0;
 
     regpath = g_strdup_printf("Software\\%s", base);
 
-    ret = RegOpenKeyEx(tree,      /* handle to open key */
-		       regpath,   /* subkey name */
-		       0,         /* reserved */
-		       KEY_READ,  /* access mask */
-		       &regkey    /* key handle */
-		       );
+    ls = RegOpenKeyEx(tree,      /* handle to open key */
+		      regpath,   /* subkey name */
+		      0,         /* reserved */
+		      KEY_READ,  /* access mask */
+		      &regkey    /* key handle */
+		      );
 
-    if (ret == ERROR_SUCCESS) {
+    if (ls == ERROR_SUCCESS) {
 	gunichar2 *wkeyname;
 
 	wkeyname = g_utf8_to_utf16(keyname, -1, NULL, NULL, NULL);
 	if (wkeyname == NULL) {
-	    enc_err = 1;
+	    err = 1;
 	} else {
 	    gunichar2 wval[MAXLEN/2] = {0};
 
-	    ret = RegQueryValueExW(regkey,
-				   wkeyname,
-				   NULL,
-				   NULL,
-				   (LPBYTE) wval,
-				   &datalen);
+	    ls = RegQueryValueExW(regkey,
+				  wkeyname,
+				  NULL,
+				  NULL,
+				  (LPBYTE) wval,
+				  &datalen);
+	    if (ls == ERROR_SUCCESS) {
+		gchar *result = g_utf16_to_utf8(wval, -1, NULL, NULL, NULL);
 
-	    if (ret == ERROR_SUCCESS) {
-		gchar *result;
-
-		result = g_utf16_to_utf8(wval, -1, NULL, NULL, NULL);
 		if (result != NULL) {
-		    strcpy(keyval, result);
+		    if (g_strlcpy(keyval, result, keyval_len) >= keyval_len) {
+			/* registry value too long for destination buffer:
+			   treat as failure rather than risk overflow or
+			   silently returning a truncated value
+			*/
+			err = 1;
+		    }
 		    g_free(result);
 		} else {
-		    enc_err = 1;
+		    err = 1;
 		}
 	    }
 	    g_free(wkeyname);
 	}
-
 	RegCloseKey(regkey);
+    } else {
+	err = 1;
     }
 
     g_free(regpath);
 
-    if (ret != ERROR_SUCCESS || enc_err) {
-	if (ret != ERROR_SUCCESS) {
+    if (err) {
+	if (ls != ERROR_SUCCESS) {
 	    win32_print_last_error();
 	}
 	*keyval = '\0';
-	return 1;
     }
 
-    return 0;
+    return err;
 }
 
 static char netfile[FILENAME_MAX];
@@ -249,15 +254,15 @@ void win32_cli_read_rc (void)
     */
     if (cpaths.gretldir[0] == '\0') {
 	read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir",
-		     cpaths.gretldir);
+		     cpaths.gretldir, sizeof cpaths.gretldir);
     }
     if (cpaths.x12a[0] == '\0') {
 	read_reg_val(HKEY_LOCAL_MACHINE, "x12arima", "x12a",
-		     cpaths.x12a);
+		     cpaths.x12a, sizeof cpaths.x12a);
     }
     if (cpaths.tramo[0] == '\0') {
 	read_reg_val(HKEY_LOCAL_MACHINE, "tramo", "tramo",
-		     cpaths.tramo);
+		     cpaths.tramo, sizeof cpaths.tramo);
     }
 
     gretl_set_paths(&cpaths);
@@ -1375,59 +1380,61 @@ char *slash_convert (char *str, int which)
     return str;
 }
 
-static int try_for_R_path (HKEY tree, char *s)
+static int try_for_R_path (HKEY tree, char *s, size_t slen)
 {
     int err = 0;
 
-    err = read_reg_val(tree, "R-core\\R", "InstallPath", s);
+    err = read_reg_val(tree, "R-core\\R", "InstallPath", s, slen);
 
     if (err) {
 	char version[8], path[32];
 
 	/* new-style: path contains R version number */
 	err = read_reg_val(tree, "R-core\\R", "Current Version",
-			   version);
+			   version, sizeof version);
 	if (!err) {
 	    sprintf(path, "R-core\\R\\%s", version);
-	    err = read_reg_val(tree, path, "InstallPath", s);
+	    err = read_reg_val(tree, path, "InstallPath", s, slen);
 	}
     }
 
     if (err) {
 	/* did this variant work at one time? */
-	err = read_reg_val(tree, "R", "InstallPath", s);
+	err = read_reg_val(tree, "R", "InstallPath", s, slen);
     }
 
     return err;
 }
 
 /* See if we can get the R installation path from the Windows
-   registry. This is not a sure thing, since recording the path
-   in the registry on installation is optional.
+   registry. This is not a sure thing, since recording the path in the
+   registry on installation is optional.
 
-   To complicate matters, the path within the registry where
-   we might find this information has not remained constant
-   across R versions.
+   To complicate matters, the path within the registry where we might
+   find this information has not remained constant across R versions.
 */
 
 static char Rbase[MAXLEN];
 
-int R_home_from_registry (char *s)
+int R_home_from_registry (char *s, size_t slen)
 {
     int err = 0;
 
     if (Rbase[0] != '\0') {
-	strcpy(s, Rbase);
+	if (g_strlcpy(s, Rbase, slen) >= slen) {
+	    *s = '\0';
+	    return E_EXTERNAL;
+	}
 	return 0;
     }
 
     *s = '\0';
 
     /* try for an admin install first */
-    err = try_for_R_path(HKEY_LOCAL_MACHINE, Rbase);
+    err = try_for_R_path(HKEY_LOCAL_MACHINE, Rbase, sizeof Rbase);
     if (err) {
 	/* maybe user is not an admin? */
-	err = try_for_R_path(HKEY_CURRENT_USER, Rbase);
+	err = try_for_R_path(HKEY_CURRENT_USER, Rbase, sizeof Rbase);
     }
 
     if (!err) {
@@ -1439,7 +1446,10 @@ int R_home_from_registry (char *s)
 	    Rbase[0] = '\0';
 	} else {
 	    g_dir_close(dir);
-	    strcpy(s, Rbase);
+	    if (g_strlcpy(s, Rbase, slen) >= slen) {
+		*s = '\0';
+		err = E_EXTERNAL;
+	    }
 	}
     }
 
@@ -1450,20 +1460,28 @@ int R_home_from_registry (char *s)
     return err;
 }
 
-static void append_R_filename (char *s, int which)
+static int append_R_filename (char *s, int which, size_t slen)
 {
+    const char *fname = NULL;
+
     if (which == REXE) {
-	strcat(s, "R.exe");
+	fname = "R.exe";
     } else if (which == RGUI) {
-	strcat(s, "Rgui.exe");
+	fname = "Rgui.exe";
     } else if (which == RTERM) {
-	strcat(s, "Rterm.exe");
+	fname = "Rterm.exe";
     } else if (which == RLIB) {
-	strcat(s, "R.dll");
+	fname = "R.dll";
     }
+
+    if (fname != NULL && g_strlcat(s, fname, slen) >= slen) {
+	return E_EXTERNAL;
+    }
+
+    return 0;
 }
 
-int win32_R_path (char *s, int which)
+int win32_R_path (char *s, int which, size_t slen)
 {
     int openerr = 0;
     int err;
@@ -1483,13 +1501,18 @@ int win32_R_path (char *s, int which)
         }
     }
 
-    err = R_home_from_registry(s);
+    err = R_home_from_registry(s, slen);
+    if (err) {
+	return err;
+    }
+    if (g_strlcat(s, "\\bin\\", slen) >= slen) {
+	return E_EXTERNAL;
+    }
+    err = append_R_filename(s, which, slen);
     if (err) {
 	return err;
     }
 
-    strcat(s, "\\bin\\");
-    append_R_filename(s, which);
     openerr = gretl_test_fopen(s, "rb");
 
     if (openerr) {
@@ -1507,14 +1530,24 @@ int win32_R_path (char *s, int which)
 	char *p = strrchr(s, 'R');
 
 	*p = '\0';
-	strcat(s, arch[0]);
-	append_R_filename(s, which);
+	if (g_strlcat(s, arch[0], slen) >= slen) {
+	    return E_EXTERNAL;
+	}
+	err = append_R_filename(s, which, slen);
+	if (err) {
+	    return err;
+	}
 	openerr = gretl_test_fopen(s, "rb");
 	if (openerr) {
 	    /* try for alternate arch */
 	    *p = '\0';
-	    strcat(s, arch[1]);
-	    append_R_filename(s, which);
+	    if (g_strlcat(s, arch[1], slen) >= slen) {
+		return E_EXTERNAL;
+	    }
+	    err = append_R_filename(s, which, slen);
+	    if (err) {
+		return err;
+	    }
 	    openerr = gretl_test_fopen(s, "rb");
 	    if (openerr) {
 		err = E_FOPEN;

@@ -1918,34 +1918,27 @@ int out_of_sample_info (int add_ok, int *t2)
     return err;
 }
 
-/* Handle any option flags that were added to @gopt for convenience but
-   really belong in @fopt. OPT_M is relatively complicated since it
-   pertains to both @gopt and &fopt: we want to copy it rather than
-   shift it.
+/* Handle any option flags that were added to @gopt (because related
+   to graphing) but are also pertinent to the forecast itself (@fopt).
+   This applies to OPT_I (integration) and OPT_X (exponentiate a log
+   forecast).
 */
 
-static void maybe_transfer_options (gretlopt *gopt,
-				    gretlopt *fopt)
+static void maybe_copy_options (gretlopt *gopt,
+                                gretlopt *fopt)
 {
-    gretlopt shift = OPT_I | OPT_M | OPT_X | OPT_G;
-    gretlopt isect = *gopt & shift;
+    gretlopt to_copy = OPT_I | OPT_X;
+    gretlopt isect = *gopt & to_copy;
 
     if (isect) {
-	*fopt |= isect;  /* copy flags to @fopt */
-	isect &= ~OPT_M; /* protect OPT_M in @gopt */
-	*gopt &= ~isect; /* delete all but OPT_M */
-	if (*fopt & OPT_G) {
-	    /* debatable! */
-	    *fopt |= OPT_X;
-	    *fopt &= ~OPT_G;
-	    set_optval_int(FCAST, OPT_X, 2);
-	}
+	*fopt |= isect; /* copy flags to @fopt */
     }
 }
 
 void gui_do_forecast (GtkAction *action, gpointer p)
 {
-    static gretlopt gopt = OPT_P | OPT_H;
+    /* by default: produce a plot, show some pre-forecast data */
+    gretlopt gopt = OPT_P | OPT_H;
     gretlopt fopt = OPT_NONE;
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
@@ -2030,14 +2023,16 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     if (resp == 1) {
+	/* --dynamic */
         fopt = OPT_D;
     } else if (resp == 2) {
+	/* --static */
         fopt = OPT_S;
     } else if (resp == 3) {
         recursive = 1;
     }
 
-    maybe_transfer_options(&gopt, &fopt);
+    maybe_copy_options(&gopt, &fopt);
 
     if (recursive) {
         fr = recursive_OLS_k_step_fcast(pmod, dataset,
@@ -2066,7 +2061,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 
     if (!err) {
         int ols_special = dataset_is_cross_section(dataset) &&
-	    gretl_is_simple_OLS(pmod);
+	    gretl_is_simple_OLS(pmod) && !(gopt & OPT_X);
         int width = 78;
 
         if (recursive) {
@@ -2096,10 +2091,6 @@ void gui_do_forecast (GtkAction *action, gpointer p)
                                 _("gretl: forecasts"),
                                 FCAST, fr);
     }
-
-    /* OPT_M may have been passed for plotting: don't
-       remember it */
-    gopt &= ~OPT_M;
 }
 
 void do_bootstrap (GtkAction *action, gpointer p)
@@ -5723,7 +5714,7 @@ static void real_do_tramo_x12a (int v, int tramo)
     int save_t2 = dataset->t2;
     int (*write_tx_data) (char *, int, DATASET *, gretlopt *,
                           int, int *, GtkWindow *, void *);
-    char outfile[MAXLEN] = {0};
+    char outfile[FILENAME_MAX] = {0};
     int warning = 0;
     int graph_ok = 1;
     int err = 0;
@@ -5795,7 +5786,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 void run_x12a_script (const gchar *buf)
 {
     int (*func) (char *, const gchar *);
-    char outfile[MAXLEN] = {0};
+    char outfile[FILENAME_MAX] = {0};
     int err = 0;
 
     func = gui_get_plugin_function("exec_tx_script");
@@ -9325,7 +9316,7 @@ static void clean_up_varlabels (DATASET *dset)
     }
 }
 
-static int ok_run_file (char *runfile, int *is_gfn)
+static int ok_run_file (char *runfile, gchar **gfnpath)
 {
     FILE *fp;
     char myline[32];
@@ -9336,18 +9327,17 @@ static int ok_run_file (char *runfile, int *is_gfn)
     if (fp == NULL && !g_path_is_absolute(runfile) &&
         strstr(runfile, ".gfn") != NULL) {
         /* try for ad hoc gfn file location */
-        gchar *path = gfn_browser_get_alt_path();
+        gchar *alt = gfn_browser_get_alt_path();
 
-        if (path != NULL) {
-            gchar *tmp = g_strdup(runfile);
+        if (alt != NULL) {
+	    char tmp[FILENAME_MAX];
+	    int err;
 
-            gretl_build_path(runfile, path, tmp, NULL);
-            fp = gretl_fopen(runfile, "r");
-            g_free(tmp);
-            g_free(path);
-            if (fp != NULL) {
-                fclose(fp);
-                *is_gfn = 1;
+            gretl_build_path(tmp, alt, runfile, NULL);
+            err = gretl_test_fopen(tmp, "r");
+	    g_free(alt);
+            if (err == 0) {
+		*gfnpath = g_strdup(tmp);
                 return 1;
             }
         }
@@ -9499,12 +9489,14 @@ int execute_script (char *runfile, const char *buf,
 
     if (runfile != NULL) {
         /* we'll get commands from file */
-        int file_is_gfn = 0;
+	gchar *gfnpath = NULL;
 
-        if (!ok_run_file(runfile, &file_is_gfn)) {
+        if (!ok_run_file(runfile, &gfnpath)) {
             return -1;
-        } else if (file_is_gfn) {
-            return include_gfn(runfile, OPT_NONE, prn);
+        } else if (gfnpath != NULL) {
+            exec_err = include_gfn(gfnpath, OPT_NONE, prn);
+	    g_free(gfnpath);
+	    return exec_err;
         } else {
             fb = gretl_fopen(runfile, "r");
         }
@@ -9784,7 +9776,6 @@ static int gui_exec_callback (ExecState *s, void *ptr,
                               (s->cmd->opt & OPT_G))) {
         register_graph();
     } else if (ci == SETOBS) {
-        set_sample_label(dataset);
         mark_dataset_as_modified();
     } else if (ci == SMPL) {
         set_sample_label(dataset);
@@ -9940,9 +9931,22 @@ static int script_delete_function_package (const char *action,
 {
     gchar *gfnname = NULL;
     gchar *pkgname = NULL;
-    char *p, fname[MAXLEN];
+    char fname[FILENAME_MAX];
+    char *p;
     int delfile = 0;
     int err;
+
+    if (strchr(param, '/') != NULL || strchr(param, '\\') != NULL ||
+        strstr(param, "..") != NULL) {
+        /* reject anything that is not a plain package name: this
+           guards against path-traversal via a script-supplied
+           "pkg <name> remove/unload" command
+        */
+        if (prn != NULL) {
+            pprintf(prn, _("Invalid package name '%s'\n"), param);
+        }
+        return E_DATA;
+    }
 
     if (!strcmp(action, "remove")) {
         delfile = 1;
@@ -10018,7 +10022,7 @@ static int script_renumber_series (const int *list,
 
 static int script_open_session_file (CMD *cmd)
 {
-    char myfile[MAXLEN] = {0};
+    char myfile[FILENAME_MAX] = {0};
     int err;
 
     err = get_full_filename(cmd->param, myfile, OPT_NONE);
@@ -10259,7 +10263,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
-    char runfile[MAXLEN];
+    char runfile[FILENAME_MAX];
     char *buf = NULL;
     int ppos = -1;
     int err = 0;

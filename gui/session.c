@@ -100,7 +100,7 @@ enum {
 
 struct SESSION_ {
     char name[MAXLEN];
-    char dirname[MAXLEN];
+    char dirname[FILENAME_MAX];
     int status;
     int show_notes;
     int nmodels;
@@ -125,7 +125,7 @@ struct SESSION_MODEL_ {
 
 struct SESSION_GRAPH_ {
     char name[MAXSAVENAME];
-    char fname[MAXLEN];
+    char fname[FILENAME_MAX];
     GretlObjType type;
     int has_datafile;
 };
@@ -140,7 +140,7 @@ struct gui_obj_ {
 };
 
 struct sample_info {
-    char datafile[MAXLEN];
+    char datafile[FILENAME_MAX];
     int t1;
     int t2;
     char *mask;
@@ -236,7 +236,7 @@ static char *bundle_items[] = {
 
 SESSION session; /* holds named models, graphs, etc. */
 
-static char sessionfile[MAXLEN];
+static char sessionfile[FILENAME_MAX];
 
 static GtkWidget *iconview;
 static GtkWidget *icon_table;
@@ -454,7 +454,7 @@ static SESSION_GRAPH *session_append_graph (const char *grname,
 
     *graph->fname = '\0';
     if (fname != NULL) {
-	strncat(graph->fname, fname, MAXLEN - 1);
+	strncat(graph->fname, fname, FILENAME_MAX - 1);
     }
 
     graph->type = type;
@@ -515,7 +515,7 @@ char *session_graph_make_path (char *path, const char *fname)
     return path;
 }
 
-/* first arg should be a MAXLEN string */
+/* first arg should be a FILENAME_MAX string */
 
 static char *session_file_make_path (char *path,
 				     const char *fname,
@@ -997,7 +997,7 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
 {
     SESSION_GRAPH *graph = NULL;
     char shortname[MAXSAVENAME];
-    char grpath[MAXLEN];
+    char grpath[FILENAME_MAX];
     int replace = 0;
     int ret = 0;
 
@@ -1387,7 +1387,7 @@ static void sinfo_free_data (struct sample_info *sinfo)
 
 static int test_session_dirname (const char *zdirname)
 {
-    char test[2*MAXLEN];
+    char test[2*FILENAME_MAX];
 
     g_return_val_if_fail(zdirname != NULL, 1);
 
@@ -1426,9 +1426,9 @@ static char *maybe_absolutize_tryfile (void)
 static gboolean real_open_session (gretl_bundle **pb)
 {
     struct sample_info sinfo;
-    char xmlname[MAXLEN]; /* path to master session XML file */
-    char gdtname[MAXLEN]; /* path to session data file */
-    char fname[MAXLEN];   /* multi-purpose temp variable */
+    char xmlname[FILENAME_MAX]; /* path to master session XML file */
+    char gdtname[FILENAME_MAX]; /* path to session data file */
+    char fname[FILENAME_MAX];   /* multi-purpose temp variable */
     char *tryname = get_tryfile();
     gchar *zdirname = NULL;
     DATASET *sdset = NULL;
@@ -1902,7 +1902,7 @@ static void relpath_from_fname (char *path, const char *fname)
 
 static int real_save_session_dataset (const char *dname)
 {
-    char tmpname[MAXLEN];
+    char tmpname[FILENAME_MAX];
     char *mask = NULL;
     char *restr = NULL;
     int save_t1 = dataset->t1;
@@ -2029,8 +2029,8 @@ static void make_session_dataname (char *datname)
 int save_session (char *fname)
 {
     char *dirbak = NULL;
-    char datname[MAXLEN];
-    char dirname[MAXLEN];
+    char datname[FILENAME_MAX];
+    char dirname[FILENAME_MAX];
     int len, err = 0;
     int log_code = LOG_SAVE;
 
@@ -2251,7 +2251,7 @@ static char *model_cmd_str (MODEL *pmod)
 
 static gchar *graph_str (SESSION_GRAPH *graph)
 {
-    char tmp[MAXLEN];
+    char tmp[FILENAME_MAX];
     FILE *fp;
     gchar *buf = NULL;
 
@@ -2497,7 +2497,7 @@ static int real_delete_text_from_session (SESSION_TEXT *junk)
 
 static void remove_session_graph_file (SESSION_GRAPH *graph)
 {
-    char fname[MAXLEN];
+    char fname[FILENAME_MAX];
 
     gretl_chdir(gretl_dotdir());
     session_file_make_path(fname, graph->fname, NULL);
@@ -2586,7 +2586,7 @@ static void maybe_delete_session_object (gui_obj *obj)
 
 	busywin = get_window_for_plot(graph);
 	if (busywin == NULL) {
-	    char fullname[MAXLEN];
+	    char fullname[FILENAME_MAX];
 
 	    session_file_make_path(fullname, graph->fname, NULL);
 	    busywin = vwin_toplevel(get_editor_for_file(fullname));
@@ -3593,7 +3593,7 @@ static int prepare_plot_action (SESSION_GRAPH *graph,
 
 void view_plot_commands (SESSION_GRAPH *graph)
 {
-    char fullname[MAXLEN];
+    char fullname[FILENAME_MAX];
     int err;
 
     err = prepare_plot_action(graph, fullname);
@@ -3613,7 +3613,7 @@ void view_plot_commands (SESSION_GRAPH *graph)
 
 static void view_using_gnuplot (SESSION_GRAPH *graph)
 {
-    char fullname[MAXLEN];
+    char fullname[FILENAME_MAX];
     int err;
 
     err = prepare_plot_action(graph, fullname);
@@ -4303,7 +4303,7 @@ static void real_open_session_graph (SESSION_GRAPH *graph)
     if (plotwin != NULL) {
 	gtk_window_present(GTK_WINDOW(plotwin));
     } else {
-	char tmp[MAXLEN];
+	char tmp[FILENAME_MAX];
 
 	session_file_make_path(tmp, graph->fname, NULL);
 #if GRAPH_DEBUG
@@ -4329,7 +4329,7 @@ gchar *session_graph_get_filename (void *p)
 {
     if (p != NULL) {
 	SESSION_GRAPH *graph = p;
-	char tmp[MAXLEN];
+	char tmp[FILENAME_MAX];
 
 	session_file_make_path(tmp, graph->fname, NULL);
 	return g_strdup(tmp);

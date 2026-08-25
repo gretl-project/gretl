@@ -5548,16 +5548,16 @@ void *dbnomics_probe_series (const char *prov,
     return A;
 }
 
-static void call_string_append (const char *funcname,
-				const char *argstr,
-				GretlType argtype,
-				gpointer argdata,
-				int i, GString *gs)
+static int call_string_append (const char *funcname,
+			       const char *argstr,
+			       GretlType argtype,
+			       gpointer argdata,
+			       int i, GString *gs)
 {
     gchar *altstr = NULL;
-    gboolean gstr = 0;
 
     if (argstr == NULL) {
+	/* we need to construct an argument string */
 	int err = 0;
 
 	if (argtype == GRETL_TYPE_DOUBLE) {
@@ -5566,34 +5566,36 @@ static void call_string_append (const char *funcname,
 	    char *tmp = gretl_list_to_compact_string(argdata, dataset,
 						     1, &err);
 
-	    altstr = g_strdup_printf("deflist(%s)", g_strchug(tmp));
-	    free(tmp);
-	    gstr = 1;
+	    if (tmp != NULL) {
+		altstr = g_strdup_printf("deflist(%s)", g_strchug(tmp));
+		free(tmp);
+	    }
 	} else if (argtype == GRETL_TYPE_BUNDLE) {
 	    altstr = gretl_bundle_write_constructor(argdata);
-	    gstr = 1;
 	} else {
-	    altstr = gretl_strdup("unknown");
+	    altstr = g_strdup("unknown");
 	}
 	argstr = altstr;
+    }
+
+    if (argstr == NULL) {
+	return 1;
     }
 
     if (i == 0) {
 	/* the first arg */
 	g_string_append_printf(gs, "%s(%s", funcname, argstr);
     } else if (i < 0) {
-	/* code for the last arg */
+	/* flag for the last arg */
 	g_string_append_printf(gs, ", %s)", argstr);
     } else {
 	/* an intermediate argument */
 	g_string_append_printf(gs, ", %s", argstr);
     }
 
-    if (gstr) {
-	g_free(altstr);
-    } else {
-	free(altstr);
-    }
+    g_free(altstr);
+
+    return 0;
 }
 
 int real_do_regls (const char *buf)
@@ -5638,15 +5640,26 @@ int real_do_regls (const char *buf)
 	/* command recording apparatus */
 	GString *gs =  g_string_sized_new(64);
 	gchar *cstr = NULL;
+	int rec_err;
 
-	call_string_append("regls", dataset->varname[yno],
-			   GRETL_TYPE_USERIES, NULL, 0, gs);
-	call_string_append(NULL, NULL, GRETL_TYPE_LIST, X, 1, gs);
-	call_string_append(NULL, NULL, GRETL_TYPE_BUNDLE, parms, -1, gs);
+	rec_err = call_string_append("regls", dataset->varname[yno],
+				     GRETL_TYPE_USERIES, NULL, 0, gs);
+	if (!rec_err) {
+	    rec_err = call_string_append(NULL, NULL, GRETL_TYPE_LIST,
+					 X, 1, gs);
+	}
+	if (!rec_err) {
+	    rec_err = call_string_append(NULL, NULL, GRETL_TYPE_BUNDLE,
+					 parms, -1, gs);
+	}
 	cstr = g_string_free(gs, FALSE);
-	lib_command_strcpy(cstr);
-	record_command_verbatim();
-	g_free(cstr);
+	if (cstr != NULL) {
+	    if (!rec_err) {
+		lib_command_strcpy(cstr);
+		record_command_verbatim();
+	    }
+	    g_free(cstr);
+	}
     }
 
     if (!err) {

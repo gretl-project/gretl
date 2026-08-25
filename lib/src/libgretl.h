@@ -33,6 +33,14 @@
 # include <stdio.h>
 #endif
 
+#undef FILENAME_MAX
+/* On MS Windows FILENAME_MAX is 260; on Linux it's typically
+   4096; and on macOS we read that it's typically 1024. Here
+   we define it to a value that should be big enough for
+   most purposes but is not too wasteful of stack space.
+*/
+#define FILENAME_MAX 1024
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
@@ -286,7 +294,7 @@ typedef enum {
     FC_DYNAMIC_OK   = 1 << 1,
     FC_ADDOBS_OK    = 1 << 2,
     FC_INTEGRATE_OK = 1 << 3,
-    FC_MEAN_OK      = 1 << 4
+    FC_EXPON_OK     = 1 << 4
 } FcastFlags;
 
 #ifndef CMPLX

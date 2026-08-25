@@ -284,7 +284,9 @@ static int csvdata_add_cols_list (csvdata *c, const char *s,
                                   gretlopt opt)
 {
     int delimited = (opt & OPT_L);
-    int *list, *clist = NULL, *wlist = NULL;
+    int *list = NULL;
+    int *clist = NULL;
+    int *wlist = NULL;
     int i, n, m = 0;
     int err = 0;
 
@@ -890,8 +892,20 @@ static int transform_daily_dates (DATASET *dset, int dorder,
         } else {
             n = sscanf(label, fmt, &mon, &day, &yr);
         }
-        if (n == 3) {
-            sprintf(label, YMD_WRITE_Y2_FMT, yr, mon, day);
+        /* Guard against oversized field values: @fmt places no
+           width limit on the sscanf conversions above (the
+           separator-derived form has none, and even the fallback
+           "%4d%2d%2d" only bounds the width of the *input* field,
+           not the numeric value produced), so a crafted label can
+           yield a mon/day/yr combination that would not fit back
+           into the fixed OBSLEN-byte label buffer once reformatted
+           by YMD_WRITE_Y2_FMT below. Reject any row whose parsed
+           values fall outside sane calendar-date bounds before
+           attempting to write them back.
+	*/
+        if (n == 3 && mon >= 1 && mon <= 12 && day >= 1 && day <= 31 &&
+            yr >= 0 && yr <= 9999) {
+            snprintf(label, OBSLEN, YMD_WRITE_Y2_FMT, yr, mon, day);
         } else {
             err = 1;
         }
@@ -1927,7 +1941,7 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
 	    quoted = 1;
 	}
 
-        while (*s && i < sizeof field1) {
+        while (*s && i < sizeof field1 - 1) {
             if (!quoted && *s == c->delim) {
                 break;
             } else if (!quoted && *s == '\t') {
@@ -1963,7 +1977,8 @@ void import_na_init (void)
 {
     const char *s = get_csv_na_read_string();
 
-    strcpy(import_na, s);
+    *import_na = '\0';
+    strncat(import_na, s, sizeof(import_na) - 1);
 }
 
 /* Returns 1 if the string @s should be counted as representing a
@@ -3915,10 +3930,15 @@ gretl_matrix *import_csv_as_matrix (const char *fname, int *err)
     } else if (!*err) {
         char fullname[FILENAME_MAX];
 
-        strcpy(fullname, fname);
-        gretl_maybe_prepend_dir(fullname);
-        *err = real_import_csv(fullname, NULL, NULL, NULL,
-                               NULL, NULL, &m, opt, prn);
+        if (strlen(fname) >= sizeof fullname) {
+            gretl_errmsg_set(_("Filename is too long"));
+            *err = E_DATA;
+        } else {
+            strcpy(fullname, fname);
+            gretl_maybe_prepend_dir(fullname);
+            *err = real_import_csv(fullname, NULL, NULL, NULL,
+                                   NULL, NULL, &m, opt, prn);
+        }
     }
 
     gretl_print_destroy(prn);

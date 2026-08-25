@@ -1314,6 +1314,9 @@ static int set_logfile (const char *s)
 	gretl_insert_builtin_string("logfile", "");
     } else if (!strcmp(s, "stdout") || !strcmp(s, "stderr")) {
 	gretl_insert_builtin_string("logfile", s);
+    } else if (strlen(s) >= FILENAME_MAX) {
+	gretl_errmsg_set(_("set logfile: filename is too long"));
+	return E_INVARG;
     } else {
         char outname[FILENAME_MAX];
 
@@ -1324,7 +1327,7 @@ static int set_logfile (const char *s)
 	if (!err) {
 	    gretl_insert_builtin_string("logfile", outname);
 	} else {
-	    gretl_errmsg_sprintf("Couldn't write to %s", outname);
+	    gretl_errmsg_sprintf(_("Couldn't write to %s"), outname);
 	    err = E_FOPEN;
 	}
     }
@@ -2684,15 +2687,21 @@ static int set_string_setvar (char *targ, const char *s, int len)
     *targ = '\0';
 
     if (*s == '"') {
+        /* @s is quoted */
 	const char *p = strchr(s+1, '"');
+        int n;
 
 	if (p == NULL) {
 	    return E_PARSE;
-	} else {
-	    strncat(targ, s+1, p-s-1);
-	}
+        } else {
+            n = p - s - 1;
+            if (n > len) {
+                n = len;
+            }
+            strncat(targ, s+1, n);
+        }
     } else {
-	strncat(targ, s, len);
+        strncat(targ, s, len);
     }
 
     return 0;
@@ -2787,8 +2796,8 @@ static char *get_quoted_arg (const char *s, int *err)
     return ret;
 }
 
-/* If @prn is non-NULL we're called via the "set" command.
-   Otherwise we're called by the gretl session apparatus.
+/* If @prn is non-NULL we're called via the "set" command. Otherwise
+   we're called by the gretl GUI session apparatus.
 */
 
 static int real_libset_read_script (const char *fname,

@@ -185,6 +185,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
 
     f->sigma = NADBL;
     f->alpha = 0.05;
+    f->a0 = NADBL;
 
     f->actual = NULL;
     f->fitted = NULL;
@@ -555,8 +556,7 @@ static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
 
    The forecast standard errors include both uncertainty over the
    error process and parameter uncertainty (Davidson and MacKinnon
-   method) -- unless @opt contains OPT_M, in which case the standard
-   errors pertain to prediction of mean Y.
+   method).
 */
 
 static int
@@ -625,9 +625,7 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 	if (na(vyh)) {
 	    err = 1;
 	} else {
-	    if (!(opt & OPT_M)) {
-		vyh += s2;
-	    }
+	    vyh += s2;
 	    if (vyh >= 0.0) {
 		fc->sderr[t] = sqrt(vyh);
 	    } else {
@@ -700,8 +698,8 @@ static void transcribe_to_matrix (gretl_matrix *fc,
     }
 }
 
-/* specific to "dpanel": handles both within-sample
-   and out of sample forecasts
+/* Specific to "dpanel": handles both within-sample and out of sample
+   forecasts.
 */
 
 static int real_dpanel_fcast (double *yhat,
@@ -2837,6 +2835,54 @@ static int check_all_probs_option (MODEL *pmod)
     return err;
 }
 
+static int add_expon_factor (FITRESID *fr, MODEL *pmod)
+{
+    double test, skew, xkurt;
+    double normpv = NADBL;
+    int n, err = 0;
+
+    err = series_get_skew_kurt(pmod->t1, pmod->t2, pmod->uhat,
+			       &skew, &xkurt, &n);
+    if (err) {
+	return err;
+    }
+
+    /* Doornik-Hansen P-value */
+    test = doornik_chisq(skew, xkurt, n);
+    if (!na(test)) {
+	normpv = chisq_cdf_comp(2, test);
+    }
+
+    if (na(normpv)) {
+	return 1;
+    } else if (normpv > 0.05) {
+	/* normality not rejected */
+	fr->a0 = exp(pmod->sigma * pmod->sigma / 2.0);
+    } else {
+	/* Duan's smearing estimator */
+	double sum = 0.0;
+	int t;
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->uhat[t])) {
+		sum += exp(pmod->uhat[t]);
+	    }
+	}
+	fr->a0 = sum / n;
+    }
+
+    return 0;
+}
+
+static double log2lev (FITRESID *fr, int t)
+{
+    if (!na(fr->a0)) {
+	return fr->a0 * exp(fr->fitted[t]);
+    } else {
+	return exp(fr->fitted[t]);
+    }
+}
+
 /* Driver for various functions that compute forecasts for different
    sorts of models.
 */
@@ -2979,6 +3025,10 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	pmod->arinfo = NULL;
     }
 
+    if (expon) {
+	add_expon_factor(fr, pmod);
+    }
+
     same_data = same_dataset(pmod, dset);
     y = dset->Z[yno];
 
@@ -2988,8 +3038,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	    if (!na(fr->fitted[t])) {
 		nf++;
 		if (expon) {
-		    /* FIXME case of OPT_M ? */
-		    fr->fitted[t] = exp(fr->fitted[t]);
+		    fr->fitted[t] = log2lev(fr, t);
 		}
 	    }
 	} else if (same_data && t >= fr->t0 && t <= fr->t2 &&
@@ -2999,7 +3048,11 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 		fr->fitted[t] = fr->fitted[t-1] + pmod->yhat[t];
 		fr->resid[t] = fr->resid[t-1] + pmod->uhat[t];
 	    } else if (expon) {
-		fr->fitted[t] = exp(pmod->yhat[t]);
+		if (!na(fr->a0)) {
+		    fr->fitted[t] = fr->a0 * exp(pmod->yhat[t]);
+		} else {
+		    fr->fitted[t] = exp(pmod->yhat[t]);
+		}
 		fr->resid[t] = exp(y[t]) - fr->fitted[t];
 	    } else {
 		fr->fitted[t] = pmod->yhat[t];
@@ -4283,8 +4336,8 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
     if (pmod->ci == OLS) {
 	if (is_standard_diff(dv, dset, NULL)) {
 	    *flags |= FC_INTEGRATE_OK;
-	} else {
-	    *flags |= FC_MEAN_OK;
+	} else if (is_standard_log(dv, dset, NULL)) {
+	    *flags |= FC_EXPON_OK;
 	}
     } else if (pmod->ci == NLS) {
 	/* we'll try winging it! */

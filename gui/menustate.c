@@ -94,6 +94,11 @@ static void view_items_state (gboolean s)
 
     s2 = s && n_ok_series() > 1;
 
+#if 0
+    fprintf(stderr, "HERE s=%d, s2=%d, data_status=%d, ts=%d\n",
+            (int) s, (int) s2, data_status, dataset_is_time_series(dataset));
+#endif
+
     for (i=0; viewpaths[i] != NULL; i++) {
         sprintf(fullpath, "/menubar/View/%s", viewpaths[i]);
 	if (i == 2) {
@@ -106,7 +111,7 @@ static void view_items_state (gboolean s)
     flip(mdata->ui, "/menubar/View/IconView", have_session_objects());
 
     flip(mdata->ui, "/menubar/View/xcorrgm",
-         data_status && dataset_is_time_series(dataset));
+         s2 && dataset_is_time_series(dataset));
 }
 
 static void gfn_menuitems_state (void)

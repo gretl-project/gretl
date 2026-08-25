@@ -5479,7 +5479,7 @@ static int resize_png_plot (png_plot *plot, int width, int height,
 
 static GdkPixbuf *pixbuf_from_file (png_plot *plot)
 {
-    char fname[MAXLEN];
+    char fname[FILENAME_MAX];
     GError *gerr = NULL;
     GdkPixbuf *pbuf;
 
@@ -5510,7 +5510,7 @@ static GdkPixbuf *pixbuf_from_file (png_plot *plot)
 
 static int render_png (png_plot *plot, viewcode view)
 {
-    char pngname[MAXLEN];
+    char pngname[FILENAME_MAX];
     gint width, height;
     GdkPixbuf *pbuf;
 
@@ -6344,7 +6344,7 @@ static int get_png_size (char *str, png_bounds *bounds)
 static int get_png_bounds_info (png_bounds *bounds)
 {
     FILE *fp;
-    char bbname[MAXLEN], line[128];
+    char bbname[FILENAME_MAX], line[128];
     int plot_ret = -1, data_ret = -1;
     int ret = GRETL_PNG_OK;
 

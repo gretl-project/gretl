@@ -2771,14 +2771,22 @@ static char x2c (char *s)
 
 void unescape_url (char *url)
 {
-    register int x, y;
+    int x, y;
 
     for (x=0, y=0; url[y]; ++x, ++y) {
-        if ((url[x] = url[y]) == '%') {
-            url[x] = x2c(&url[y+1]);
-            y += 2;
-        }
+	if ((url[x] = url[y]) == '%') {
+            /* Only decode the escape if both hex digits are
+               actually present; otherwise leave the '%' as-is
+               and avoid reading past the terminating NUL.
+            */
+            if (isxdigit((unsigned char) url[y+1]) &&
+                isxdigit((unsigned char) url[y+2])) {
+                url[x] = x2c(&url[y+1]);
+                y += 2;
+            }
+	}
     }
+
     url[x] = '\0';
 }
 
@@ -3217,8 +3225,8 @@ char *gretl_utf8_replace_char (const char *targ, const char *src,
  *
  * Performs sscanf() on @src, using a conversion specifier
  * which allows for writing up to VNAMELEN-1 bytes into
- * @targ (stopping at white space); @targ therefore be at
- * least VNAMELEN bytes long. No checking is done for the
+ * @targ (stopping at white space); @targ must therefore be
+ * at least VNAMELEN bytes long. No checking is done for the
  * validity of the scanned string as a gretl identifier.
  *
  * Returns: the return value from sscanf().
@@ -3407,7 +3415,8 @@ char *gretl_literal_replace (const char *orig,
  * @last: 1-based index of final character, or -1 to go to the end.
  * @err: location to receive error code.
  *
- * Returns: a substring of @str, from @first to @last.
+ * Returns: a substring of @str, from @first to @last, or NULL
+ * on failure.
  */
 
 char *gretl_substring (const char *str, int first, int last, int *err)
@@ -3424,6 +3433,7 @@ char *gretl_substring (const char *str, int first, int last, int *err)
 	gretl_errmsg_sprintf("Index value %d is out of bounds",
 			     first <= 0 ? first : last);
 	*err = E_DATA;
+	return NULL;
     }
 
     ini = (first < 1) ? 1 : ((first > len) ? len : first);
@@ -3440,7 +3450,7 @@ char *gretl_substring (const char *str, int first, int last, int *err)
 	    str = g_utf8_next_char(str);
 	}
 	s1 = str;
-	for (i=ini; i<=last; i++) {
+	for (i=ini; i<=fin; i++) {
 	    str = g_utf8_next_char(str);
 	}
 	len = str - s1;

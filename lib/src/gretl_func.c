@@ -2185,6 +2185,12 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
             fn_param *param = &fun->params[n++];
 
             if (gretl_xml_get_prop_as_string(cur, "name", &field)) {
+		if (strlen(field) >= FN_NAMELEN) {
+		    gretl_errmsg_set(_("Identifier exceeds the maximum of 31 characters"));
+		    free(field);
+		    err = E_DATA;
+		    break;
+		}
                 param->name = field;
             } else {
                 err = E_DATA;
@@ -6551,7 +6557,7 @@ static void plain_print_package_info (const fnpkg *pkg,
     has_examples = pkg_has_examples(pkg);
 
     if (has_examples || pkg_has_datafiles(pkg)) {
-        char resdir[MAXLEN];
+        char resdir[FILENAME_MAX];
         char **resources;
         int n_res = 0;
 
@@ -7326,7 +7332,7 @@ static char *sample_script_from_xml (const char *pkgname, int *err)
 {
     char *ret = NULL;
     gchar *gfnname = NULL;
-    char fullname[MAXLEN];
+    char fullname[FILENAME_MAX];
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
 
@@ -8230,6 +8236,9 @@ static int parse_function_param (char *s, fn_param *param, int i)
     if (len == 0) {
         gretl_errmsg_sprintf(_("parameter %d: name is missing"), i + 1);
         err = E_PARSE;
+    } else if (len >= VNAMELEN) {
+	gretl_errmsg_set(_("Identifier exceeds the maximum of 31 characters"));
+	err = E_PARSE;
     } else {
         name = gretl_strndup(s, len);
         if (name == NULL) {
@@ -11540,8 +11549,19 @@ int uninstall_function_package (const char *package, gretlopt opt,
 {
     gchar *gfnname = NULL;
     gchar *pkgname = NULL;
-    char *p, fname[MAXLEN];
+    char fname[FILENAME_MAX];
+    char *p;
     int err;
+
+    if (strchr(package, '/') != NULL || strchr(package, '\\') != NULL ||
+        strstr(package, "..") != NULL) {
+        /* reject anything that is not a plain package name: this
+           guards against path-traversal via a script-supplied
+           "pkg <name> remove/unload" command
+        */
+        gretl_errmsg_sprintf(_("Invalid package name '%s'"), package);
+        return E_DATA;
+    }
 
     if (has_suffix(package, ".gfn")) {
         gfnname = g_strdup(package);

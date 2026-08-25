@@ -1,14 +1,16 @@
 ### Plotting functions for the kmeans addon
 
-function void kmeans_plot (const list xlist, bundle kmb)
+function void kmeans_plot (const list xlist,
+                           bundle self)
     /* -doc-
        Plot clusters in two dimensions.
     */
-
-    string kmb.filename = inbundle(kmb, "filename") ? \
-      kmb.filename : "display"
-    series factor = kmb.cluster_id
-    PairPlot(xlist, factor, kmb)
+    if !inbundle(self, "filename")
+        string self.filename = "display"
+    endif
+    series factor = self.cluster_id
+    include PairPlot.gfn
+    PairPlot(xlist, factor, self)
 end function
 
 function void kmeans_screeplot (const matrix scree,
@@ -186,7 +188,6 @@ function void kmeans_sil_plot (const bundle Model,
         else
             keystr = "unset key"
         endif
-        # print cluster_sil_values
 
         plot cluster_sil_values
             options fit=none time-series single-yaxis with-lines=2 \

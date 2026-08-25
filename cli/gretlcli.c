@@ -61,8 +61,8 @@ extern void initialize_readline (void);
 #define ENDRUN (NC + 1)
 #define RUNLOOP (NC + 2)
 
-char datafile[MAXLEN];
-char cmdfile[MAXLEN];
+char datafile[FILENAME_MAX];
+char cmdfile[FILENAME_MAX];
 FILE *fb;
 int batch;
 int runit;
@@ -315,7 +315,7 @@ static int file_get_line (ExecState *s, const char *fname)
 static void nls_init (void)
 {
 # if defined(WIN32) && defined(PKGBUILD)
-    char localedir[MAXLEN];
+    char localedir[FILENAME_MAX];
 
     gretl_build_path(localedir, gretl_home(), "locale", NULL);
 # else
@@ -579,7 +579,7 @@ static void handle_datafile (char *filearg, char *runfile,
                              DATASET *dset, PRN *prn,
                              PRN *cmdprn)
 {
-    char given_file[MAXLEN];
+    char given_file[FILENAME_MAX];
     int load_datafile = 1;
     int ftype, err = 0;
 
@@ -1174,7 +1174,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
     int old_runit = runit;
-    char runfile[MAXLEN];
+    char runfile[FILENAME_MAX];
     int renumber = 0;
     int err = 0;
 

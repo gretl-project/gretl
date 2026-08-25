@@ -862,7 +862,7 @@ static void copy_tx_series (DATASET *targ, int targv,
 
 static void clear_tramo_files (const char *path, const char *vname)
 {
-    char fname[MAXLEN];
+    char fname[FILENAME_MAX];
     int i;
 
     for (i=0; tramo_save_strings[i] != NULL; i++) {
@@ -887,7 +887,7 @@ static void clear_tramo_files (const char *path, const char *vname)
 
 static void clear_x13a_files (const char *path, const char *vname)
 {
-    char fname[MAXLEN];
+    char fname[FILENAME_MAX];
     int i;
 
     gretl_build_path(fname, path, vname, NULL);
@@ -917,7 +917,7 @@ static void clear_x13a_files (const char *path, const char *vname)
 static int seats_no_seasonal (const char *path)
 {
     char *p, line[MAXLEN];
-    char outname[MAXLEN];
+    char outname[FILENAME_MAX];
     FILE *fp;
     int ret = 0;
 
@@ -992,7 +992,7 @@ static int add_series_from_file (const char *path, int src,
                                  tx_request *request)
 {
     FILE *fp;
-    char line[128], sfname[MAXLEN];
+    char line[128], sfname[FILENAME_MAX];
     char varname[VNAMELEN], date[16];
     gchar *label, *tmp;
     double x;
@@ -1118,7 +1118,7 @@ static int grab_tramo_output_series (double *y, const double *x,
                                      const char *path, PRN *prn)
 {
     FILE *fp;
-    char line[128], sfname[MAXLEN];
+    char line[128], sfname[FILENAME_MAX];
     double yt;
     int no_seas = 0;
     int t, err = 0;
@@ -1303,7 +1303,7 @@ static int grab_linearized_series (double *y, const double *x,
                                    const char *vname)
 {
     FILE *fp;
-    char line[128], sfname[MAXLEN];
+    char line[128], sfname[FILENAME_MAX];
     double yt;
     int err = 0;
     int i, t;
@@ -2515,7 +2515,7 @@ int adjust_series (const double *x, double *y,
     x13a_opts xopt = {0};
     const char *exepath;
     const char *workdir;
-    char fname[MAXLEN];
+    char fname[FILENAME_MAX];
     int err = 0;
 
     if (vname == NULL) {
@@ -2601,7 +2601,7 @@ int linearize_series (const double *x, double *y, const DATASET *dset)
     const char *vname = "x";
     const char *exepath;
     const char *workdir;
-    char fname[MAXLEN];
+    char fname[FILENAME_MAX];
     int err = 0;
 
     exepath = gretl_tramo();

@@ -3828,8 +3828,8 @@ int renumber_series_with_checks (const int *list,
 int modify_dataset (DATASET *dset, int op, const int *list,
 		    const char *param, gretlopt opt, PRN *prn)
 {
-    static int resampled;
-    int k = 0, err = 0;
+    int k = 0;
+    int err = 0;
 
     if (dset == NULL || dset->Z == NULL) {
 	return E_NODATA;
@@ -3864,13 +3864,11 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	return 1;
     }
 
-    if (op == DS_RESAMPLE && resampled) {
+    if (op == DS_RESAMPLE && dataset_is_resampled(dset)) {
 	/* repeated "resample": implicitly restore first */
 	err = restore_full_sample(dset, NULL);
 	if (err) {
 	    return err;
-	} else {
-	    resampled = 0;
 	}
     }
 
@@ -3927,9 +3925,6 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	err = dataset_sort(dset, list, OPT_D);
     } else if (op == DS_RESAMPLE) {
 	err = dataset_resample(dset, k, 0);
-	if (!err) {
-	    resampled = 1;
-	}
     } else {
 	err = E_PARSE;
     }
@@ -4543,7 +4538,10 @@ void series_set_parent (DATASET *dset, int i,
 			const char *parent)
 {
     if (i > 0 && i < dset->v) {
-	strcpy(dset->varinfo[i]->parent, parent);
+	char *targ = dset->varinfo[i]->parent;
+
+	*targ = '\0';
+	strncat(targ, parent, VNAMELEN - 1);
     }
 }
 

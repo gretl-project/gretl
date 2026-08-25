@@ -1,0 +1,32 @@
+set verbose off
+include regls.gfn
+
+n = 80  # observations
+k = 120 # regressors
+matrix X = mnormal(n,k)
+u = mnormal(n, 1)
+matrix sel = {5, 20, 37, 60, 70}
+matrix y = sumr(X[,sel]) + u
+printf "Truly non-zero coefficients:\n"
+eval sel
+
+nulldata n --preserve
+series ys = y
+list LX = null
+loop i=1..k -q
+  LX += genseries(sprintf("x%d", i), X[,i])
+endloop
+
+bundle parms = _(nlambda=25, stdize=0)
+bundle b = regls(ys, LX, parms)
+eval b.nzb
+
+list LL = ys LX
+foreign language=R --send-data=LL
+  library(glmnet)
+  x <- as.matrix(gretldata[,2:ncol(gretldata)])
+  y <- as.matrix(gretldata[,1])
+  m <- glmnet(x, y, family = "gaussian", alpha = 1, nlambda = 25,
+    standardize = F, intercept = F, thresh = 1.0e-7)
+  print(m)
+end foreign

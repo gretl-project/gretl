@@ -542,7 +542,7 @@ static void real_add_files_to_menus (int ftype)
 	"/menubar/File/OpenDataMenu/RecentData",
 	"/menubar/File/SessionFiles/RecentSessions",
 	"/menubar/File/ScriptFiles/RecentScripts",
-	"/menubar/File/Packages/RecentGfns"
+	"/menubar/Packages/RecentGfns"
     };
     gchar *aname, *alabel, *apath;
     int jmin = 0, jmax = NFILELISTS - 1;

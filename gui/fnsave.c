@@ -267,9 +267,15 @@ static const char *funname_from_filename (const char *fname)
 static char *filename_from_funname (char *fname,
 				    const char *funname)
 {
+    int len;
+
     gretl_build_path(fname, gretl_dotdir(), "pkgedit", NULL);
-    strcat(fname, ".");
-    strcat(fname, funname);
+    len = strlen(fname) + 1 + strlen(funname);
+    if (len < FILENAME_MAX) {
+	strcat(fname, ".");
+	strcat(fname, funname);
+    }
+
     return fname;
 }
 
@@ -5373,7 +5379,7 @@ static int is_pdf_reference (const char *s)
 static fnpkg *load_gfn_from_zip (const char *fname, int *err)
 {
     fnpkg *pkg = NULL;
-    char tmpgfn[MAXLEN];
+    char tmpgfn[FILENAME_MAX];
     gchar *tmpname, *tmp2;
     char *p;
 

@@ -177,10 +177,10 @@ int win32_run_async (const char *prog, const char *arg)
 
 static int get_Rgui_path (void)
 {
-    char tmp[MAX_PATH];
+    char tmp[MAXSTR];
     int err;
 
-    err = win32_R_path(tmp, RGUI);
+    err = win32_R_path(tmp, RGUI, sizeof tmp);
 
     if (!err) {
 	*Rcommand = '\0';
@@ -350,7 +350,7 @@ void gretl_win32_init (int debug, int ignore_rc)
 
     read_reg_val(HKEY_CURRENT_USER,
 		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager",
-		 "ThemeActive", tmp);
+		 "ThemeActive", tmp, sizeof tmp);
     set_wimp_preferred(strcmp(tmp, "1") == 0);
 #endif
 
