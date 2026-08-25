@@ -24,6 +24,8 @@
 
 #define RESAMPLED ((char *) 0xdeadbeef)
 
+#define SUBMASK_SENTINEL 0x0f
+
 DATASET *fetch_full_dataset (void);
 
 void sync_dataset_shared_members (const DATASET *dset);

@@ -29,6 +29,7 @@
 #include "dbread.h"
 #include "uservar.h"
 #include "gretl_xml.h"
+#include "subsample.h"
 
 #define SUBDEBUG 0
 #define FULLDEBUG 0
@@ -76,8 +77,6 @@ int recode_strvals (DATASET *dset, gretlopt opt)
 
 static DATASET *fullset;
 static DATASET *peerset;
-
-#define SUBMASK_SENTINEL 0x0f
 
 static int smpl_get_int (const char *s, DATASET *dset,
                          int relative, int *err);
