@@ -2821,7 +2821,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
 {
     const gretl_matrix *c = J->beta;
     const gretl_matrix *sd = J->bse;
-    char s[16], vname[NAMETRUNC];
+    char s[16], vname[SHORTLEN];
     char namefmt[16];
     int nwid, sdshow;
     int i, j;

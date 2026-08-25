@@ -3149,20 +3149,6 @@ void dialog_add_iters_spin (GtkWidget *dlg, int *iters)
     }
 }
 
-static void flip_sensitivity (GtkToggleButton *b, GtkWidget *w)
-{
-    gtk_widget_set_sensitive(w, gtk_toggle_button_get_active(b));
-}
-
-static void snap_to_static (GtkToggleButton *b, GtkWidget *w)
-{
-    gboolean s = gtk_toggle_button_get_active(b);
-
-    if (!s) {
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
-    }
-}
-
 /* FIXME: Ideally this conditionality should be centralized in
    lib/src/forecast.c, and worked out in proper detail. Note that we
    don't need to worry here about estimators for which forecasts are not
@@ -3241,15 +3227,44 @@ static GtkWidget *depvar_form_selector (GtkWidget *vbox,
     return depvar_combo;
 }
 
-static void toggle_ci_choice (GtkComboBox *depvar_combo,
-			      gpointer data)
+static void snap_to_static (GtkComboBox *depvar_combo,
+			    GtkWidget *button)
+{
+    if (gtk_combo_box_get_active(depvar_combo) == 0) {
+	/* possible integrated forecast not selected, so
+	   force-select the "static" button */
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+    }
+}
+
+static void set_dynamic_ok (GtkComboBox *depvar_combo,
+			    GtkWidget *button)
+{
+    if (gtk_combo_box_get_active(depvar_combo) == 1) {
+	/* integrated forecast selected */
+	gtk_widget_set_sensitive(button, TRUE);
+    } else {
+	/* using differenced forecast : FIXME */
+	gtk_widget_set_sensitive(button, FALSE);
+    }
+}
+
+static void set_ci_choice (GtkComboBox *depvar_combo,
+			   gpointer data)
 {
     GtkWidget *ci_combo = data;
 
-    if (gtk_combo_box_get_active(depvar_combo) == 1) {
+    /* If the active value in @depvar_combo is 0 that means that
+       the forecast variable is the actual dependent variable, and
+       not a transformation thereof.
+    */
+    if (gtk_combo_box_get_active(depvar_combo) == 0) {
+	/* select low/high lines for the CI and suppress the
+	   usual choice */
 	gtk_combo_box_set_active(GTK_COMBO_BOX(ci_combo), 1);
 	gtk_widget_set_sensitive(GTK_WIDGET(ci_combo), FALSE);
     } else {
+	/* re-activate choice of representation of the CI */
 	gtk_widget_set_sensitive(GTK_WIDGET(ci_combo), TRUE);
     }
 }
@@ -3384,24 +3399,20 @@ int forecast_dialog (int t1min, int t1max, int *t1,
                           GINT_TO_POINTER(i));
         if (!opt_ok) {
             gtk_widget_set_sensitive(button, FALSE);
-#if 0
-            if (ibutton != NULL) {
-                /* integrate option makes dynamic option available */
-                g_signal_connect(G_OBJECT(ibutton), "toggled",
-                                 G_CALLBACK(flip_sensitivity),
-                                 button);
+            if (flags & FC_INTEGRATE_OK) {
+                /* If the integrate option is selected, a dynamic
+		   forecast should be feasible */
+		g_signal_connect(G_OBJECT(depvar_combo), "changed",
+				 G_CALLBACK(set_dynamic_ok), button);
             }
-#endif
         }
     }
 
-#if 0
-    if (ibutton != NULL && sbutton != NULL && !(flags & FC_DYNAMIC_OK)) {
-        g_signal_connect(G_OBJECT(ibutton), "toggled",
-                         G_CALLBACK(snap_to_static),
-                         sbutton);
+    if (flags & FC_INTEGRATE_OK && !(flags & FC_DYNAMIC_OK) &&
+	sbutton != NULL) {
+        g_signal_connect(G_OBJECT(depvar_combo), "changed",
+                         G_CALLBACK(snap_to_static), sbutton);
     }
-#endif
 
     /* pre-forecast obs spin button */
     tmp = gtk_hseparator_new();
@@ -3440,13 +3451,14 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         };
         static combo_opts ci_opts;
         GtkWidget *ci_combo;
-        gboolean ci_choice = TRUE;
+	gboolean ci_choose = TRUE;
+	gboolean simple_ols;
         int deflt;
 
         if (*t2 - *t1 < 1) {
             /* one observation: can only do error bar */
             deflt = 0;
-            ci_choice = FALSE;
+            ci_choose = FALSE;
             *optp &= ~OPT_L;
             *optp &= ~OPT_F;
         } else {
@@ -3467,29 +3479,23 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         gtk_box_pack_start(GTK_BOX(hbox), ci_combo, FALSE, FALSE, 5);
         gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
-#if 1
-	int simple_ols = gretl_is_simple_OLS(pmod);
-	if (depvar_combo != NULL && simple_ols) {
+	simple_ols = gretl_is_simple_OLS(pmod);
+	if (depvar_combo != NULL && simple_ols && ci_choose) {
+	    /* In the "simple ols" case, with a single regressor besides
+	       the constant, we'll represent confidence intervals in a
+	       special mode and not offer the usual choice.  However, if
+	       it turns out we're actually showing a forecast of a
+	       transformation of the dependent variable (as selected via
+	       depvar_combo) we drop the special mode and revert to the
+	       usual choice.
+	    */
+	    set_ci_choice(GTK_COMBO_BOX(depvar_combo), ci_combo);
 	    g_signal_connect(G_OBJECT(depvar_combo), "changed",
-			     G_CALLBACK(toggle_ci_choice), ci_combo);
+			     G_CALLBACK(set_ci_choice), ci_combo);
 	}
-#endif
 
         if (conf != NULL) {
             dialog_add_confidence_selector(rset->dlg, conf, NULL);
-#if 0
-            if (ci_choice && (flags & FC_MEAN_OK) && !expon) {
-                confidence_scope_selector(rset->dlg, optp);
-                if (gretl_is_simple_OLS(pmod)) {
-                    /* ols: y 0 x */
-                    gtk_combo_box_set_active(GTK_COMBO_BOX(ci_combo), 1);
-                    ci_choice = 0;
-                }
-            }
-#endif
-        }
-        if (!ci_choice) {
-            gtk_widget_set_sensitive(ci_combo, FALSE);
         }
     }
 

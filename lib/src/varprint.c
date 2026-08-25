@@ -787,8 +787,8 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
 	    } else {
 		src = dset->varname[list[j+1]];
 		wi = strlen(src);
-		if (wi >= NAMETRUNC) {
-		    wi = NAMETRUNC - 1;
+		if (wi >= SHORTLEN) {
+		    wi = SHORTLEN - 1;
 		}
 		if (wi < vwidth - 1) wi = vwidth - 1;
 		pprintf(prn, "%#*.5g ", wi, gretl_matrix_get(jvar->S, i, j));
@@ -974,8 +974,8 @@ static int max_Ftest_label_len (GRETL_VAR *var,
 	}
     }
 
-    if (maxnamelen >= NAMETRUNC) {
-	maxnamelen = NAMETRUNC - 1;
+    if (maxnamelen >= SHORTLEN) {
+	maxnamelen = SHORTLEN - 1;
     }
 
     tmp = g_strdup_printf(_("All lags of %s"), "x");
@@ -1188,7 +1188,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		    pprintf(prn, "F(%d, %d) = %8.5g ", nlags, dfd, Fval);
 		    pprintf(prn, "[%.4f]\\par\n", pv);
 		} else {
-		    char tmp[NAMETRUNC];
+		    char tmp[SHORTLEN];
 
 		    maybe_trim_varname(tmp, vname);
 		    lagstr = g_strdup_printf(_("All lags of %s"), tmp);

@@ -45,7 +45,8 @@ struct FITRESID_ {
     int t2;         /* end of forecast range */
     int k;          /* number of steps ahead (method = FC_KSTEP only) */
     int nobs;       /* length of the arrays actual, fitted, resid */
-    char depvar[VNAMELEN]; /* name of dependent variable */
+    char depvar[VNAMELEN]; /* full name of dependent variable */
+    char ylabel[SHORTLEN]; /* name to display in printout or plot */
     gretlopt opt;   /* option flags applied to forecast */
 };
 

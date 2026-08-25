@@ -589,7 +589,7 @@ static void print_loop_coeff (const DATASET *dset,
                               int i, PRN *prn)
 {
     char pname[VNAMELEN];
-    char tmp[NAMETRUNC];
+    char tmp[SHORTLEN];
     mpf_t c1, c2, m, sd1, sd2;
     unsigned long ln = lmod->n;
 
