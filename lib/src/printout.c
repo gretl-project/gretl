@@ -3403,9 +3403,9 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
     }
 
     if (fr->a0meth == 1) {
-	pprintf(prn, " (%s)\n", _("Normal correction"));
+	pprintf(prn, " (%s)\n", _("Normal correction applied to point forecast"));
     } else if (fr->a0meth == 2) {
-	pprintf(prn, " (%s)\n", _("Smearing correction"));
+	pprintf(prn, " (%s)\n", _("Smearing correction applied to point forecast"));
     }
 
     obslen = max_obs_marker_length(dset);
