@@ -2017,8 +2017,6 @@ void gui_do_forecast (GtkAction *action, gpointer p)
                            pmod, vwin_toplevel(vwin));
 
     if (canceled(resp)) {
-	/* reinstate the default value */
-        gopt = OPT_P | OPT_H;
         return;
     }
 

@@ -3227,6 +3227,13 @@ static GtkWidget *depvar_form_selector (GtkWidget *vbox,
     return depvar_combo;
 }
 
+enum {
+    FTYPE_AUTO = 0,
+    FTYPE_DYN,
+    FTYPE_STATIC,
+    FTYPE_KSTEP
+};
+
 static void snap_to_static (GtkComboBox *depvar_combo,
 			    GtkWidget *button)
 {
@@ -3238,14 +3245,25 @@ static void snap_to_static (GtkComboBox *depvar_combo,
 }
 
 static void set_dynamic_ok (GtkComboBox *depvar_combo,
-			    GtkWidget *button)
+			    GtkWidget **buttons)
 {
+    int i;
+
     if (gtk_combo_box_get_active(depvar_combo) == 1) {
 	/* integrated forecast selected */
-	gtk_widget_set_sensitive(button, TRUE);
+	for (i=0; buttons[i] != NULL; i++) {
+	    gtk_widget_set_sensitive(buttons[i], TRUE);
+	}
     } else {
-	/* using differenced forecast : FIXME */
-	gtk_widget_set_sensitive(button, FALSE);
+	/* using differenced forecast : FIXME? */
+	for (i=0; buttons[i] != NULL; i++) {
+	    if (i == FTYPE_STATIC) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(buttons[i]), TRUE);
+	    } else {
+		gtk_widget_set_sensitive(buttons[i], FALSE);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(buttons[i]), FALSE);
+	    }
+	}
     }
 }
 
@@ -3274,8 +3292,8 @@ static void set_ci_choice (GtkComboBox *depvar_combo,
    be non-NULL in the former case, NULL in the latter.
 
    The @optp argument is mainly to do with plotting the forecast,
-   but can accept OPT_I (integrate), OPT_M (mean-y) or OPT_X
-   (exponentiate log dependent variable).
+   but can accept OPT_I (integrate) or OPT_X (exponentiate log
+   dependent variable).
 */
 
 int forecast_dialog (int t1min, int t1max, int *t1,
@@ -3297,9 +3315,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     int deflt = 0;
     GtkWidget *tmp;
     GtkWidget *vbox, *hbox, *bbox;
-    GtkWidget *sbutton = NULL;
-    GtkWidget *button = NULL;
     GtkWidget *depvar_combo = NULL;
+    GtkWidget *fc_buttons[4] = {NULL};
     struct range_setting *rset;
     int i, radio_val = 0;
     int ret = GRETL_CANCEL;
@@ -3328,7 +3345,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
     if (!dataset_is_time_series(dataset)) {
 	/* only a static forecast is available */
-	deflt = 2;
+	deflt = FTYPE_STATIC;
 	goto skip_ts_options;
     }
 
@@ -3345,7 +3362,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     }
     if (!(flags & (FC_AUTO_OK | FC_DYNAMIC_OK))) {
         /* default to static forecast */
-        deflt = 2;
+        deflt = FTYPE_STATIC;
     }
 
     /* forecast-type options */
@@ -3353,65 +3370,67 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         gboolean opt_ok = TRUE;
         GSList *group = NULL;
 
-        if (button != NULL) {
-            group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-        }
-        hbox = gtk_hbox_new(FALSE, 5);
-        button = gtk_radio_button_new_with_label(group, _(opts[i]));
-        gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
-        if (i == 2) {
-            /* keep a handle to the "static forecast" button */
-            sbutton = button;
+        if (i > 0) {
+            group =
+		gtk_radio_button_get_group(GTK_RADIO_BUTTON(fc_buttons[i-1]));
         }
 
+        hbox = gtk_hbox_new(FALSE, 5);
+        fc_buttons[i] = gtk_radio_button_new_with_label(group, _(opts[i]));
+        gtk_box_pack_start(GTK_BOX(hbox), fc_buttons[i], FALSE, FALSE, 5);
+
         if (i == 3 && k != NULL) {
-            /* steps ahead for recursive forecast */
+            /* steps ahead for recursive forecast: this packed to the
+	       right of the radio button */
             GtkWidget *spin = gtk_spin_button_new_with_range(1, 50, 1);
 
             g_signal_connect(G_OBJECT(spin), "value-changed",
                              G_CALLBACK(set_int_from_spin), k);
             gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);
             gtk_widget_set_sensitive(spin, deflt == 3);
-            sensitize_conditional_on(spin, button);
+            sensitize_conditional_on(spin, fc_buttons[i]);
         }
 
+	/* pack the hbox into the vbox */
         gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
         if (i == deflt) {
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fc_buttons[i]), TRUE);
             radio_val = i;
         }
-        if (i < 2 && !(flags & FC_DYNAMIC_OK)) {
+        if (i < FTYPE_STATIC && !(flags & FC_DYNAMIC_OK)) {
             /* disallow dynamic options */
             opt_ok = FALSE;
         }
-        if (i == 0 && (flags & FC_AUTO_OK)) {
+        if (i == FTYPE_AUTO && (flags & FC_AUTO_OK)) {
             opt_ok = TRUE;
         }
-        if (i >= 2) {
-            g_signal_connect(G_OBJECT(button), "clicked",
+        if (i >= FTYPE_STATIC) {
+            g_signal_connect(G_OBJECT(fc_buttons[i]), "clicked",
                              G_CALLBACK(adjust_fcast_t1),
                              rset);
         }
-        g_signal_connect(G_OBJECT(button), "clicked",
+        g_signal_connect(G_OBJECT(fc_buttons[i]), "clicked",
                          G_CALLBACK(set_radio_opt), &radio_val);
-        g_object_set_data(G_OBJECT(button), "action",
+        g_object_set_data(G_OBJECT(fc_buttons[i]), "action",
                           GINT_TO_POINTER(i));
         if (!opt_ok) {
-            gtk_widget_set_sensitive(button, FALSE);
+            gtk_widget_set_sensitive(fc_buttons[i], FALSE);
             if (flags & FC_INTEGRATE_OK) {
                 /* If the integrate option is selected, a dynamic
-		   forecast should be feasible */
+		   forecast should be allowed */
 		g_signal_connect(G_OBJECT(depvar_combo), "changed",
-				 G_CALLBACK(set_dynamic_ok), button);
+				 G_CALLBACK(set_dynamic_ok),
+				 fc_buttons);
             }
         }
     }
 
     if (flags & FC_INTEGRATE_OK && !(flags & FC_DYNAMIC_OK) &&
-	sbutton != NULL) {
+	fc_buttons[FTYPE_STATIC] != NULL) {
         g_signal_connect(G_OBJECT(depvar_combo), "changed",
-                         G_CALLBACK(snap_to_static), sbutton);
+                         G_CALLBACK(snap_to_static),
+			 fc_buttons[FTYPE_STATIC]);
     }
 
     /* pre-forecast obs spin button */
@@ -3493,13 +3512,12 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	    g_signal_connect(G_OBJECT(depvar_combo), "changed",
 			     G_CALLBACK(set_ci_choice), ci_combo);
 	}
-
         if (conf != NULL) {
             dialog_add_confidence_selector(rset->dlg, conf, NULL);
         }
     }
 
-    /* buttons */
+    /* control buttons */
     bbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
     cancel_delete_button(bbox, rset->dlg);
     tmp = ok_validate_button(bbox, &ret, &radio_val);
