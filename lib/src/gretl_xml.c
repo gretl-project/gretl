@@ -1833,9 +1833,10 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node,
  * @doc: XML document pointer.
  * @pmask: location to receive allocated mask.
  *
- * In XML a mask is written as an array of 0s and 1s, separated
- * by single spaces. What's written to @pmask is an array of
- * bytes, each with value 0 or 1.
+ * In XML a mask is written as an array of numerals, '0' or '1',
+ * separated by single spaces. What's written to @pmask is an
+ * array of bytes, each with value 0 or 1, terminated by
+ * 0x0f (SUBMASK_SENTINEL, see subsample.c).
  *
  * Returns: 0 on success, non-zero on failure.
  */
@@ -1853,6 +1854,8 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask)
     if (len == 0) {
 	*pmask = RESAMPLED;
 	return 0;
+    } else if (len < 0) {
+	return 1;
     }
 
     mask = calloc(len, 1);
@@ -1865,23 +1868,37 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask)
 	if (tmp == NULL) {
 	    err = 1;
 	} else {
-	    char *s = (char *) tmp;
+	    char c, *s = (char *) tmp;
 	    size_t rem = strlen(s);
 
 	    for (i=0; i<len; i++) {
-		if (rem == 0) {
+		if (rem <= 0) {
 		    /* declared "length" exceeds the actual number of
 		       tokens present in the text content: bail out
 		       rather than reading past the string buffer
 		    */
+		    fprintf(stderr, "Invalid mask!\n");
 		    err = 1;
 		    break;
 		}
-		mask[i] = atoi(s);
+		c = mask[i] = atoi(s);
+		if (c != 0 && c != 1 && c != SUBMASK_SENTINEL) {
+		    fprintf(stderr, "Invalid mask!\n");
+		    err = 1;
+		    break;
+		}
 		s += 2; /* skip to next int */
 		rem = (rem > 2)? (rem - 2) : 0;
 	    }
+	    if (!err && mask[len-1] != SUBMASK_SENTINEL) {
+		fprintf(stderr, "Invalid mask!\n");
+		err = 1;
+	    }
 	    free(tmp);
+	}
+	if (err) {
+	    free(mask);
+	    mask = NULL;
 	}
     }
 
