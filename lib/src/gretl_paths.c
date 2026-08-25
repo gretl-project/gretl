@@ -3853,9 +3853,9 @@ static void real_build_path (char *targ,
 
     if (single_element) {
         *targ = '\0';
-        strcat(targ, single_element);
+        strcat_bounded(targ, single_element);
     } else if (last_trailing) {
-        strcat(targ, last_trailing);
+        strcat_bounded(targ, last_trailing);
     }
 }
 
