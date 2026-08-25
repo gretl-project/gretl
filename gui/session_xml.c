@@ -9,7 +9,7 @@
 
 static int check_graph_file (const char *fname, int type)
 {
-    char fullname[MAXLEN];
+    char fullname[FILENAME_MAX];
     FILE *fp;
     int err = 0;
 
@@ -57,8 +57,8 @@ static void normalize_graph_filename (char *fname, int gnum)
     int i;
 
     if (sscanf(fname, "%15[^.].%d", s, &i) == 2) {
-	char oldname[MAXLEN];
-	char newname[MAXLEN];
+	char oldname[FILENAME_MAX];
+	char newname[FILENAME_MAX];
 	gchar *tmp = NULL;
 
 	if (i != gnum && (!strcmp(s, "graph") || !strcmp(s, "plot"))) {
@@ -344,7 +344,7 @@ static int rebuild_session_model (const char *fname,
 
 static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 {
-    char fullname[MAXLEN];
+    char fullname[FILENAME_MAX];
     xmlNodePtr cur;
     int errs = 0;
 
@@ -463,7 +463,7 @@ static int session_models_to_bundles (xmlNodePtr node,
 				      DATASET *dset,
 				      const char *sdir)
 {
-    char fullname[MAXLEN];
+    char fullname[FILENAME_MAX];
     xmlNodePtr cur;
     int i = 0;
     int errs = 0;
@@ -844,7 +844,7 @@ static void trash_old_session_files (const char *path)
 
     if (sdir != NULL) {
 	const gchar *dname;
-	char tmp[2*MAXLEN];
+	char tmp[FILENAME_MAX];
 	int fnum;
 
 	while ((dname = g_dir_read_name(sdir)) != NULL) {
@@ -872,8 +872,8 @@ static void trash_old_session_files (const char *path)
 static int write_session_xml (const char *datname)
 {
     MODEL *pmod;
-    char fname[2*MAXLEN];
-    char tmpname[2*MAXLEN];
+    char fname[FILENAME_MAX];
+    char tmpname[FILENAME_MAX];
     char *objname, *xmlname;
     PRN *prn;
     int nmodels;
