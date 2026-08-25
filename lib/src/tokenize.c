@@ -1923,11 +1923,16 @@ static int token_to_int (CMD *c, int k)
 
 static int list_max (const int *list)
 {
-    int i, lmax = list[1];
+    int i, lmax;
 
-    for (i=2; i<=list[0]; i++) {
-	if (list[i] > lmax) {
-	    lmax = list[i];
+    if (list == NULL || list[0] == 0) {
+	lmax = 0;
+    } else {
+	lmax = list[1];
+	for (i=2; i<=list[0]; i++) {
+	    if (list[i] > lmax) {
+		lmax = list[i];
+	    }
 	}
     }
 
