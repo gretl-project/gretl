@@ -12294,17 +12294,10 @@ del comando <cmdref targ="set"/>.
       smpl full
     </code>
     <para>
-<<<<<<< HEAD
-      L'opzione <opt>output=</opt><repl>filename</repl> è usata per
-      controllare forma e destinazione dell'output; per dettagli su
-      questa opzione e anche l'opzione <opt>font</opt>, vedi il
-      comando <cmdref targ="gnuplot"/>.
-=======
       L'opzione <opt>output=</opt><repl>filename</repl> può essere
       usata per controllare forma e destinazione dell'output. Per
       dettagli su questa opzione e anche sull'opzione <opt>font</opt>,
       si veda il comando <cmdref targ="gnuplot"/>.
->>>>>>> 8a8e3bd8a79f3b14f1c8b51d3c2fe4a84415dc22
     </para>
 
   </description>
