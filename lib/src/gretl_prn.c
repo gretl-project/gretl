@@ -40,8 +40,8 @@
  *
  * To get hold of a PRN use gretl_print_new() or one of the more
  * specific constructors, and to free it use gretl_print_destroy().
- * If you want to use a PRN dirctly for printing in your own code, use
- * the functions pprintf(), pputs() and pputc(). These are
+ * If you want to use a PRN directly for printing in your own code,
+ * use the functions pprintf(), pputs() and pputc(). These are
  * counterparts to the standard C functions fprintf, fputs and
  * fputc, but note that with pputs and pputc the PRN argument
  * must be given first (unlike fputs and fputc in which the
