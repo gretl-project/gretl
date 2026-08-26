@@ -4151,6 +4151,14 @@
 	  <effect>see below</effect>
         </option>
         <option>
+	  <flag>--exponentiate</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
+	  <flag>--integrate</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
 	  <flag>--all-probs</flag>
 	  <effect>see below</effect>
         </option>
@@ -4245,6 +4253,49 @@
 	<repl>steps-ahead</repl> argument should be given only in
 	conjunction with the <opt>recursive</opt> option.
       </para>
+
+      <subhead context="cli">Transformed forecasts</subhead>
+      <para context="cli">
+	This section applies specifically to single-equation models
+	estimated via OLS. By default <lit>fcast</lit> produces
+	forecasts of the dependent variable, <math>y</math>, but two
+	sorts of transformed forecast are supported.
+      </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    If <math>y</math> is recognized as the log of another
+	    variable in the dataset, the <opt>exponentiate</opt> option
+	    can be used to produce a forecast of the
+	    <emphasis>level</emphasis> of the variable rather than its
+	    log. In this case the log-forecast is exponentiated, and
+	    point values (but not the limits of confidence intervals, if
+	    applicable) are multiplied by a bias-correction factor. This
+	    factor is exp(<math>s</math><sup>2</sup>), where
+	    <math>s</math> is the standard error of the regression, if
+	    the Doornik&ndash;Hansen test fails to reject normality of
+	    the error term. Otherwise it is the nonparametric
+	    <quote>smearing estimator</quote> suggested by <cite
+	    key="duan83">Duan (1983)</cite>, namely the sample mean of
+	    the exponentiated residuals. See section 6-4c of <cite
+	    key="wooldridge-intro">Wooldridge (2016)</cite> for details
+	    on this matter.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    If <math>y</math> is recognized as the first difference of
+	    another variable in the dataset, the <opt>integrate</opt>
+	    option can be used to produce a forecast of the level of the
+	    variable rather than its difference. An integrated forecast
+	    can be static (the forecast for time <math>t</math>+1 is the
+	    actual level of the variable at time <math>t</math> plus the
+	    predicted difference), or dynamic, in which case the prior
+	    forecast of the level at time <math>t</math> is substituted
+	    for the actual level.
+	  </para>
+	</li>
+      </ilist>
 
       <subhead>Ordered and multinomial models</subhead>
       <para>
