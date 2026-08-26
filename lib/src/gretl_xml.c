@@ -1881,8 +1881,12 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask)
 		    err = 1;
 		    break;
 		}
-		c = mask[i] = atoi(s);
-		if (c != 0 && c != 1 && c != SUBMASK_SENTINEL) {
+		if (*s == 'p') {
+		    c = mask[i] = 'p';
+		} else {
+		    c = mask[i] = atoi(s);
+		}
+		if (c != 0 && c != 1 && c != 'p' && c != SUBMASK_SENTINEL) {
 		    fprintf(stderr, "Invalid mask!\n");
 		    err = 1;
 		    break;

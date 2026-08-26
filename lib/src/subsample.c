@@ -31,9 +31,9 @@
 #include "gretl_xml.h"
 #include "subsample.h"
 
-#define SUBDEBUG 0
-#define FULLDEBUG 0
-#define PANDEBUG 0
+#define SUBDEBUG 1
+#define FULLDEBUG 1
+#define PANDEBUG 1
 
 typedef enum {
     SUBSAMPLE_NONE,
@@ -203,7 +203,11 @@ int write_dataset_submask (const DATASET *dset, PRN *prn)
 
 	pprintf(prn, "<submask length=\"%d\">", n);
 	for (i=0; i<n; i++) {
-	    pprintf(prn, "%d ", (int) dset->submask[i]);
+	    if (dset->submask[i] == 'p') {
+		pputs(prn, "p ");
+	    } else {
+		pprintf(prn, "%d ", (int) dset->submask[i]);
+	    }
 	}
 	pputs(prn, "</submask>\n");
 
@@ -274,6 +278,8 @@ static void debug_print_submask (char *mask, char *msg)
 		fputc('0', stderr);
 	    } else if (*s == 1) {
 		fputc('1', stderr);
+	    } else if (*s == 'p') {
+		fputc('p', stderr);
 	    } else {
 		fputc('?', stderr);
 	    }
@@ -1227,7 +1233,16 @@ static int mask_from_dummy (const char *s, const DATASET *dset,
     return err;
 }
 
-/* how many observations are selected by @mask relative to @dset? */
+/* How many observations are selected by @mask relative to @dset?
+   Observations where mask == 1 are "genuine" observations; those where
+   mask == 'p' are rows of NAs inserted to preserve panel structure.
+
+   As of 2026-08-26 the 'p' cases were not being counted here, leading
+   to a crash when opening a gretl session in which a panel dataset was
+   subsampled with padding. Now these cases are counted and that crash
+   is fixed, but we need to be on the lookout for possible bad side
+   effects of this change.
+*/
 
 static int
 count_selected_cases (const char *mask, const DATASET *dset)
@@ -1235,7 +1250,7 @@ count_selected_cases (const char *mask, const DATASET *dset)
     int i, n = 0;
 
     for (i=0; i<dset->n; i++) {
-	if (mask[i] == 1) {
+	if (mask[i] == 1 || mask[i] == 'p') {
 	    n++;
 	}
     }
@@ -1243,8 +1258,8 @@ count_selected_cases (const char *mask, const DATASET *dset)
     return n;
 }
 
-/* panel: how many distinct cross-sectional units are included
-   in the masked subset of observations? */
+/* panel data: how many distinct cross-sectional units are included in
+   the masked subset of observations? */
 
 static int
 count_panel_units (const char *mask, const DATASET *dset)
