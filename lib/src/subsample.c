@@ -31,9 +31,9 @@
 #include "gretl_xml.h"
 #include "subsample.h"
 
-#define SUBDEBUG 1
-#define FULLDEBUG 1
-#define PANDEBUG 1
+#define SUBDEBUG 0
+#define FULLDEBUG 0
+#define PANDEBUG 0
 
 typedef enum {
     SUBSAMPLE_NONE,
