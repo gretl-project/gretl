@@ -180,7 +180,11 @@ int write_model_submask (const MODEL *pmod, PRN *prn)
 
 	pprintf(prn, "<submask length=\"%d\">", n);
 	for (i=0; i<n; i++) {
-	    pprintf(prn, "%d ", (int) pmod->submask[i]);
+	    if (pmod->submask[i] == 'p') {
+		pputs(prn, "p ");
+	    } else {
+		pprintf(prn, "%d ", (int) pmod->submask[i]);
+	    }
 	}
 	pputs(prn, "</submask>\n");
 	ret = 1;
@@ -3398,6 +3402,10 @@ int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
 	/* no subsample info: pmod was estimated on the full dataset,
 	   so we'll reconstruct the full dataset */
 	sn = srcset->n;
+    } else if (pmod->submask == RESAMPLED) {
+	/* can't reconstruct: resampling doesn't correspond to a
+	   mask over the original dataset */
+	return E_DATA;
     } else {
 	/* pmod was estimated on a subsample, which has to
 	   be reconstructed */
@@ -3408,8 +3416,11 @@ int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
 	    return E_ALLOC;
 	}
 	for (t=0; t<srcset->n; t++) {
-	    if (pmod->submask[t] > 0) {
-		mask[t] = 1;
+	    if (pmod->submask[t] == 1 || pmod->submask[t] == 'p') {
+		/* preserve the panel-padding marker, if any, so that
+		   copy_data_to_subsample() fills padding rows with
+		   NAs rather than genuine source-dataset values */
+		mask[t] = pmod->submask[t];
 		sn++;
 	    }
 	}
