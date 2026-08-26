@@ -1834,9 +1834,9 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node,
  * @pmask: location to receive allocated mask.
  *
  * In XML a mask is written as an array of numerals, '0' or '1',
- * separated by single spaces. What's written to @pmask is an
- * array of bytes, each with value 0 or 1, terminated by
- * 0x0f (SUBMASK_SENTINEL, see subsample.c).
+ * or 'p' to represent panel padding, each separated by single spaces.
+ * What's written to @pmask is an array of coniguous bytes, each with
+ * value 0, 1 or 'p', terminated by 0x0f (SUBMASK_SENTINEL, see subsample.h).
  *
  * Returns: 0 on success, non-zero on failure.
  */
