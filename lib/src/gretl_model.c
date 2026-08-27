@@ -1155,7 +1155,10 @@ char *gretl_model_get_param_name (const MODEL *pmod,
 
 	if (k >= 0) {
 	    if (pmod->params != NULL) {
-		strcpy(targ, pmod->params[k]);
+		if (g_strlcpy(targ, pmod->params[k], VNAMELEN) >= VNAMELEN) {
+		    fprintf(stderr, "gretl_model_get_param_name: "
+			    "name too long, truncated\n");
+		}
 	    } else {
 		strcpy(targ, "unknown");
 	    }

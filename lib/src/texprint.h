@@ -54,7 +54,9 @@ char *tex_escape (char *targ, const char *src);
 
 char *tex_escape_new (const char *src);
 
-char *tex_escape_special (char *targ, const char *src);
+char *tex_escape_special (char *targ, size_t targ_len, const char *src);
+
+char *tex_escape_bounded (char *targ, size_t targ_len, const char *src);
 
 char *tex_rl_float (double x, char *s, int dig);
 

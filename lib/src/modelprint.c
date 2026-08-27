@@ -32,6 +32,8 @@ static void alt_print_rho_terms (const MODEL *pmod, PRN *prn);
 static void logit_probit_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_heckit_stats (const MODEL *pmod, PRN *prn);
+static char *rtf_escape_new (const char *src);
+static char *csv_escape_new (const char *src);
 
 #define RTFTAB "\\par \\ql \\tab "
 
@@ -172,17 +174,23 @@ static void print_model_stats_table (const double *stats,
 		pprintf(prn, "  %s = %s\n", names[i], tmp1);
 	    }
 	} else if (tex_format(prn)) {
-	    tex_escape_special(tmp1, names[i]);
+	    tex_escape_special(tmp1, sizeof tmp1, names[i]);
 	    tex_rl_double(stats[i], tmp2);
 	    pprintf(prn, "%s & %s \\\\\n", tmp1, tmp2);
 	} else if (rtf_format(prn)) {
+	    char *ename = rtf_escape_new(names[i]);
+
 	    if (na(stats[i])) {
-		pprintf(prn, RTFTAB "%s = NA\n", names[i]);
+		pprintf(prn, RTFTAB "%s = NA\n", ename);
 	    } else {
-		pprintf(prn, RTFTAB "%s = %g\n", names[i], stats[i]);
+		pprintf(prn, RTFTAB "%s = %g\n", ename, stats[i]);
 	    }
+	    free(ename);
 	} else if (csv_format(prn)) {
-	    pprintf(prn, "\"%s\"%c%.15g\n", names[i], prn_delim(prn), stats[i]);
+	    char *ename = csv_escape_new(names[i]);
+
+	    pprintf(prn, "\"%s\"%c%.15g\n", ename, prn_delim(prn), stats[i]);
+	    free(ename);
 	}
     }
 
@@ -1369,7 +1377,7 @@ print_ivreg_instruments (const MODEL *pmod, const DATASET *dset, PRN *prn)
 		continue;
 	    }
 	    if (tex) {
-		tex_escape(vname, dset->varname[vi]);
+		tex_escape_bounded(vname, sizeof vname, dset->varname[vi]);
 	    } else {
 		strcpy(vname, dset->varname[vi]);
 	    }
@@ -1643,7 +1651,7 @@ static void tex_vecm_depvar_name (char *s, const char *vname)
     if (sscanf(vname, "d_%13s", tmp)) {
 	char myvar[24];
 
-	tex_escape(myvar, tmp);
+	tex_escape_bounded(myvar, sizeof myvar, tmp);
 	sprintf(s, "$\\Delta$%s", myvar);
 	gotit = 1;
     }
@@ -1657,7 +1665,7 @@ static void tex_dpd_depvar_name (char *s, const char *vname)
 {
     char vnesc[32];
 
-    tex_escape(vnesc, vname);
+    tex_escape_bounded(vnesc, sizeof vnesc, vname);
     sprintf(s, "$\\Delta$%s", vnesc);
 }
 
@@ -1811,7 +1819,7 @@ static void print_arma_depvar (const MODEL *pmod,
 	if (d > 0 || D > 0) {
 	    strcat(vname, "$");
 	}
-	tex_escape(tmp, dset->varname[yno]);
+	tex_escape_bounded(tmp, sizeof tmp, dset->varname[yno]);
 	strcat(vname, tmp);
     } else {
 	if (d == 1) {
@@ -2078,7 +2086,7 @@ static void print_model_heading (const MODEL *pmod,
 	    char modname[32];
 
 	    if (tex) {
-		tex_escape(modname, pmod->name);
+		tex_escape_bounded(modname, sizeof modname, pmod->name);
 	    } else {
 		strcpy(modname, pmod->name);
 	    }
@@ -2265,7 +2273,7 @@ static void print_model_heading (const MODEL *pmod,
 	    } else if (pmod->ci == DPANEL) {
 		tex_dpd_depvar_name(vname, dvname);
 	    } else {
-		tex_escape(vname, dvname);
+		tex_escape_bounded(vname, sizeof vname, dvname);
 	    }
 	}
 
@@ -2311,7 +2319,7 @@ static void print_model_heading (const MODEL *pmod,
 	if (selvar != NULL) {
 	    if (csv) pputc(prn, '"');
 	    if (tex) {
-		tex_escape(vname, selvar);
+		tex_escape_bounded(vname, sizeof vname, selvar);
 	    }
 	    pprintf(prn, "%s: %s", _("Selection variable"),
 		    (tex)? vname : selvar);
@@ -2358,7 +2366,7 @@ static void print_model_heading (const MODEL *pmod,
     } else if (pmod->ci == WLS && !pmod->aux) {
 	/* weight variable for WLS */
 	if (tex) {
-	    tex_escape(vname, dset->varname[pmod->nwt]);
+	    tex_escape_bounded(vname, sizeof vname, dset->varname[pmod->nwt]);
 	}
 	if (csv) pputc(prn, '"');
 	pprintf(prn, "%s: %s", _("Variable used as weight"),
@@ -3786,15 +3794,111 @@ static void rtf_print_double (double xx, PRN *prn)
     }
 }
 
+/* Escape a string for safe embedding in generated RTF text: double
+   any literal backslash or brace, which are RTF's own control-word/
+   group-delimiter characters. Without this, a coefficient or
+   statistic name containing e.g. "\field{\*\fldinst ...}" would be
+   emitted as live RTF markup rather than literal text. Returns a
+   newly allocated string; the caller must free() it.
+*/
+
+static char *rtf_escape_new (const char *src)
+{
+    const char *s;
+    char *ret, *p;
+    int len = 0;
+
+    if (src == NULL) {
+	return gretl_strdup("");
+    }
+
+    for (s=src; *s; s++) {
+	if (*s == '\\' || *s == '{' || *s == '}') {
+	    len++;
+	}
+	len++;
+    }
+
+    ret = calloc(1, len + 1);
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    p = ret;
+    for (s=src; *s; s++) {
+	if (*s == '\\' || *s == '{' || *s == '}') {
+	    *p++ = '\\';
+	}
+	*p++ = *s;
+    }
+
+    return ret;
+}
+
+/* Escape a string for safe embedding in a quoted CSV field: double
+   any embedded double-quote (RFC 4180), and if the value would
+   start with a character a spreadsheet application treats as a
+   formula trigger ('=','+','-','@', tab, or CR), prefix it with a
+   benign leading apostrophe to neutralize that. Returns a newly
+   allocated string; the caller must free() it.
+*/
+
+static char *csv_escape_new (const char *src)
+{
+    const char *s;
+    char *ret, *p;
+    int len = 0;
+    int prefix = 0;
+
+    if (src == NULL) {
+	return gretl_strdup("");
+    }
+
+    if (*src == '=' || *src == '+' || *src == '-' || *src == '@' ||
+	*src == '\t' || *src == '\r') {
+	prefix = 1;
+	len++;
+    }
+
+    for (s=src; *s; s++) {
+	if (*s == '"') {
+	    len++;
+	}
+	len++;
+    }
+
+    ret = calloc(1, len + 1);
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    p = ret;
+    if (prefix) {
+	*p++ = '\'';
+    }
+    for (s=src; *s; s++) {
+	if (*s == '"') {
+	    *p++ = '"';
+	}
+	*p++ = *s;
+    }
+
+    return ret;
+}
+
 static void rtf_print_coeff (const model_coeff *mc, PRN *prn)
 {
+    char *ename;
+
     if (!na(mc->lo)) {
 	pputs(prn, RTF_INTVL_ROW);
     } else {
 	pputs(prn, RTF_COEFF_ROW);
     }
 
-    pprintf(prn, "\\ql %s\\cell", mc->name);
+    ename = rtf_escape_new(mc->name);
+    pprintf(prn, "\\ql %s\\cell", ename);
+    free(ename);
 
     if (na(mc->b)) {
 	pprintf(prn, " \\qc %s\\cell", _("undefined"));
@@ -3865,9 +3969,11 @@ static void rtf_print_coeff (const model_coeff *mc, PRN *prn)
 
 static void csv_print_coeff (const model_coeff *mc, PRN *prn)
 {
+    char *ename = csv_escape_new(mc->name);
     char d = prn_delim(prn);
 
-    pprintf(prn, "\"%s\"", mc->name);
+    pprintf(prn, "\"%s\"", ename);
+    free(ename);
 
     if (na(mc->b)) {
 	pprintf(prn, "%c\"%s\"", d, _("undefined"));
@@ -4022,9 +4128,8 @@ static void print_coeff_left_string (const char *s, PRN *prn)
     } else if (tex_format(prn)) {
 	char tmp[48];
 
-	tex_escape(tmp, s);
+	tex_escape_bounded(tmp, sizeof tmp, s);
 	pputs(prn, "\\\\ [-8pt]\n");
-
 	pprintf(prn, "%s \\\\[1ex]\n", tmp);
     } else if (rtf_format(prn)) {
 	pputs(prn, RTF_MULTICOL);
@@ -4425,7 +4530,7 @@ static int alt_print_aux_coeffs (const double *b, const double *se,
 	    mc.pval = coeff_pval(ci, mc.tval, df);
 	}
 	if (tex_format(prn)) {
-	    tex_escape_special(mc.name, names[i]);
+	    tex_escape_special(mc.name, sizeof mc.name, names[i]);
 	} else {
 	    *mc.name = '\0';
 	    strncat(mc.name, names[i], MC_NAMELEN - 1);
@@ -4862,10 +4967,10 @@ print_count_offset (const MODEL *pmod, const DATASET *dset,
     int offvar = gretl_model_get_int(pmod, "offset_var");
 
     if (offvar > 0) {
-	char name[24];
+	char name[VNAMELEN + 6]; /* "log(" + varname + ")" + NUL */
 	int n;
 
-	sprintf(name, "log(%s)", dset->varname[offvar]);
+	g_snprintf(name, sizeof name, "log(%s)", dset->varname[offvar]);
 	n = strlen(name);
 	pprintf(prn, "\n  %-*s", namelen, name);
 	if (n > namelen) {
@@ -4894,19 +4999,27 @@ static void print_ar_sum (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void mn_logit_coeffsep (char *sep, const MODEL *pmod,
-                               const DATASET *dset, int i)
+static void mn_logit_coeffsep (char *sep, size_t sep_len,
+			       const MODEL *pmod,
+                               const DATASET *dset,
+			       int i)
 {
     const char *vname = gretl_model_get_depvar_name(pmod, dset);
     int v = pmod->list[1];
 
     if (is_string_valued(dset, v)) {
+        /* the string-value label has no length limit anywhere it's
+           stored (series_table_add_string(), gretl_string_table.c),
+           so bound this write explicitly rather than trusting it
+        */
         const char *value = series_get_string_for_value(dset, v, i+1);
-        sprintf(sep, "%s = %s", vname, value);
+
+	g_snprintf(sep, sep_len, "%s = %s", vname, value);
     } else {
         const gretl_matrix *y = gretl_model_get_data(pmod, "yvals");
         int val = (y != NULL)? y->val[i] : i;
-        sprintf(sep, "%s = %d", vname, val);
+
+	g_snprintf(sep, sep_len, "%s = %d", vname, val);
     }
 }
 
@@ -5169,7 +5282,7 @@ static int plain_print_coeffs (const MODEL *pmod,
         } else if (cblock > 0 && i % cblock == 0) {
             char mnlsep[32];
 
-            mn_logit_coeffsep(mnlsep, pmod, dset, ++k);
+            mn_logit_coeffsep(mnlsep, sizeof mnlsep, pmod, dset, ++k);
 	    print_coeff_separator(mnlsep, 0, prn);
 	}
 	maybe_trim_varname(tmp, names[i]);
@@ -5260,10 +5373,9 @@ alt_print_count_offset (const MODEL *pmod, const DATASET *dset, PRN *prn)
     int offvar = gretl_model_get_int(pmod, "offset_var");
 
     if (offvar > 0) {
-	char name[24];
+	char name[VNAMELEN + 6]; /* "log(" + varname + ")" + NUL */
 
-	sprintf(name, "log(%s)", dset->varname[offvar]);
-
+	g_snprintf(name, sizeof name, "log(%s)", dset->varname[offvar]);
 	if (plain_format(prn)) {
 	    pprintf(prn, "\n  %-13s         1.0\n", name);
 	} else if (rtf_format(prn)) {
@@ -5273,7 +5385,7 @@ alt_print_count_offset (const MODEL *pmod, const DATASET *dset, PRN *prn)
 	} else if (tex_format(prn)) {
 	    char tmp[48];
 
-	    tex_escape(tmp, name);
+	    tex_escape_bounded(tmp, sizeof tmp, name);
 	    pprintf(prn, "{\\rm %s} & \\multicolumn{1}{c}{1.0} \\\\\n", tmp);
 	}
     }

@@ -167,7 +167,7 @@ char *tex_escape_new (const char *src)
     return ret;
 }
 
-static int tex_math_pname (char *targ, const char *s)
+static int tex_math_pname (char *targ, size_t targ_len, const char *s)
 {
     char base[16], op[2], mod[8];
     int n;
@@ -179,9 +179,9 @@ static int tex_math_pname (char *targ, const char *s)
 	const char *tbase = (tgreek != NULL)? tgreek : base;
 
 	if (*mod == '{') {
-	    sprintf(targ, "$%s%s%s$", tbase, op, mod);
+	    g_snprintf(targ, targ_len, "$%s%s%s$", tbase, op, mod);
 	} else {
-	    sprintf(targ, "$%s%s{%s}$", tbase, op, mod);
+	    g_snprintf(targ, targ_len, "$%s%s{%s}$", tbase, op, mod);
 	}
 	return 1;
     }
@@ -191,46 +191,127 @@ static int tex_math_pname (char *targ, const char *s)
 
 /**
  * tex_escape_special:
- * @targ: target string (must be pre-allocated)
+ * @targ: target string (must be pre-allocated, at least @targ_len bytes)
+ * @targ_len: usable size of @targ, in bytes, including the
+ * terminating NUL.
  * @src: source string.
  *
  * Copies from @src to @targ, escaping characters in @src that are
- * special to TeX (by inserting a leading backslash).  Unlike
- * tex_escape(), this function does not mess with '$' in the
- * source string, and it attempts to handle greek letters
- * correctly.
+ * special to TeX (by inserting a leading backslash), bounding the
+ * write to @targ_len bytes and truncating (with a diagnostic) if
+ * @src's escaped form would not fit. It attempts to handle greek
+ * letters correctly. As of 2026-08, also escapes a literal
+ * backslash, braces, and (unlike earlier versions) '$' itself --
+ * earlier versions passed @src through completely unescaped
+ * whenever it contained '$', on the theory that such a string was
+ * deliberately hand-written TeX math markup; but since @src can be
+ * fully attacker-controlled (e.g. a user-supplied coefficient name
+ * reaching here via the modprint command), that passthrough was
+ * also a way to smuggle an arbitrary, entirely unescaped LaTeX
+ * command through. Closing it means a name containing '$' no
+ * longer opens TeX math mode; it prints as a literal "\$" instead.
  *
  * Returns: the transformed copy of the string.
- */
+*/
 
-char *tex_escape_special (char *targ, const char *src)
+char *tex_escape_special (char *targ, size_t targ_len, const char *src)
 {
     const char *tgreek;
     char *p = targ;
+    size_t used;
 
-    if (strchr(src, '$')) {
-	/* don't mess with it */
-	strcpy(targ, src);
-	return targ;
+    if (src == NULL) {
+	fprintf(stderr, "tex_escape_special: src is NULL\n");
+	if (targ_len > 0) {
+	    *targ = '\0';
+	}
+ 	return targ;
     }
 
     tgreek = tex_greek_var(src);
 
     if (tgreek != NULL) {
-	sprintf(targ, "$%s$", tgreek);
-    } else if (tex_math_pname(targ, src)) {
-	; /* handled */
+	g_snprintf(targ, targ_len, "$%s$", tgreek);
+    } else if (tex_math_pname(targ, targ_len, src)) {
+	/* handled: tex_math_pname() now also honors @targ_len
+	   directly (it uses g_snprintf internally), so this is
+	   bounded regardless; its own field-width limits (base <=
+	   15 chars, mod <= 7 chars) additionally keep its output
+	   well under the smallest @targ_len (32) actually in use at
+	   either of this function's call sites, so truncation is
+	   not expected to be hit in practice
+	*/
+	;
     } else {
-	/* regular escape routine */
-	while (*src) {
-	    if (*src == '&' || *src == '_' ||
+	/* regular escape routine, bounded, and now also escaping a
+	   literal backslash, braces, and '$' (previously only
+	   '&','_','%','#' were escaped here, and any '$' anywhere
+	   in @src instead diverted to an unescaped passthrough --
+	   see the function doc comment above)
+	*/
+	used = 0;
+	while (*src && used + 2 < targ_len) {
+	    if (*src == '\\' || *src == '{' || *src == '}' ||
+		*src == '$' || *src == '&' || *src == '_' ||
 		*src == '%' || *src == '#') {
-		*p++ = '\\';
+		p[used++] = '\\';
 	    }
-	    *p++ = *src++;
+	    p[used++] = *src++;
 	}
+	if (targ_len > 0) {
+	    p[used] = '\0';
+	}
+	if (*src != '\0') {
+	    fprintf(stderr, "tex_escape_special: source too long, truncated\n");
+	}
+    }
 
-	*p = '\0';
+    return targ;
+}
+
+/**
+ * tex_escape_bounded:
+ * @targ: target string (must be pre-allocated, at least @targ_len bytes)
+ * @targ_len: usable size of @targ, in bytes, including the
+ * terminating NUL.
+ * @src: source string.
+ *
+ * Like tex_escape(), but bounds the write to @targ_len bytes
+ * (truncating, with a diagnostic, if @src's escaped form would
+ * not fit) and additionally escapes a literal backslash and
+ * braces, which tex_escape() does not. Intended for call sites
+ * where @targ is a small fixed-size buffer that a sufficiently
+ * escape-heavy or long @src could otherwise overflow.
+ *
+ * Returns: the transformed copy of the string.
+ */
+
+char *tex_escape_bounded (char *targ, size_t targ_len, const char *src)
+{
+    char *p = targ;
+    size_t used = 0;
+
+    if (src == NULL) {
+	fprintf(stderr, "tex_escape_bounded: src is NULL\n");
+	if (targ_len > 0) {
+	    *targ = '\0';
+	}
+	return targ;
+    }
+
+    while (*src && used + 2 < targ_len) {
+	if (*src == '\\' || *src == '{' || *src == '}' ||
+	    *src == '$' || *src == '&' || *src == '_' ||
+	    *src == '%' || *src == '#') {
+	    p[used++] = '\\';
+	}
+	p[used++] = *src++;
+    }
+    if (targ_len > 0) {
+	p[used] = '\0';
+    }
+    if (*src != '\0') {
+	fprintf(stderr, "tex_escape_bounded: source too long, truncated\n");
     }
 
     return targ;
