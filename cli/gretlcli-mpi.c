@@ -374,7 +374,7 @@ int main (int argc, char *argv[])
     ExecState state;
     char *line = NULL;
     char filearg[MAXLEN];
-    char runfile[MAXLEN];
+    char runfile[FILENAME_MAX];
     double scriptval = NADBL;
     gretlopt progopt = 0;
     CMD cmd;

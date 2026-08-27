@@ -4517,7 +4517,7 @@ static void boxplot_show_summary (GPT_SPEC *spec)
 
 static int add_to_session_callback (png_plot *plot)
 {
-    char fullname[MAXLEN] = {0};
+    char fullname[FILENAME_MAX] = {0};
     SESSION_GRAPH *grf = NULL;
     int err, type;
 

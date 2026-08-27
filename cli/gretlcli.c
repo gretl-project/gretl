@@ -667,7 +667,7 @@ int main (int argc, char *argv[])
     int pkgmode = 0;
     int load_datafile = 1;
     char filearg[MAXLEN];
-    char runfile[MAXLEN];
+    char runfile[FILENAME_MAX];
     double scriptval = NADBL;
     CMD cmd;
     PRN *prn = NULL;

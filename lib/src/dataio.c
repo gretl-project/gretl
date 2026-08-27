@@ -1541,7 +1541,7 @@ int gretl_seek_data (char *fname, DATASET *dset,
 int gretl_get_data (const char *fname, DATASET *dset,
                     gretlopt opt, PRN *prn)
 {
-    char tmp[MAXLEN] = {0};
+    char tmp[FILENAME_MAX] = {0};
 
     if (fname == NULL || strlen(fname) >= sizeof tmp) {
         return E_DATA;

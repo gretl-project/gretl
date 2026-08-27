@@ -6635,7 +6635,7 @@ static void real_bundle_package_info (const fnpkg *pkg,
     has_examples = pkg_has_examples(pkg);
 
     if (has_examples || pkg_has_datafiles(pkg)) {
-        char resdir[MAXLEN];
+        char resdir[FILENAME_MAX];
         char **resources;
         int n_res = 0;
 
