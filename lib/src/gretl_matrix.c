@@ -3071,19 +3071,6 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
     }
 #endif
 
-#if defined(_OPENMP)
-    if (!gretl_use_openmp(n)) {
-        goto st_mode;
-    }
-#pragma omp parallel for private(i)
-    for (i=0; i<n; i++) {
-        targ->val[i] += src->val[i];
-    }
-    return 0;
-
- st_mode:
-#endif
-
     for (i=0; i<n; i++) {
         targ->val[i] += src->val[i];
     }
@@ -3210,19 +3197,6 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
     }
 #endif
 
-#if defined(_OPENMP)
-    if (!gretl_use_openmp(n)) {
-        goto st_mode;
-    }
-#pragma omp parallel for private(i)
-    for (i=0; i<n; i++) {
-        targ->val[i] -= src->val[i];
-    }
-    return 0;
-
- st_mode:
-#endif
-
     for (i=0; i<n; i++) {
         targ->val[i] -= src->val[i];
     }
@@ -3294,20 +3268,7 @@ gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b)
         return E_NONCONF;
     }
 
-    n = a->rows * b->cols;
-
-#if defined(_OPENMP)
-    if (!gretl_use_openmp(n)) {
-        goto st_mode;
-    }
-#pragma omp parallel for private(i)
-    for (i=0; i<n; i++) {
-        b->val[i] = a->val[i] - b->val[i];
-    }
-    return 0;
-
- st_mode:
-#endif
+    n = a->rows * a->cols;
 
     for (i=0; i<n; i++) {
         b->val[i] = a->val[i] - b->val[i];
@@ -5540,9 +5501,6 @@ static void gretl_blas_dsyrk (const gretl_matrix *a, int atr,
     integer k = (atr)? a->rows : a->cols;
     integer lda = a->rows;
     double x, alpha = 1.0, beta = 0.0;
-#if defined(_OPENMP)
-    guint64 fpm;
-#endif
     int i, j;
 
     if (cmod == GRETL_MOD_CUMULATE) {
@@ -5554,23 +5512,6 @@ static void gretl_blas_dsyrk (const gretl_matrix *a, int atr,
 
     dsyrk_(&uplo, &tr, &n, &k, &alpha, a->val, &lda,
            &beta, c->val, &n);
-
-#if defined(_OPENMP)
-    fpm = (guint64) n * n;
-    if (!gretl_use_openmp(fpm)) {
-        goto st_mode;
-    }
-#pragma omp parallel for private(i, j, x)
-    for (i=0; i<n; i++) {
-        for (j=i+1; j<n; j++) {
-            x = gretl_matrix_get(c, i, j);
-            gretl_matrix_set(c, j, i, x);
-        }
-    }
-    return;
-
-   st_mode:
-#endif
 
     for (i=0; i<n; i++) {
         for (j=i+1; j<n; j++) {
@@ -5603,9 +5544,6 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     int nc = (atr)? a->cols : a->rows;
     int nr = (atr)? a->rows : a->cols;
     int idx1, idx2;
-#if defined(_OPENMP)
-    guint64 fpm;
-#endif
     double x;
 
     if (c->rows != nc) {
@@ -5627,48 +5565,6 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
         }
         return 0;
     }
-
-#if defined(_OPENMP)
-    fpm = (guint64) nc * nc * nr;
-    if (!gretl_use_openmp(fpm)) {
-        goto st_mode;
-    }
-
-    if (atr) {
-#pragma omp parallel for private(i, j, k, idx1, idx2, x)
-        for (i=0; i<nc; i++) {
-            for (j=i; j<nc; j++) {
-                idx1 = i * a->rows;
-                idx2 = j * a->rows;
-                x = 0.0;
-                for (k=0; k<nr; k++) {
-                    x += a->val[idx1++] * a->val[idx2++];
-                }
-                gretl_st_result(c,i,j,x,cmod);
-            }
-        }
-    } else {
-#pragma omp parallel for private(i, j, k, idx1, idx2, x)
-        for (i=0; i<nc; i++) {
-            for (j=i; j<nc; j++) {
-                idx1 = i;
-                idx2 = j;
-                x = 0.0;
-                for (k=0; k<nr; k++) {
-                    x += a->val[idx1] * a->val[idx2];
-                    idx1 += a->rows;
-                    idx2 += a->rows;
-                }
-                gretl_st_result(c,i,j,x,cmod);
-            }
-        }
-    }
-
-    return 0;
-
- st_mode:
-
-#endif /* _OPENMP */
 
     if (atr) {
         for (i=0; i<nc; i++) {
@@ -5804,10 +5700,6 @@ static gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X,
 {
     gretl_matrix *XTX = NULL;
     double x;
-#if defined(_OPENMP)
-    int ii;
-    guint64 fpm;
-#endif
     int i, j, k, nc, nr, n;
 
     if (gretl_is_null_matrix(X)) {
@@ -5822,30 +5714,6 @@ static gretl_matrix *gretl_matrix_packed_XTX_new (const gretl_matrix *X,
     if (XTX == NULL) {
         return NULL;
     }
-
-#if defined(_OPENMP)
-    fpm = (guint64) n * nr;
-    if (!gretl_use_openmp(fpm)) {
-        goto st_mode;
-    }
-#pragma omp parallel for private(i, j, k, ii, x)
-    for (i=0; i<nc; i++) {
-        for (j=i; j<nc; j++) {
-            ii = ijton(i,j, nc);
-            x = 0.0;
-            for (k=0; k<nr; k++) {
-                x += X->val[i*nr+k] * X->val[j*nr+k];
-            }
-            if (i == j && x < DBL_EPSILON) {
-                *nasty = 1;
-            }
-            XTX->val[ii] = x;
-        }
-    }
-    return XTX;
-
- st_mode:
-#endif
 
     n = 0;
     for (i=0; i<nc; i++) {
@@ -5944,193 +5812,6 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
                          const gretl_matrix *b, int btr,
                          gretl_matrix *c, GretlMatrixMod cmod,
                          int m, int n, int k)
-{
-    const double * restrict A = a->val;
-    const double * restrict B = b->val;
-    double * restrict C = c->val;
-    double x, alpha = 1.0;
-    int beta = 0;
-    int ar = a->rows;
-    int br = b->rows;
-    int cr = c->rows;
-#if defined(_OPENMP)
-    guint64 fpm;
-#endif
-    int i, j, l;
-
-    if (cmod == GRETL_MOD_CUMULATE) {
-        beta = 1;
-    } else if (cmod == GRETL_MOD_DECREMENT) {
-        alpha = -1.0;
-        beta = 1;
-    }
-
-#if defined(USE_SIMD)
-    if (k <= simd_k_max && !atr && !btr && !cmod) {
-        gretl_matrix_simd_mul(a, b, c);
-        return;
-    }
-#endif
-
-#if defined(_OPENMP)
-    fpm = (guint64) m * n * k;
-    if (!gretl_use_openmp(fpm)) {
-        goto st_mode;
-    }
-
-    if (!btr) {
-        if (!atr) {
-            /* C := alpha*A*B + beta*C */
-#pragma omp parallel for private(j, i, l, x)
-            for (j=0; j<n; j++) {
-                if (beta == 0) {
-                    for (i=0; i<m; i++) {
-                        C[j*cr+i] = 0.0;
-                    }
-                }
-                for (l=0; l<k; l++) {
-                    if (B[j*br+l] != 0.0) {
-                        x = alpha * B[j*br+l];
-                        for (i=0; i<m; i++) {
-                            C[j*cr+i] += x * A[l*ar+i];
-                        }
-                    }
-                }
-            }
-        } else {
-            /* C := alpha*A'*B + beta*C */
-#pragma omp parallel for private(j, i, l, x)
-            for (j=0; j<n; j++) {
-                for (i=0; i<m; i++) {
-                    x = 0.0;
-                    for (l=0; l<k; l++) {
-                        x += A[i*ar+l] * B[j*br+l];
-                    }
-                    if (beta == 0) {
-                        C[j*cr+i] = alpha * x;
-                    } else {
-                        C[j*cr+i] += alpha * x;
-                    }
-                }
-            }
-        }
-    } else {
-        if (!atr) {
-            /* C := alpha*A*B' + beta*C */
-#pragma omp parallel for private(j, i, l, x)
-            for (j=0; j<n; j++) {
-                if (beta == 0) {
-                    for (i=0; i<m; i++) {
-                        C[j*cr+i] = 0.0;
-                    }
-                }
-                for (l=0; l<k; l++) {
-                    if (B[l*br+j] != 0.0) {
-                        x = alpha * B[l*br+j];
-                        for (i=0; i<m; i++) {
-                            C[j*cr+i] += x * A[l*ar+i];
-                        }
-                    }
-                }
-            }
-        } else {
-            /* C := alpha*A'*B' + beta*C */
-#pragma omp parallel for private(j, i, l, x)
-            for (j=0; j<n; j++) {
-                for (i=0; i<m; i++) {
-                    x = 0.0;
-                    for (l=0; l<k; l++) {
-                        x += A[i*ar+l] * B[l*br+j];
-                    }
-                    if (beta == 0) {
-                        C[j*cr+i] = alpha * x;
-                    } else {
-                        C[j*cr+i] += alpha * x;
-                    }
-                }
-            }
-        }
-    }
-
-    return;
-
- st_mode:
-
-#endif /* _OPENMP */
-
-    if (!btr) {
-        if (!atr) {
-            /* C := alpha*A*B + beta*C */
-            for (j=0; j<n; j++) {
-                if (beta == 0) {
-                    for (i=0; i<m; i++) {
-                        C[j*cr+i] = 0.0;
-                    }
-                }
-                for (l=0; l<k; l++) {
-		    x = alpha * B[j*br+l];
-		    for (i=0; i<m; i++) {
-			C[j*cr+i] += x * A[l*ar+i];
-		    }
-                }
-            }
-        } else {
-            /* C := alpha*A'*B + beta*C */
-            for (j=0; j<n; j++) {
-                for (i=0; i<m; i++) {
-                    x = 0.0;
-                    for (l=0; l<k; l++) {
-                        x += A[i*ar+l] * B[j*br+l];
-                    }
-                    if (beta == 0) {
-                        C[j*cr+i] = alpha * x;
-                    } else {
-                        C[j*cr+i] += alpha * x;
-                    }
-                }
-            }
-        }
-    } else {
-        if (!atr) {
-            /* C := alpha*A*B' + beta*C */
-            for (j=0; j<n; j++) {
-                if (beta == 0) {
-                    for (i=0; i<m; i++) {
-                        C[j*cr+i] = 0.0;
-                    }
-                }
-                for (l=0; l<k; l++) {
-		    x = alpha * B[l*br+j];
-		    for (i=0; i<m; i++) {
-			C[j*cr+i] += x * A[l*ar+i];
-		    }
-                }
-            }
-        } else {
-            /* C := alpha*A'*B' + beta*C */
-            for (j=0; j<n; j++) {
-                for (i=0; i<m; i++) {
-                    x = 0.0;
-                    for (l=0; l<k; l++) {
-                        x += A[i*ar+l] * B[l*br+j];
-                    }
-                    if (beta == 0) {
-                        C[j*cr+i] = alpha * x;
-                    } else {
-                        C[j*cr+i] += alpha * x;
-                    }
-                }
-            }
-        }
-    }
-}
-
-/* non-threaded version of gretl_dgemm() */
-
-static void gretl_dgemm_single (const gretl_matrix *a, int atr,
-                                const gretl_matrix *b, int btr,
-                                gretl_matrix *c, GretlMatrixMod cmod,
-                                int m, int n, int k)
 {
     const double *A = a->val;
     const double *B = b->val;
@@ -6414,7 +6095,7 @@ int gretl_matrix_multiply_mod_single (const gretl_matrix *a,
         return E_NONCONF;
     }
 
-    gretl_dgemm_single(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
+    gretl_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
 
     return 0;
 }

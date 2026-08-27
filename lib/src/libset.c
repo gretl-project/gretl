@@ -229,7 +229,6 @@ setvar setvars[] = {
     { NS_MAX, NULL },
     /* delegated ints */
     { BLAS_MNK_MIN,  "blas_mnk_min", CAT_BEHAVE },
-    { OMP_MNK_MIN,   "omp_mnk_min",  CAT_BEHAVE },
     { OMP_N_THREADS, "omp_num_threads", CAT_SPECIAL },
     { SIMD_K_MAX,    "simd_k_max",  CAT_BEHAVE },
     { SIMD_MN_MIN,   "simd_mn_min", CAT_BEHAVE },
@@ -339,8 +338,6 @@ static setvar *get_setvar_by_name (const char *name)
 	/* backward compatibility */
 	if (!strcmp(name, "csv_na")) {
 	    ret = g_hash_table_lookup(svht, "csv_write_na");
-	} else if (!strcmp(name, "mp_mnk_min")) {
-	    ret = g_hash_table_lookup(svht, "omp_mnk_min");
 	}
     }
 
@@ -949,7 +946,7 @@ static int negval_invalid (SetKey key)
     int ret = 1; /* presume invalid */
 
     if (key > 0) {
-	if (key == BLAS_MNK_MIN || key == OMP_MNK_MIN ||
+	if (key == BLAS_MNK_MIN ||
 	    key == SIMD_K_MAX || key == SIMD_MN_MIN) {
 	    /* these can all be set to -1 */
 	    ret = 0;
@@ -1767,6 +1764,10 @@ int execute_set (const char *setobj, const char *setarg,
     } else if (!strcmp(setobj, "dcmt")) {
         pputs(prn, "'dcmt': obsolete setting\n");
         return 0;
+    } else if (!strcmp(setobj, "omp_mnk_min") ||
+               !strcmp(setobj, "mp_mnk_min")) {
+        pputs(prn, "'omp_mnk_min': obsolete setting, ignored\n");
+        return 0;
     } else {
 	sv = get_setvar_by_name(setobj);
     }
@@ -1808,12 +1809,6 @@ int execute_set (const char *setobj, const char *setarg,
 	    return set_verbosity(setarg);
 	} else if (sv->key == TEX_PLOT_OPTS) {
 	    return set_tex_plot_opts(setarg);
-	} else if (sv->key == OMP_MNK_MIN) {
-#if defined(_OPENMP)
-	    return set_omp_mnk_min(atoi(setarg));
-#else
-	    pprintf(prn, "Warning: openmp not supported\n");
-#endif
 	}
 
 	if (libset_boolvar(sv->key)) {
@@ -1966,8 +1961,6 @@ int libset_get_int (SetKey key)
 	return get_blas_mnk_min();
     } else if (key == OMP_N_THREADS) {
 	return gretl_get_omp_threads();
-    } else if (key == OMP_MNK_MIN) {
-	return get_omp_mnk_min();
     } else if (key == SIMD_K_MAX) {
 	return get_simd_k_max();
     } else if (key == SIMD_MN_MIN) {

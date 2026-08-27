@@ -40,12 +40,6 @@
 
 static int gretl_omp_threads;
 
-#if defined(_OPENMP) && (!defined(__APPLE__) || defined(__aarch64__))
-static int omp_mnk_min = 80000;
-#else
-static int omp_mnk_min = -1; /* ? */
-#endif
-
 int gretl_n_processors (void)
 {
     static int n_proc = -1;
@@ -128,40 +122,6 @@ int gretl_n_physical_cores (void)
     return n_cores;
 }
 
-#ifdef _OPENMP
-
-/* Called only from gretl_matrix.c, where it is invoked only when
-   _OPENMP is defined.
-*/
-
-int gretl_use_openmp (guint64 n)
-{
-    if (gretl_omp_threads < 2) {
-	return 0;
-    } else if (omp_mnk_min >= 0 && n >= (guint64) omp_mnk_min) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-#endif
-
-int set_omp_mnk_min (int n)
-{
-    if (n < -1) {
-	return E_DATA;
-    } else {
-	omp_mnk_min = n;
-	return 0;
-    }
-}
-
-int get_omp_mnk_min (void)
-{
-    return omp_mnk_min;
-}
-
 /* Called from gretl_foreign.c (via libset.c) to set the number
    of OpenMP threads per process in the context of an mpi block.
    We issue a call to omp_set_num_threads(), which will override
@@ -201,7 +161,7 @@ void num_threads_init (int blas_type)
 #endif
     if (blas_is_threaded()) {
 	blas_set_num_threads(nc);
-        set_blas_mnk_min(90000); /* ? */
+        set_blas_mnk_min(80000);
     }
 }
 

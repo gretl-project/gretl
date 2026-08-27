@@ -30,13 +30,7 @@ int gretl_get_omp_threads (void);
 
 int gretl_set_omp_threads (int n);
 
-int set_omp_mnk_min (int n);
-
-int get_omp_mnk_min (void);
-
 #ifdef _OPENMP
-
-int gretl_use_openmp (guint64 n);
 
 int openmp_by_default (void);
 

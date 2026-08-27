@@ -125,7 +125,6 @@ typedef enum {
     GMP_BITS,
     NS_MAX, /* separator */
     BLAS_MNK_MIN,
-    OMP_MNK_MIN,
     OMP_N_THREADS,
     SIMD_K_MAX,
     SIMD_MN_MIN,

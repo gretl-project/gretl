@@ -1,4 +1,9 @@
 version 2026c, in progress
+- matrix code: drop the experimental hand-crafted OpenMP
+  paths for multiplication, X'X and element-wise add/subtract,
+  relying on the BLAS and native single-threaded code; lower
+  the default blas_mnk_min threshold to 80000 accordingly
+- the "omp_mnk_min" set-variable is now an obsolete no-op
 - new function kmeans(): algorithm ASA136 for the k-means
   problem
 - new function permute(): calculate all permutations of a
