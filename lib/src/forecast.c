@@ -2837,39 +2837,78 @@ static int check_all_probs_option (MODEL *pmod)
     return err;
 }
 
+/* Here we respond to the --exponentiate option for the "fcast" command.
+   If the optional int parameter is not given, or given as 0, we apply
+   the normal correction if the Doornik-Hansen normality test on the
+   residual series fails to reject at the 10 percent level, or otherwise
+   Duan's smearing estimator. If the int parameter is given we respond
+   as below:
+
+   1 -> apply the normal correction unconditionally
+   2 -> apply the smearing correction unconditionally
+   3 -> don't apply any correction (just exponentiate)
+*/
+
 static int add_expon_factor (FITRESID *fr, MODEL *pmod)
 {
     double test, skew, xkurt;
     double normpv = NADBL;
+    int mode = 0;
     int n, err = 0;
 
-    err = series_get_skew_kurt(pmod->t1, pmod->t2, pmod->uhat,
-			       &skew, &xkurt, &n);
+    mode = get_optval_int(FCAST, OPT_X, &err);
+    if (!err && (mode < 0 || mode > 3)) {
+	err = E_INVARG;
+    }
+
     if (err) {
 	return err;
     }
 
-    /* Doornik-Hansen P-value */
-    test = doornik_chisq(skew, xkurt, n);
-    if (!na(test)) {
-	normpv = chisq_cdf_comp(2, test);
+    if (mode == 0) {
+	/* automatic: normal or Duan */
+	err = series_get_skew_kurt(pmod->t1, pmod->t2, pmod->uhat,
+				   &skew, &xkurt, &n);
+	if (err) {
+	    return err;
+	}
+	test = doornik_chisq(skew, xkurt, n);
+	if (na(test)) {
+	    return E_DATA;
+	} else {
+	    normpv = chisq_cdf_comp(2, test);
+	    if (na(normpv)) {
+		return E_DATA;
+	    } else if (normpv > 0.10) {
+		fr->a0meth = 1;
+	    } else {
+		fr->a0meth = 2;
+	    }
+	}
+    } else if (mode == 1) {
+	/* normal correction forced */
+	fr->a0meth = 1;
+    } else if (mode == 2) {
+	/* Duan forced */
+	fr->a0meth = 2;
+    } else {
+	/* naive exponentiation forced */
+	fr->a0meth = 0;
+	fr->a0 = 1.0;
     }
 
-    if (na(normpv)) {
-	return 1;
-    } else if (normpv > 0.05) {
-	/* normality not rejected */
-	fr->a0meth = 1;
+    if (fr->a0meth == 1) {
+	/* normal correction */
 	fr->a0 = exp(pmod->sigma * pmod->sigma / 2.0);
-    } else {
+    } else if (fr->a0meth == 2) {
 	/* Duan's smearing estimator */
 	double sum = 0.0;
 	int t;
 
-	fr->a0meth = 2;
-	for (t=pmod->t1; t<=pmod->t2; t++) {
+	for (t=pmod->t1, n=0; t<=pmod->t2; t++) {
 	    if (!na(pmod->uhat[t])) {
 		sum += exp(pmod->uhat[t]);
+		n++;
 	    }
 	}
 	fr->a0 = sum / n;

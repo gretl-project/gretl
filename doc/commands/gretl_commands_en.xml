@@ -4152,6 +4152,7 @@
         </option>
         <option>
 	  <flag>--exponentiate</flag>
+	  <optparm optional="true">adjust</optparm>
 	  <effect>see below</effect>
         </option>
         <option>
@@ -4268,18 +4269,24 @@
 	    variable in the dataset, the <opt>exponentiate</opt> option
 	    can be used to produce a forecast of the
 	    <emphasis>level</emphasis> of the variable rather than its
-	    log. In this case the log-forecast is exponentiated, and
-	    point values (but not the limits of confidence intervals, if
-	    applicable) are multiplied by a bias-correction factor. This
-	    factor is exp(<math>s</math><sup>2</sup>), where
-	    <math>s</math> is the standard error of the regression, if
-	    the Doornik&ndash;Hansen test fails to reject normality of
-	    the error term. Otherwise it is the nonparametric
-	    <quote>smearing estimator</quote> suggested by <cite
-	    key="duan83">Duan (1983)</cite>, namely the sample mean of
-	    the exponentiated residuals. See section 6-4c of <cite
-	    key="wooldridge-intro">Wooldridge (2016)</cite> for details
-	    on this matter.
+	    log. In this case the log-forecast is exponentiated, and by
+	    default point values (but not the limits of confidence
+	    intervals, if applicable) are multiplied by a
+	    bias-correction factor. This factor is
+	    exp(<math>s</math><sup>2</sup>), where <math>s</math> is the
+	    standard error of the regression, if the
+	    Doornik&ndash;Hansen test fails to reject normality of the
+	    error term at the 10 percent level. Otherwise it is the
+	    nonparametric <quote>smearing estimator</quote> suggested by
+	    <cite key="duan83">Duan (1983)</cite>, namely the sample
+	    mean of the exponentiated residuals. See section 6-4c of
+	    <cite key="wooldridge-intro">Wooldridge (2016)</cite> for
+	    details on this matter.  You can force the bias correction
+	    to be the normal variant, or the smearing variant, or to be
+	    omitted (in effect, set to 1) by appending optional
+	    <lit>adjust</lit> (integer) parameter to the
+	    <opt>exponentiate</opt> option, with value 1, 2 or 3,
+	    respectively.
 	  </para>
 	</li>
 	<li>
