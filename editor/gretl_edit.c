@@ -211,10 +211,10 @@ static void real_nls_init (void)
 	return;
     }
 
-    strcpy(localedir, gretlhome);
+    g_strlcpy(localedir, gretlhome, sizeof localedir);
     p = strstr(localedir, "share/gretl");
     if (p != NULL) {
-	strcpy(p, "share/locale");
+	g_strlcpy(p, "share/locale", sizeof localedir - (p - localedir));
     }
 
     p = setlocale(LC_ALL, "");
@@ -257,17 +257,17 @@ void gui_nls_init (void)
     real_nls_init();
 }
 
-static void record_filearg (char *targ, const char *src)
+static void record_filearg (char *targ, size_t targ_len, const char *src)
 {
     if (*src == '.') {
 	gchar *cdir = g_get_current_dir();
 	gchar *tmp = g_build_filename(cdir, src, NULL);
 
-	strcpy(targ, tmp);
+	g_strlcpy(targ, tmp, targ_len);
 	g_free(cdir);
 	g_free(tmp);
     } else {
-	strcpy(targ, src);
+	g_strlcpy(targ, src, targ_len);
     }
 }
 
@@ -508,7 +508,7 @@ int main (int argc, char **argv)
 	/* Record what is presumably a filename argument
 	   given on the command line.
 	*/
-	record_filearg(tryfile, filearg);
+	record_filearg(tryfile, sizeof tryfile, filearg);
     }
 
 #if defined(G_OS_WIN32)
