@@ -331,16 +331,19 @@ static int matrix_block_error (const char *f)
 
 static void maybe_force_single (int n, int thresh, int *save_nt)
 {
-    *save_nt = gretl_get_omp_threads();
+    int nt = blas_get_num_threads();
 # ifdef WIN32
-    if (*save_nt > 1) {
-        omp_set_num_threads(1);
-    }
+    int limit = (nt > 1);
 # else
-    if (*save_nt > 1 && n < thresh) {
-        omp_set_num_threads(1);
-    }
+    int limit = (nt > 1 && n < thresh);
 # endif
+
+    if (limit) {
+        blas_set_num_threads(1);
+        *save_nt = nt;
+    } else {
+        *save_nt = 0;
+    }
 }
 
 #endif /* LIMIT_THREADS */
@@ -8441,7 +8444,7 @@ int cholesky_factor_of_inverse (gretl_matrix *a)
 
 #if LIMIT_THREADS
     if (save_nt > 1) {
-        omp_set_num_threads(save_nt);
+        blas_set_num_threads(save_nt);
     }
 #endif
 
@@ -9123,7 +9126,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 
 #if LIMIT_THREADS
     if (save_nt > 1) {
-        omp_set_num_threads(save_nt);
+        blas_set_num_threads(save_nt);
     }
 #endif
 
@@ -9467,7 +9470,7 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 
 #if LIMIT_THREADS
     if (save_nt > 1) {
-        omp_set_num_threads(save_nt);
+        blas_set_num_threads(save_nt);
     }
 #endif
 
