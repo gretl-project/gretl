@@ -1944,6 +1944,7 @@ static int check_colspec (const char *s)
     const char *ok = "eEfgG";
     int w = 0, p = 0;
     char c = 0;
+    int n = 0;
     int err = 1;
 
     /* blank is OK */
@@ -1961,20 +1962,27 @@ static int check_colspec (const char *s)
 	s++;
     }
 
-    if (sscanf(s, "%d.%d%c", &w, &p, &c) == 3) {
-	if (w != 0 && p > 0 && strchr(ok, c)) {
+    /* Each %n below records how many bytes of @s the preceding
+       conversions consumed; requiring s[n] == '\0' ensures the
+       matched spec accounts for the *whole* remainder of the
+       string, so a trailing second conversion (e.g. "f%n" or
+       "f%s") can't sneak past this check and reach pprintf() as
+       part of a live, attacker-controlled format string.
+    */
+    if (sscanf(s, "%d.%d%c%n", &w, &p, &c, &n) == 3) {
+	if (w != 0 && p > 0 && strchr(ok, c) && s[n] == '\0') {
 	    err = 0;
 	}
-    } else if (sscanf(s, "%d%c", &w, &c) == 2) {
-	if (w != 0 && strchr(ok, c)) {
+    } else if (sscanf(s, "%d%c%n", &w, &c, &n) == 2) {
+	if (w != 0 && strchr(ok, c) && s[n] == '\0') {
 	    err = 0;
 	}
-    } else if (sscanf(s, ".%d%c", &p, &c) == 2) {
-	if (p > 0 && strchr(ok, c)) {
+    } else if (sscanf(s, ".%d%c%n", &p, &c, &n) == 2) {
+	if (p > 0 && strchr(ok, c) && s[n] == '\0') {
 	    err = 0;
 	}
-    } else if (sscanf(s, "%c", &c) == 1) {
-	if (strchr(ok, c)) {
+    } else if (sscanf(s, "%c%n", &c, &n) == 1) {
+	if (strchr(ok, c) && s[n] == '\0') {
 	    err = 0;
 	}
     }
