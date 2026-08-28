@@ -5536,7 +5536,7 @@ static void gretl_blas_dsyrk (const gretl_matrix *a, int atr,
             gretl_matrix_set(c,i,j,x);                  \
             gretl_matrix_set(c,j,i,x);                  \
         }                                               \
-    } while (0);
+    } while (0)
 
 
 static int
@@ -5606,7 +5606,7 @@ matrix_multiply_self_transpose_single (const gretl_matrix *a,
                                        gretl_matrix *c,
                                        GretlMatrixMod cmod)
 {
-    register int i, j, k;
+    int i, j, k;
     int nc = (atr)? a->cols : a->rows;
     int nr = (atr)? a->rows : a->cols;
     int idx1, idx2;
