@@ -80,6 +80,9 @@ static char *printf_get_string (char *s, DATASET *dset,
 
 	if (*q == '+') {
 	    offset = atoi(++q);
+	    if (offset < 0) {
+		offset = 0;
+	    }
 	    len -= offset;
 	}
 	if (len >= 0) {
@@ -644,6 +647,13 @@ static int print_arg (const char **pfmt, const char **pargs,
     if (got_scalar && na(x)) {
 	fc = fmt[flen - 1] = 's';
 	str = gretl_strdup("NA");
+	if (conv[0] == 'l') {
+	    /* strip the 'l' length modifier: "%ld" -> "%s", so we
+	       don't form an invalid "%ls" (wide-string) conversion
+	    */
+	    fmt[flen - 2] = 's';
+	    fmt[flen - 1] = '\0';
+	}
     }
 
     /* do the actual printing */
@@ -768,15 +778,22 @@ static int real_do_printf (const char *format,
 	    } else if (*p == '%') {
 		err = print_arg(&p, &q, dset, t, prn);
 	    } else if (*p == '\\') {
-		c = printf_escape(*(p+1), &err);
-		if (c == 0) {
-		    /* tolerate slop! */
+		if (*(p+1) == '\0') {
+		    /* trailing backslash: treat as literal, and don't
+		       step past the string terminator */
 		    pputc(prn, *p);
-		    pputc(prn, *(p+1));
+		    p++;
 		} else {
-		    pputc(prn, c);
+		    c = printf_escape(*(p+1), &err);
+		    if (c == 0) {
+			/* tolerate slop! */
+			pputc(prn, *p);
+			pputc(prn, *(p+1));
+		    } else {
+			pputc(prn, c);
+		    }
+		    p += 2;
 		}
-		p += 2;
 	    } else {
 		pputc(prn, *p);
 		p++;
@@ -870,15 +887,22 @@ char *do_sprintf_function (const char *format, const char *args,
 	} else if (*p == '%') {
 	    *err = print_arg(&p, &q, dset, -1, prn);
 	} else if (*p == '\\') {
-	    c = printf_escape(*(p+1), err);
-	    if (c == 0) {
-		/* tolerate slop! */
+	    if (*(p+1) == '\0') {
+		/* trailing backslash: treat as literal, and don't
+		   step past the string terminator */
 		pputc(prn, *p);
-		pputc(prn, *(p+1));
+		p++;
 	    } else {
-		pputc(prn, c);
+		c = printf_escape(*(p+1), err);
+		if (c == 0) {
+		    /* tolerate slop! */
+		    pputc(prn, *p);
+		    pputc(prn, *(p+1));
+		} else {
+		    pputc(prn, c);
+		}
+		p += 2;
 	    }
-	    p += 2;
 	} else {
 	    pputc(prn, *p);
 	    p++;
@@ -1147,7 +1171,7 @@ static int scan_scalar (char *targ, const char **psrc,
     /* "genr" operates in the C locale regardless */
     gretl_push_c_numeric_locale();
 
-    if (!errno && endp != *psrc) {
+    if (!errno && endp != *psrc && targ != NULL) {
 	char *genline;
 
 	if (fc == 'd') {
