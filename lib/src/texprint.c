@@ -150,6 +150,7 @@ char *tex_escape_new (const char *src)
 	    len++;
 	}
 	len++;
+	s++;
     }
 
     ret = calloc(1, len + 1);
@@ -161,7 +162,7 @@ char *tex_escape_new (const char *src)
 	    *s == '%' || *s == '#') {
 	    ret[i++] = '\\';
 	}
-	ret[i++] = *s;
+	ret[i++] = *s++;
     }
 
     return ret;
