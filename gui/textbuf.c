@@ -2130,13 +2130,13 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
 	if (p != NULL) {
 	    show = g_strndup(text, p - text);
-	    strcpy(tagname, p + 1);
+	    g_strlcpy(tagname, p + 1, TAGLEN);
 	} else {
 	    strcpy(tagname, "tag:guide");
 	}
     } else if (page == MNU_PAGE) {
 	show = get_mnu_string(text);
-	strcpy(tagname, text);
+	g_strlcpy(tagname, text, TAGLEN);
     } else if (page == SCRIPT_PAGE || page == EXT_PAGE) {
 	*tagname = '\0';
 	strncat(tagname, text, TAGLEN-1);
@@ -2154,10 +2154,10 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	const char *p = strrchr(text, ';');
 
 	if (p != NULL) {
-	    strcpy(tagname, p + 1);
+	    g_strlcpy(tagname, p + 1, TAGLEN);
 	    show = g_strndup(text, p - text);
 	} else {
-	    strcpy(tagname, text);
+	    g_strlcpy(tagname, text, TAGLEN);
 	}
     } else {
 	sprintf(tagname, "tag:p%d", page);
