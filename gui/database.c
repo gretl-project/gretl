@@ -1261,7 +1261,11 @@ static int make_db_index_window (int action, char *fname,
 	strip_extension(fname);
     }
 
-    strcpy(vwin->fname, fname);
+    err = gretl_viewer_set_fname(vwin, fname);
+    if (err) {
+	gtk_widget_destroy(vwin->main);
+	return 1;
+    }
 
     vwin->vbox = gtk_vbox_new(FALSE, 1);
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);

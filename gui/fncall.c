@@ -3733,7 +3733,11 @@ int exec_bundle_special_function (gretl_bundle *b,
 	    sscanf(aname, "%31[^:]:%d", funname, &iopt);
 	} else {
 	    /* name but no option present */
-	    strcpy(funname, aname);
+	    if (strlen(aname) >= sizeof funname) {
+		return E_DATA;
+	    } else {
+		strcpy(funname, aname);
+	    }
 	}
     } else {
 	gchar *sf = get_bundle_special_function(b, id);

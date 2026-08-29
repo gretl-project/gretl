@@ -1122,6 +1122,7 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
     ufunc *fun;
     windata_t *vwin;
     PRN *prn = NULL;
+    int err;
 
     if (funname == NULL) {
 	return;
@@ -1154,9 +1155,11 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 		       finfo->active, EDIT_PKG_CODE, finfo);
 
     if (vwin != NULL) {
-	strcpy(vwin->fname, fname);
 	finfo_add_codewin(finfo, vwin);
-	set_window_delete_filename(vwin);
+	err = gretl_viewer_set_fname(vwin, fname);
+	if (!err) {
+	    set_window_delete_filename(vwin);
+	}
     }
 }
 

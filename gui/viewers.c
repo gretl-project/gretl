@@ -876,7 +876,7 @@ void vwin_set_filename (windata_t *vwin, const char *fname)
 
     gtk_window_set_title(GTK_WINDOW(vwin->main), title);
     g_free(title);
-    strcpy(vwin->fname, fname);
+    gretl_viewer_set_fname(vwin, fname);
 }
 
 gchar *title_from_filename (const char *fname,
@@ -1433,7 +1433,7 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 	return NULL;
     }
 
-    strcpy(vwin->fname, filename);
+    gretl_viewer_set_fname(vwin, fname);
 
 #ifdef GRETL_EDIT
     if (role != VIEW_DOC) {
@@ -1587,7 +1587,7 @@ windata_t *view_help_file (const char *filename, int role)
 
     if (vwin == NULL) return NULL;
 
-    strcpy(vwin->fname, filename);
+    gretl_viewer_set_fname(vwin, filename);
     vwin->data = fbuf;
 
     if (role != GUI_HELP && role != GUI_HELP_EN) {

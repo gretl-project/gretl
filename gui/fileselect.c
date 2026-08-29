@@ -242,9 +242,13 @@ static void script_window_update (windata_t *vwin,
 				  const char *fname)
 {
     gchar *basename;
+    int err;
 
     /* update internal filename record */
-    strcpy(vwin->fname, fname);
+    err = gretl_viewer_set_fname(vwin, fname);
+    if (err) {
+	return;
+    }
 
     /* get basename for display */
     basename = g_path_get_basename(fname);

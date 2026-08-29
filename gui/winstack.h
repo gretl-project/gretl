@@ -104,6 +104,8 @@ void gretl_viewer_destroy (windata_t *vwin);
 
 void gretl_viewer_set_title (windata_t *vwin, const char *title);
 
+int gretl_viewer_set_fname (windata_t *vwin, const char *fname);
+
 void preset_viewer_flag (windata_flags f);
 
 void vwin_record_action (windata_t *vwin, GtkAction *action);

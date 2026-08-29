@@ -6028,7 +6028,7 @@ static int gnuplot_show_png (const char *fname,
     if (strlen(fname) >= sizeof plot->spec->fname) {
 	plotspec_destroy(plot->spec);
 	free(plot);
-	gretl_errmsg_set(_("Graph filename is too long"));
+	gretl_errmsg_set(_("Filename is too long"));
 	return E_DATA;
     }
     strcpy(plot->spec->fname, fname);
@@ -6143,7 +6143,7 @@ int gnuplot_show_map (gretl_bundle *mb)
     if (strlen(fname) >= sizeof plot->spec->fname) {
 	plotspec_destroy(plot->spec);
 	free(plot);
-	gretl_errmsg_set(_("Graph filename is too long"));
+	gretl_errmsg_set(_("Filename is too long"));
 	return E_DATA;
     }
     strcpy(plot->spec->fname, fname);

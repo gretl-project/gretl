@@ -116,7 +116,7 @@ arglist *arglist_lookup (const char *pkgname, const void *func)
 
 int arglist_record_arg (arglist *a, int i, const char *val)
 {
-    if (a == NULL || i < 0 || i > a->argc) {
+    if (a == NULL || i < 0 || i >= a->argc) {
 	return E_DATA;
     } else {
 	free(a->argv[i]);
@@ -131,7 +131,7 @@ int arglist_record_arg (arglist *a, int i, const char *val)
 
 const char *arglist_lookup_val (arglist *a, int i)
 {
-    if (a == NULL || i < 0 || i > a->argc) {
+    if (a == NULL || i < 0 || i >= a->argc) {
 	return NULL;
     } else {
 	return a->argv[i];

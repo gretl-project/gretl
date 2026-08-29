@@ -977,10 +977,15 @@ windata_t *display_function_package_data (const char *pkgname,
         } else {
             vwin = view_buffer(prn, 78, 350, title, role, NULL);
         }
-        strcpy(vwin->fname, path);
-        if (strstr(path, "dltmp")) {
-            set_window_delete_filename(vwin);
-        }
+	err = gretl_viewer_set_fname(vwin, path);
+	if (err) {
+	    gtk_widget_destroy(vwin->main);
+	    vwin = NULL;
+	} else {
+	    if (strstr(path, "dltmp")) {
+		set_window_delete_filename(vwin);
+	    }
+	}
         g_free(title);
     }
 
