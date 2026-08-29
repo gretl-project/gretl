@@ -58,6 +58,6 @@ void win32_font_selector (char *fontname, int flag);
 
 int win32_rename_dir (const char *oldname, const char *newname);
 
-void get_default_windows_app_font (char *target);
+void get_default_windows_app_font (char *target, size_t targlen);
 
 #endif /* GRETLWIN32_H */

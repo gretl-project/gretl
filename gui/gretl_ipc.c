@@ -295,7 +295,7 @@ int write_pid_to_file (void)
 #endif
 
     dotdir = gretl_dotdir();
-    sprintf(pidfile, "%sgretl.pid", dotdir);
+    snprintf(pidfile, sizeof pidfile, "%sgretl.pid", dotdir);
     f1 = gretl_fopen(pidfile, "rb");
 
     if (f1 == NULL) {
@@ -315,7 +315,7 @@ int write_pid_to_file (void)
 	long pid;
 	int m, n = 0;
 
-	sprintf(newfile, "%sgretlpid.tmp", dotdir);
+	snprintf(newfile, sizeof newfile, "%sgretlpid.tmp", gretl_dotdir());
 	f2 = gretl_fopen(newfile, "wb");
 
 	if (f2 == NULL) {
@@ -379,7 +379,7 @@ void delete_pid_from_file (void)
 	long pid;
 	int nleft = 0;
 
-	sprintf(newfile, "%sgretlpid.tmp", dotdir);
+	snprintf(newfile, sizeof newfile, "%sgretlpid.tmp", dotdir);
 	f2 = gretl_fopen(newfile, "wb");
 
 	if (f2 == NULL) {
@@ -539,7 +539,7 @@ static void process_handoff_message (void)
     mypid = (long) getpid();
 #endif
 
-    sprintf(fname, "%sopen-%ld", gretl_dotdir(), mypid);
+    snprintf(fname, sizeof fname, "%sopen-%ld", gretl_dotdir(), mypid);
     fp = gretl_fopen(fname, "rb");
 
 #if IPC_DEBUG
@@ -578,7 +578,7 @@ static gboolean write_request_file (long gpid, const char *fname)
     char tmpname[FILENAME_MAX];
     FILE *fp;
 
-    sprintf(tmpname, "%sopen-%ld", gretl_dotdir(), gpid);
+    snprintf(tmpname, sizeof tmpname, "%sopen-%ld", gretl_dotdir(), gpid);
     fp = gretl_fopen(tmpname, "wb");
 
     if (fp == NULL) {
@@ -603,8 +603,8 @@ static void open_handler (int sig, siginfo_t *sinfo, void *context)
     if (sig == SIGUSR1 && sinfo->si_code == SI_QUEUE) {
 	if (sinfo->si_uid == getuid() &&
 	    sinfo->si_value.sival_ptr == (void *) 0xf0) {
+	    process_handoff_message();
 	}
-	process_handoff_message();
     }
 }
 

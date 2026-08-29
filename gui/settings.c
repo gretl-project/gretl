@@ -691,7 +691,7 @@ static void record_system_appfont (GtkSettings *settings,
 {
     g_object_get(G_OBJECT(settings), "gtk-font-name", pfont, NULL);
 #if defined(G_OS_WIN32)
-    get_default_windows_app_font(system_appfont);
+    get_default_windows_app_font(system_appfont, sizeof system_appfont);
 #else
     if (*pfont != NULL) {
 	strcpy(system_appfont, *pfont);
@@ -3197,7 +3197,7 @@ static void impose_font_scale (int scale, int remember)
 
 #ifdef G_OS_WIN32
     if (*appfontname == '\0') {
-	get_default_windows_app_font(appfontname);
+	get_default_windows_app_font(appfontname, sizeof appfontname);
     }
 #endif
 

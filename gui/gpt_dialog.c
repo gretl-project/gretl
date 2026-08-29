@@ -931,8 +931,8 @@ static char *default_bars_filename (void)
     static char barsname[FILENAME_MAX];
 
     if (*barsname == '\0') {
-	sprintf(barsname, "%sdata%cplotbars%cnber.txt",
-		gretl_home(), SLASH, SLASH);
+	snprintf(barsname, sizeof barsname, "%sdata%cplotbars%cnber.txt",
+		 gretl_home(), SLASH, SLASH);
     }
 
     return barsname;

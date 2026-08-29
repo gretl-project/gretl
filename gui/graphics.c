@@ -271,7 +271,7 @@ const char *pdf_ps_saver_current_font (gpointer p)
     static char fontname[68];
     struct pdf_ps_saver *s = p;
 
-    sprintf(fontname, "%s %d", s->font, s->fontsize);
+    g_snprintf(fontname, sizeof fontname, "%s %d", s->font, s->fontsize);
     return fontname;
 }
 

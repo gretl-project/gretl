@@ -892,7 +892,7 @@ void save_graph_to_file (gpointer data, const char *fname)
     char pltname[FILENAME_MAX];
     int err = 0;
 
-    sprintf(pltname, "%sgptout.tmp", gretl_dotdir());
+    snprintf(pltname, sizeof pltname, "%sgptout.tmp", gretl_dotdir());
 
     if (plot_is_geomap(plot)) {
         set_special_plot_size(plot->pixel_width, plot->pixel_height);
@@ -2179,12 +2179,18 @@ static int verify_rgb (char *cstr)
             /* unmatched delimiter */
             err = E_DATA;
         }
+    } else if (strlen(cstr) > 19) {
+	/* Unquoted input must fit the canonical "#RRGGBB" form (or
+	   similar short token) that callers' fixed-size destination
+	   buffers assume; anything longer is not a color we accept.
+	*/
+	err = E_DATA;
     }
 
     return err;
 }
 
-static int grab_rgb_spec (char *targ, const char *src)
+static int grab_rgb_spec (char *targ, size_t targlen, const char *src)
 {
     char tmp[20];
     int err = 0;
@@ -2192,7 +2198,7 @@ static int grab_rgb_spec (char *targ, const char *src)
     if (sscanf(src, "%19s", tmp)) {
         /* validate and convert to hex if needed */
         err = verify_rgb(tmp);
-        if (!err) {
+        if (!err && strlen < targlen) {
             strcpy(targ, tmp);
         }
     } else {
@@ -2232,7 +2238,7 @@ static int parse_linetype (const char *s, linestyle *styles)
             p += 4;
         }
         p += strspn(p, " ");
-        err = grab_rgb_spec(styles[i].lc, p);
+        err = grab_rgb_spec(styles[i].lc, sizeof styles[i].lc, p);
     }
     if (!err && (p = strstr(s, " lw ")) != NULL) {
         /* check line-width specification */
@@ -2939,7 +2945,7 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec,
     if ((p = strstr(s, " lt "))) {
         sscanf(p + 4, "%d", &line->type);
     } else if ((p = strstr(s, " lc rgb "))) {
-        grab_rgb_spec(line->rgb, p + 8);
+        grab_rgb_spec(line->rgb, sizeof line->rgb, p + 8);
     }
     if ((p = strstr(s, " ps "))) {
         sscanf(p + 4, "%f", &line->pscale);
@@ -4311,16 +4317,34 @@ static int substitute_graph_font (char *line, const gchar *fstr)
     char *p = strstr(line, " font ");
 
     if (p != NULL) {
-        char tmp[256];
+	char tmp[256];
+	size_t prefix_len = (p - line) + 7;
+	size_t used;
 
-        *tmp = '\0';
-        strncat(tmp, line, p - line + 7);
-        strcat(tmp, fstr);      /* replacement font string */
-        p = strchr(p + 7, '"'); /* closing quote of original font string */
-        if (p != NULL) {
-            strcat(tmp, p);
-            strcpy(line, tmp);
-        }
+	if (prefix_len >= sizeof tmp) {
+	    return E_DATA;
+	}
+	memcpy(tmp, line, prefix_len);
+	tmp[prefix_len] = '\0';
+	used = prefix_len;
+
+	if (used + strlen(fstr) >= sizeof tmp) {
+	    return E_DATA;
+	}
+	strcpy(tmp + used, fstr); /* replacement font string */
+	used += strlen(fstr);
+
+	p = strchr(p + 7, '"'); /* closing quote of original font string */
+	if (p != NULL) {
+	    if (used + strlen(p) >= sizeof tmp) {
+		return E_DATA;
+	    }
+	    strcpy(tmp + used, p);
+	    /* caller's @line buffer is the same size as @tmp,
+	       declared char[256] in activate_plot_font_choice
+	    */
+	    strcpy(line, tmp);
+	}
     }
 
     return (p == NULL)? E_DATA : 0;
@@ -6001,6 +6025,12 @@ static int gnuplot_show_png (const char *fname,
         return E_ALLOC;
     }
 
+    if (strlen(fname) >= sizeof plot->spec->fname) {
+	plotspec_destroy(plot->spec);
+	free(plot);
+	gretl_errmsg_set(_("Graph filename is too long"));
+	return E_DATA;
+    }
     strcpy(plot->spec->fname, fname);
 
     /* make png plot struct accessible via spec */
@@ -6012,7 +6042,6 @@ static int gnuplot_show_png (const char *fname,
        E_FOPEN.
     */
     plot->err = read_plotspec_from_file(plot);
-
     if (plot->err == E_FOPEN) {
         plotspec_destroy(plot->spec);
         free(plot);
@@ -6111,9 +6140,15 @@ int gnuplot_show_map (gretl_bundle *mb)
         return E_ALLOC;
     }
 
+    if (strlen(fname) >= sizeof plot->spec->fname) {
+	plotspec_destroy(plot->spec);
+	free(plot);
+	gretl_errmsg_set(_("Graph filename is too long"));
+	return E_DATA;
+    }
     strcpy(plot->spec->fname, fname);
-    plot->spec->ptr = plot;
 
+    plot->spec->ptr = plot;
     err = gretl_test_fopen(plot->spec->fname, "rb");
     if (err) {
         gretl_errmsg_sprintf(_("Couldn't read '%s'"), plot->spec->fname);
@@ -6469,24 +6504,33 @@ void launch_gnuplot_interactive (void)
     win32_run_async(gretl_gnuplot_path(), NULL);
 #elif defined(__APPLE__)
     const char *gppath = gretl_gnuplot_path();
-    gchar *gpline;
+    gchar *script;
+    gchar *argv[5];
+    GError *error = NULL;
 
 # ifdef PKGBUILD
     /* call driver script to set environment correctly -- and
        in addition prepend a full path spec if necessary
     */
-    if (g_path_is_absolute(gppath)) {
-        gpline = g_strdup_printf("open -a Terminal.app \"%s.sh\"",
-                                 gppath);
-    } else {
-        gpline = g_strdup_printf("open -a Terminal.app \"%s%s.sh\"",
-                                 gretl_bindir(), gppath);
-    }
+    script = g_path_is_absolute(gppath) ?
+	g_strdup_printf("%s.sh", gppath) :
+	g_strdup_printf("%s%s.sh", gretl_bindir(), gppath);
 # else
-    gpline = g_strdup_printf("open -a Terminal.app \"%s\"", gppath);
+    script = g_strdup(gppath);
 # endif
-    system(gpline);
-    g_free(gpline);
+    argv[0] = "open";
+    argv[1] = "-a";
+    argv[2] = "Terminal.app";
+    argv[3] = script;
+    argv[4] = NULL;
+
+    g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+		  NULL, NULL, NULL, &error);
+    if (error != NULL) {
+	errbox(error->message);
+	g_error_free(error);
+    }
+    g_free(script);
 #else /* neither WIN32 nor MAC */
     char term[32];
     int err;

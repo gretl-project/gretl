@@ -63,7 +63,11 @@ static int real_update_query (int verbose)
 
 	show_update_message(vserver);
     } else if (strncmp(getbuf, "message:", 8) == 0) {
-	infobox(getbuf + 9);
+	if (g_utf8_validate(getbuf + 9, -1, NULL)) {
+	    infobox(getbuf + 9);
+	} else {
+	    warnbox(_("Received an invalid update message"));
+	}
     } else if (verbose) {
 	infobox(_("No new files"));
     }

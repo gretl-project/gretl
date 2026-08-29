@@ -254,7 +254,7 @@ static void set_g_logging (int debug)
     g_log_set_handler("GtkSourceView", flags, (GLogFunc) handler, NULL);
 }
 
-void get_default_windows_app_font (char *target)
+void get_default_windows_app_font (char *target, size_t targlen)
 {
     NONCLIENTMETRICS ncm;
 
@@ -269,11 +269,11 @@ void get_default_windows_app_font (char *target)
 	if (point_size < 0) {
 	    point_size = -point_size;
 	}
-	sprintf(target, "%s %d", ncm.lfMenuFont.lfFaceName, point_size);
+	g_snprintf(target, targlen, "%s %d", ncm.lfMenuFont.lfFaceName, point_size);
 	ReleaseDC(0, screen);
     } else {
 	/* fallback */
-	strcpy(target, "tahoma 8");
+	g_strlcpy(target, "tahoma 8", targlen);
     }
 }
 
@@ -549,6 +549,25 @@ static long get_reg_key (HKEY key, char *subkey, char *retdata)
 
 #endif
 
+/* Escape characters that have syntactic meaning inside an Acrobat
+   DDE command string ('"' terminates the quoted argument; a lone
+   ')' can close the command early). Caller must free the result.
+*/
+
+static gchar *dde_escape (const char *s)
+{
+    GString *out = g_string_new(NULL);
+
+    for (; *s != '\0'; s++) {
+	if (*s == '"' || *s == '\\' || *s == ')' || *s == '(') {
+	    g_string_append_c(out, '\\');
+	}
+	g_string_append_c(out, *s);
+    }
+
+    return g_string_free(out, FALSE);
+}
+
 static int dde_open_pdf (const char *exename,
 			 const char *fname,
 			 const char *dest);
@@ -801,10 +820,10 @@ HDDEDATA CALLBACK init_callback (UINT uType, UINT uFmt, HCONV hconv,
 				 DWORD dwData1, DWORD dwData2)
 {
     if (uType == XTYP_ADVDATA) {
-	DWORD len = DdeGetData(hdata, NULL, 0, 0);
-	char *buf = (char *)_alloca(len + 1);
-
-	DdeGetData(hdata, (LPBYTE) buf, len + 1, 0);
+	/* We don't currently do anything with the "advise" data, so
+	   just acknowledge it without copying an attacker/peer-sized
+	   buffer onto the stack.
+	*/
 	return (HDDEDATA) DDE_FACK;
     }
 
@@ -909,6 +928,8 @@ static int exec_dde_command (const char *buf, HCONV conversation,
     return err;
 }
 
+/* HERE */
+
 static int dde_open_pdf (const char *exename,
 			 const char *fname,
 			 const char *dest)
@@ -918,6 +939,7 @@ static int dde_open_pdf (const char *exename,
     char ddename[32];
     char *buf = NULL;
     gchar *lname = NULL;
+    gchar *efname, *edest;
     int err = 0;
 
     /* Try to figure out the name of the DDE service
@@ -950,23 +972,33 @@ static int dde_open_pdf (const char *exename,
 	}
     }
 
-    sprintf(buf, "[DocClose(\"%s\")]", fname);
+    efname = dde_escape(fname);
+    edest = dde_escape(dest);
+    /* buf was sized from the original (unescaped) fname/dest lengths;
+       escaping can only grow the string, so recompute the allocation
+    */
+    free(buf);
+    buf = calloc(strlen(efname) + strlen(edest) + 32, 1);
+
+    sprintf(buf, "[DocClose(\"%s\")]", efname);
     exec_dde_command(buf, conversation, session);
-    sprintf(buf, "[DocOpen(\"%s\")]", fname);
+    sprintf(buf, "[DocOpen(\"%s\")]", efname);
     exec_dde_command(buf, conversation, session);
     if (strstr(ddename, "wR") == NULL) {
 	/* specific to acrord32 version 8 bug */
-	sprintf(buf, "[DocOpen(\"%s\")]", fname);
+	sprintf(buf, "[DocOpen(\"%s\")]", efname);
 	exec_dde_command(buf, conversation, session);
     }
-    sprintf(buf, "[FileOpen(\"%s\")]", fname);
+    sprintf(buf, "[FileOpen(\"%s\")]", efname);
     exec_dde_command(buf, conversation, session);
 
-    sprintf(buf, "[DocGoToNameDest(\"%s\", %s)]", fname, dest);
+    sprintf(buf, "[DocGoToNameDest(\"%s\", %s)]", efname, edest);
     err = exec_dde_command(buf, conversation, session);
 
     free(buf);
     g_free(lname);
+    g_free(efname);
+    g_free(edest);
 
     if (conversation) {
 	DdeDisconnect(conversation);

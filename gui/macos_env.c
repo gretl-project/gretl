@@ -16,13 +16,14 @@ void macos_setup_paths (void)
     char *c, *rhome;
 
     /* record the initial working directory */
-    getcwd(userpath, sizeof userpath);
-    setenv("GRETL_STARTDIR", userpath, 1);
+    if (getcwd(userpath, sizeof userpath) == NULL) {
+	*userpath = '\0';
+    }
 
     if (*userpath != '\0' && strcmp(userpath, "/")) {
-        setenv("GRETL_STARTDIR", userpath, 1);
+	setenv("GRETL_STARTDIR", userpath, 1);
     } else {
-        const char *home = g_get_home_dir();
+	const char *home = g_get_home_dir();
 
         if (home != NULL) {
             setenv("GRETL_STARTDIR", home, 1);
@@ -39,8 +40,15 @@ void macos_setup_paths (void)
        We need to obtain the Contents/Resources path.
     */
     c = strstr(execpath, "/Contents/MacOS");
-    *c = '\0';
-    respath = g_strdup_printf("%s/Contents/Resources", execpath);
+    if (c != NULL) {
+	*c = '\0';
+	respath = g_strdup_printf("%s/Contents/Resources", execpath);
+    } else {
+	/* not running from inside an app bundle as expected */
+	fprintf(stderr, "macos_setup_paths: unexpected executable path '%s'\n",
+		execpath);
+	respath = g_strdup(execpath);
+    }
 #endif
 
     tmp = g_strdup_printf("%s/share/gretl/", respath);

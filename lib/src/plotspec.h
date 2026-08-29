@@ -83,7 +83,7 @@ typedef struct {
     char *ustr;          /* custom 'using' string */
     int *mcols;          /* data-matrix columns used */
     float pscale;        /* scale factor for points */
-    char rgb[10];        /* rgb color specification */
+    char rgb[20];        /* rgb color specification */
     char yaxis;          /* 1 for left, 2 for right */
     int type;            /* 1, 2, ... (style reference) */
     int ptype;           /* point type */
