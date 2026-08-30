@@ -2704,11 +2704,32 @@ static int scalar_bounds_check (call_info *cinfo, int i)
     return err;
 }
 
+/* Build a hansl double-quoted string literal from @s, escaping any
+   embedded backslash or double-quote so the result can't break out
+   of the literal in which it's placed.
+*/
+
+static gchar *hansl_quote_string (const char *s)
+{
+    GString *gs = g_string_new("\"");
+
+    for (; *s != '\0'; s++) {
+        if (*s == '"' || *s == '\\') {
+            g_string_append_c(gs, '\\');
+        }
+        g_string_append_c(gs, *s);
+    }
+    g_string_append_c(gs, '"');
+
+    return g_string_free(gs, FALSE);
+}
+
 static int pre_process_args (call_info *cinfo, int *autolist,
 			     int *badpos, PRN *prn)
 {
     char auxline[MAXLINE];
     char auxname[VNAMELEN+2];
+    gchar *quoted = NULL;
     int i, add = 0, err = 0;
 
     for (i=0; i<cinfo->n_params && !err; i++) {
@@ -2741,9 +2762,9 @@ static int pre_process_args (call_info *cinfo, int *autolist,
 	} else if (is_nullarg_label(cinfo->args[i])) {
 	    ; /* leave it alone */
 	} else if (needs_quoting(cinfo, i)) {
-	    sprintf(auxname, "\"%s\"", cinfo->args[i]);
+	    quoted = hansl_quote_string(cinfo->args[i]);
 	    g_free(cinfo->args[i]);
-	    cinfo->args[i] = g_strdup(auxname);
+	    cinfo->args[i] = quoted;
 	}
 
 	if (ptype == GRETL_TYPE_DOUBLE &&
@@ -3742,7 +3763,7 @@ int exec_bundle_special_function (gretl_bundle *b,
     } else {
 	gchar *sf = get_bundle_special_function(b, id);
 
-	if (sf == NULL) {
+	if (sf == NULL || strlen(sf) >= sizeof funname) {
 	    return E_DATA;
 	} else {
 	    strcpy(funname, sf);
