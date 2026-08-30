@@ -1,0 +1,36 @@
+set verbose off
+set assert stop
+
+# GeoJSON permits a Feature with a null "geometry" member. Feeding such
+# a file to geoplot() used to segfault in the plugin (geo2dat() did
+# strcmp() on a NULL geometry type); it should now fail cleanly with a
+# data error. See plugin/geoplot.c.
+
+# Given: a FeatureCollection whose second feature has null geometry
+string js = "{ \"type\": \"FeatureCollection\", \"features\": [ \
+{ \"type\": \"Feature\", \"properties\": {\"name\": \"A\", \"v\": 1.0}, \
+\"geometry\": {\"type\": \"Polygon\", \
+\"coordinates\": [[[0,0],[0,1],[1,1],[1,0],[0,0]]]} }, \
+{ \"type\": \"Feature\", \"properties\": {\"name\": \"B\", \"v\": 2.0}, \
+\"geometry\": null } ] }"
+
+string fname = sprintf("%s/ut_geoplot_nullgeom.geojson", $dotdir)
+outfile @fname --quiet
+    printf "%s\n", js
+end outfile
+
+open "@fname" --quiet
+
+bundle opt = null
+opt.plotfile = sprintf("%s/ut_geoplot_nullgeom.plt", $dotdir)
+opt.show = 0
+
+# When
+catch geoplot(v, opt)
+scalar err = $error
+
+# Then: geoplot reports an error rather than crashing
+assert(err != 0)
+
+print "Successfully finished tests."
+quit
