@@ -2198,7 +2198,7 @@ static int grab_rgb_spec (char *targ, size_t targlen, const char *src)
     if (sscanf(src, "%19s", tmp)) {
         /* validate and convert to hex if needed */
         err = verify_rgb(tmp);
-        if (!err && strlen < targlen) {
+        if (!err && strlen(tmp) < targlen) {
             strcpy(targ, tmp);
         }
     } else {

@@ -1738,10 +1738,9 @@ void gretl_viewer_set_title (windata_t *vwin, const char *title)
 
 int gretl_viewer_set_fname (windata_t *vwin, const char *fname)
 {
-    gsize sz;
-
     if (strlen(fname) < sizeof vwin->fname) {
 	strcpy(vwin->fname, fname);
+	return 0;
     } else {
 	gretl_errmsg_set(_("Filename is too long"));
 	return 1;

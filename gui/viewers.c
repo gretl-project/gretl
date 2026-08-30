@@ -1433,7 +1433,7 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 	return NULL;
     }
 
-    gretl_viewer_set_fname(vwin, fname);
+    gretl_viewer_set_fname(vwin, filename);
 
 #ifdef GRETL_EDIT
     if (role != VIEW_DOC) {
