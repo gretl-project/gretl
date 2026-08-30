@@ -235,6 +235,9 @@ static int hartigan_wong_init (hw_info *hw)
     int err = 0;
 
     dmat = gretl_zero_matrix_new(hw->m, 2);
+    if (dmat == NULL) {
+	return E_ALLOC;
+    }
 
     for (j=0; j<hw->n; j++) {
 	cmean = hw->ameans[j];
@@ -249,13 +252,15 @@ static int hartigan_wong_init (hw_info *hw)
     }
 
     s = gretl_matrix_sort_by_column(dmat, 0, &err);
-    step = hw->m / hw->k;
 
-    for (i=0; i<hw->k; i++) {
-	r = (int) gretl_matrix_get(s, i * step, 1);
-	for (j=0; j<hw->n; j++) {
-	    d = gretl_matrix_get(hw->a, r, j);
-	    gretl_matrix_set(hw->c, i, j, d);
+    if (!err) {
+	step = hw->m / hw->k;
+	for (i=0; i<hw->k; i++) {
+	    r = (int) gretl_matrix_get(s, i * step, 1);
+	    for (j=0; j<hw->n; j++) {
+		d = gretl_matrix_get(hw->a, r, j);
+		gretl_matrix_set(hw->c, i, j, d);
+	    }
 	}
     }
 
@@ -307,16 +312,21 @@ static int pc_init (hw_info *hw)
     return err;
 }
 
-static void get_k_random_candidates (hw_info *hw)
+static int get_k_random_candidates (hw_info *hw)
 {
     gretl_vector *v = gretl_vector_alloc(hw->k);
     double tmp;
     int i, j, r;
+    int err = 0;
+
+    if (v == NULL) {
+	return E_ALLOC;
+    }
 
     /* fill @v with @k draws from 1,2,...,@m without replacement */
-    fill_permutation_vector(v, hw->m);
+    err = fill_permutation_vector(v, hw->m);
 
-    for (i=0; i<hw->k; i++)  {
+    for (i=0; i<hw->k && !err; i++)  {
 	r = (int) v->val[i] - 1;
 	for (j=0; j<hw->n; j++)  {
 	    tmp = gretl_matrix_get(hw->a, r, j);
@@ -325,6 +335,8 @@ static void get_k_random_candidates (hw_info *hw)
     }
 
     gretl_matrix_free(v);
+
+    return err;
 }
 
 static double compute_ith_distance (hw_info *hw,
@@ -735,13 +747,17 @@ static int kmeans_init (hw_info *hw,
     int err = 0;
 
     if (iflag == INIT_HW) {
-	hartigan_wong_init(hw);
+	err = hartigan_wong_init(hw);
     } else if (iflag == INIT_PC) {
-	pc_init(hw);
+	err = pc_init(hw);
     } else if (iflag == INIT_RAND) {
-	get_k_random_candidates(hw);
+	err = get_k_random_candidates(hw);
     } else {
 	; /* INIT_USER or INIT_FINAL: use the incoming hw->c as is */
+    }
+
+    if (err) {
+	return err;
     }
 
     /* For each point i, find its two closest centers, ic1[i] and
