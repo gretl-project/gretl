@@ -52,8 +52,7 @@ function void GUI_kmeans_plot(bundle *kmb, int ptype[1:3:1] \
         PairPlot(X, factor)
     elif ptype == 2
         nc = kmb.n_clusters
-        matrix scree = kmeans_scree(X, nc+1)
-        kmeans_screeplot(scree)
+        kmeans_screeplot(X, nc+1)
     elif ptype == 3
         kmeans_sil_plot(kmb, X)
     endif

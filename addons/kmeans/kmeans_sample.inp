@@ -60,8 +60,7 @@ print cluster_id -o --range=1:15
 # Evaluate within-cluster distance for k = 1 to 5 clusters
 # ==========
 smpl x --no-missing
-matrix scree = kmeans_scree(x, 5)
-kmeans_screeplot(scree, , _(fontsize=12))
+kmeans_screeplot(x, 5, null, _(fontsize=12))
 
 # Predict
 # ==========

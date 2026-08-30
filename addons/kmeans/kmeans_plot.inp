@@ -13,7 +13,8 @@ function void kmeans_plot (const list xlist,
     PairPlot(xlist, factor, self)
 end function
 
-function void kmeans_screeplot (const matrix scree,
+function void kmeans_screeplot (const list xlist,
+                                int kmax[3::5],
                                 const string filename[null],
                                 bundle opts[null])
     /* -doc-
@@ -24,6 +25,7 @@ function void kmeans_screeplot (const matrix scree,
         bundle opts = _()
     endif
     bundle opts = handle_options_and_defaults(1, opts)
+    matrix scree = kmeans_scree(xlist, kmax, opts)
 
     string fontopt = ""
     if inbundle(opts, "fontsize")
@@ -31,13 +33,15 @@ function void kmeans_screeplot (const matrix scree,
     endif
     string fname = exists(filename) ? filename : "display"
 
-    scalar x = minc(scree[,2])
-    printf "Total within-cluster distance as a function of K\n"
-    if x > 10000
-        printf "\n%9.0f\n", scree
-    else
-        print scree
-    endif
+    /*
+       scalar x = minc(scree[,2])
+       printf "Total within-cluster distance as a function of K\n"
+       if x > 10000
+       printf "\n%9.0f\n", scree
+       else
+       print scree
+       endif
+    */
 
     matrix mplot = mreverse(scree, TRUE)
     plot mplot
