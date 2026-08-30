@@ -469,8 +469,13 @@ static gretl_matrix *geo2dat (gretl_array *features,
 	pz = (zvec == NULL)? NULL : &z;
 	fi = gretl_array_get_data(features, i);
 	geom = gretl_bundle_get_bundle(fi, "geometry", NULL);
-	gtype = gretl_bundle_get_string(geom, "type", NULL);
-	if (!strcmp(gtype, "Polygon")) {
+	gtype = geom == NULL ? NULL :
+	    gretl_bundle_get_string(geom, "type", NULL);
+	if (gtype == NULL) {
+	    gretl_errmsg_set("geoplot: feature has no usable geometry");
+	    err = E_DATA;
+	    break;
+	} else if (!strcmp(gtype, "Polygon")) {
 	    mp = 0;
 	} else if (!strcmp(gtype, "MultiPolygon")) {
 	    mp = 1;
@@ -770,6 +775,7 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
         if (obj == NULL) {
 	    fprintf(stderr, "Unable to read shape %d, terminating.\n", i);
 	    *err = E_DATA;
+	    break;
         } else if (obj->nParts > 0 && obj->PartStart[0] != 0) {
             fprintf(stderr, "PartStart[0] = %d, not zero as expected.\n",
 		    obj->PartStart[0]);
@@ -781,7 +787,7 @@ gretl_bundle *shp_get_bundle (const char *shpname, int *err)
 		i+1, obj->nVertices, obj->nParts);
 #endif
 
-	if (obj->nParts > 1) {
+	if (!*err && obj->nParts > 1) {
 	    for (p=1; p < obj->nParts && !*err; p++) {
 		if (obj->PartStart[p] <= obj->PartStart[p-1]) {
 		    gretl_errmsg_set("SHP parts are not in order!");
@@ -1412,7 +1418,10 @@ static int set_projection (mapinfo *mi, const char *s)
     }
 
 #if TR_RANGES
-    if (mi->proj == EPSG3857 && mi->opts != NULL) {
+    /* Note: use the just-assigned file-scope @proj here, not
+       mi->proj, which is not set until the end of geoplot().
+    */
+    if (proj == EPSG3857 && mi->opts != NULL) {
 	err = transform_ranges(mi->opts, proj);
     }
 #endif
