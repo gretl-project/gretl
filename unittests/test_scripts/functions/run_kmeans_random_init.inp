@@ -1,0 +1,36 @@
+set verbose off
+clear
+set assert stop
+set seed 20260830
+
+# kmeans() with a random initializer used to segfault whenever
+# n_draws was <= 0: the "best so far" recorder matrix (hw->cmin in
+# plugin/kmeans.c) was only allocated when n_draws > 0, but the
+# random-init code path dereferences it unconditionally.
+
+# Given
+matrix X = mnormal(60, 3)
+scalar k = 3
+
+function void check_result (const bundle b, scalar k, scalar n)
+    assert(inbundle(b, "cluster_id"))
+    assert(inbundle(b, "centroids"))
+    assert(rows(b.cluster_id) == n)
+    assert(rows(b.centroids) == k)
+    assert(min(b.cluster_id) >= 1 && max(b.cluster_id) <= k)
+    assert(b.within_variation <= b.total_variation)
+end function
+
+# When / Then: none of these should crash
+
+bundle b0 = kmeans(X, k, _(init="random", n_draws=0))
+check_result(b0, k, rows(X))
+
+bundle bneg = kmeans(X, k, _(init="random", n_draws=-3))
+check_result(bneg, k, rows(X))
+
+bundle bpos = kmeans(X, k, _(init="random", n_draws=5))
+check_result(bpos, k, rows(X))
+
+print "Successfully finished tests."
+quit

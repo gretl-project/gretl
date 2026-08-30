@@ -96,8 +96,10 @@ static int build_hw_info (hw_info *hw,
     }
     hw->ic1 = malloc(2 * hw->m * sizeof *hw->ic1);
     hw->ic2 = hw->ic1 + hw->m;
-    if (n_draws > 0) {
-	/* recorder for "best so far" */
+    if (n_draws > 0 || *iflag == INIT_RAND) {
+	/* recorder for "best so far": needed whenever a random
+	   initializer is in play, not just when n_draws > 0
+	*/
 	hw->cmin = gretl_matrix_alloc(hw->k, hw->n);
     } else {
 	hw->cmin = NULL;
@@ -105,6 +107,11 @@ static int build_hw_info (hw_info *hw,
 
     hw->d = malloc(hw->m * sizeof *hw->d);
     hw->ameans = get_ameans(a, &err);
+
+    if (!err && (hw->c == NULL || hw->ic1 == NULL || hw->d == NULL ||
+		 ((n_draws > 0 || *iflag == INIT_RAND) && hw->cmin == NULL))) {
+	err = E_ALLOC;
+    }
 
     return err;
 }
