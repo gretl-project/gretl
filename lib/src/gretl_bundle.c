@@ -1483,6 +1483,9 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
     if (key == NULL || key[0] == '\0') {
         gretl_errmsg_sprintf("real_bundle_set_data: missing key string");
         return E_DATA;
+    } else if (strlen(key) >= VNAMELEN) {
+        gretl_errmsg_sprintf(_("Identifier exceeds the maximum of 31 characters"));
+        return E_DATA;
     }
 
     if (b->type == BUNDLE_KALMAN) {
