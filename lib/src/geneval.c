@@ -2061,7 +2061,7 @@ static int get_matrix_size (gretl_matrix *a, gretl_matrix *b,
 
     if (a != NULL) {
         *r = a->rows;
-        *c = b->cols;
+        *c = a->cols;
         if (b != NULL && (b->rows != *r || b->cols != *c)) {
             err = E_NONCONF;
         }
