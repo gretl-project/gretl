@@ -63,8 +63,12 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	gchar *blurb;
 	int resp, show = 1;
 
-	*vname = '\0';
-	strncat(vname, key, VNAMELEN - 1);
+	err = check_varname(key);
+	if (err) {
+	    *vname = '\0';
+	} else {
+	    strcpy(vname, key);
+	}
 
 	blurb = g_strdup_printf("%s (%s) from bundle\n"
 				"Name (max. %d characters):",
