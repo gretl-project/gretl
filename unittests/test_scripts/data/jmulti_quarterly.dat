@@ -1,0 +1,10 @@
+/*
+Small hand-built JMulTi dataset used as a regression test for the
+gretl JMulTi import plugin (plugin/jmulti_import.c). Quarterly frequency.
+*/
+<1960 Q1>
+Y      X
+100.0  10.0
+101.0  10.5
+102.0  11.0
+103.0  11.5
