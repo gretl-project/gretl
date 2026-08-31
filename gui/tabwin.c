@@ -524,7 +524,7 @@ tabwin_handle_drag  (GtkWidget *widget,
     const guchar *seldata = NULL;
     gboolean success = 0;
     gchar *dfname = NULL;
-    char tmp[MAXLEN];
+    char tmp[FILENAME_MAX];
     int pos, skip = 5;
 
     if (data != NULL) {
@@ -550,8 +550,16 @@ tabwin_handle_drag  (GtkWidget *widget,
     *tmp = '\0';
     if ((pos = gretl_charpos('\r', dfname)) > 0 ||
 	(pos = gretl_charpos('\n', dfname) > 0)) {
+	int len = pos - skip;
+
+	if (len < 0 || len >= FILENAME_MAX) {
+	    goto drag_finish; /* can't handle this */
+	}
 	strncat(tmp, dfname + skip, pos - skip);
     } else {
+	if (strlen(dfname + skip) >= FILENAME_MAX) {
+	    goto drag_finish; /* can't handle this */
+	}
 	strcat(tmp, dfname + skip);
     }
 

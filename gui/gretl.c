@@ -383,7 +383,9 @@ static void maybe_fix_dbname (char *dbname)
 	strstr(dbname, ".rat") == NULL &&
 	strstr(dbname, ".RAT") == NULL &&
 	strstr(dbname, ".bn7") == NULL) {
-	strcat(dbname, ".bin");
+	if (strlen(dbname) + 4 < MAXSTR) {
+	    strcat(dbname, ".bin");
+	}
     }
 
     err = gretl_test_fopen(dbname, "rb");
@@ -781,8 +783,8 @@ static int have_data (void)
 
 int main (int argc, char **argv)
 {
-    char auxname[MAXLEN];
-    char filearg[MAXLEN];
+    char auxname[MAXSTR];
+    char filearg[MAXSTR];
     GError *opterr = NULL;
 
 #if defined(G_OS_WIN32)
@@ -849,12 +851,12 @@ int main (int argc, char **argv)
 	dump_rc();
 	exit(EXIT_SUCCESS);
     } else if (optdb != NULL) {
-	strncat(auxname, optdb, MAXLEN - 1);
+	strncat(auxname, optdb, MAXSTR - 1);
 	maybe_fix_dbname(auxname);
     } else if (optwebdb != NULL) {
-	strncat(auxname, optwebdb, MAXLEN - 1);
+	strncat(auxname, optwebdb, MAXSTR - 1);
     } else if (optpkg != NULL) {
-	strncat(auxname, optpkg, MAXLEN - 1);
+	strncat(auxname, optpkg, MAXSTR - 1);
     }
 
     if (opteng) {
@@ -2318,11 +2320,21 @@ static void new_gretl_instance (GtkAction *action, gpointer data)
     char *topdir = getenv("GTK_DATA_PREFIX");
 
     if (topdir != NULL) {
-	gchar *cmd;
+	gchar *apppath = g_strdup_printf("%s/../../../Gretl.app", topdir);
+	gchar *argv[] = { "open", "-n", apppath, NULL };
+	GError *error = NULL;
 
-	cmd = g_strdup_printf("open -n %s/../../../Gretl.app", topdir);
-	system(cmd);
-	g_free(cmd);
+	/* use an argv array rather than system(), since @topdir comes
+	   from the environment and could in principle contain shell
+	   metacharacters
+	*/
+	g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
+		      NULL, NULL, NULL, &error);
+	if (error != NULL) {
+	    errbox(error->message);
+	    g_error_free(error);
+	}
+	g_free(apppath);
     }
 }
 
@@ -2628,7 +2640,7 @@ mdata_handle_drag  (GtkWidget *widget,
 {
     const guchar *seldata = NULL;
     gchar *dfname;
-    char tmp[MAXLEN];
+    char tmp[MAXSTR];
     int pos, skip = 5;
 
     if (data != NULL) {
@@ -2660,8 +2672,16 @@ mdata_handle_drag  (GtkWidget *widget,
     *tmp = 0;
     if ((pos = gretl_charpos('\r', dfname)) > 0 ||
 	(pos = gretl_charpos('\n', dfname) > 0)) {
-	strncat(tmp, dfname + skip, pos - skip);
+	int len = pos - skip;
+
+	if (len < 0 || len >= MAXSTR) {
+	    return; /* too long to be a sane path */
+	}
+	strncat(tmp, dfname + skip, len);
     } else {
+	if (strlen(dfname + skip) >= MAXSTR) {
+	    return; /* too long to be a sane path */
+	}
 	strcat(tmp, dfname + skip);
     }
 
