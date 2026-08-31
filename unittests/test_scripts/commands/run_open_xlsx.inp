@@ -1,0 +1,35 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test for a fix in plugin/xlsx_import.c's
+# xlsx_read_worksheet(): the internal path to the selected worksheet
+# member (built from the "Target" attribute of a relationship entry
+# inside the .xlsx archive, which is attacker-controlled XML content)
+# used to be written into a fixed-size 'sheetfile[FILENAME_MAX]' stack
+# buffer via unbounded sprintf(). That call is now snprintf()-bounded
+# and reports a data error on truncation instead of overflowing.
+# (An end-to-end overflow via a >FILENAME_MAX worksheet path isn't
+# reproducible through this test alone, since any path long enough to
+# overflow the buffer is also too long for the OS to open the
+# extracted member -- see the commit message for how this was
+# confirmed directly against the vulnerable code.) This test instead
+# guards against a regression in ordinary .xlsx imports from that fix.
+print "Start testing open of a well-formed .xlsx file."
+
+# Given
+string fname = "../data/xlsx_sanity.xlsx"
+
+# When
+catch open @fname
+
+# Then
+assert($error == 0)
+assert($nobs == 3)
+assert(y[1] == 100)
+assert(y[3] == 300)
+assert(x[2] == 20.5)
+
+
+print "Successfully finished tests."
+quit

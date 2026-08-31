@@ -1028,8 +1028,11 @@ static int xlsx_read_worksheet (xlsx_info *xinfo,
     int i, gotdata = 0;
     int err = 0;
 
-    sprintf(xinfo->sheetfile, "xl%c%s", SLASH,
-	    xinfo->filenames[xinfo->selsheet]);
+    if (snprintf(xinfo->sheetfile, FILENAME_MAX, "xl%c%s", SLASH,
+		 xinfo->filenames[xinfo->selsheet]) >= FILENAME_MAX) {
+	fprintf(stderr, "xlsx_read_worksheet: internal sheet path too long\n");
+	return E_DATA;
+    }
 
 #if XDEBUG
     fprintf(stderr, "xlsx_read_worksheet: sheetnum=%d, name='%s'\n",

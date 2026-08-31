@@ -334,13 +334,22 @@ static int odbc_read_rows (ODBC_info *odinfo,
 		    pprintf(prn, "%d bytes", (int) colbytes[i]);
 		}
 		if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
-		    sprintf(obsbit, odinfo->fmts[i], (int) grabint[j++]);
+		    if (snprintf(obsbit, OBSLEN, odinfo->fmts[i],
+				 (int) grabint[j++]) >= OBSLEN) {
+			fprintf(stderr, "Overflow in observation format!\n");
+		    }
 		} else if (odinfo->coltypes[i] == GRETL_TYPE_STRING) {
-		    sprintf(obsbit, odinfo->fmts[i], grabstr[k++]);
+		    if (snprintf(obsbit, OBSLEN, odinfo->fmts[i],
+				 grabstr[k++]) >= OBSLEN) {
+			fprintf(stderr, "Overflow in observation format!\n");
+		    }
 		} else if (odinfo->coltypes[i] == GRETL_TYPE_DATE) {
 		    obsbit_from_sql_date(obsbit, &grabd[q++]);
 		} else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
-		    sprintf(obsbit, odinfo->fmts[i], grabx[p++]);
+		    if (snprintf(obsbit, OBSLEN, odinfo->fmts[i],
+				 grabx[p++]) >= OBSLEN) {
+			fprintf(stderr, "Overflow in observation format!\n");
+		    }
 		}
 		if (odinfo->S != NULL && *obsbit != '\0') {
 		    if (strlen(odinfo->S[t]) + strlen(obsbit) > OBSLEN - 1) {
