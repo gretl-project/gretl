@@ -32,6 +32,11 @@
 
 #define WF1_NA 1e-37
 
+/* sanity limits on values read from the (untrusted) file header */
+#define WF1_MAXVARS  100000
+#define WF1_MAXOBS   10000000
+#define WF1_MAXLABEL (1024 * 1024)
+
 static void wf1_error (int *err)
 {
     fputs("binary read error\n", stderr);
@@ -40,7 +45,7 @@ static void wf1_error (int *err)
 
 static int read_int (FILE *fp, int *err)
 {
-    int i;
+    int i = 0;
 
     if (fread(&i, sizeof i, 1, fp) != 1) {
 	wf1_error(err);
@@ -54,22 +59,24 @@ static int read_int (FILE *fp, int *err)
 
 static int read_short (FILE *fp, int *err)
 {
-    int i;
+    int i = 0;
 #if WORDS_BIGENDIAN
     union {
 	short s;
 	unsigned char c[2];
-    } sc;
+    } sc = {0};
 
-    fread(&(sc.c[1]), 1, 1, fp);
-    fread(&(sc.c[0]), 1, 1, fp);
+    if (fread(&(sc.c[1]), 1, 1, fp) != 1 ||
+	fread(&(sc.c[0]), 1, 1, fp) != 1) {
+	wf1_error(err);
+    }
     i = sc.s;
 #else
-    unsigned short s;
+    unsigned short s = 0;
 
     if (fread(&s, sizeof s, 1, fp) != 1) {
 	wf1_error(err);
-    } 
+    }
     i = s;
 #endif
 
@@ -78,7 +85,7 @@ static int read_short (FILE *fp, int *err)
 
 static unsigned int read_unsigned (FILE *fp, int *err)
 {
-    unsigned int u;
+    unsigned int u = 0;
 
     if (fread(&u, sizeof u, 1, fp) != 1) {
 	wf1_error(err);
@@ -92,7 +99,7 @@ static unsigned int read_unsigned (FILE *fp, int *err)
 
 static double read_double (FILE *fp, int *err)
 {
-    double x;
+    double x = 0.0;
 
     if (fread(&x, sizeof x, 1, fp) != 1) {
 	wf1_error(err);
@@ -118,8 +125,9 @@ static int wf1_read_history (FILE *fp, unsigned pos,
 
     fseek(fp, pos + 2, SEEK_SET);
     len = read_int(fp, &err);
-    if (err) {
-	return 1;
+    if (err || len <= 0 || len > WF1_MAXLABEL) {
+	/* missing or implausible history length: skip, non-fatally */
+	return 0;
     }
 
 #if EVDEBUG
@@ -293,6 +301,17 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 #endif
 	}
 
+	if (j >= dset->v - 1) {
+	    /* dset->varname, dset->Z and dset->varinfo hold dset->v
+	       slots (index 0 = const), room for dset->v - 1 series. A
+	       well-formed file won't exceed that, but the loop limit
+	       (nv = dset->v + 1) would let a malformed one write past
+	       the ends of those arrays, so stop here.
+	    */
+	    pputs(prn, _("warning: too many variables in workfile\n"));
+	    break;
+	}
+
 	dset->varname[++j][0] = 0;
 	strncat(dset->varname[j], vname, VNAMELEN - 1);
 
@@ -302,6 +321,9 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 	fseek(fp, pos + 10, SEEK_SET);
 	sz = read_unsigned(fp, &err);
 	fprintf(stderr, "data block size: %d\n", (int) sz);
+	if (err) {
+	    break;
+	}
 
 #if EVDEBUG
 	fprintf(stderr, "first 6 bytes as shorts:");
@@ -417,8 +439,9 @@ static int parse_wf1_header (FILE *fp, int ftype, DATASET *dset,
 	startper = 0;
     }
 
-    if (nvars <= 2 || nobs <= 0 || startyr < 0 ||
-	pd <= 0 || startper < 0) {
+    if (nvars <= 2 || nvars > WF1_MAXVARS ||
+	nobs <= 0 || nobs > WF1_MAXOBS ||
+	startyr < 0 || pd <= 0 || startper < 0) {
 	err = E_DATA;
 	fprintf(stderr, "header info:\n"
 		" nvars = %d\n"
