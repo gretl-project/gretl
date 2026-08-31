@@ -159,24 +159,33 @@ static int parse_obs_bits (const char *s1, const char *s2,
 	    } 
 	}
 	if (!err) {
-	    sprintf(stobs, YMD_WRITE_FMT, y, m, d);
-	    fprintf(stderr, "Daily data, starting '%s', pd = %d\n", stobs, *pd);
+	    if (snprintf(stobs, OBSLEN, YMD_WRITE_FMT, y, m, d) >= OBSLEN) {
+		err = E_DATA;
+	    } else {
+		fprintf(stderr, "Daily data, starting '%s', pd = %d\n", stobs, *pd);
+	    }
 	}
     } else {
 	y0 = atoi(s1);
 	if (*s2 == 0) {
 	    /* annual? */
-	    sprintf(stobs, "%d", y0);
+	    if (snprintf(stobs, OBSLEN, "%d", y0) >= OBSLEN) {
+		err = E_DATA;
+	    }
 	    *pd = 1;
 	} else if (*s2 == 'Q') {
 	    /* quarterly */
 	    p0 = atoi(s2 + 1);
-	    sprintf(stobs, "%d:%d", y0, p0);
+	    if (snprintf(stobs, OBSLEN, "%d:%d", y0, p0) >= OBSLEN) {
+		err = E_DATA;
+	    }
 	    *pd = 4;
 	} else if (*s2 == 'M') {
 	    /* monthly */
 	    p0 = atoi(s2 + 1);
-	    sprintf(stobs, "%d:%02d", y0, p0);
+	    if (snprintf(stobs, OBSLEN, "%d:%02d", y0, p0) >= OBSLEN) {
+		err = E_DATA;
+	    }
 	    *pd = 12;
 	} else {
 	    err = E_DATA;

@@ -1,0 +1,41 @@
+set verbose off
+clear
+set assert stop
+
+print "Start testing open of a well-formed JMulTi file (quarterly)."
+
+# Given
+string fname1 = "../data/jmulti_quarterly.dat"
+
+# When
+catch open @fname1
+
+# Then
+assert($error == 0)
+assert($pd == 4)
+assert($nobs == 4)
+assert(obslabel(1) == "1960:1")
+assert(Y[1] == 100.0)
+assert(X[4] == 11.5)
+
+clear
+
+# Regression test for a stack-buffer-overflow fix in
+# plugin/jmulti_import.c's parse_obs_bits(): a dated-daily obs-info line
+# carrying an out-of-range year used to be formatted, unbounded, into the
+# fixed 16-byte 'stobs' buffer via sprintf(), overflowing the stack. Such
+# a file must now be rejected with a clean data error instead of crashing.
+print "Start testing open of a JMulTi file with an oversized obs-info field."
+
+# Given
+string fname2 = "../data/jmulti_overflow_obs.dat"
+
+# When
+catch open @fname2
+
+# Then
+assert($error != 0)
+
+
+print "Successfully finished tests."
+quit

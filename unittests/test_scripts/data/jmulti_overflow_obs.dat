@@ -1,0 +1,11 @@
+/*
+Regression test for a stack-buffer-overflow fix in
+plugin/jmulti_import.c's parse_obs_bits(): a long/negative year in a
+dated-daily obs-info line used to be formatted, unbounded, into the
+fixed 16-byte 'stobs' buffer via sprintf(), overflowing the stack.
+The import must now fail cleanly with a data error instead.
+*/
+<1/1/-2147483648 (4)>
+Y      X
+100.0  10.0
+101.0  10.5
