@@ -1,0 +1,49 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test for a fix in plugin/odbc_import.c's odbc_read_rows():
+# the observation-identifier buffer 'obsbit[OBSLEN]' (16 bytes) used to
+# be filled via sprintf(obsbit, odinfo->fmts[i], ...), where fmts[i] is
+# a runtime format string built from a "data ... obs-format=..." clause
+# (parse_odbc_format_chunk() in lib/src/dbread.c). That parser bounds
+# only the width/precision digit on the %-conversion itself, not any
+# trailing literal text or the length of a %s argument, so a crafted
+# obs-format (or an ordinary long database string) could overflow the
+# buffer. Confirmed via ASan against the pre-fix code, through this
+# exact 'data ... --odbc' path, that it aborted with a stack-buffer
+# overflow at plugin/odbc_import.c:337. The sprintf() calls are now
+# snprintf()-bounded, degrading to truncation (logged, obs rejected)
+# instead of overflowing.
+#
+# This test needs a live ODBC DSN named 'gretl_test' pointing at a
+# SQLite database with a table "t(id INTEGER, y REAL)" holding a few
+# rows -- unixODBC + a driver + a configured data source, which is
+# opt-in infrastructure outside gretl itself and not something CI can
+# assume. Where that DSN isn't configured the test no-ops; it provides
+# real coverage only on a machine set up to match.
+
+catch open dsn=gretl_test --odbc
+if $error
+    print "Skipping ODBC overflow test: no 'gretl_test' DSN available."
+    quit
+endif
+
+print "Start testing 'data ... obs-format=' against oversized formatting."
+
+# Given
+nulldata 3
+string evil_fmt = "%1d-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
+# When
+catch data y obs-format="@evil_fmt" query="select id, y from t" --odbc
+
+# Then: must not crash, and must report the (correct) absence of any
+# valid observations, since every obs-identifier chunk was rejected
+# for exceeding the buffer
+assert($error == 0)
+assert(nobs(y) == 0)
+
+
+print "Successfully finished tests."
+quit
