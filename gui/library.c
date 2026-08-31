@@ -6806,7 +6806,15 @@ int save_bundled_series (gretl_matrix *m,
     int cancel = 0;
     int err = 0;
 
-    strcpy(vname, key);
+    if (strlen(key) >= VNAMELEN) {
+	char *tmp = gretl_strdup(key);
+
+	gretl_utf8_truncate_b(tmp, VNAMELEN - 1);
+	strcpy(vname, tmp);
+	free(tmp);
+    } else {
+	strcpy(vname, key);
+    }
     descrip = (note != NULL) ? g_strdup(note) : g_strdup("");
     name_new_series_dialog(vname, &descrip, vwin, &cancel);
 

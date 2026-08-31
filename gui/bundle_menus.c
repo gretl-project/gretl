@@ -156,6 +156,11 @@ static gchar *alt_bundle_content_label (bundled_item *bi,
     gchar *keystr = double_underscores_new((gchar *) bi->key);
     gchar *label = NULL;
 
+    if (strlen(bi->key) >= 32) {
+	gretl_utf8_truncate_b(keystr, 29);
+	strcat(keystr, "..");
+    }
+
     if (r > 0 && c > 0) {
 	if (note != NULL) {
 	    label = g_strdup_printf("%s (%s, %d x %d)", keystr,
@@ -203,6 +208,11 @@ static gchar *bundle_content_label (bundled_item *bi,
     const char *note = extra_content_info(bi);
     gchar *keystr = double_underscores_new((gchar *) bi->key);
     gchar *label = NULL;
+
+    if (strlen(bi->key) >= 32) {
+	gretl_utf8_truncate_b(keystr, 29);
+	strcat(keystr, "..");
+    }
 
     if (r > 0 && c > 0) {
 	if (note != NULL) {
