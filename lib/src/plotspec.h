@@ -122,7 +122,7 @@ typedef struct {
 
 struct GPT_SPEC_ {
     FILE *fp;
-    char fname[MAXLEN];        /* for gui purposes */
+    char fname[FILENAME_MAX];  /* for gui purposes */
     PlotType code;             /* to deal with FREQ, FCAST... */
     GptFlags flags;            /* bitwise OR of options */
     int heredata;              /* plot file uses "heredoc" for data */
