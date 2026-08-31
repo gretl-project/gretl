@@ -20209,10 +20209,6 @@ static NODE *eval (NODE *t, parser *p)
         }
     }
 
-    if (multi != NULL) {
-        destroy_multi(multi);
-    }
-
     if (!p->err && t->t == F_LDIFF) {
         if (!null_node(m) || !null_node(r)) {
             post_process_ldiff(ret, m, r, p);
@@ -20220,6 +20216,10 @@ static NODE *eval (NODE *t, parser *p)
     }
 
  bailout:
+
+    if (multi != NULL) {
+        destroy_multi(multi);
+    }
 
 #if EDEBUG
     fprintf(stderr, "eval (t->t = %03d, %s): returning NODE %s at %p, err %d\n",
