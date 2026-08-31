@@ -3735,6 +3735,32 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
     view_buffer(prn, 78, 450, my_sys->name, SYSTEM, my_sys);
 }
 
+/* Heuristic check on the text of a parser error message (or the
+   echoed input line it may contain): does it show a digit
+   immediately flanked by commas on both sides, suggesting that a
+   locale decimal comma may actually be responsible for the parse
+   failure? E_PARSE is gretl's catch-all syntax-error code, used for
+   many conditions that have nothing to do with decimal points (an
+   overlong identifier, unbalanced brackets, and so on), so we should
+   not just assume every E_PARSE in a comma-decimal locale is a
+   decimal-comma problem: we require some actual textual evidence.
+*/
+
+static int text_suggests_decimal_comma (const char *s)
+{
+    const char *p;
+
+    for (p=s; *p != '\0'; p++) {
+        if (*p == ',' && p > s &&
+            isdigit((unsigned char) *(p-1)) &&
+            isdigit((unsigned char) *(p+1))) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 /* Try for the most informative possible error message
    from genr, but also try to avoid duplication. In context,
    @plus is (or may be) a specific message from "genr".
@@ -3749,14 +3775,15 @@ void errmsg_plus (int err, const char *plus)
         gchar *s2 = g_strstrip(g_strdup(plus));
         const char *s3 = NULL;
 
-        if (err == E_PARSE && get_local_decpoint() == ',') {
+        if (err == E_PARSE && get_local_decpoint() == ',' &&
+            text_suggests_decimal_comma(s2)) {
             s3 = N_("Please note: the decimal character must be '.'\n"
                     "in this context");
         }
 
         if (*s1 != '\0' && *s2 != '\0' && strcmp(s1, s2)) {
             if (s3 != NULL) {
-                errbox_printf("%s\n\n%s", s1, _(s3));
+                errbox_printf("%s\n\n%s\n\n%s", s1, s2, _(s3));
             } else {
                 errbox_printf("%s\n\n%s", s1, s2);
             }
