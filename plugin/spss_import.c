@@ -428,31 +428,43 @@ static int check_sav_varname (char *vname, const char *s)
 
 /* Read record type 7, subtype 13: long variable names */
 
-static int read_long_varnames (spss_data *sdat, unsigned size,
-			       unsigned count)
+static int read_long_varnames (spss_data *sdat, int32_t size,
+			       int32_t count)
 {
     char *buf, *val;
     char *p, *endp;
     spss_var *var;
+    size_t total;
 
-    if (size != 1 || count == 0) {
-	fprintf(stderr, "Strange record info: size=%u, count=%u,"
+    if (size != 1 || count <= 0) {
+	fprintf(stderr, "Strange record info: size=%d, count=%d,"
 		"ignoring long variable names\n", size, count);
 	return E_DATA;
     }
 
-    size *= count;
+    /* compute the byte count in a width that can't wrap around,
+       and reject anything implausible for a long-variable-names
+       record, rather than letting a huge or wrapped value reach
+       calloc()/fread()
+    */
+    total = (size_t) size * (size_t) count;
+
+    if (total > 8 * 1024 * 1024) {
+	fprintf(stderr, "long_varnames: implausible size %zu bytes, "
+		"ignoring\n", total);
+	return E_DATA;
+    }
 
 #if SPSS_DEBUG
-    fprintf(stderr, "long_varnames: getting %u bytes\n", size);
+    fprintf(stderr, "long_varnames: getting %zu bytes\n", total);
 #endif
 
-    buf = calloc(size + 1, 1);
+    buf = calloc(total + 1, 1);
     if (buf == NULL) {
 	return E_ALLOC;
     }
 
-    if (fread(buf, size, 1, sdat->fp) != 1) {
+    if (fread(buf, total, 1, sdat->fp) != 1) {
 	free(buf);
 	return E_DATA;
     }
@@ -1154,6 +1166,17 @@ static int read_sav_variables (spss_data *sdat, struct sysfile_header *hdr)
 		next_value += v->nv;
 		long_string_count = v->nv - 1;
 	    }
+	    if (next_value > hdr->case_size) {
+		/* the dictionary claims more value-positions than the
+		   header's case_size, which sizes the per-observation
+		   buffer used in sav_read_observation(): reading data
+		   for this variable would run past the end of that
+		   buffer, so bail out now rather than warn later
+		*/
+		err = sav_error("Variable dictionary claims more value "
+				 "positions (%d) than the header's case "
+				 "size (%d)", next_value, hdr->case_size);
+	    }
 	}
 
 	/* get the variable label, if any */
@@ -1178,7 +1201,7 @@ static int read_sav_variables (spss_data *sdat, struct sysfile_header *hdr)
 		"read from file\n", hdr->case_size, next_value);
     }
 
-    return 0;
+    return err;
 }
 
 static void print_product_name (struct sysfile_header *hdr)
@@ -1989,7 +2012,7 @@ int sav_get_data (const char *fname, DATASET *dset,
 	if (opt & OPT_D) {
 	    sdat.opt |= OPT_D;
 	}
-	read_sav_variables(&sdat, &hdr);
+	err = read_sav_variables(&sdat, &hdr);
     }
 
     if (!err) {
