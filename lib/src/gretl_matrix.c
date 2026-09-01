@@ -365,19 +365,20 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     double chk;
 
     if (rows < 0 || cols < 0) {
+	set_gretl_matrix_err(E_INVARG);
         fprintf(stderr, "gretl error: gretl_matrix_alloc: rows=%d, cols=%d\n",
                 rows, cols);
         return NULL;
     }
 
-    chk = rows * (double) cols * sizeof *m->val;
+    chk = rows * (double) cols * sizeof(double);
 
     if (chk > (double) SIZE_MAX) {
 	fprintf(stderr, "gretl_matrix_alloc: max size_t exceeded\n");
 	set_gretl_matrix_err(E_ALLOC);
 	return NULL;
     } else {
-	vsize = rows * cols * sizeof *m->val;
+	vsize = (size_t) chk;
     }
 
     m = malloc(sizeof *m);
@@ -883,12 +884,26 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
 
 int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 {
-    int n = rows * cols;
     int oldrows, oldcols;
+    double chk;
     double *x = NULL;
 
     if (m == NULL) {
         return E_DATA;
+    }
+
+    if (rows < 0 || cols < 0) {
+	set_gretl_matrix_err(E_INVARG);
+        fprintf(stderr, "gretl error: gretl_matrix_realloc: rows=%d, cols=%d\n",
+                rows, cols);
+        return E_INVARG;
+    }
+
+    chk = rows * (double) cols * sizeof(double);
+
+    if (chk > SIZE_MAX || (m->is_complex && 2*chk > SIZE_MAX)) {
+	fprintf(stderr, "gretl_matrix_alloc: max size_t exceeded\n");
+	return E_INVARG;
     }
 
     if (rows == m->rows && cols == m->cols) {
@@ -896,7 +911,7 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
         return 0;
     }
 
-    if (m->rows * m->cols == n) {
+    if (rows * cols == m->rows * m->cols) {
         /* no need to reallocate storage */
         m->rows = rows;
         m->cols = cols;
@@ -909,13 +924,16 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
         return E_DATA;
     }
 
-    if (n == 0) {
+    if (rows * cols == 0) {
         mval_free(m->val);
+	m->val = NULL;
     } else {
+	size_t sz = (size_t) chk;
+
         if (m->is_complex) {
-            x = mval_realloc(m->val, 2 * n * sizeof *m->val);
+            x = mval_realloc(m->val, 2 * sz);
         } else {
-            x = mval_realloc(m->val, n * sizeof *m->val);
+            x = mval_realloc(m->val, sz);
         }
         if (x == NULL) {
             return E_ALLOC;
