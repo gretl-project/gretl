@@ -139,6 +139,12 @@ enum {
 #define STATA_13_STRL     32768
 #define STATA_STRF_MAX     2045
 
+/* size of the stack buffer used to hold the dataset label in
+   read_dta_117_data(): the length read from the file must not
+   be allowed to exceed this
+*/
+#define DTA_LABEL_BUFSIZE 322
+
 #define STATA_FLOAT_MAX  1.701e+38
 #define STATA_DOUBLE_MAX 8.988e+307
 #define STATA_LONG_MAX   2147483620
@@ -994,6 +1000,12 @@ static int process_value_labels (FILE *fp, DATASET *dset, int j,
     }
 
     stata_read_string(fp, namelen + 1, buf, &err);
+    if (!err) {
+        /* the field is namelen+1 bytes; don't trust that the file
+           put a NUL in the last one
+        */
+        buf[namelen] = '\0';
+    }
     pprintf(vprn, "labels %d: (namelen=%d) name = '%s'\n", j, namelen, buf);
 
     /* padding */
@@ -1048,10 +1060,29 @@ static int process_value_labels (FILE *fp, DATASET *dset, int j,
 
     if (!err) {
         stata_read_string(fp, totlen, txt, &err);
+        if (!err) {
+            /* guard against a missing NUL at the very end of the
+               text block: force one so a valid-looking offset can
+               never run off the end of the buffer
+            */
+            txt[totlen - 1] = '\0';
+        }
     }
 
     for (i=0; i<nlabels && !err; i++) {
-        const char *vlabel = txt + off[i];
+        const char *vlabel;
+
+        if (off[i] < 0 || off[i] >= totlen) {
+            /* @off[i] is an unvalidated on-disk value: without this
+               check it can point anywhere relative to @txt
+            */
+            fprintf(stderr, "value label: implausible text offset "
+                    "%d (totlen=%d)\n", off[i], totlen);
+            err = E_DATA;
+            break;
+        }
+
+        vlabel = txt + off[i];
 
         pprintf(vprn, " label %d = '%s'\n", i, vlabel);
         if (g_utf8_validate(vlabel, -1, NULL)) {
@@ -1081,6 +1112,14 @@ static int process_stata_varname (FILE *fp, char *buf, int namelen,
     int err = 0;
 
     stata_read_string(fp, namelen + 1, buf, &err);
+
+    if (!err) {
+        /* the field is namelen+1 bytes; don't trust that the file
+           put a NUL in the last one -- @buf is sized namelen+1 by
+           every caller
+        */
+        buf[namelen] = '\0';
+    }
 
 #if HDR_DEBUG
     fprintf(stderr, "varname %d: read length %d, '%s'\n",
@@ -1184,6 +1223,16 @@ static int stata_read_buffer (char *buf, int bufsize,
     int err = 0;
 
     *buf = '\0';
+
+    if (len < 0) {
+        /* the on-disk length field is unsigned (guint32); a value
+           greater than INT_MAX will have come through as negative --
+           reject it rather than passing it to fread()/array-indexing
+           as a huge size_t
+        */
+        fputs("stata_read_buffer: implausible (negative) length\n", stderr);
+        return E_DATA;
+    }
 
     if (len > n) {
         stata_read_string(fp, n, buf, &err);
@@ -1395,7 +1444,7 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     int nvar = dset->v - 1;
     int nsv = 0;
     int pd = 0, tvar = -1;
-    char label[322]; /* dataset label */
+    char label[DTA_LABEL_BUFSIZE]; /* dataset label */
     char aname[130]; /* variable names */
     char c60[60];    /* misc strings */
     int *types = NULL;
@@ -1491,6 +1540,12 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
         err = stata_seek(fp, dtab->vfmt_pos, SEEK_SET);
         for (i=0; i<nvar && !err; i++){
             stata_read_string(fp, fmtlen, c60, &err);
+            if (!err) {
+                /* @fmtlen never exceeds sizeof c60 - 1: the file is
+                   not guaranteed to have NUL-terminated the field
+                */
+                c60[fmtlen] = '\0';
+            }
             if (!err && types[i] >= STATA_13_DOUBLE) {
                 process_stata_format(c60, i+1, &pd, &tvar, vprn);
             }
@@ -1513,6 +1568,13 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
     */
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, namelen + 1, aname, &err);
+        if (!err) {
+            /* the field is namelen+1 bytes, its own last byte is
+               meant to be the NUL -- don't trust that the file
+               actually put one there
+            */
+            aname[namelen] = '\0';
+        }
         if (!err && *aname != '\0' && !st_err) {
             pprintf(vprn, "variable %d: value-label name = '%s'\n", i+1, aname);
             st_err = push_label_info(&lvars, &lnames, i+1, aname);
@@ -1533,6 +1595,10 @@ static int read_dta_117_data (FILE *fp, DATASET *dset,
         err = stata_seek(fp, dtab->varlabel_pos, SEEK_SET);
         for (i=0; i<nvar && !err; i++) {
             stata_read_string(fp, vlabellen, label, &err);
+            if (!err) {
+                /* @vlabellen never exceeds sizeof label - 1 */
+                label[vlabellen] = '\0';
+            }
             if (*label != '\0') {
                 process_stata_varlabel(label, dset, i+1, vprn);
             }
@@ -1677,12 +1743,20 @@ static int read_old_dta_data (FILE *fp, DATASET *dset,
 
     pprintf(vprn, "Max length of labels = %d\n", labellen);
 
-    /* dataset label: fixed length, NUL-terminated */
+    /* dataset label: fixed length, nominally NUL-terminated, but
+       don't trust a hostile file to have actually done so
+    */
     stata_read_string(fp, labellen, label, &err);
+    if (!err) {
+        label[labellen-1] = '\0';
+    }
     pprintf(vprn, "dataset label: '%s'\n", label);
 
-    /* timestamp: fixed length, NUL-terminated */
+    /* timestamp: fixed length, likewise force termination */
     stata_read_string(fp, 18, c50, &err);
+    if (!err) {
+        c50[18] = '\0';
+    }
     pprintf(vprn, "timestamp: '%s'\n", c50);
 
     if (*label != '\0' || *c50 != '\0') {
@@ -1724,6 +1798,8 @@ static int read_old_dta_data (FILE *fp, DATASET *dset,
     for (i=0; i<nvar && !err; i++){
         stata_read_string(fp, fmtlen, c50, &err);
         if (!err) {
+            /* @fmtlen never exceeds sizeof c50 - 1 */
+            c50[fmtlen] = '\0';
             process_stata_format(c50, i+1, &pd, &tvar, vprn);
         }
     }
@@ -1733,6 +1809,9 @@ static int read_old_dta_data (FILE *fp, DATASET *dset,
     */
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, namelen + 1, aname, &err);
+        if (!err) {
+            aname[namelen] = '\0';
+        }
         if (*aname != '\0' && !st_err) {
             pprintf(vprn, "variable %d: value-label name = '%s'\n", i+1, aname);
             st_err = push_label_info(&lvars, &lnames, i+1, aname);
@@ -1742,6 +1821,9 @@ static int read_old_dta_data (FILE *fp, DATASET *dset,
     /* variable descriptive labels */
     for (i=0; i<nvar && !err; i++) {
         stata_read_string(fp, labellen, label, &err);
+        if (!err) {
+            label[labellen-1] = '\0';
+        }
         if (*label != '\0') {
             process_stata_varlabel(label, dset, i+1, vprn);
         }
@@ -2011,9 +2093,15 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
                 clen = stata_read_byte(fp, &err);
             }
             if (!err && clen > 0) {
-                dtab->dlabellen = clen;
-                dtab->dlabelpos = ftell64(fp);
-                err = stata_seek(fp, clen, SEEK_CUR);
+                if (clen > DTA_LABEL_BUFSIZE - 1) {
+                    fprintf(stderr, "dta: implausible dataset label "
+                            "length %d\n", clen);
+                    err = 1;
+                } else {
+                    dtab->dlabellen = clen;
+                    dtab->dlabelpos = ftell64(fp);
+                    err = stata_seek(fp, clen, SEEK_CUR);
+                }
             }
         }
     }

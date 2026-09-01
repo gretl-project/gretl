@@ -90,6 +90,15 @@ enum {
 
 #define VERBOSE 1
 
+/* sanity bounds on the per-variable length/position fields read
+   from a NAMESTR record: SAS XPORT character variables are at
+   most 200 bytes, and observation records are never remotely
+   this wide in practice, so anything outside these bounds
+   indicates a malformed (or hostile) file
+*/
+#define SAS_MAX_VARLEN  200
+#define SAS_MAX_VARPOS  100000
+
 static void SAS_fileinfo_init (struct SAS_fileinfo *finfo,
 			       int opt)
 {
@@ -267,6 +276,21 @@ static int read_namestr (FILE *fp, int nsize, int j, struct SAS_varinfo *var)
 	return E_DATA;
     }
 
+    /* nlng and npos come straight from the file with no guarantee
+       of sanity: reject anything outside plausible bounds rather
+       than letting a negative or huge value reach the pointer
+       arithmetic and fread() calls in SAS_read_data()
+    */
+    if (nstr.nlng <= 0 || nstr.nlng > SAS_MAX_VARLEN) {
+	fprintf(stderr, "invalid variable length %d\n", (int) nstr.nlng);
+	return E_DATA;
+    }
+
+    if (nstr.npos < 0 || nstr.npos > SAS_MAX_VARPOS) {
+	fprintf(stderr, "invalid variable position %d\n", (int) nstr.npos);
+	return E_DATA;
+    }
+
     var->type = nstr.ntype;
     var->size = nstr.nlng;
     var->pos = nstr.npos;
@@ -400,6 +424,12 @@ static int get_nobs (FILE *fp, struct SAS_fileinfo *finfo)
 		}
 	    }
 	    finfo->obsize += vsize;
+	}
+
+	if (finfo->obsize <= 0) {
+	    fprintf(stderr, "invalid computed observation size (%d)\n",
+		    finfo->obsize);
+	    return E_DATA;
 	}
 
 	fprintf(stderr, "max length of character data = %d\n", finfo->maxclen);
