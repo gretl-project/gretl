@@ -101,6 +101,10 @@ static void dta_value_labels_write (FILE *fp, const DATASET *dset,
     }
 
     tmp = malloc(maxlen + 1);
+    if (tmp == NULL) {
+	fprintf(stderr, "dta_value_labels_write: out of memory\n");
+	return;
+    }
 
     len = 0;
     for (i=0; i<ns; i++) {
@@ -172,7 +176,13 @@ static void asciify_to_length (char *targ, const char *src, int len)
 static int write_stata_strval (const DATASET *dset, int v, int t,
 			       guint8 len, FILE *fp)
 {
-    char buf[244] = {0};
+    /* @len can be as large as 244 (see get_string_type()), and
+       asciify_to_length()/u8_to_ascii_convert() always append a
+       terminating NUL after writing up to @len bytes, so the
+       buffer must hold @len + 1 bytes: size it for the full
+       range of guint8 to be safe regardless of @len
+    */
+    char buf[256] = {0};
     const char *s;
 
     s = series_get_string_for_obs(dset, v, t);
