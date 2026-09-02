@@ -13981,7 +13981,7 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
                         const gretl_matrix *X, gretl_matrix *C,
                         GretlMatrixMod cmod)
 {
-    register int i, j, ii, jj;
+    int i, j, ii, jj;
     double xi, xj, xij, xx, cij;
     int m, k;
     guint64 N;
@@ -14011,7 +14011,7 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
         return E_NONCONF;
     }
 
-    N = m * m * k * k;
+    N = (guint64) m * m * k * k;
 
     if (N > 100000) {
         /* take advantage of optimized matrix multiplication */
