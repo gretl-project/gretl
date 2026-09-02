@@ -14013,7 +14013,7 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 
     N = (guint64) m * m * k * k;
 
-    if (N > 100000) {
+    if (N > 80000) {
         /* take advantage of optimized matrix multiplication */
         return alt_qform(A, amod, X, C, cmod);
     }
