@@ -622,7 +622,7 @@ static int gen_special (const char *s, const char *line,
 	if (!err) {
 	    msg = N_("Periodic dummy variables generated.\n");
 	}
-    } else if (!strncmp(s, "cdummy:", 7) && integer_string(s+7)) {
+    } else if (!strncmp(s, "cdummy:", 7)) {
 	int ref = positive_int_from_string(s + 7);
 
 	if (ref > 0 && ref <= dset->pd) {
