@@ -2870,6 +2870,9 @@ static void register_mkl_details (void *handle)
         case 14: /* MKL_CBWR_AVX512_E1 */
             buf = "AVX-512 with support of Vector Neural Network Instructions";
             break;
+        case 15: /* MKL_CBWR_AVX10 */
+            buf = "AVX-10.2 with support for Advanced Matrix Extensions";
+            break;
         default:
             buf = "unknown";
         }
