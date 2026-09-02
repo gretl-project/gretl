@@ -1,0 +1,25 @@
+set verbose off
+set assert stop
+
+m = 257
+k = 257
+
+C = mnormal(m,k)
+B = mnormal(k,k)
+B = upper(B) + upper(B)' # should be symmetric now
+
+C2 = C[1:256,1:256]
+B2 = B[1:256,1:256]
+
+set stopwatch
+qform(C, B)
+t1 = $stopwatch
+printf "m=%d, k=%d, elapsed=%g\n", m, k, t1
+
+set stopwatch
+qform(C2, B2)
+t2 = $stopwatch
+printf "m=%d, k=%d, elapsed=%g\n", rows(C2), cols(C2), t2
+
+assert(t2 < t1)
+
