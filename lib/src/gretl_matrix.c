@@ -885,6 +885,7 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
 int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 {
     int oldrows, oldcols;
+    size_t n;
     double chk;
     double *x = NULL;
 
@@ -911,7 +912,9 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
         return 0;
     }
 
-    if (rows * cols == m->rows * m->cols) {
+    n = rows * cols;
+
+    if (n == m->rows * m->cols) {
         /* no need to reallocate storage */
         m->rows = rows;
         m->cols = cols;
@@ -924,7 +927,7 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
         return E_DATA;
     }
 
-    if (rows * cols == 0) {
+    if (n == 0) {
         mval_free(m->val);
 	m->val = NULL;
     } else {
