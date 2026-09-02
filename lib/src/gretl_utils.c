@@ -1534,14 +1534,17 @@ int positive_int_from_string (const char *s)
 
     if (s != NULL && *s != '\0') {
         char *test;
+	long il;
 
         errno = 0;
 
-        ret = strtol(s, &test, 10);
-        if (*test != '\0' || !strcmp(s, test) ||
-	    errno == ERANGE || ret <= 0) {
+        il = strtol(s, &test, 10);
+        if (*test != '\0' || strcmp(s, test) == 0 ||
+	    errno == ERANGE || il <= 0 || il > INT_MAX) {
             ret = -1;
-        }
+        } else {
+	    ret = (int) il;
+	}
     }
 
     return ret;

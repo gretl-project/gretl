@@ -548,9 +548,9 @@ int genr_special_word (const char *s)
 	!strcmp(s, "unit") ||
 	!strcmp(s, "weekday")) {
 	return 1;
-    } else if (!strncmp(s, "dummy:", 6) && integer_string(s+6)) {
+    } else if (!strncmp(s, "dummy:", 6) && *(s+6) != '\0') {
         return 1;
-    } else if (!strncmp(s, "cdummy:", 7) && integer_string(s+7)) {
+    } else if (!strncmp(s, "cdummy:", 7) && *(s+7) != '\0') {
         return 1;
     } else {
 	return 0;
@@ -611,13 +611,25 @@ static int gen_special (const char *s, const char *line,
     } else if (!strcmp(s, "weekday")) {
 	err = gen_wkday(dset, &vnum);
 	write_label = 1;
-    } else if (!strncmp(s, "dummy:", 6) && integer_string(s+6)) {
-        err = gen_seasonal_dummies(dset, atoi(s+6), 0);
+    } else if (!strncmp(s, "dummy:", 6)) {
+	int ref = positive_int_from_string(s + 6);
+
+	if (ref > 0 && ref <= dset->pd) {
+	    err = gen_seasonal_dummies(dset, ref, 0);
+	} else {
+	    err = E_INVARG;
+	}
 	if (!err) {
 	    msg = N_("Periodic dummy variables generated.\n");
 	}
     } else if (!strncmp(s, "cdummy:", 7) && integer_string(s+7)) {
-        err = gen_seasonal_dummies(dset, atoi(s+7), 1);
+	int ref = positive_int_from_string(s + 7);
+
+	if (ref > 0 && ref <= dset->pd) {
+	    err = gen_seasonal_dummies(dset, ref, 1);
+	} else {
+	    err = E_INVARG;
+	}
 	if (!err) {
 	    msg = N_("Centered periodic dummy variables generated.\n");
 	}
@@ -649,9 +661,10 @@ static int gen_special (const char *s, const char *line,
     return err;
 }
 
-static int is_genr_special (const char *s, char *spec, const char **rem)
+static int is_genr_special (const char *s, char *vspec, const char **rem)
 {
     if (strncmp(s, "genr ", 5)) {
+	/* all specials begin with "genr " */
 	return 0;
     }
 
@@ -659,8 +672,9 @@ static int is_genr_special (const char *s, char *spec, const char **rem)
     while (*s == ' ') s++;
 
     if (genr_special_word(s)) {
-	if (spec != NULL) {
-	    strcpy(spec, s);
+	if (vspec != NULL) {
+	    *vspec = '\0';
+	    strncat(vspec, s, VNAMELEN - 1);
 	}
 	if (rem != NULL) {
 	    *rem = s;
@@ -669,8 +683,8 @@ static int is_genr_special (const char *s, char *spec, const char **rem)
     }
 
     if (!strncmp(s, "markers", 7) && strchr(s, '=')) {
-	if (spec != NULL) {
-	    strcpy(spec, "markers");
+	if (vspec != NULL) {
+	    strcpy(vspec, "markers");
 	}
 	if (rem != NULL) {
 	    s = strchr(s, '=') + 1;
