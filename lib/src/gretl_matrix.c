@@ -6380,6 +6380,7 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
                                     int *err)
 {
     gretl_matrix *K;
+    guint64 u64;
     int p, q, r, s;
 
     if (gretl_is_null_matrix(A) || gretl_is_null_matrix(B)) {
@@ -6391,6 +6392,13 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
     q = A->cols;
     r = B->rows;
     s = B->cols;
+
+    u64 = (guint64) p * r * q * s;
+    if (u64 > INT32_MAX) {
+	*err = E_INVARG;
+	gretl_errmsg_set("Kronecker product: too many elements");
+	return NULL;
+    }
 
     K = gretl_matrix_alloc(p * r, q * s);
 
