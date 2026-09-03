@@ -4,26 +4,31 @@
 set assert stop
 
 function void test_bs_escape_on()
-	set bs_escape on
-	string input = "one\ttwo\vthree"
-	printf "input = '%s'\n", input
-	assert(strlen(input) == 13) # \t and \v are single chars
+    set bs_escape on
+    string input = "one\ttwo\vthree"
+    printf "input = '%s'\n", input
+    assert(strlen(input) == 13) # \t and \v are single chars
 
-	# The string p is supposed to be empty, since strstr() is "looking for"
-	# a literal backslash in s, and s does not contain that byte.
-	string actual = strstr(input, "\\")
-	assert(nelem(actual) == 0) # should be empty
+    # The string p is supposed to be empty, since strstr() is "looking for"
+    # a literal backslash in s, and s does not contain that byte.
+    string actual = strstr(input, "\\")
+    assert(nelem(actual) == 0) # should be empty
+
+    print "Finished as expected"
 end function
 
 function void test_bs_escape_off()
-	set bs_escape off
-	string input = "one\ttwo\vthree"
-	printf "input = '%s'\n", input
-	assert(strlen(input) == 15) # backslashes are literal
+    set bs_escape off
+    string input = "one\ttwo\vthree"
+    printf "input = '%s'\n", input
+    assert(strlen(input) == 15) # backslashes are literal
 
-	catch string tmp = strstr(input, "\\") # error, as expected
+    catch string tmp = strstr(input, "\\") # error, as expected
     assert($error > FALSE)
+
+    print "Finished as expected"
 end function
+
 
 test_bs_escape_on()
 test_bs_escape_off()
