@@ -1,0 +1,28 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test: princomp_with_NAs() in princomp_extra.c did not
+# check that the requested number of components is within bounds,
+# so an out-of-bounds component count combined with NAs in the input
+# matrix caused a SIGSEGV instead of a clean error.
+# Date: September 2026
+
+function void test_princomp_na_oob (void)
+    print "Start testing princomp() with NAs and out-of-bounds ncomp"
+
+    # Given
+    matrix M = mnormal(10, 3)
+    M[1,1] = NA
+
+    # When
+    catch matrix P = princomp(M, 4) # 4 exceeds the number of columns
+
+    # Then
+    assert($error != 0)
+end function
+test_princomp_na_oob()
+
+
+print "Successfully finished tests."
+quit
