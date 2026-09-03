@@ -403,9 +403,7 @@ svm(L, b)
     \dtk{model_outfile} & filename for writing model \\
     \dtk{model_infile} & filename for reading model \\
     \dtk{ranges_outfile} & filename for writing data ranges \\
-    \dtk{ranges_infile} & filename for reading data ranges \\
-    \dtk{data_outfile} & filename for writing data values \\
-    \dtk{range_format} & string: \texttt{libsvm} or \texttt{gretl}
+    \dtk{ranges_infile} & filename for reading data ranges
   \end{tabular}
   \end{center}
   \caption{Parameters and options that may be set using the second
@@ -505,25 +503,10 @@ any files; by default everything goes on in memory.
 trained \textsf{libsvm} model file (which implies that \texttt{svm}
 will skip the training step), and \dtk{model_outfile} can be used
 to produce a file readable by the \texttt{svm-predict} executable.
-The \texttt{ranges} keys work in a similar manner, for files
-containing \textsf{libsvm} data-range information. However, gretl's
-own range files contain more information than standard \textsf{libsvm}
-ones and cannot be read by the \texttt{svm-} executables, so if you
-wish to output a ranges file readable by them you must in addition
-specify
-\begin{code}
-parms.range_format = "libsvm"
-\end{code}
-(substituting the name of your parameter bundle). There is at present
-no facility for the converse---that is, getting gretl's \texttt{svm()}
-to read a ranges file written by \texttt{svm-scale}. Attempting to do
-so will generate an error, regardless of the setting of
-\dtk{range_format}.
-
-Finally, \dtk{data_outfile} can be used to write data in the
-format required by \texttt{svm-train} and \texttt{svm-predict}. Note
-that there is no \dtk{data_infile} key: \texttt{svm} only accepts
-data passed from a gretl dataset via its first (list) argument.
+The \texttt{ranges} keys work in a similar manner, letting you carry
+the data-scaling ranges computed on the training data over to a
+separate script or session in which prediction is performed---see
+Listing~\ref{listing:s2-separate} above.
 
 \section{Cross validation}
 \label{sec:xvalid}

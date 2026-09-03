@@ -64,7 +64,6 @@ enum {
     W_LOADMOD = 1 << 1, /* loading a model? */
     W_QUIET   = 1 << 2, /* quiet operation? */
     W_SEARCH  = 1 << 3, /* doing parameter search? */
-    W_STDFMT  = 1 << 4, /* use plain libsvm format for ranges? */
     W_SVPARM  = 1 << 5, /* saving tuned params to bundle? */
     W_FOLDVAR = 1 << 6, /* caller-supplied folds variable? */
     W_YSCALE  = 1 << 7, /* scaling the dependent var? */
@@ -103,7 +102,6 @@ struct sv_wrapper_ {
     char *ranges_infile;
     char *model_outfile;
     char *model_infile;
-    char *data_outfile;
     char foldname[VNAMELEN];
     sv_grid *grid;
     char *plot;
@@ -172,7 +170,6 @@ static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
     w->ranges_infile = NULL;
     w->model_outfile = NULL;
     w->model_infile = NULL;
-    w->data_outfile = NULL;
     w->foldname[0] = '\0';
     w->grid = NULL;
     w->plot = NULL;
@@ -192,7 +189,6 @@ static void sv_wrapper_free (sv_wrapper *w)
     free(w->ranges_infile);
     free(w->model_outfile);
     free(w->model_infile);
-    free(w->data_outfile);
     free(w->grid);
     free(w->plot);
     gretl_matrix_free(w->xdata);
@@ -889,12 +885,14 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
     return model;
 }
 
-/* can use for testing against svm-scale */
+/* Write out the data ranges used for scaling, so they can be re-read
+   (via read_ranges() below) in a later gretl session -- typically to
+   support training and prediction being done via separate scripts.
+*/
 
 static int write_ranges (sv_wrapper *w)
 {
     const char *fname;
-    int libsvm_format = 0;
     double lo, hi;
     int i, idx, vi;
     FILE *fp;
@@ -905,33 +903,19 @@ static int write_ranges (sv_wrapper *w)
 	return E_FOPEN;
     }
 
-    if (w->flags & W_STDFMT) {
-	libsvm_format = 1;
-    }
-
     gretl_push_c_numeric_locale();
 
-    if (libsvm_format) {
-	fprintf(fp, "x\n%d %d\n",
-		(int) gretl_matrix_get(w->ranges, 0, 0),
-		(int) gretl_matrix_get(w->ranges, 0, 1));
-    } else {
-	fprintf(fp, "x\n%d %d %d\n",
-		(int) gretl_matrix_get(w->ranges, 0, 0),
-		(int) gretl_matrix_get(w->ranges, 0, 1),
-		(int) gretl_matrix_get(w->ranges, 0, 2));
-    }
+    fprintf(fp, "x\n%d %d %d\n",
+	    (int) gretl_matrix_get(w->ranges, 0, 0),
+	    (int) gretl_matrix_get(w->ranges, 0, 1),
+	    (int) gretl_matrix_get(w->ranges, 0, 2));
 
     for (i=1; i<w->ranges->rows; i++) {
 	idx = gretl_matrix_get(w->ranges, i, 0);
 	lo  = gretl_matrix_get(w->ranges, i, 1);
 	hi  = gretl_matrix_get(w->ranges, i, 2);
-	if (libsvm_format) {
-	    fprintf(fp, "%d %.16g %.16g\n", idx, lo, hi);
-	} else {
-	    vi = gretl_matrix_get(w->ranges, i, 3);
-	    fprintf(fp, "%d %.16g %.16g %d\n", idx, lo, hi, vi);
-	}
+	vi  = gretl_matrix_get(w->ranges, i, 3);
+	fprintf(fp, "%d %.16g %.16g %d\n", idx, lo, hi, vi);
     }
 
     gretl_pop_c_numeric_locale();
@@ -948,7 +932,6 @@ static int read_ranges (sv_wrapper *w)
     char line[512];
     double lo, hi, j;
     int read_lims = 0;
-    int ncols = 4;
     int i, vi, idx, n = 0;
     int nf; /* sscanf return, for the header line only */
     int err = 0;
@@ -967,12 +950,8 @@ static int read_ranges (sv_wrapper *w)
 	    continue;
 	}
 	if (read_lims) {
-	    if (ncols == 3) {
-		nf = sscanf(line, "%lf %lf\n", &lo, &hi);
-	    } else {
-		nf = sscanf(line, "%lf %lf %lf\n", &lo, &hi, &j);
-	    }
-	    if (nf != ncols - 1) {
+	    nf = sscanf(line, "%lf %lf %lf\n", &lo, &hi, &j);
+	    if (nf != 3) {
 		err = E_DATA;
 	    }
 	    read_lims = 0;
@@ -981,16 +960,14 @@ static int read_ranges (sv_wrapper *w)
 	}
     }
 
-    w->ranges = gretl_matrix_alloc(n+1, ncols);
+    w->ranges = gretl_matrix_alloc(n+1, 4);
     if (w->ranges == NULL) {
 	err = E_ALLOC;
     } else {
 	gretl_matrix_set(w->ranges, 0, 0, lo);
 	gretl_matrix_set(w->ranges, 0, 1, hi);
 	gretl_matrix_set(w->ranges, 0, 2, j);
-	if (ncols == 4) {
-	    gretl_matrix_set(w->ranges, 0, 3, 0);
-	}
+	gretl_matrix_set(w->ranges, 0, 3, 0);
 	rewind(fp);
 	i = 1;
     }
@@ -1004,20 +981,14 @@ static int read_ranges (sv_wrapper *w)
 		continue;
 	    }
 	}
-	if (ncols == 3) {
-	    n = sscanf(line, "%d %lf %lf\n", &idx, &lo, &hi);
-	} else {
-	    n = sscanf(line, "%d %lf %lf %d\n", &idx, &lo, &hi, &vi);
-	}
-	if (n != ncols) {
+	n = sscanf(line, "%d %lf %lf %d\n", &idx, &lo, &hi, &vi);
+	if (n != 4) {
 	    err = E_DATA;
 	} else {
 	    gretl_matrix_set(w->ranges, i, 0, idx);
 	    gretl_matrix_set(w->ranges, i, 1, lo);
 	    gretl_matrix_set(w->ranges, i, 2, hi);
-	    if (ncols == 4) {
-		gretl_matrix_set(w->ranges, i, 3, vi);
-	    }
+	    gretl_matrix_set(w->ranges, i, 3, vi);
 	    i++;
 	}
     }
@@ -1027,42 +998,6 @@ static int read_ranges (sv_wrapper *w)
     fclose(fp);
 
     return err;
-}
-
-/* can use for testing against svm-scale */
-
-static int write_problem (sv_data *p, sv_wrapper *w)
-{
-    const char *fname;
-    FILE *fp;
-    int i, t, idx;
-    double val;
-
-    fname = gretl_maybe_switch_dir(w->data_outfile);
-    fp = gretl_fopen(fname, "wb");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
-
-    gretl_push_c_numeric_locale();
-
-    for (t=0; t<p->l; t++) {
-	fprintf(fp, "%g ", p->y[t]);
-	for (i=0; i<w->k; i++) {
-	    idx = p->x[t][i].index;
-	    val = p->x[t][i].value;
-	    if (val != 0) {
-		fprintf(fp, "%d:%g ", idx, val);
-	    }
-	}
-	fputc('\n', fp);
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    fclose(fp);
-
-    return 0;
 }
 
 static void gretl_sv_data_destroy (sv_data *p, sv_cell *x_space)
@@ -2631,8 +2566,8 @@ static int is_w_parm (const char *s)
 	"folds", "seed", "quiet", "search",
 	"foldvar", "consecutive", "yscale",
 	"search_only", "grid", "ranges_outfile",
-	"data_outfile", "ranges_infile", "model_outfile",
-	"model_infile", "plot", "range_format", "refold",
+	"ranges_infile", "model_outfile",
+	"model_infile", "plot", "refold",
 	"autoseed", "regcrit", "use_mpi", NULL
     };
     int i;
@@ -2835,10 +2770,6 @@ static int read_params_bundle (gretl_bundle *bparm,
 	if (strval != NULL && *strval != '\0') {
 	    wrap->ranges_outfile = gretl_strdup(strval);
 	}
-	strval = gretl_bundle_get_string(bparm, "data_outfile", NULL);
-	if (strval != NULL && *strval != '\0') {
-	    wrap->data_outfile = gretl_strdup(strval);
-	}
 	strval = gretl_bundle_get_string(bparm, "ranges_infile", NULL);
 	if (strval != NULL && *strval != '\0') {
 	    wrap->ranges_infile = gretl_strdup(strval);
@@ -2854,10 +2785,6 @@ static int read_params_bundle (gretl_bundle *bparm,
 	strval = gretl_bundle_get_string(bparm, "plot", NULL);
 	if (strval != NULL && *strval != '\0') {
 	    wrap->plot = gretl_strdup(strval);
-	}
-	strval = gretl_bundle_get_string(bparm, "range_format", NULL);
-	if (strval != NULL && !strcmp(strval, "libsvm")) {
-	    wrap->flags |= W_STDFMT;
 	}
     }
 
@@ -3163,11 +3090,6 @@ static int svm_predict_main (const int *list,
     int err = 0;
 
     gui_mode = gretl_in_gui_mode();
-
-    if (!err && wrap->data_outfile != NULL && wrap->rank <= 0) {
-	err = write_problem(prob1, wrap);
-	report_result(err, prn);
-    }
 
     if (wrap->flags & W_NOTRAIN) {
 	do_training = 0;
