@@ -421,16 +421,20 @@ static int is_graphic_filename (const char *s)
     return 0;
 }
 
-/* If we find that @s is not really a gnuplot commands
-   buffer, try treating it as the name of file that
-   may contain gnuplot commands. This requires ruling out
-   the possibility that it's a graphic file (e.g. a PNG).
-   If it looks plausible, return the contents of the file.
+/* If we find that @s is not really a gnuplot commands buffer, try
+   treating it as the name of file that may contain gnuplot
+   commands. This requires ruling out the possibility that it's a
+   graphic file (e.g. a PNG).  If it looks plausible, return the
+   contents of the file.
 */
 
 static char *try_for_plot_filename (const char *s)
 {
     char *ret = NULL;
+
+    if (strlen(s) >= FILENAME_MAX) {
+	return NULL;
+    }
 
     if (!is_graphic_filename(s)) {
         char fname[FILENAME_MAX];
