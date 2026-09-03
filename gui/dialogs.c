@@ -3186,26 +3186,27 @@ static GtkWidget *depvar_form_selector (GtkWidget *vbox,
 					const MODEL *pmod,
 					gretlopt *optp)
 {
-    const char *strs[3];
+    const char *strs[3] = {NULL};
+    char expname[VNAMELEN];
     gretlopt opts[] = {OPT_NONE, OPT_NONE};
     GtkWidget *hbox, *tmp, *depvar_combo;
     int i, dv, altv = 0;
 
     opts[0] = OPT_NONE;
     dv = gretl_model_get_depvar(pmod);
+    strs[0] = dataset->varname[dv];
+
     if (flags & FC_EXPON_OK) {
 	/* log to level option */
 	opts[1] = OPT_X;
-	is_standard_log(dv, dataset, &altv);
+	series_is_log(dataset, dv, expname);
+	strs[1] = expname; /* OK? */
     } else {
 	/* integrating option */
 	opts[1] = OPT_I;
 	is_standard_diff(dv, dataset, &altv);
+	strs[1] = dataset->varname[altv];
     }
-
-    strs[0] = dataset->varname[dv];
-    strs[1] = dataset->varname[altv];
-    strs[2] = NULL;
 
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);

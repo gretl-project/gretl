@@ -446,7 +446,7 @@ const char *dataset_get_mapfile (const DATASET *dset);
 
 void dataset_set_mapfile (DATASET *dset, const char *fname);
 
-int series_is_log (const DATASET *dset, int i, char *parent);
+int series_is_log (const DATASET *dset, int i, char *pvname);
 
 void series_set_discrete (DATASET *dset, int i, int s);
 

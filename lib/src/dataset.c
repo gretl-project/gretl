@@ -3251,59 +3251,100 @@ int panelize_side_by_side_series (DATASET **pdset,
     return err;
 }
 
-static int found_log_parent (const char *s, char *targ)
+static char *get_exp_vname (const char *s, char last)
 {
-    int len = gretl_namechar_spn(s);
+    int n = gretl_namechar_spn(s);
+    char *ret = NULL;
 
-    if (len < VNAMELEN && s[len] == ')') {
-	char fmt[8];
-
-	sprintf(fmt, "%%%d[^)]", VNAMELEN-1);
-	sscanf(s, fmt, targ);
-	return 1;
+    if (n > 0 && n < VNAMELEN) {
+	if (*(s + n) == last) {
+	    /* we got the expected ending */
+	    ret = gretl_strndup(s, n);
+	}
     }
 
-    return 0;
+    return ret;
 }
 
 /**
  * series_is_log:
  * @dset: dataset information.
  * @i: ID number of series.
- * @parent: location to which to write the name of the
- * "parent" variable if any; must be of length VNAMELEN
- * or greater.
+ * @pvname: location (which must be of length at least
+ * VNAMELEN) to which to write the name of the "parent"
+ * series, if found, or NULL.
  *
- * Tries to determine if the variable with ID number @i is
- * the logarithm of some other variable.
+ * Tries to determine if the series with ID number @i is
+ * the logarithm of some other series, and to recover the
+ * ID number and/or name of that series if wanted.
  *
  * Returns: 1 if variable @i appears to be a log, else 0.
  */
 
-int series_is_log (const DATASET *dset, int i, char *parent)
+int series_is_log (const DATASET *dset, int i, char *pvname)
 {
-    const char *s = series_get_label(dset, i);
+    const char *label = NULL;
+    int ret = 0;
 
-    *parent = '\0';
+    if (i <= 0 || i >= dset->v) {
+	return 0;
+    }
 
-    if (s != NULL && *s != '\0') {
-	char fmt[16];
+    if (pvname != NULL) {
+	*pvname = '\0';
+    }
 
-	sprintf(fmt, "= log of %%%ds", VNAMELEN-1);
+    /* First let's see if we have a formal record of series @v
+       being the log of something. If so, check that it seems
+       to be (still) valid.
+    */
+    if (series_get_transform(dset, i) == LOGS) {
+	const char *s = series_get_parent_name(dset, i);
+	int tmpv = series_get_parent_id(dset, i);
+	int chk = current_series_index(dset, s);
 
-	if (sscanf(s, fmt, parent) == 1) {
-	    return 1;
-	} else if (!strncmp(s, "log(", 4)) {
-	    return found_log_parent(s + 4, parent);
-	} else {
-	    s += strcspn(s, "=");
-	    if (!strncmp(s, "=log(", 5)) {
-		return found_log_parent(s + 5, parent);
+	if (tmpv > 0 && tmpv < dset->v && tmpv == chk) {
+	    if (pvname != NULL) {
+		strcpy(pvname, s);
 	    }
+	    ret = 1;
+	}
+	return ret;
+    }
+
+    /* If we don't have a formal record we can try checking the
+       descriptive label for series @i, if present.
+    */
+    label = series_get_label(dset, i);
+
+    if (label != NULL && strlen(label) > 5) {
+	char *vname = NULL;
+
+	if (!strncmp(label, "log(", 4)) {
+	    /* case 1: "log(<varname>)" */
+	    vname = get_exp_vname(label + 4, ')');
+	    ret = 1;
+	} else if (!strncmp(label, "log of ", 6)) {
+	    /* case 2: "log of <str>" */
+	    vname = get_exp_vname(label + 6, '\0');
+	    ret = 1;
+	}
+	if (vname == NULL && pvname != NULL) {
+	    /* fallback */
+	    if (strlen(dset->varname[i]) + 5 < VNAMELEN) {
+		sprintf(pvname, "exp(%s)", dset->varname[i]);
+	    } else {
+		strcpy(pvname, "exp(depvar)");
+	    }
+	} else if (vname != NULL) {
+	    if (pvname != NULL) {
+		strcpy(pvname, vname);
+	    }
+	    free(vname);
 	}
     }
 
-    return 0;
+    return ret;
 }
 
 /**

@@ -290,38 +290,6 @@ int is_standard_diff (int v, const DATASET *dset, int *parent)
     return ret;
 }
 
-/**
- * is_standard_log:
- * @v: ID number of variable to test.
- * @dset: dataset information.
- * @parent: location to receive ID number of parent variable,
- * or NULL.
- *
- * Returns: 1 if the variable @v is marked as being the log
- * of some "parent" variable in the dataset, otherwise 0.
- */
-
-int is_standard_log (int v, const DATASET *dset, int *parent)
-{
-    int pv = 0, ret = 0;
-
-    if (v <= 0 || v >= dset->v) {
-	return 0;
-    }
-
-    if (series_get_transform(dset, v) == LOGS) {
-	pv = series_get_parent_id(dset, v);
-	if (pv > 0) {
-	    if (parent != NULL) {
-		*parent = pv;
-	    }
-	    ret = 1;
-	}
-    }
-
-    return ret;
-}
-
 static void make_xp_varname (char *vname, int v1, int v2,
 			     const DATASET *dset,
 			     int len)

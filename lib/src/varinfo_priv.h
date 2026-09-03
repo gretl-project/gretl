@@ -61,7 +61,7 @@ struct VARINFO_ {
    builds: when writing to gdtb we transcribe from VARINFO to
    VARINFO64, which includes emulated 64-bit pointers, and when
    reading we transcribe back to the small-pointer variant. See
-   plugin/purebin/c for details.
+   plugin/purebin.c for details.
 */
 
 struct VARINFO64 {

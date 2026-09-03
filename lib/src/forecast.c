@@ -4431,7 +4431,7 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
     if (pmod->ci == OLS) {
 	if (is_standard_diff(dv, dset, NULL)) {
 	    *flags |= FC_INTEGRATE_OK;
-	} else if (is_standard_log(dv, dset, NULL)) {
+	} else if (series_is_log(dset, dv, NULL)) {
 	    *flags |= FC_EXPON_OK;
 	}
     } else if (pmod->ci == NLS) {
