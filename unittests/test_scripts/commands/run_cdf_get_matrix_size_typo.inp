@@ -1,0 +1,35 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test: get_matrix_size() in geneval.c had a typo where it
+# returned the wrong matrix dimension in certain contexts (*c = b->cols
+# instead of *c = a->cols), causing crashes or garbage results when
+# cdf() or similar functions operated on matrix arguments with mismatched
+# expected/actual dimensions.
+# Date: September 2026
+
+function void test_cdf_matrix_params (void)
+    print "Start testing cdf() with matrix parameters"
+
+    # Given
+    matrix a = {1; 2; 3}
+    scalar b = 0.5
+
+    # When
+    matrix x = cdf(D, 0.3, a, b)
+
+    # Then
+    assert(rows(x) == 3)
+    assert(cols(x) == 1)
+    loop k = 1..3
+        scalar xk = x[k]
+        assert(ok(xk))
+        assert(xk >= 0 && xk <= 1)
+    endloop
+end function
+test_cdf_matrix_params()
+
+
+print "Successfully finished tests."
+quit
