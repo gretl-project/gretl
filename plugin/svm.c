@@ -783,6 +783,14 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
 	m = gretl_bundle_get_matrix(b, "sv_coef", err);
 	if (m == NULL) {
 	    *err = E_DATA;
+	} else if ((double) (nc - 1) * l > (double) m->rows * m->cols) {
+	    /* the bundle's declared nr_class/l are inconsistent with the
+	       actual size of the supplied sv_coef matrix: reading on
+	       would run off the end of m->val
+	    */
+	    gretl_errmsg_set(_("svm model: 'sv_coef' matrix is too small "
+			      "for the given l and nr_class"));
+	    *err = E_DATA;
 	} else {
 	    model->sv_coef = doubles_array_new(nc-1, l);
 	    if (model->sv_coef == NULL) {
@@ -804,6 +812,7 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
 	gretl_array *avec = NULL;
 	gretl_matrix *vec;
 	int *idx;
+	int pos = 0;
 
 	model->SV = malloc(l * sizeof *model->SV);
 	if (model->SV == NULL) {
@@ -823,16 +832,45 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
 	    if (gretl_array_get_type(aidx) != GRETL_TYPE_LISTS ||
 		gretl_array_get_type(avec) != GRETL_TYPE_MATRICES) {
 		*err = E_DATA;
+	    } else if (gretl_array_get_length(aidx) < l ||
+		       gretl_array_get_length(avec) < l) {
+		/* not enough rows to cover the declared "l" */
+		gretl_errmsg_set(_("svm model: SV_indices/SV_vecs too short "
+				  "for the given l"));
+		*err = E_DATA;
 	    }
 	}
 
 	for (i=0; i<l && !*err; i++) {
-	    int ni;
+	    int ni, nv;
 
 	    model->SV[i] = p;
 	    idx = gretl_array_get_element(aidx, i, NULL, err);
 	    vec = gretl_array_get_element(avec, i, NULL, err);
+	    if (*err) {
+		break;
+	    }
 	    ni = idx[0];
+	    nv = vec->rows * vec->cols;
+	    if (ni < 0 || ni != nv) {
+		/* the index list and value vector for this SV don't
+		   agree in length: the bundle is malformed
+		*/
+		gretl_errmsg_set(_("svm model: inconsistent SV_indices/SV_vecs "
+				  "entry"));
+		*err = E_DATA;
+		break;
+	    }
+	    pos += ni + 1;
+	    if (pos > n_elements) {
+		/* writing this row would overrun x_space, which was sized
+		   to the bundle's (also attacker-suppliable) "n_elements"
+		*/
+		gretl_errmsg_set(_("svm model: 'n_elements' is too small for "
+				  "the supplied SVs"));
+		*err = E_DATA;
+		break;
+	    }
 	    for (j=0; j<ni; j++) {
 		p[j].index = idx[j+1];
 		p[j].value = vec->val[j];
@@ -912,6 +950,7 @@ static int read_ranges (sv_wrapper *w)
     int read_lims = 0;
     int ncols = 4;
     int i, vi, idx, n = 0;
+    int nf; /* sscanf return, for the header line only */
     int err = 0;
 
     fname = gretl_maybe_switch_dir(w->ranges_infile);
@@ -929,11 +968,11 @@ static int read_ranges (sv_wrapper *w)
 	}
 	if (read_lims) {
 	    if (ncols == 3) {
-		n = sscanf(line, "%lf %lf\n", &lo, &hi);
+		nf = sscanf(line, "%lf %lf\n", &lo, &hi);
 	    } else {
-		n = sscanf(line, "%lf %lf %lf\n", &lo, &hi, &j);
+		nf = sscanf(line, "%lf %lf %lf\n", &lo, &hi, &j);
 	    }
-	    if (n != ncols - 1) {
+	    if (nf != ncols - 1) {
 		err = E_DATA;
 	    }
 	    read_lims = 0;
