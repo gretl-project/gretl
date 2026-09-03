@@ -288,7 +288,7 @@ static int ascii_plot (const int *list, const DATASET *dset,
     int t1 = dset->t1;
     int t2 = dset->t2;
     char word[32], px[132];
-    char s1[10], s2[10];
+    char s1[VNAMELEN], s2[VNAMELEN];
     double xmin, xmax, xrange, ymin, ymax, yrange, xymin, xymax;
     double xyrange, xx, yy;
     double *x, *y;
