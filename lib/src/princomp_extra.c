@@ -190,6 +190,12 @@ static gretl_matrix *princomp_with_NAs (const gretl_matrix *M,
 
     mask = makemask(M, &nfull, &ndrop);
 
+    if (p <= 0 || p > M->cols) {
+	gretl_errmsg_sprintf("%d: invalid number of components", p);
+	*err = E_INVARG;
+	return NULL;
+    }
+
     if (ndrop > 0) {
         *err = E_MISSDATA;
         gretl_errmsg_sprintf("%d rows were entirely missing", ndrop);
