@@ -18,6 +18,7 @@ lib/src/discrete.c
 lib/src/estimate.c
 lib/src/flow_control.c
 lib/src/forecast.c
+lib/src/foreign_db.c
 lib/src/geneval.c
 lib/src/genfuncs.c
 lib/src/genlex.c
@@ -55,6 +56,7 @@ lib/src/gretl_paths.c
 lib/src/gretl_plot.c
 lib/src/gretl_prn.c
 lib/src/gretl_restrict.c
+lib/src/gretl_sampler.c
 lib/src/gretl_string_table.c
 lib/src/gretl_tdisagg.c
 lib/src/gretl_typemap.c
@@ -81,9 +83,11 @@ lib/src/nls.c
 lib/src/nonparam.c
 lib/src/objstack.c
 lib/src/options.c
+lib/src/pb_legacy.c
 lib/src/plotbands.c
 lib/src/plotspec.c
 lib/src/plugins.c
+lib/src/princomp_extra.c
 lib/src/printout.c
 lib/src/printscan.c
 lib/src/prog_loop.c
@@ -146,6 +150,8 @@ gui/helpfiles.c
 gui/join-gui.c
 gui/lagpref.c
 gui/library.c
+gui/macos_env.c
+gui/macos_open.c
 gui/menustate.c
 gui/mklang.c
 gui/mknews.c
@@ -153,8 +159,7 @@ gui/mkpnglist.c
 gui/model_table.c
 gui/objectsave.c
 gui/obsbutton.c
-gui/osx_env.c
-gui/osx_open.c
+gui/placeholder.c
 gui/R_exec.c
 gui/selector.c
 gui/series_view.c
@@ -205,6 +210,7 @@ plugin/jrestrict.c
 plugin/json_get.c
 plugin/kalman_arma.c
 plugin/kernel.c
+plugin/kmeans.c
 plugin/leverage.c
 plugin/liml.c
 plugin/lpsolve.c
@@ -227,7 +233,9 @@ plugin/spss_import.c
 plugin/stata_export.c
 plugin/stata_import.c
 plugin/stats_tables.c
+plugin/stepwise.c
 plugin/svm.c
+plugin/svrand.c
 plugin/sysest.c
 plugin/tramo_options.c
 plugin/tramo-x12a.c
