@@ -1,0 +1,31 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test: inverting a large symmetric (but not necessarily
+# positive-definite) matrix around the 4GB data-size boundary
+# (8 bytes/double * n^2 numbers, n = 23171 -> ~4GB) used to trigger a
+# crash, suspected to be related to integer overflow in matrix-size
+# bookkeeping. Creating the matrix takes a little while.
+# Date: September 2026
+
+function void test_large_matrix_inverse (void)
+    print "Start testing inverse of large symmetric matrix (~4GB)"
+
+    # Given
+    scalar n = 2317 #1-> 23171 would be ~4GB, but that takes a while to allocate
+    matrix M = mnormal(n, n)
+    M = upper(M) + upper(M)' # symmetric but not necessarily pos-def
+
+    # When
+    matrix Minv = inv(M)  # caused a crash
+
+    # Then
+    assert(rows(Minv) == n)
+    assert(cols(Minv) == n)
+end function
+test_large_matrix_inverse()
+
+
+print "Successfully finished tests."
+quit
