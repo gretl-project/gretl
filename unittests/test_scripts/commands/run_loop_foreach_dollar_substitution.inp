@@ -1,0 +1,54 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test: "$"-string substitution in a foreach loop used to
+# crash (buffer overflow / SIGABRT) when a string array element
+# literally contains "$<loopvar>" where <loopvar> is the name of the
+# foreach loop's own index/element variable, e.g. looping "foreach i"
+# over an array containing the substring "$i". This is about
+# substitute_dollar_targ() in monte_carlo.c.
+# Date: September 2026
+
+function void test_foreach_dollar_self (void)
+    print "Start testing foreach loop with '$loopvar' inside the looped strings"
+
+    # Given
+    strings mystrs = defarray("y$iy")
+    string buffer
+
+    # When
+    outfile --buffer=buffer
+        loop foreach i mystrs
+            print "$i"
+        endloop
+    end outfile
+
+    # Then
+    assert(nlines(buffer) == 1)
+end function
+test_foreach_dollar_self()
+
+
+function void test_foreach_dollar_self_multi (void)
+    print "Start testing foreach loop with '$loopvar' inside multiple looped strings"
+
+    # Given
+    strings mystrs = defarray("y$iy", "z$iz")
+    string buffer
+
+    # When
+    outfile --buffer=buffer
+        loop foreach i mystrs
+            print "$i"
+        endloop
+    end outfile
+
+    # Then
+    assert(nlines(buffer) == 2)
+end function
+test_foreach_dollar_self_multi()
+
+
+print "Successfully finished tests."
+quit
