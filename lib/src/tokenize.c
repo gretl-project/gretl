@@ -3513,6 +3513,11 @@ static int print_do_eval (CMD *cmd, int imin, char *s)
 	cmd->gtype = GRETL_TYPE_NONE;
 	cmd_set_vstart(cmd, strchr(s, '$'));
 	return 1;
+    } else if (!strncmp(s, "print ", 6) && strchr(s, '[')) {
+	cmd->ci = EVAL;
+	cmd->gtype = GRETL_TYPE_NONE;
+	cmd_set_vstart(cmd, s + 6);
+	return 1;
     } else if (c != '"') {
 	cmd->ciflags |= CI_LIST;
     }
