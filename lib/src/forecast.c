@@ -2932,38 +2932,13 @@ static double log2lev (FITRESID *fr, int t)
    log form and has been exponentiated.
 */
 
-#if 1
-
-static void fr_set_ylabel (FITRESID *fr, const DATASET *dset)
-{
-    if (fr->opt & OPT_X) {
-	int v = current_series_index(dset, fr->depvar);
-	int pv = 0;
-
-	if (v > 0 && is_standard_log(v, dset, &pv)) {
-	    if (pv > 0 && pv < dset->v) {
-		maybe_trim_varname(fr->ylabel, dset->varname[pv]);
-		return;
-	    }
-	}
-    }
-
-    maybe_trim_varname(fr->ylabel, fr->depvar);
-}
-
-#else
-
-/* Relies on series_is_log(), which in its current form is not
-   robust to non-English locales.
-*/
-
 static void fr_set_ylabel (FITRESID *fr, const DATASET *dset)
 {
     if (fr->opt & OPT_X) {
 	char parent[VNAMELEN] = {0};
 	int v = current_series_index(dset, fr->depvar);
 
-	if (v > 0) {
+	if (v > 0 && v < dset->v) {
 	    series_is_log(dset, v, parent);
 	}
 	if (*parent != '\0') {
@@ -2974,8 +2949,6 @@ static void fr_set_ylabel (FITRESID *fr, const DATASET *dset)
 
     maybe_trim_varname(fr->ylabel, fr->depvar);
 }
-
-#endif
 
 /* Driver for various functions that compute forecasts for different
    sorts of models.

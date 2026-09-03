@@ -3266,6 +3266,15 @@ static char *get_exp_vname (const char *s, char last)
     return ret;
 }
 
+static void exp_name_fallback (char *pvname, const char *logname)
+{
+    if (strlen(logname) + 5 < VNAMELEN) {
+	sprintf(pvname, "exp(%s)", logname);
+    } else {
+	strcpy(pvname, "exp(depvar)");
+    }
+}
+
 /**
  * series_is_log:
  * @dset: dataset information.
@@ -3303,13 +3312,13 @@ int series_is_log (const DATASET *dset, int i, char *pvname)
 	int tmpv = series_get_parent_id(dset, i);
 	int chk = current_series_index(dset, s);
 
-	if (tmpv > 0 && tmpv < dset->v && tmpv == chk) {
-	    if (pvname != NULL) {
-		strcpy(pvname, s);
-	    }
-	    ret = 1;
+	if (pvname != NULL && tmpv > 0 &&
+	    tmpv < dset->v && tmpv == chk) {
+	    strcpy(pvname, s);
+	} else if (pvname != NULL) {
+	   exp_name_fallback(pvname, dset->varname[i]);
 	}
-	return ret;
+	return 1;
     }
 
     /* If we don't have a formal record we can try checking the
@@ -3329,19 +3338,12 @@ int series_is_log (const DATASET *dset, int i, char *pvname)
 	    vname = get_exp_vname(label + 6, '\0');
 	    ret = 1;
 	}
-	if (vname == NULL && pvname != NULL) {
-	    /* fallback */
-	    if (strlen(dset->varname[i]) + 5 < VNAMELEN) {
-		sprintf(pvname, "exp(%s)", dset->varname[i]);
-	    } else {
-		strcpy(pvname, "exp(depvar)");
-	    }
-	} else if (vname != NULL) {
-	    if (pvname != NULL) {
-		strcpy(pvname, vname);
-	    }
-	    free(vname);
+	if (pvname != NULL && vname != NULL) {
+	    strcpy(pvname, vname);
+	} else if (pvname != NULL && ret && vname == NULL) {
+	    exp_name_fallback(pvname, dset->varname[i]);
 	}
+	free(vname);
     }
 
     return ret;
