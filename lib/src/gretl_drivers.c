@@ -810,6 +810,10 @@ int do_modprint (const char *mname, const char *names,
 	    const char *s = get_optval_string(MODPRINT, OPT_O);
 
 	    if (s != NULL && *s != '\0') {
+		if (strlen(s) >= FILENAME_MAX) {
+		    err = E_INVARG;
+		    goto bailout;
+		}
 		strcpy(fname, s);
 		if (has_suffix(fname, ".tex")) {
 		    fmt = GRETL_FORMAT_TEX;
@@ -843,6 +847,8 @@ int do_modprint (const char *mname, const char *names,
 					    prn);
 	}
     }
+
+ bailout:
 
     if (free_coef_se) {
 	gretl_matrix_free(coef_se);
