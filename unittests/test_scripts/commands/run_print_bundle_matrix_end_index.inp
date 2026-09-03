@@ -1,0 +1,54 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test: indexing a bundle-member matrix using "end" as the
+# column (or row) selector used to trigger a SIGSEGV. Indexing a plain
+# matrix with "end" already worked correctly; the crash was specific to
+# accessing the matrix through a bundle member, e.g. B.mat[, end].
+# Date: September 2026
+
+function void test_bundle_matrix_col_end (void)
+    print "Start testing bundle-member matrix indexed with 'end' (columns)"
+
+    # Given
+    bundle B
+    matrix A = mnormal(10, 20)
+    B.mat = A
+    string buffer
+    scalar expected = 10 + 1 # 10 data rows plus 1 trailing blank line
+
+    # When
+    outfile --buffer=buffer
+        print B.mat[, end]
+    end outfile
+
+    # Then
+    assert(nlines(buffer) == expected)
+end function
+test_bundle_matrix_col_end()
+
+
+function void test_bundle_matrix_row_end (void)
+    print "Start testing bundle-member matrix indexed with 'end' (rows)"
+
+    # Given
+    bundle B
+    matrix A = mnormal(10, 20)
+    B.mat = A
+    string buffer
+    scalar expected = 1 + 1 # 1 data row plus 1 trailing blank line
+
+    # When
+    outfile --buffer=buffer
+        print B.mat[end, ]
+    end outfile
+
+    # Then
+    assert(nlines(buffer) == expected)
+end function
+test_bundle_matrix_row_end()
+
+
+print "Successfully finished tests."
+quit
