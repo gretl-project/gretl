@@ -1,0 +1,31 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test: in geneval.c's eval(), destroy_multi(multi) was only
+# called on the normal "finish" path, not on the "bailout" (error) path,
+# causing a small memory leak whenever a multi-argument function call
+# such as hyp2f1() errored out, e.g. due to an out-of-bounds matrix
+# index in one of its arguments. This does not crash, but the error
+# should still be raised and caught cleanly, with execution continuing
+# afterwards.
+# Date: September 2026
+
+function void test_hyp2f1_oob_index_bailout (void)
+    print "Start testing hyp2f1() bailout on out-of-bounds matrix index"
+    printf "Testing hyp2f1() with out-of-bounds matrix index\n"
+
+    # Given
+    matrix m1 = {1, 2, 3} # few elements
+
+    # When
+    catch scalar x = hyp2f1(1, m1[100], 1, 0.5) # index way too large
+
+    # Then
+    assert($error != 0)
+end function
+test_hyp2f1_oob_index_bailout()
+
+
+print "Successfully finished tests."
+quit
