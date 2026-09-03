@@ -398,6 +398,10 @@ static int spec_check_dimensions (matrix_subspec *spec,
     int rt = spec->rtype;
     int err = 0;
 
+    if (m == NULL) {
+	return E_DATA;
+    }
+
     /* check spec->lsel against rows */
     if (lt == SEL_MATRIX) {
 	err = bad_sel_vector(spec->lsel.m, m->rows);
