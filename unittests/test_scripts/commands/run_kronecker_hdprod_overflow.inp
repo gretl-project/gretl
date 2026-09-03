@@ -1,0 +1,64 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test: the Kronecker product (**) and hdprod() used to crash
+# for large matrices whose resulting element count overflows a 32-bit
+# signed int used in size bookkeeping.
+# Date: September 2026
+
+function void test_real_kronecker_overflow (void)
+    print "Start testing real Kronecker product overflow"
+
+    # Given
+    scalar n = 65537
+    matrix A = ones(n)
+    matrix B = ones(n - 1)
+
+    # When
+    matrix C = A ** B
+
+    # Then
+    assert(nelem(C) == (n * n) * ((n - 1) * (n - 1)))
+end function
+
+
+function void test_complex_kronecker_overflow (void)
+    print "Start testing complex Kronecker product overflow"
+
+    # Given
+    scalar n = 46341
+    matrix A = ones(n)
+    matrix B = complex(A)
+
+    # When
+    matrix C = A ** B
+
+    # Then
+    assert(nelem(C) == (n * n) * (n * n))
+end function
+
+
+function void test_complex_hdprod_overflow (void)
+    print "Start testing complex hdprod overflow"
+
+    # Given
+    scalar n = 65536
+    matrix A = ones(n)'
+    matrix B = complex(A)
+
+    # When
+    matrix C = hdprod(A, B)
+
+    # Then
+    assert(nelem(C) == n)
+end function
+
+
+test_real_kronecker_overflow()
+test_complex_kronecker_overflow()
+test_complex_hdprod_overflow()
+
+
+print "Successfully finished tests."
+quit
