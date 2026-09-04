@@ -159,13 +159,10 @@ int *gretl_list_new (int nterms)
 	return NULL;
     }
 
-    /* Guard against overflow in the size calculation below: @nterms
-       may originate from attacker-controlled input (e.g. a braced
-       list range such as "{0-1200000000}" parsed elsewhere), so
-       verify that (nterms + 1) * sizeof *list cannot wrap a size_t
-       before handing it to malloc().
+    /* Guard against creation of a list with more elements than
+       can be indexed.
     */
-    if ((size_t) nterms > SIZE_MAX / sizeof *list - 1) {
+    if ((size_t) nterms > INT32_MAX - 1) {
 	return NULL;
     }
 
