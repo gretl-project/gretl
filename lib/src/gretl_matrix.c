@@ -892,18 +892,15 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
     }
 
     if (rows < 0 || cols < 0) {
-	set_gretl_matrix_err(E_INVARG);
         fprintf(stderr, "gretl error: gretl_matrix_realloc: rows=%d, cols=%d\n",
                 rows, cols);
         return E_INVARG;
     }
 
     chk = rows * (guint64) cols;
-
     if (chk > (guint64) INT32_MAX) {
-	set_gretl_matrix_err(E_INVARG);
 	gretl_errmsg_set(_("Too many elements"));
-	return NULL;
+	return E_INVARG;
     }
 
     if (rows == m->rows && cols == m->cols) {
