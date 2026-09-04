@@ -2,35 +2,21 @@ set verbose off
 clear
 set assert stop
 
-# Regression test: flexible_2arg_node() in geneval.c broadcasts a
-# 1-element matrix argument against a longer one, but its loop
-#     for (i=0; i<nmax; i++) {
-#         x1 = node_get_double(l, i, p);
-#         x2 = node_get_double(r, i, p);
-# incremented the index for both operands even when one side has just
-# a single element to broadcast, reading past the end of that shorter
-# matrix and producing garbage values (uninitialized/denormal doubles)
-# instead of repeating the single value.
-# Date: September 2026
-
 function void test_atan2_broadcast (void)
     print "Start testing atan2() broadcasting a 1-element matrix"
 
-    # Given
+    # Bad input: if a and b are both vectors, they must be of
+	# the same length per the documentation
     matrix a = {1}
     matrix b = {1, 2, 3, 4, 5}
 
     # When
-    matrix y = atan2(a, b)
+    catch matrix y = atan2(a, b)
 
     # Then
-    assert(rows(y) == 5)
-    matrix expected = {0.78540; 0.46365; 0.32175; 0.24498; 0.19740}
-    scalar maxdiff = maxc(maxc(abs(y - expected)))
-    assert(maxdiff < 1.0e-4)
+    assert($error != 0)
 end function
 test_atan2_broadcast()
-
 
 print "Successfully finished tests."
 quit

@@ -15,40 +15,16 @@ function void test_foreach_dollar_self (void)
 
     # Given
     strings mystrs = defarray("y$iy")
-    string buffer
 
     # When
-    outfile --buffer=buffer
-        loop foreach i mystrs
-            print "$i"
-        endloop
-    end outfile
+    catch loop foreach i mystrs
+        print "$i"
+    endloop
 
     # Then
-    assert(nlines(buffer) == 1)
+    assert($error != 0)
 end function
 test_foreach_dollar_self()
-
-
-function void test_foreach_dollar_self_multi (void)
-    print "Start testing foreach loop with '$loopvar' inside multiple looped strings"
-
-    # Given
-    strings mystrs = defarray("y$iy", "z$iz")
-    string buffer
-
-    # When
-    outfile --buffer=buffer
-        loop foreach i mystrs
-            print "$i"
-        endloop
-    end outfile
-
-    # Then
-    assert(nlines(buffer) == 2)
-end function
-test_foreach_dollar_self_multi()
-
 
 print "Successfully finished tests."
 quit

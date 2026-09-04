@@ -3,28 +3,24 @@ clear
 set assert stop
 
 # Regression test: allocating a matrix whose total element count
-# (rows * cols) overflows a 32-bit signed int used to trigger a SIGSEGV
-# in gretl_matrix_alloc()/gretl_matrix_realloc(). 65536 * 65536 == 2^32,
-# which wraps to 0 under 32-bit signed multiplication.
+# (rows * cols) overflows a 32-bit signed int, meaning that the
+# resulting matrix -- even if it could be allocated -- cannot be
+# fully indexed.
 # Date: September 2026
 
 function void test_large_matrix_alloc (void)
-    print "Start testing large matrix allocation (rows*cols overflow)"
+    print "Start testing too big matrix allocation (rows*cols overflow)"
 
     # Given
     scalar n = 65536
 
     # When
-    matrix M = zeros(n, n)
-    M[1,1] = 5
+    catch matrix M = zeros(n, n)
 
     # Then
-    assert(rows(M) == n)
-    assert(cols(M) == n)
-    assert(M[1,1] == 5)
+    assert($error != 0)
 end function
 test_large_matrix_alloc()
-
 
 print "Successfully finished tests."
 quit
