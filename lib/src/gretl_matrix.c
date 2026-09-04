@@ -362,7 +362,7 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 {
     gretl_matrix *m;
     size_t vsize = 0;
-    double chk;
+    guint64 chk;
 
     if (rows < 0 || cols < 0) {
 	set_gretl_matrix_err(E_INVARG);
@@ -371,14 +371,11 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
         return NULL;
     }
 
-    chk = rows * (double) cols * sizeof(double);
-
-    if (chk > (double) SIZE_MAX) {
-	fprintf(stderr, "gretl_matrix_alloc: max size_t exceeded\n");
-	set_gretl_matrix_err(E_ALLOC);
+    chk = rows * (guint64) cols;
+    if (chk > (guint64) INT32_MAX) {
+	set_gretl_matrix_err(E_INVARG);
+	gretl_errmsg_set(_("Too many elements"));
 	return NULL;
-    } else {
-	vsize = (size_t) chk;
     }
 
     m = malloc(sizeof *m);
@@ -387,6 +384,7 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
         return NULL;
     }
 
+    vsize = (size_t) chk * sizeof(double);
     if (vsize == 0) {
         m->val = NULL;
     } else {
@@ -886,7 +884,7 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 {
     int oldrows, oldcols;
     size_t n;
-    double chk;
+    guint64 chk;
     double *x = NULL;
 
     if (m == NULL) {
@@ -900,11 +898,12 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
         return E_INVARG;
     }
 
-    chk = rows * (double) cols * sizeof(double);
+    chk = rows * (guint64) cols;
 
-    if (chk > SIZE_MAX || (m->is_complex && 2*chk > SIZE_MAX)) {
-	fprintf(stderr, "gretl_matrix_alloc: max size_t exceeded\n");
-	return E_INVARG;
+    if (chk > (guint64) INT32_MAX) {
+	set_gretl_matrix_err(E_INVARG);
+	gretl_errmsg_set(_("Too many elements"));
+	return NULL;
     }
 
     if (rows == m->rows && cols == m->cols) {
@@ -931,7 +930,7 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
         mval_free(m->val);
 	m->val = NULL;
     } else {
-	size_t sz = (size_t) chk;
+	size_t sz = (size_t) chk * sizeof(double);
 
         if (m->is_complex) {
             x = mval_realloc(m->val, 2 * sz);
@@ -6380,7 +6379,7 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
                                     int *err)
 {
     gretl_matrix *K;
-    guint64 u64;
+    guint64 chk;
     int p, q, r, s;
 
     if (gretl_is_null_matrix(A) || gretl_is_null_matrix(B)) {
@@ -6393,10 +6392,10 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
     r = B->rows;
     s = B->cols;
 
-    u64 = (guint64) p * r * q * s;
-    if (u64 > INT32_MAX) {
+    chk = (guint64) p * r * q * s;
+    if (chk > INT32_MAX) {
 	*err = E_INVARG;
-	gretl_errmsg_set("Kronecker product: too many elements");
+	gretl_errmsg_set(_("Too many elements"));
 	return NULL;
     }
 
