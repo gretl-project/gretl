@@ -1156,6 +1156,32 @@ static GretlType find_target_in_parentage (LOOPSET *loop,
     return GRETL_TYPE_NONE;
 }
 
+static int check_array_each_strings (gretl_array *a,
+				     int len,
+				     char *ivar)
+{
+    char *chk = g_strdup_printf("$%s", ivar);
+    char *s;
+    int i, err = 0;
+
+    /* We can't have a situation where the auto-substitution string
+       (for example, "$i") occurs in any of the array elements.
+    */
+    for (i=0; i<len && !err; i++) {
+	s = gretl_array_get_element(a, i, NULL, &err);
+	if (!err && strstr(s, chk)) {
+	    gretl_errmsg_sprintf("'%s': not allowed in loop "
+				 "strings with index %s",
+				 chk, ivar);
+	    err = E_INVARG;
+	}
+    }
+
+    g_free(chk);
+
+    return err;
+}
+
 /* We're looking at a "foreach" loop with a single field after the
    index variable, so it's most likely a loop over a list or array.
 
@@ -1175,8 +1201,8 @@ static GretlType find_target_in_parentage (LOOPSET *loop,
    may be an @-string that cashes out into one or more "words".
 */
 
-static int list_loop_setup (LOOPSET *loop, char *s, int *nf,
-                            int *idxmax)
+static int list_loop_setup (LOOPSET *loop, char *s, char *ivar,
+			    int *nf, int *idxmax)
 {
     GretlType t = 0;
     gretl_array *a = NULL;
@@ -1209,7 +1235,12 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf,
         if (t != GRETL_TYPE_STRINGS) {
             *idxmax = len;
             return 0;
-        }
+        } else {
+	    err = check_array_each_strings(a, len, ivar);
+	    if (err) {
+		return err;
+	    }
+	}
     } else if ((b = look_up_bundle(s)) != NULL) {
         t = GRETL_TYPE_BUNDLE;
         len = gretl_bundle_get_n_keys(b);
@@ -1297,8 +1328,9 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATASET *dset,
     return err;
 }
 
-/* in context of "foreach" loop, split a string variable by
-   both spaces and newlines */
+/* In the context of a "foreach" loop, split a string variable into
+   words by both spaces and newlines.
+*/
 
 static int count_each_fields (const char *s)
 {
@@ -1330,9 +1362,9 @@ static int count_each_fields (const char *s)
     return nf;
 }
 
-/* Implement "foreach" for arrays other than strings:
-   convert to index loop with automatic max value set
-   to the length of the array.
+/* Implement "foreach" for arrays other than strings: convert to
+   indexed loop with an automatic max value set to the length of the
+   array.
 */
 
 static int set_alt_each_loop (LOOPSET *loop, DATASET *dset,
@@ -1390,15 +1422,20 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
     }
 
     if (!done && nf == 1) {
-        /* try for a named list or array? */
+        /* first try for a named list or array? */
         int nelem = -1;
 
-        err = list_loop_setup(loop, s, &nf, &nelem);
-        if (!err && nelem >= 0) {
+        err = list_loop_setup(loop, s, ivar, &nf, &nelem);
+	if (err == E_INVARG) {
+	    /* don't continue into the (!done) clause below */
+	    done = 1;
+	} else if (!err && nelem >= 0) {
             /* got an array, but not of strings */
             return set_alt_each_loop(loop, dset, ivar, nelem);
         }
-        done = (err == 0);
+	if (!done) {
+	    done = (err == 0);
+	}
     }
 
     if (!done) {
