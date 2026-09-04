@@ -896,7 +896,7 @@ static int closing_quote_pos (const char *s, int ci, int *esc)
 		return i-1;
 	    }
 	} else if (s[i] == '"') {
-	    /* not plain PRINT, or bs_escape */
+	    /* not plain PRINT */
 	    bsl = 0;
 	    for (j=i-1; j>=1; j--) {
 		if (s[j] == '\\') {
