@@ -6334,7 +6334,7 @@ static double node_get_double (NODE *n, int i, parser *p)
     if (n->t == NUM) {
         return n->v.xval;
     } else if (n->t == MAT) {
-        return n->v.m->val[i];
+	return n->v.m->val[i];
     } else {
         return n->v.xvec[p->dset->t1 + i];
     }
@@ -6404,7 +6404,6 @@ static double threshold (double x, double a, int hard, int *err)
     return ret;
 }
 
-
 /* flexible_2arg_node() handles cases like atan2, where we have two
    possibly heterogeneous arguments (scalar, series, matrix) and the
    objective is to return a sensibly sized object. The @flag argument
@@ -6433,6 +6432,11 @@ static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, int flag,
         nr = gretl_vector_get_length(r->v.m);
     } else {
         nr = sample_size(p->dset);
+    }
+
+    if (l->t == MAT && r->t == MAT && nl != nr) {
+	p->err = E_NONCONF;
+	return NULL;
     }
 
     nmin = nr < nl ? nr : nl;
