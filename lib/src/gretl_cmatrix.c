@@ -69,10 +69,8 @@ static int fft_allocate (double **ffx, double complex **ffz,
     return 0;
 }
 
-/* FFT for real input -> complex output and
-   FFTI for Hermetian input -> real output.
-   Both old and new-style complex formats
-   are supported.
+/* FFT for real input -> complex output and FFTI for Hermetian input ->
+   real output.  Both old and new-style complex formats are supported.
 */
 
 static gretl_matrix *real_matrix_fft (const gretl_matrix *y,
@@ -271,8 +269,8 @@ static gretl_matrix *complex_from_real (const gretl_matrix *A,
 
 #if 0 /* currently unused but could be useful! */
 
-/* Multiplication of complex matrices via BLAS zgemm(),
-   allowing for conjugate transposition of @A or @B.
+/* Multiplication of complex matrices via BLAS zgemm(), allowing for
+   conjugate transposition of @A or @B.
 */
 
 static int gretl_zgemm_full (cmplx alpha,
@@ -319,8 +317,15 @@ static int gretl_zgemm_full (cmplx alpha,
 
 #endif /* currently unused */
 
-/* Variant of zgemm: simplified version of gretl_zgemm_full
-   which allocates the product matrix, C.
+static void *oversize_error (int *err)
+{
+    *err = E_INVARG;
+    gretl_errmsg_set("Too many elements");
+    return NULL;
+}
+
+/* Variant of zgemm: simplified version of gretl_zgemm_full which
+   allocates the product matrix, C.
 */
 
 static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
@@ -334,6 +339,7 @@ static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
     cmplx beta = {0, 0};
     integer lda, ldb, ldc;
     integer m, n, k, kb;
+    guint64 chk;
 
     if (!cmatrix_validate(A, 0) || !cmatrix_validate(B, 0)) {
         *err = E_INVARG;
@@ -359,6 +365,11 @@ static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
     if (k != kb) {
         *err = E_NONCONF;
         return NULL;
+    }
+
+    chk = m * (guint64) n;
+    if (chk > (guint64) INT32_MAX) {
+	return oversize_error(err);
     }
 
     C = gretl_cmatrix_new(m, n);
@@ -412,10 +423,9 @@ static gretl_matrix *real_cmatrix_multiply (const gretl_matrix *A,
     return C;
 }
 
-/* Multiplication of @A times @B, where we know that at
-   least one of them is complex; the other, if it's not
-   complex, must be converted to a complex matrix with
-   a zero imaginary part first.
+/* Multiplication of @A times @B, where we know that at least one of
+   them is complex; the other, if it's not complex, must be converted to
+   a complex matrix with a zero imaginary part first.
 */
 
 gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
@@ -425,9 +435,9 @@ gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
     return real_cmatrix_multiply(A, B, 'N', err);
 }
 
-/* Returns (conjugate transpose of A, or A^H) times B,
-   allowing for the possibility that either A or B (but
-   not both!) may be a real matrix on input.
+/* Returns (conjugate transpose of A, or A^H) times B, allowing for the
+   possibility that either A or B (but not both!) may be a real matrix
+   on input.
 */
 
 gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
@@ -437,8 +447,9 @@ gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
     return real_cmatrix_multiply(A, B, 'C', err);
 }
 
-/* Eigen decomposition of complex (Hermitian) matrix using
-   LAPACK's zheev() */
+/* Eigen decomposition of complex (Hermitian) matrix using LAPACK's
+   zheev()
+*/
 
 gretl_matrix *gretl_zheev (gretl_matrix *A, int eigenvecs,
                            int *err)
@@ -1046,6 +1057,7 @@ static gretl_matrix *real_cmatrix_hdp (const gretl_matrix *A,
     gretl_matrix *C = NULL;
     double complex aij, bik;
     int do_symmetric = 0;
+    guint64 chk;
     int i, j, k, ndx;
     int r, p, q, ccols;
 
@@ -1070,10 +1082,23 @@ static gretl_matrix *real_cmatrix_hdp (const gretl_matrix *A,
 
     if (do_symmetric) {
         q = p;
+	chk = (guint64) p * (p+1) / 2;
+	if (chk > (guint64) INT32_MAX) {
+	    return oversize_error(err);
+	}
         ccols = p * (p+1) / 2;
     } else {
         q = B->cols;
+	chk = (guint64) p * q;
+	if (chk > (guint64) INT32_MAX) {
+	    return oversize_error(err);
+	}
         ccols = p * q;
+    }
+
+    chk = r * (guint64) ccols;
+    if (chk > (guint64) INT32_MAX) {
+	return oversize_error(err);
     }
 
     C = gretl_cmatrix_new0(r, ccols);
@@ -1112,6 +1137,7 @@ static gretl_matrix *real_cmatrix_kron (const gretl_matrix *A,
                                         int *err)
 {
     gretl_matrix *K = NULL;
+    guint64 chk;
     int p, q, r, s;
 
     if (!cmatrix_validate(A,0) || !cmatrix_validate(B,0)) {
@@ -1124,7 +1150,12 @@ static gretl_matrix *real_cmatrix_kron (const gretl_matrix *A,
     r = B->rows;
     s = B->cols;
 
-    K = gretl_cmatrix_new0(p*r, q*s);
+    chk = (guint64) p * r * q * s;
+    if (chk > (guint64) INT32_MAX) {
+	return oversize_error(err);
+    }
+
+    K = gretl_cmatrix_new0(p * r, q * s);
 
     if (K == NULL) {
         *err = E_ALLOC;
