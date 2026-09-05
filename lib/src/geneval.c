@@ -6327,14 +6327,20 @@ static double real_apply_func (double x, int f, parser *p)
     }
 }
 
-/* @n must be of type NUM, MAT or SERIES, pre-checked */
+/* @n must be of type NUM, MAT or SERIES, pre-checked. If
+   it's MAT and 1 x 1 we treat it as if it were a scalar.
+*/
 
 static double node_get_double (NODE *n, int i, parser *p)
 {
     if (n->t == NUM) {
         return n->v.xval;
     } else if (n->t == MAT) {
-	return n->v.m->val[i];
+	if (n->v.m->rows == 1 && n->v.m->cols == 1) {
+	    return n->v.m->val[0];
+	} else {
+	    return n->v.m->val[i];
+	}
     } else {
         return n->v.xvec[p->dset->t1 + i];
     }
@@ -6432,11 +6438,6 @@ static NODE *flexible_2arg_node (NODE *l, NODE *r, int f, int flag,
         nr = gretl_vector_get_length(r->v.m);
     } else {
         nr = sample_size(p->dset);
-    }
-
-    if (l->t == MAT && r->t == MAT && nl != nr) {
-	p->err = E_NONCONF;
-	return NULL;
     }
 
     nmin = nr < nl ? nr : nl;
