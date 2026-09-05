@@ -9443,7 +9443,7 @@ static int real_invert_symmetric_matrix (gretl_matrix *a,
 
     if (preserve) {
 	/* back-up, just in case */
-	int bytes = n * n * sizeof *aval;
+	size_t bytes = n * n * sizeof *aval;
 
 	aval = lapack_malloc(bytes);
 	if (aval == NULL) {
