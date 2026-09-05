@@ -1559,6 +1559,9 @@ int gretl_array_drop_string (gretl_array *A, const char *s)
 {
     if (A->type != GRETL_TYPE_STRINGS) {
 	return E_TYPES;
+    } else if (A->data == NULL || A->n == 0 || s == NULL) {
+	gretl_errmsg_set("Array is empty");
+	return E_INVARG;
     } else {
 	int i, j, rem = A->n;
 	int n_orig = A->n;
@@ -1595,6 +1598,11 @@ int gretl_array_drop_null (gretl_array *A)
     int i, j, rem = A->n;
     int n_orig = A->n;
     size_t sz;
+
+    if (A->data == NULL || rem == 0) {
+	gretl_errmsg_set("Array is empty");
+	return E_INVARG;
+    }
 
     for (i=0; ; ) {
 	if (A->data[i] == NULL) {
