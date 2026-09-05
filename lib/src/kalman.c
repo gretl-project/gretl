@@ -1277,6 +1277,26 @@ static void set_row_to_value (gretl_matrix *targ, int t, double x)
     }
 }
 
+static int check_DK_dims (const gretl_matrix *Q,
+			  const gretl_matrix *R)
+{
+    int m = Q->rows; /* m x m */
+    int r = R->rows; /* r x m, with m <= r */
+
+    if (Q->cols != m) {
+	gretl_errmsg_set("Q must be square");
+	return E_INVARG;
+    } else if (R->cols != m) {
+	gretl_errmsg_set("cols(R) must equal rows(Q)");
+	return E_INVARG;
+    } else if (m > r) {
+	gretl_errmsg_set("cols(Q) must be <= rows(R))");
+	return E_INVARG;
+    } else {
+	return 0;
+    }
+}
+
 /* supports hansl function for creating a named Kalman bundle */
 
 kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
@@ -1313,6 +1333,10 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
 
     if (nmat == 5) {
         if (dkvar) {
+	    *err = check_DK_dims(M[3], M[4]);
+	    if (*err) {
+		goto bailout;
+	    }
             K->vartype = DK_VAR;
             targ[3] = &K->Q;
             targ[4] = &K->R;
@@ -1344,6 +1368,8 @@ kalman *kalman_new_minimal (gretl_matrix *M[], int copy[],
     if (!*err) {
         *err = kalman_init(K);
     }
+
+ bailout:
 
     if (*err) {
         kalman_free(K);
