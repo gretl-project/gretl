@@ -462,22 +462,11 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
 int emf_to_clipboard (char *emfname)
 {
-    HWND mainw;
     HENHMETAFILE hemfclip;
     HENHMETAFILE hemf = NULL;
     HANDLE htest;
 
-#if GTK_MAJOR_VERSION > 2
-    mainw = GDK_WINDOW_HWND(gtk_widget_get_window(mdata->main));
-#else
-    mainw = GDK_WINDOW_HWND(mdata->main->window);
-#endif
-    if (mainw == NULL) {
-	errbox("Got NULL HWND");
-	return 1;
-    }
-
-    if (!OpenClipboard(mainw)) {
+    if (!OpenClipboard(NULL)) {
 	errbox(_("Cannot open the clipboard"));
 	return 1;
     }
