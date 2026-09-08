@@ -42,12 +42,11 @@ come back when you're ready.\footnote{For a good account of the
 
 \textsf{Libsvm} is an open-source library (see
 \url{https://www.csie.ntu.edu.tw/~cjlin/libsvm/}) and gretl (as we
-suppose you know) is an open-source, cross-platform econometrics
-package (\url{http://gretl.sourceforge.net/}). Support for
-\textsf{libsvm} in gretl was added in the \texttt{2017d} release
-(2017-11-07). Since then, however, some improvements have been made
-and at present you'll be better off using gretl \texttt{2019a} or
-higher to work with this.
+suppose you know) is an open-source, cross-platform econometrics package
+(\url{http://gretl.sourceforge.net/}). Support for \textsf{libsvm} in
+gretl was added in the \texttt{2017d} release Since then several
+improvements have been made and at present you'll be better off using
+current gretl to work with this.
 
 In section~\ref{sec:function} we outline the gretl \texttt{svm}
 function and illustrate its usage via a few example scenarios;
@@ -69,7 +68,7 @@ That is, this function returns a series (predictions) and it has two
 required arguments, a list (of series) and a bundle containing zero
 or more parameter specifications. The third and fourth arguments take
 the form of ``pointers to bundle''; they are optional, and may be set
-to \texttt{null} or omitted altogether; we illustrate their use below
+to \texttt{null} or omitted altogether. We illustrate their use below
 but for now we just note that they offer means of ferrying additional
 information from \texttt{svm} to the user or vice versa.
 
@@ -85,18 +84,16 @@ values which may be acceptable, in which case you can get by with a
 minimal set.  A listing is given in Table~\ref{tab:options} and usage
 is discussed in section~\ref{sec:options}.
 
-The workflow for supervised machine learning goes like this:
+In general the workflow for supervised machine learning goes like this:
 \begin{enumerate}
 \item Gather suitable data and divide them into a training set and a
   testing or ``holdout'' set.
 \item Build a model using the training data and assess its fit.
 \item Using this model, generate predictions for the testing data and
   assess the fit.
+\item If the out-of-sample performance is deemed satisfactory, the model
+  may then be used to generate ``live'' predictions for additional data.
 \end{enumerate}
-
-Then if the out-of-sample performance is deemed satisfactory, the
-model may be used to generate ``live'' predictions for additional
-data.
 
 Gretl's \texttt{svm} is set up to perform steps 2 and 3 above with
 ease (though it can also do other things). We'll walk through this
@@ -114,17 +111,17 @@ argument is \dtk{n_train}, which sets the number of observations
 to use for training (assumed to be at the start of the dataset); for
 example, if you have 5000 training observations,
 \begin{code}
-bundle b = defbundle("n_train", 5000)
+bundle b = _(n_train = 5000)
 series yhat = svm(L, b)
 \end{code}
 
 Here's what happens by default.
 \begin{enumerate}
 \item Gretl examines your dependent variable (the first member of
-  \texttt{L}): if this is a binary dummy, or its ``coded'' attribute
-  is set, the $C$-SVC SVM type is selected (classification), otherwise
-  $\epsilon$-SVR (regression) is selected. In both cases the default
-  kernel is RBF (radial basis function).
+  \texttt{L}): if this is a binary dummy, or its ``coded'' attribute is
+  set, the $C$-SVC SVM type is selected (classification), otherwise
+  $\epsilon$-SVR (regression) is selected. FIXME multinomial case. In
+  both cases the default kernel is RBF (radial basis function).
 \item Gretl finds the maxima and minima of the independent variables
   in the sample range 1 to \dtk{n_train} and scales them onto
   [$-1,1$].
@@ -194,7 +191,7 @@ printf "OLS: holdout R^2 = %.3f, MSE = %.3f\n", m[1], m[2]
 
 # BLOCK 3: SVM training and testing
 smpl full
-bundle parms = defbundle("n_train", ntrain, "quiet", 1)
+bundle parms = _(n_train = ntrain, quiet = 1)
 list L = y X
 series svmpred = svm(L, parms)
 smpl 1 ntrain
@@ -292,8 +289,8 @@ as simply
 \begin{code}
 list L = dataset
 \end{code}
-This works if (a) your dependent variable occupies position 1 in the
-dataset and (b) you wish to use all the other series in the dataset as
+This works if your dependent variable occupies position 1 in the
+dataset and you wish to use all the other series in the dataset as
 supports. Otherwise you need to compose \texttt{L} yourself.
 
 \begin{script}[htbp]
@@ -302,13 +299,13 @@ supports. Otherwise you need to compose \texttt{L} yourself.
 \begin{scode}
 open train.gdt
 list L = dataset
-bundle b = defbundle("ranges_outfile", "train.ranges")
+bundle b = _(ranges_outfile = "train.ranges")
 bundle savemod = defbundle()
 svm(L, b, &savemod)
 
 open test.gdt --preserve
 list L = dataset
-bundle b = defbundle("ranges_infile", "train.ranges", "loadmod", 1)
+bundle b = _(ranges_infile = "train.ranges", loadmod = 1)
 svm(L, b, &savemod)
 \end{scode}
 \end{script}
@@ -335,13 +332,13 @@ reload them in the second.
 # script 1
 open train.gdt
 list L = dataset
-bundle b = defbundle("ranges_outfile", "my.ranges", "model_outfile", "my.model")
+bundle b = _(ranges_outfile = "my.ranges", model_outfile = "my.model")
 svm(L, b)
 
 # script 2
 open test.gdt
 list L = dataset
-bundle b = defbundle("ranges_infile", "my.ranges", "model_infile", "my.model")
+bundle b = _(ranges_infile = "my.ranges", model_infile = "my.model")
 svm(L, b)
 \end{scode}
 \end{script}
@@ -423,8 +420,7 @@ character of the dependent variable. However, this can be overridden
 by including an appropriate integer code under the key
 \dtk{svm_type}---see panel (a) of the table---as in
 \begin{code}
-bundle parms = defbundle()
-parms.svm_type = 4 # select nu-SVR
+bundle parms = _(svm_type = 4) # select nu-SVR
 \end{code}
 We also mentioned that gretl defaults to the RBF kernel; this can be
 overridden by use of the \dtk{kernel_type} key:
@@ -486,10 +482,10 @@ to expect a model bundle on input instead (and not to overwrite it).
 
 \texttt{predict}: this governs how much prediction \texttt{svm} does.
 The default is 2, meaning that if a model is built then prediction
-should be done on both the training data used to build the model (to
-get a measure of fit) and also on any testing data present. By setting
-\texttt{predict} = 1 you are requesting that prediction be done for
-(at most) only the training. By setting it to 0 you are telling gretl
+should be done on both the training data used to build the model (to get
+a measure of fit) and also on any testing data present. By setting
+\texttt{predict} = 1 you are requesting that prediction be done for (at
+most) only the training set. By setting it to 0 you are telling gretl
 not to make any calls to the \textsf{libsvm} prediction function (or
 none beyond those required by cross validation---see
 section~\ref{sec:xvalid}).
@@ -512,15 +508,15 @@ Listing~\ref{listing:s2-separate} above.
 \label{sec:xvalid}
 
 \textsf{Libsvm} provides a cross-validation function that works as
-follows. Given a number, $v \geq 2$, of ``folds,'' the data are
-divided randomly into $v$ equally sized subsets,\footnote{That is by
-  default, but see also section~\ref{sec:user-folds} below.} then
-for each subset $i$ a sub-model is trained on the complementary subset
-of the data (the other $v-1$ folds) and predictions are generated for
-subset $i$. Once this process is complete we have ``pseudo out of
-sample'' predictions for all the data supplied (which should be either
-the full training dataset or perhaps a subset thereof), and suitable
-figures of merit can be calculated for these predictions.
+follows. Given a number of ``folds'', $v \geq 2$, the data are divided
+randomly into $v$ equally sized subsets,\footnote{That is by default,
+  but see also section~\ref{sec:user-folds} below.} then for each subset
+$i$ a sub-model is trained on the complementary subset of the data (the
+other $v-1$ folds) and predictions are generated for subset $i$. Once
+this process is complete we have ``pseudo out of sample'' predictions
+for all the data supplied (which should be either the full training
+dataset or perhaps a subset thereof), and suitable figures of merit can
+be calculated for these predictions.
 
 Here's the context in which this can be particularly useful: when
 \textsf{libsvm} trains a model it automatically adjusts a (possibly
@@ -657,7 +653,7 @@ open data.gdt
 list L = dataset
 matrix gmat = {-3,7,1; 1,-13,-2}
 smpl 1 1000
-bundle b = defbundle("grid", gmat, "search_only", 1)
+bundle b = _(grid = gmat, search_only = 1)
 bundle bestparms = defbundle()
 svm(L, b, &bestparms)
 print bestparms
@@ -666,7 +662,7 @@ print bestparms
 # default grid and 5 folds
 open data.gdt
 list L = dataset
-bundle b = defbundle("n_train", 2000, "search", 1)
+bundle b = _(n_train = 2000, search = 1)
 series yhat = svm(L, b)
 \end{scode}
 \end{script}
@@ -930,7 +926,7 @@ open cadata.gdtb -q
 list X = dataset - median_value
 series lny = log(median_value)
 list L = lny X
-bundle b = defbundle("n_train", 3000, "shrinking", 0, "search_only", 1)
+bundle b = _(n_train = 3000, shrinking = 0, search_only = 1)
 b.grid = {-1, 5, 2; 3, -12, -2}
 b.seed = 1611771
 bundle res = defbundle()
@@ -1118,7 +1114,7 @@ printf "MLE: testing percent correct  = %.2f (n=%d)\n", pcc, $nobs
 smpl (year==ytrain || year==ytest) && ok(All) --restrict --replace
 scalar ntrain = sum(year == ytrain)
 # start with cross validation search using default grid
-bundle parms = defbundle("n_train", ntrain, "search", 1)
+bundle parms = _(n_train = ntrain, search = 1)
 parms.seed = 3211765 # for reproducibility
 parms.quiet = 1
 yhat_svm = svm(All, parms)
@@ -1254,14 +1250,14 @@ files are derived from the \textsf{libsvm} package (version 3.23,
 dated 2018-07-15).
 
 \texttt{svmlib.cpp} is a slightly modified version of the
-\textsf{libsvm} C++ source file \texttt{svm.cpp}. It has been edited
-to support parallelization via \textsf{OpenMP} when the symbol
-\dtk{_OPENMP} is defined. The changes are as described in answer
-to ``How can I use OpenMP to parallelize LIBSVM on a
-multicore/shared-memory computer?'' in the file \texttt{FAQ.html} in
-the \textsf{libsvm} distribution. In addition, the pseudo-random
-numbers used in cross validation are taken from libgretl's
-\textsf{SFMT} (Mersenne Twister) instead of the C library's
+\textsf{libsvm} C++ source file \texttt{svm.cpp}. It has been edited to
+support parallelization via \textsf{OpenMP} when the symbol
+\dtk{_OPENMP} is defined. The changes are as described in answer to
+``How can I use OpenMP to parallelize LIBSVM on a
+multicore/shared-memory computer?'' in the file \texttt{FAQ.html} in the
+\textsf{libsvm} distribution. In addition, the pseudo-random numbers
+used in cross validation are taken from the RNG used in libgretl
+(Blackman and Vigna's \textsf{xoshiro256+}) instead of the C library's
 \texttt{rand}.
 
 \texttt{svmlib.h} is just a renamed version of the \textsf{libsvm}
