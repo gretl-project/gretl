@@ -69,7 +69,7 @@ static void info(const char *fmt, ...)
     char buf[BUFSIZ];
     va_list ap;
     va_start(ap, fmt);
-    vsprintf(buf, fmt, ap);
+    vsnprintf(buf, BUFSIZ, fmt, ap);
     va_end(ap);
     (*svm_print_string)(buf);
 }
@@ -86,7 +86,7 @@ static void info (const char *fmt, ...) {}
 class Cache
 {
 public:
-    Cache(int l, long int size);
+    Cache(int l, size_t size);
     ~Cache();
 
     // request data [0, len)
@@ -96,7 +96,7 @@ public:
     void swap_index(int i, int j);
 private:
     int l;
-    long int size;
+    size_t size;
     struct head_t
     {
 	head_t *prev, *next; // a circular list
@@ -110,12 +110,13 @@ private:
     void lru_insert(head_t *h);
 };
 
-Cache::Cache(int l_, long int size_):l(l_), size(size_)
+Cache::Cache(int l_, size_t size_):l(l_), size(size_)
 {
-    head = (head_t *)calloc(l, sizeof(head_t)); // initialized to 0
+    head = (head_t *) calloc(l, sizeof(head_t)); // initialized to 0
     size /= sizeof(Qfloat);
-    size -= l * sizeof(head_t) / sizeof(Qfloat);
-    size = max(size, 2 * (long int) l); // cache must be large enough for two columns
+	size_t header_size = l * sizeof(head_t) / sizeof(Qfloat);
+	// cache must be large enough for two columns
+	size = max(size, 2 * (size_t) l + header_size) - header_size;
     lru_head.next = lru_head.prev = &lru_head;
 }
 
@@ -150,7 +151,7 @@ int Cache::get_data(const int index, Qfloat **data, int len)
 
     if (more > 0) {
 	// free old space
-	while (size < more) {
+	while (size < (size_t) more) {
 	    head_t *old = lru_head.next;
 	    lru_delete(old);
 	    free(old->data);
@@ -184,9 +185,9 @@ void Cache::swap_index(int i, int j)
     if (i>j) swap(i, j);
     for (head_t *h = lru_head.next; h!=&lru_head; h=h->next) {
 	if (h->len > i) {
-	    if (h->len > j)
+	    if (h->len > j) {
 		swap(h->data[i], h->data[j]);
-	    else {
+	    } else {
 		// give up
 		lru_delete(h);
 		free(h->data);
@@ -242,15 +243,15 @@ private:
     const double coef0;
 
     static double dist_1(const svm_node * px, const svm_node * py);
-    // next two functions added
+    // next two functions added for gretl
     static double dot(const svm_node *px, const svm_node *py);
     static double dist_2_sqr(const svm_node * px, const svm_node * py);
 
-    // also added
+    // also added for gretl
     inline double dist_2_sqr(int i, int j) const
     {
-	double sum = x_square[i]+x_square[j]-2*dot(x[i],x[j]);
-	return (sum > 0.0 ? sum : 0.0);
+	double sum = x_square[i] + x_square[j] - 2*dot(x[i],x[j]);
+	return sum > 0.0 ? sum : 0.0;
     }
 
     double kernel_linear(int i, int j) const
@@ -289,7 +290,8 @@ private:
 
 Kernel::Kernel(int l, svm_node * const * x_, const svm_parameter& param)
     :kernel_type(param.kernel_type), degree(param.degree),
-     gamma(param.gamma), coef0(param.coef0) {
+     gamma(param.gamma), coef0(param.coef0)
+{
     switch(kernel_type) {
     case LINEAR:
 	kernel_function = &Kernel::kernel_linear;
@@ -323,8 +325,9 @@ Kernel::Kernel(int l, svm_node * const * x_, const svm_parameter& param)
 	x_square = new double[l];
 	for (int i=0; i<l; i++)
 	    x_square[i] = dot(x[i], x[i]);
-    } else
+    } else {
 	x_square = 0;
+    }
 }
 
 Kernel::~Kernel()
@@ -426,17 +429,17 @@ double Kernel::k_function(const svm_node *x, const svm_node *y,
     case LINEAR:
 	return dot(x, y);
     case POLY:
-	return powi(param.gamma*dot(x, y)+param.coef0, param.degree);
+	return powi(param.gamma * dot(x, y)+param.coef0, param.degree);
     case RBF:
-	return exp(-param.gamma*dist_2_sqr(x, y));
+	return exp(-param.gamma * dist_2_sqr(x, y));
     case SIGMOID:
-	return tanh(param.gamma*dot(x, y)+param.coef0);
+	return tanh(param.gamma * dot(x, y)+param.coef0);
     case STUMP:
 	return -dist_1(x, y) + param.coef0;
     case PERC:
 	return -sqrt(dist_2_sqr(x, y)) + param.coef0;
     case LAPLACE:
-	return exp(-param.gamma*dist_1(x, y));
+	return exp(-param.gamma * dist_1(x, y));
     case EXPO:
 	return exp(-param.gamma*sqrt(dist_2_sqr(x, y)));
     default:
@@ -1229,7 +1232,7 @@ public:
     SVC_Q(const svm_problem& prob, const svm_parameter& param, const schar *y_)
 	:Kernel(prob.l, prob.x, param) {
 	clone(y, y_, prob.l);
-	cache = new Cache(prob.l, (long int)(param.cache_size*(1<<20)));
+	cache = new Cache(prob.l, (size_t)(param.cache_size*(1<<20)));
 	QD = new double[prob.l];
 	for (int i=0; i<prob.l; i++)
 	    QD[i] = (this->*kernel_function)(i, i);
@@ -1278,7 +1281,7 @@ class ONE_CLASS_Q: public Kernel
 public:
     ONE_CLASS_Q(const svm_problem& prob, const svm_parameter& param)
 	:Kernel(prob.l, prob.x, param) {
-	cache = new Cache(prob.l, (long int)(param.cache_size*(1<<20)));
+	cache = new Cache(prob.l, (size_t)(param.cache_size*(1<<20)));
 	QD = new double[prob.l];
 	for (int i=0; i<prob.l; i++)
 	    QD[i] = (this->*kernel_function)(i, i);
@@ -1322,7 +1325,7 @@ public:
     SVR_Q(const svm_problem& prob, const svm_parameter& param)
 	:Kernel(prob.l, prob.x, param) {
 	l = prob.l;
-	cache = new Cache(l, (long int)(param.cache_size*(1<<20)));
+	cache = new Cache(l, (size_t)(param.cache_size*(1<<20)));
 	QD = new double[2*l];
 	sign = new schar[2*l];
 	index = new int[2*l];
@@ -1395,7 +1398,7 @@ private:
 // where (i, k) is on index (i * nr_thres + k)
 // z(i, k) = sign(y[i]-k)
 
-// rnk_q: added
+// rnk_q: added for gretl
 
 class RNK_Q: public Kernel
 {
@@ -1410,7 +1413,7 @@ public:
 
 	y = new schar[l];
 
-	cache = new Cache(l, (int)(param.cache_size*(1<<20)));
+	cache = new Cache(l, (size_t)(param.cache_size*(1<<20)));
 	QD = new double[nr_thres*l];
 	index = new int[nr_thres*l];
 	sign = new schar[nr_thres*l];
@@ -1549,7 +1552,7 @@ static void solve_nu_svc(const svm_problem *prob, const svm_parameter *param,
     schar *y = new schar[l];
 
     for (i=0; i<l; i++)
-	if (prob->y[i]>0)
+	if (prob->y[i] > 0)
 	    y[i] = +1;
 	else
 	    y[i] = -1;
@@ -1598,7 +1601,7 @@ static void solve_one_class(const svm_problem *prob, const svm_parameter *param,
     schar *ones = new schar[l];
     int i;
 
-    int n = (int)(param->nu*prob->l); 	// # of alpha's at upper bound
+    int n = (int)(param->nu*prob->l); // # of alpha's at upper bound
 
     for (i=0; i<n; i++)
 	alpha[i] = 1;
@@ -1654,6 +1657,8 @@ static void solve_epsilon_svr(const svm_problem *prob, const svm_parameter *para
     delete[] linear_term;
     delete[] y;
 }
+
+// Added for gretl
 
 static void solve_c_rnk(const svm_problem *prob, const svm_parameter *param,
 			double *alpha, Solver::SolutionInfo* si,
