@@ -249,7 +249,8 @@ static int uses_coef0 (const sv_parm *parm)
 static int uses_nu (const sv_parm *parm)
 {
     return parm->svm_type == NU_SVC ||
-	parm->svm_type == NU_SVR || parm->svm_type == ONE_CLASS;
+	parm->svm_type == NU_SVR ||
+	parm->svm_type == ONE_CLASS;
 }
 
 static void set_sv_parm_defaults (sv_parm *parm)
@@ -651,11 +652,10 @@ static void save_results_to_bundle (const sv_parm *parm,
     }
 }
 
-/* If we did probability estimation we should have results
-   in w->Ptrain and/or w->Ptest (in the classification
-   case) or a single Laplace scale value in w->svr_sigma
-   (in the regression case). We now stuff this info into
-   the courier bundle supplied by the caller.
+/* If we did probability estimation we should have results in w->Ptrain
+   and/or w->Ptest (in the classification case) or a single Laplace
+   scale value in w->svr_sigma (in the regression case). We now stuff
+   this info into the courier bundle supplied by the caller.
 */
 
 static void save_probs_to_bundle (sv_wrapper *w,
@@ -1044,7 +1044,7 @@ static sv_data *gretl_sv_data_alloc (int T, int k,
     return p;
 }
 
-/* initial discovery of data ranges using the training data */
+/* Initial discovery of data ranges using the training data */
 
 static int get_data_ranges (const int *list,
 			    const DATASET *dset,
@@ -1106,8 +1106,8 @@ static int get_data_ranges (const int *list,
     return err;
 }
 
-/* The following requires a gretl-special "ranges" matrix
-   with 4 columns, including the dataset IDs of the series.
+/* The following requires a gretl-special "ranges" matrix with 4
+   columns, including the dataset IDs of the series.
 */
 
 static int check_test_data (const DATASET *dset,
@@ -1141,7 +1141,7 @@ static int check_test_data (const DATASET *dset,
     return err;
 }
 
-/* apply scaling as per the svm-scale binary */
+/* Apply scaling as per the svm-scale binary. */
 
 static double scale_x (double val, double lo, double hi,
 		       double scalemin, double scalemax)
@@ -1274,7 +1274,7 @@ static int sv_data_fill (sv_data *prob,
     return 0;
 }
 
-/* apparatus for sorting labels into ascending order */
+/* Apparatus for sorting labels into ascending order. */
 
 struct lsort {
     int val;
@@ -1289,12 +1289,11 @@ static int ls_compare (const void *a, const void *b)
     return (pa->val > pb->val) - (pa->val < pb->val);
 }
 
-/* Allocate a matrix (either w->Ptrain or w->Ptest)
-   into which we'll write the per-outcome probabilities.
-   Set the sorted labels as column names for this
-   matrix, and return in location @pls the sorting
-   info that will enable us to write the probabilities
-   into the correct corresponding columns.
+/* Allocate a matrix (either w->Ptrain or w->Ptest) into which we'll
+   write the per-outcome probabilities.  Set the sorted labels as column
+   names for this matrix, and return in location @pls the sorting info
+   that will enable us to write the probabilities into the correct
+   corresponding columns.
 */
 
 static gretl_matrix *get_probs_matrix (sv_wrapper *w,
@@ -1483,7 +1482,7 @@ static int real_svm_predict (double *yhat,
 	}
     } else {
 	pprintf(prn, "%s: %s = %d (%.1f %s)\n", _(datastr),
-		_("correct predictions"), n_correct, 100 * n_correct / (double) prob->l, 
+		_("correct predictions"), n_correct, 100 * n_correct / (double) prob->l,
 		_("percent"));
     }
 
@@ -1548,7 +1547,7 @@ static int *get_fold_sizes (const sv_data *data,
 }
 
 /* Carry out cross validation in the case where the user has provided
-   a series to specify the "folds", or has specified a given number of
+   a series to specify the folds, or has specified a given number of
    consecutive blocks, as opposed to the default random subsetting.
 */
 
@@ -1616,7 +1615,7 @@ static void custom_xvalidate (const sv_data *prob,
     }
 }
 
-/* implement a single cross validation pass */
+/* Implement a single cross validation pass. */
 
 static int xvalidate_once (sv_data *prob,
 			   sv_parm *parm,
@@ -1953,7 +1952,7 @@ static int write_plot_file (sv_wrapper *w,
     return err;
 }
 
-/* get ready to do parameter search */
+/* Get ready to do parameter search. */
 
 static int do_search_prep (sv_data *data,
 			   sv_parm *parm,
@@ -1995,9 +1994,8 @@ static void maybe_resume_printing (sv_wrapper *w)
 
 static int can_write_plot (sv_wrapper *w)
 {
-    /* for now we handle only the case of a 2D grid
-       with C and gamma, but this should be generalized
-       at some point
+    /* For now we handle only the case of a 2D grid with C and gamma,
+       but this should be generalized at some point.
     */
     if (w->xdata == NULL) {
 	return 0;
@@ -2144,8 +2142,9 @@ static int process_results (sv_parm *parm,
     return 0;
 }
 
-/* The following is called only by the root process,
-   when doing cross validation via MPI */
+/* The following is called only by the root process, when doing cross
+   validation via MPI.
+*/
 
 static int carve_up_xvalidation (sv_data *data,
 				 sv_parm *parm,
@@ -2467,10 +2466,9 @@ static int call_cross_validation (sv_data *data,
     return err;
 }
 
-/* If the caller provided a "folds" series, check it for
-   validity: the values must be consecutive integers
-   starting at 1, and the number of folds must be within
-   bounds.
+/* If the caller provided a "folds" series, check it for validity: the
+   values must be consecutive integers starting at 1, and the number of
+   folds must be within bounds.
 */
 
 static int check_folds_series (const int *list,
@@ -2524,9 +2522,9 @@ static int check_folds_series (const int *list,
     return err;
 }
 
-/* It's OK if there's no @key value in bundle @b, but if it
-   is present it should hold an integer value. Return 1
-   if key found and integer retrieved OK, else 0.
+/* It's OK if there's no @key value in bundle @b, but if it is present
+   it should hold an integer value. Return 1 if key found and integer
+   retrieved OK, else 0.
 */
 
 static int get_optional_int (gretl_bundle *b, const char *key,
@@ -2603,8 +2601,9 @@ static int check_user_params (gretl_array *A)
     return err;
 }
 
-/* process @bparm, which contains the parameters provided by
-   the caller */
+/* Process bundle @bparm, which contains the parameters provided by the
+   caller.
+*/
 
 static int read_params_bundle (gretl_bundle *bparm,
 			       gretl_bundle *bmod,
@@ -2628,8 +2627,8 @@ static int read_params_bundle (gretl_bundle *bparm,
 	}
     }
 
-    /* start by reading some info that's not included in
-       the libsvm @parm struct
+    /* start by reading some info that's not included in the libsvm
+       @parm struct
     */
 
     if (get_optional_int(bparm, "loadmod", &ival, &err)) {
@@ -2709,31 +2708,24 @@ static int read_params_bundle (gretl_bundle *bparm,
     if (gretl_bundle_has_key(bparm, "seed")) {
         wrap->seed = gretl_bundle_get_uint64(bparm, "seed", &err);
     }
-
     if (get_optional_int(bparm, "refold", &ival, &err) && ival != 0) {
 	wrap->flags |= W_REFOLD;
     }
-
     if (get_optional_int(bparm, "search", &ival, &err) && ival != 0) {
 	wrap->flags |= W_SEARCH;
     }
-
     if (get_optional_int(bparm, "use_mpi", &ival, &err) && ival != 0) {
 	wrap->flags |= W_MPI;
     }
-
     if (get_optional_int(bparm, "foldvar", &ival, &err) && ival != 0) {
 	wrap->flags |= W_FOLDVAR;
     }
-
     if (get_optional_int(bparm, "consecutive", &ival, &err) && ival != 0) {
 	wrap->flags |= W_CONSEC;
     }
-
     if (get_optional_int(bparm, "yscale", &ival, &err) && ival != 0) {
 	wrap->flags |= W_YSCALE;
     }
-
     if (get_optional_int(bparm, "search_only", &ival, &err) && ival != 0) {
 	wrap->flags |= W_SEARCH;
 	if (bmod != NULL) {
@@ -2741,7 +2733,6 @@ static int read_params_bundle (gretl_bundle *bparm,
 	    no_savemod = 1;
 	}
     }
-
     if (get_optional_int(bparm, "regcrit", &ival, &err) && ival != 0) {
 	if (ival < REG_MSE || ival > REG_ROUND_MISS) {
 	    gretl_errmsg_sprintf(_("svm: invalid regcrit value %d"), ival);
@@ -2829,8 +2820,9 @@ static int read_params_bundle (gretl_bundle *bparm,
     return err;
 }
 
-/* check in advance if the incoming list variable is supposed to
-   hold a fold variable in last place */
+/* Check in advance whether the incoming list variable is supposed to
+   hold a fold variable in last place.
+*/
 
 static int peek_foldvar (gretl_bundle *bparm, int *fvar)
 {
@@ -2845,9 +2837,9 @@ static int peek_foldvar (gretl_bundle *bparm, int *fvar)
 
 #ifdef HAVE_MPI
 
-/* Here we're trying to tell if we should invoke automated
-   local-machine MPI -- having already ascertained that it's
-   feasible in general terms.
+/* Here we're trying to tell if we should invoke automated local-machine
+   MPI -- having already ascertained that it's feasible in general
+   terms.
 */
 
 static int peek_use_mpi (gretl_bundle *bparm,
@@ -2894,9 +2886,7 @@ static int peek_use_mpi (gretl_bundle *bparm,
 
 #endif
 
-/* wrap a couple of libsvm I/0 functions so they respect
-   @workdir
-*/
+/* Wrap a couple of libsvm I/0 functions so they respect @workdir. */
 
 static sv_model *svm_load_model_wrapper (const char *fname,
 					 int *err)
@@ -2963,8 +2953,9 @@ static int get_svm_ranges (const int *list,
     return err;
 }
 
-/* load an svm model, either from a bundle in memory
-   or a text file in libsvm format */
+/* Load an svm model, either from a bundle in memory or a text file in
+   libsvm format.
+*/
 
 static sv_model *do_load_model (sv_wrapper *w,
 				gretl_bundle *b,
@@ -2984,8 +2975,9 @@ static sv_model *do_load_model (sv_wrapper *w,
     return model;
 }
 
-/* save an svm model, either to a bundle in memory
-   or a text file in libsvm format */
+/* Save an svm model, either to a bundle in memory or a text file in
+   libsvm format.
+*/
 
 static int do_save_model (sv_model *model, sv_wrapper *w,
 			  gretl_bundle *b, PRN *prn)
@@ -3004,10 +2996,9 @@ static int do_save_model (sv_model *model, sv_wrapper *w,
     return err;
 }
 
-/* here we call the libsvm parameter-checking
-   function; if all is well and we're not in quiet
-   mode, we print some information on the primary
-   parameters
+/* Here we call the libsvm parameter-checking function; if all is well
+   and we're not in quiet mode, we print some information on the primary
+   parameters.
 */
 
 static int check_svm_params (sv_data *data,
@@ -3069,8 +3060,8 @@ static int check_svm_params (sv_data *data,
     return err;
 }
 
-/* note: if we're in auto-MPI mode, only the rank 0 process
-   executes this function
+/* Note: if we're in auto-MPI mode, only the rank 0 process executes
+   this function.
 */
 
 static int svm_predict_main (const int *list,
@@ -3263,8 +3254,8 @@ static int sv_trim_missing (int *list, int fvar, DATASET *dset)
     return err;
 }
 
-/* If w->seed was automatic, and was actually used, save it
-   to the incoming bundle in case it may be of interest.
+/* If w->seed was automatic, and was actually used, save it to the
+   incoming bundle in case it may be of interest.
 */
 
 static void maybe_save_auto_seed (sv_wrapper *w, gretl_bundle *b)

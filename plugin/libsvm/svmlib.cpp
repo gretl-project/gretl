@@ -1927,6 +1927,7 @@ static double sigmoid_predict(double decision_value, double A, double B)
 }
 
 // Method 2 from the multiclass_prob paper by Wu, Lin, and Weng
+// to predict probabilities
 
 static void multiclass_probability(int k, double **r, double *p)
 {
@@ -1984,7 +1985,8 @@ static void multiclass_probability(int k, double **r, double *p)
     free(Qp);
 }
 
-// Cross-validation decision values for probability estimates
+// Using cross-validation decision values to get parameters for
+// SVC probability estimates
 
 static void svm_binary_svc_probability (const svm_problem *prob,
                                         const svm_parameter *param,
@@ -2041,6 +2043,7 @@ static void svm_binary_svc_probability (const svm_problem *prob,
 		dec_values[perm[j]] = -1;
 	else {
 	    svm_parameter subparam = *param;
+
 	    subparam.probability = 0;
 	    subparam.C = 1.0;
 	    subparam.nr_weight = 2;
@@ -2897,6 +2900,7 @@ static char *readline(FILE *input)
 //    FSCANF();
 // is used
 //
+
 #define FSCANF(_stream, _format, _var) do {			\
 	if (fscanf(_stream, _format, _var) != 1) return false;	\
     } while (0)
@@ -2911,10 +2915,11 @@ static bool read_model_header(FILE *fp, svm_model* model)
     param.weight = NULL;
 
     char cmd[1025];
+    
     while (1) {
 	FSCANF(fp, "%80s", cmd);
 
-	if (strcmp(cmd, "svm_type")==0) {
+	if (strcmp(cmd, "svm_type") == 0) {
 	    FSCANF(fp, "%80s", cmd);
 	    int i;
 	    for (i=0; svm_type_table[i]; i++) {
@@ -2927,11 +2932,11 @@ static bool read_model_header(FILE *fp, svm_model* model)
 		fprintf(stderr, "unknown svm type.\n");
 		return false;
 	    }
-	} else if (strcmp(cmd, "kernel_type")==0) {
+	} else if (strcmp(cmd, "kernel_type") == 0) {
 	    FSCANF(fp, "%80s", cmd);
 	    int i;
 	    for (i=0; kernel_type_table[i]; i++) {
-		if (strcmp(kernel_type_table[i], cmd)==0) {
+		if (strcmp(kernel_type_table[i], cmd) == 0) {
 		    param.kernel_type=i;
 		    break;
 		}
@@ -2940,47 +2945,49 @@ static bool read_model_header(FILE *fp, svm_model* model)
 		fprintf(stderr, "unknown kernel function.\n");
 		return false;
 	    }
-	} else if (strcmp(cmd, "degree")==0)
+	} else if (strcmp(cmd, "degree") == 0)
 	    FSCANF(fp, "%d", &param.degree);
-	else if (strcmp(cmd, "gamma")==0)
+	else if (strcmp(cmd, "gamma") == 0)
 	    FSCANF(fp, "%lf", &param.gamma);
-	else if (strcmp(cmd, "coef0")==0)
+	else if (strcmp(cmd, "coef0") == 0)
 	    FSCANF(fp, "%lf", &param.coef0);
-	else if (strcmp(cmd, "nr_class")==0)
+	else if (strcmp(cmd, "nr_class") == 0)
 	    FSCANF(fp, "%d", &model->nr_class);
-	else if (strcmp(cmd, "total_sv")==0)
+	else if (strcmp(cmd, "total_sv") == 0)
 	    FSCANF(fp, "%d", &model->l);
-	else if (strcmp(cmd, "rho")==0) {
+	else if (strcmp(cmd, "rho") == 0) {
 	    int n;
 
-	    if (model->param.svm_type == C_RNK)
+	    if (model->param.svm_type == C_RNK) {
 		n = model->nr_class;
-	    else
+	    } else {
 		n = model->nr_class * (model->nr_class-1)/2;
+	    }
 	    model->rho = Malloc(double, n);
-	    for (int i=0; i<n; i++)
+	    for (int i=0; i<n; i++) {
 		FSCANF(fp, "%lf", &model->rho[i]);
-	} else if (strcmp(cmd, "label")==0) {
+	    }
+	} else if (strcmp(cmd, "label") == 0) {
 	    int n = model->nr_class;
 	    model->label = Malloc(int, n);
 	    for (int i=0; i<n; i++)
 		FSCANF(fp, "%d", &model->label[i]);
-	} else if (strcmp(cmd, "probA")==0) {
+	} else if (strcmp(cmd, "probA") == 0) {
 	    int n = model->nr_class * (model->nr_class-1)/2;
 	    model->probA = Malloc(double, n);
 	    for (int i=0; i<n; i++)
 		FSCANF(fp, "%lf", &model->probA[i]);
-	} else if (strcmp(cmd, "probB")==0) {
+	} else if (strcmp(cmd, "probB") == 0) {
 	    int n = model->nr_class * (model->nr_class-1)/2;
 	    model->probB = Malloc(double, n);
 	    for (int i=0; i<n; i++)
 		FSCANF(fp, "%lf", &model->probB[i]);
-	} else if (strcmp(cmd, "nr_sv")==0) {
+	} else if (strcmp(cmd, "nr_sv") == 0) {
 	    int n = model->nr_class;
 	    model->nSV = Malloc(int, n);
 	    for (int i=0; i<n; i++)
 		FSCANF(fp, "%d", &model->nSV[i]);
-	} else if (strcmp(cmd, "SV")==0) {
+	} else if (strcmp(cmd, "SV") == 0) {
 	    while (1) {
 		int c = getc(fp);
 		if (c == EOF || c == '\n') break;
@@ -3089,7 +3096,7 @@ svm_model *svm_load_model(const char *model_file_name)
     if (ferror(fp) != 0 || fclose(fp) != 0)
 	return NULL;
 
-    model->free_sv = 1; 	// XXX
+    model->free_sv = 1; // XXX
     return model;
 }
 
