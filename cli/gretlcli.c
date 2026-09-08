@@ -287,7 +287,7 @@ static int file_get_line (ExecState *s, const char *fname)
     }
 
     if (*line == '\0') {
-	if (fb != stdin && gretl_compiling_loop()) {
+	if (fb != stdin && fname != NULL && gretl_compiling_loop()) {
 	    gretl_errmsg_sprintf(_("Broken syntax in %s: unmatched %s"), fname,
 				 "loop/endloop");
 	    return E_PARSE;
@@ -419,7 +419,7 @@ static int get_interactive_line (void *p)
 #else
     printf("%s", prompt);
     fflush(stdout);
-    file_get_line(s, stdin);
+    file_get_line(s, NULL);
 #endif
 
     return err;
