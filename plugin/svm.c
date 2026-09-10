@@ -418,9 +418,9 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
     }
 
     if (!err && !got_kspec) {
-	/* the user didn't specify a kernel type: we default to
+	/* The user didn't specify a kernel type: we default to
 	   Gaussian RBF above, but PERC seems to work better for
-	   ranking
+	   ranking.
 	*/
 	if (parm->svm_type == C_RNK) {
 	    parm->kernel_type = PERC;
@@ -2847,16 +2847,18 @@ static int peek_use_mpi (gretl_bundle *bparm,
 			 gretl_bundle *bprob,
 			 PRN *prn)
 {
-    int ival = 0, ret = 0;
+    int ival1 = 0;
+    int ival2 = 0;
+    int ret = 0;
 
     if (bmodel != NULL || bprob != NULL) {
 	/* these cases are not handled yet */
 	return 0;
     }
 
-    if (get_optional_int(bparm, "use_mpi", &ival, NULL)) {
+    if (get_optional_int(bparm, "use_mpi", &ival1, NULL)) {
 	/* if the user specified @use_mpi, respect it provisionally */
-	ret = ival;
+	ret = ival1;
     } else {
 	/* otherwise default to using MPI subject to the check below? */
 	ret = 1;
@@ -2868,15 +2870,16 @@ static int peek_use_mpi (gretl_bundle *bparm,
 	*/
 	int search = 0;
 
-	ival = 0;
-	if (get_optional_int(bparm, "search", &ival, NULL) && ival > 0) {
+	if (get_optional_int(bparm, "search", &ival2, NULL) && ival2 > 0) {
 	    search = 1;
 	} else if (gretl_bundle_get_matrix(bparm, "grid", NULL) != NULL) {
 	    search = 1;
 	}
-	if (!search && ival > 0) {
-	    pputs(prn, _("svm: 'use_mpi' option ignored in the absence of search"));
-	    pputc(prn, '\n');
+	if (search == 0) {
+	    if (ival1 > 0) {
+		pputs(prn, _("svm: 'use_mpi' option ignored in the absence of search"));
+		pputc(prn, '\n');
+	    }
 	    ret = 0;
 	}
     }
@@ -3060,8 +3063,8 @@ static int check_svm_params (sv_data *data,
     return err;
 }
 
-/* Note: if we're in auto-MPI mode, only the rank 0 process executes
-   this function.
+/* svm_predict_main() is called if we're not using MPI or, if we are using MPI,
+   it's the rank 0 process that is executing.
 */
 
 static int svm_predict_main (const int *list,
@@ -3495,7 +3498,6 @@ int gretl_svm_driver (const int *list,
     if (!err && bprob != NULL) {
 	save_probs_to_bundle(&wrap, bprob);
     }
-
     if (!err && bparams != NULL) {
 	maybe_save_auto_seed(&wrap, bparams);
     }

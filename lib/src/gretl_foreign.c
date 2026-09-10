@@ -312,6 +312,8 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 
 #ifdef HAVE_MPI /* start common MPI-driver code block */
 
+#include <omp.h>
+
 enum {
     MPI_OPENMPI,
     MPI_MPICH,
@@ -1595,6 +1597,31 @@ static int mpi_send_funcs_setup (FILE *fp)
     return err;
 }
 
+#ifdef _OPENMP
+
+static int set_omp_threads_for_mpi (gretlopt opt)
+{
+    gchar *tmp;
+    int nt = 1;
+    int err = 0;
+
+    if (opt & OPT_T) {
+	/* respect the --omp-threads option if it's sane */
+	nt = get_optval_int(MPI, OPT_T, &err);
+	if (!err && (nt <= 0 || nt > 999)) {
+	    err = E_INVARG;
+	}
+    }
+
+    tmp = g_strdup_printf("%d", nt);
+    gretl_setenv("OMP_NUM_THREADS", tmp);
+    g_free(tmp);
+
+    return err;
+}
+
+#endif /* _OPENMP */
+
 static int write_gretl_mpi_script (gretlopt opt, DATASET *dset)
 {
     const gchar *fname = get_mpi_scriptname();
@@ -1623,31 +1650,8 @@ static int write_gretl_mpi_script (gretlopt opt, DATASET *dset)
         }
     }
 
-#ifdef _OPENMP
     if (!err) {
-        if (opt & OPT_T) {
-            /* respect the --omp-threads option */
-            int nt = get_optval_int(MPI, OPT_T, &err);
-
-            if (nt == -1) {
-                ; /* unlimited/auto */
-            } else {
-                if (!err && (nt <= 0 || nt > 9999999)) {
-                    err = E_DATA;
-                }
-                if (!err) {
-                    fprintf(fp, "set omp_num_threads %d\n", nt);
-                }
-            }
-        } else {
-            /* by default, don't use OMP threading */
-            fputs("set omp_num_threads 1\n", fp);
-        }
-    }
-#endif
-
-    if (!err) {
-        /* put out the stored 'foreign' lines */
+        /* output the stored 'foreign' lines */
         put_foreign_lines(fp);
 #ifdef MPI_REALTIME
         /* plus an easily recognized trailer */
@@ -1660,6 +1664,10 @@ static int write_gretl_mpi_script (gretlopt opt, DATASET *dset)
     }
 
     fclose(fp);
+
+    if (!err) {
+	set_omp_threads_for_mpi(opt);
+    }
 
     return err;
 }
