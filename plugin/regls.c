@@ -362,34 +362,47 @@ static int regls_set_Xty (regls_info *ri)
 
 static int randomize_rows (gretl_matrix *X, gretl_matrix *y)
 {
+    gretl_matrix *Tmp;
     gretl_vector *vp;
-    double x, tmp;
+    double x;
     int i, j, src;
+    int k = X->cols;
 
     vp = gretl_matrix_alloc(X->rows, 1);
-    if (vp == NULL) {
+    Tmp = gretl_matrix_alloc(X->rows, k + 1);
+    if (vp == NULL || Tmp == NULL) {
+	gretl_matrix_free(vp);
+	gretl_matrix_free(Tmp);
 	return E_ALLOC;
     }
 
+    /* @vp is a uniform random permutation of 1..X->rows */
     fill_permutation_vector(vp, X->rows);
 
+    /* Gather the rows of X and y into @Tmp in the order given by @vp,
+       then copy back. Doing this via a scratch buffer (rather than a
+       sequence of in-place swaps) makes the result exactly the
+       permutation @vp, with no selection bias in the fold assignment.
+       Note that every row of @Tmp must be written here, including the
+       rows that @vp maps to themselves.
+    */
     for (i=0; i<X->rows; i++) {
 	src = vp->val[i] - 1;
-	if (src == i) {
-	    continue;
-	}
-	for (j=0; j<X->cols; j++) {
-	    tmp = gretl_matrix_get(X, i, j);
+	for (j=0; j<k; j++) {
 	    x = gretl_matrix_get(X, src, j);
-	    gretl_matrix_set(X, i, j, x);
-	    gretl_matrix_set(X, src, j, tmp);
+	    gretl_matrix_set(Tmp, i, j, x);
 	}
-	tmp = y->val[i];
-	y->val[i] = y->val[src];
-	y->val[src] = tmp;
+	gretl_matrix_set(Tmp, i, k, y->val[src]);
     }
 
+    for (i=0; i<X->rows; i++) {
+	y->val[i] = gretl_matrix_get(Tmp, i, k);
+    }
+    gretl_matrix_reuse(Tmp, X->rows, k);
+    gretl_matrix_copy_values(X, Tmp);
+
     gretl_matrix_free(vp);
+    gretl_matrix_free(Tmp);
 
     return 0;
 }
@@ -876,10 +889,14 @@ static int ccd_iteration (double alpha, const gretl_matrix *X, double *g,
     a = malloc(nx * sizeof *a);
     da = malloc(nx * sizeof *da);
     mm = malloc(nx * sizeof *mm);
+
     if (C == NULL || a == NULL || da == NULL || mm == NULL) {
 	fprintf(stderr, "ccd: allocation failure (nx = %d)\n", nx);
+	gretl_matrix_free(C);
+	free(a); free(da); free(mm);
 	return E_ALLOC;
     }
+
     /* "zero" @a and @mm */
     for (j=0; j<nx; j++) {
 	a[j] = 0.0;
@@ -1766,7 +1783,7 @@ static int svd_ridge_vcv (regls_info *ri,
     double vij, SSR, s2;
     int n = ri->X->rows;
     int k = ri->X->cols;
-    int offset = 0;
+    int ns, offset = 0;
     int i, j, err = 0;
 
 #if RIDGE_DEBUG
@@ -1774,26 +1791,31 @@ static int svd_ridge_vcv (regls_info *ri,
 #endif
 
     err = gretl_matrix_SVD(ri->X, NULL, &sv, &Vt, 0);
-
-    if (!err) {
-	MB = gretl_matrix_block_new(&sve, 1, k,
-				    &u, n, 1,
-				    &RI, k, k,
-				    &Ve, k, k,
-				    &Tmp, k, k,
-				    &b, k, 1, NULL);
-	if (MB == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}
+    if (err) {
+	goto bailout;
     }
 
-    if (!err) {
-	V = gretl_matrix_alloc(k, k);
-	if (V == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}
+    /* Number of singular values: this equals @k when X has (weakly)
+       more rows than columns, but when n < k the "economy" SVD gives
+       us just ns = n values, and @Vt is ns x k rather than k x k.
+    */
+    ns = gretl_vector_get_length(sv);
+
+    MB = gretl_matrix_block_new(&sve, 1, ns,
+				&u, n, 1,
+				&RI, k, k,
+				&Ve, k, k,
+				&Tmp, k, k,
+				&b, k, 1, NULL);
+    if (MB == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    V = gretl_matrix_alloc(k, k);
+    if (V == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
     if (ri->edf != NULL) {
@@ -1801,23 +1823,28 @@ static int svd_ridge_vcv (regls_info *ri,
     }
 
     /* sve = 1 / (sv.^2 + lambda) */
-    for (i=0; i<k; i++) {
+    for (i=0; i<ns; i++) {
 	sve->val[i] = 1.0 / (sv->val[i] * sv->val[i] + lam);
 	if (ri->edf != NULL) {
 	    ri->edf->val[0] += sv->val[i] * sv->val[i] * sve->val[i];
 	}
     }
 
-    /* Ve = Vt' .* sve */
-    for (j=0; j<k; j++) {
+    /* Ve = V .* sve' (k x ns) */
+    gretl_matrix_reuse(Ve, k, ns);
+    for (j=0; j<ns; j++) {
 	for (i=0; i<k; i++) {
 	    vij = gretl_matrix_get(Vt, j, i);
 	    gretl_matrix_set(Ve, i, j, vij * sve->val[j]);
 	}
     }
 
-    /* RI = Ve * Vt */
+    /* RI = Ve * Vt = V * diag(sve) * V'. When n < k this is the ridge
+       inverse restricted to the row space of X, which is all we need
+       since X'y lies in that space.
+    */
     gretl_matrix_multiply(Ve, Vt, RI);
+    gretl_matrix_reuse(Ve, k, k);
 
     /* b = RI * Xty */
     gretl_matrix_multiply(RI, ri->Xty, b);
@@ -1856,6 +1883,8 @@ static int svd_ridge_vcv (regls_info *ri,
 	gretl_matrix_free(V);
     }
 
+    gretl_matrix_free(sv);
+    gretl_matrix_free(Vt);
     gretl_matrix_block_destroy(MB);
 
     return err;
@@ -3259,11 +3288,30 @@ struct glasso_info_ {
 
 typedef struct glasso_info_ glasso_info;
 
+static void glasso_info_free (glasso_info *gi)
+{
+    if (gi != NULL) {
+	gretl_matrix_block_destroy(gi->B);
+	free(gi->lam);
+	free(gi->ia);
+	free(gi);
+    }
+}
+
 static glasso_info *glasso_info_new (int p, int n, double rho)
 {
     glasso_info *gi = malloc(sizeof *gi);
 
     if (gi == NULL) {
+	return NULL;
+    }
+
+    gi->B = NULL;
+    gi->lam = malloc(sizeof *gi->lam);
+    gi->ia = calloc(n + 1, sizeof *gi->ia);
+
+    if (gi->lam == NULL || gi->ia == NULL) {
+	glasso_info_free(gi);
 	return NULL;
     }
 
@@ -3282,29 +3330,14 @@ static glasso_info *glasso_info_new (int p, int n, double rho)
 				   &gi->Tmp2, n, n,
 				   NULL);
     if (gi->B == NULL) {
-	free(gi);
+	glasso_info_free(gi);
 	return NULL;
     }
 
-    gi->lam = malloc(sizeof *gi->lam);
     gi->lam[0] = rho;
-
-    gi->ia = calloc(n + 1, sizeof *gi->ia);
-    if (gi->ia != NULL) {
-        gi->nnz = gi->ia + n;
-    }
+    gi->nnz = gi->ia + n;
 
     return gi;
-}
-
-static void glasso_info_free (glasso_info *gi)
-{
-    if (gi != NULL) {
-	gretl_matrix_block_destroy(gi->B);
-	free(gi->lam);
-	free(gi->ia);
-	free(gi);
-    }
 }
 
 static int ccd_glasso (glasso_info *gi, double tol)
@@ -3340,7 +3373,7 @@ static int glasso_converged (const gretl_matrix *W0,
     for (j=0; j<W0->cols; j++) {
         csum = 0.0;
         for (i=0; i<W0->rows; i++) {
-	    csum = fabs(x[i] - y[i]);
+	    csum += fabs(x[i] - y[i]);
         }
         if (csum > tol) {
 	    return 0;
@@ -3456,6 +3489,9 @@ gretl_matrix *gretl_glasso (const gretl_matrix *S,
             Mj_vector(gi->Sj, S, j);
             gretl_matrix_copy_values(gi->Ev, gi->Wj);
             dsqrt = gretl_symmetric_matrix_eigenvals(gi->Ev, 1, err);
+	    if (*err) {
+		break;
+	    }
             vsqrt(dsqrt);
             gretl_square_matrix_transpose(gi->Ev);
             ev_dotmul1(gi->X, dsqrt, gi->Ev, gi->Tmp1);
