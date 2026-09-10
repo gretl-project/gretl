@@ -1215,7 +1215,6 @@ end function
   \label{script:gamma}
 \begin{scode}
 include gamma-funcs.inp
-set use_dcmt off
 
 if $mpirank == 0
    scalar N = 1000000
@@ -1280,14 +1279,8 @@ directly---see section~\ref{subsec:gretlmpi}. One could wrap the
 entire script in an \texttt{mpi} block and run it in the gretl GUI if
 desired.
 
-After including the functions file we do \dtk{set use_dcmt
-  off}. This is not essential, but makes it possible to do a direct
-comparison of the results from MPI with those from a single-process
-variant of the script (given a common random seed). Then the rank 0
-process prepares the gamma data.
-
-Once the initial set-up is complete, process 0 broadcasts the initial
-parameter vector (which we deliberately make ``off'' so that
+The rank 0 process first prepares the gamma data, then broadcasts the
+initial parameter vector (which we deliberately make inexact so that
 \texttt{mle} has some work to do) and scatters the data matrix,
 \texttt{X}.
 
