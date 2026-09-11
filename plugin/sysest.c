@@ -976,6 +976,8 @@ static int ols_data_to_sys (equation_system *sys, int mk)
     B = gretl_matrix_alloc(mk, 1);
     V = gretl_zero_matrix_new(mk, mk);
     if (B == NULL || V == NULL) {
+        gretl_matrix_free(B);
+        gretl_matrix_free(V);
         return E_ALLOC;
     }
 
@@ -1129,7 +1131,9 @@ int system_estimate (equation_system *sys, DATASET *dset,
         gretlopt eq_opt;
 
         if (list == NULL) {
-            err = 1;
+            gretl_errmsg_sprintf(_("Couldn't compose a regression list "
+                                  "for equation %d"), i + 1);
+            err = E_DATA;
             break;
         }
 
