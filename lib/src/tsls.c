@@ -522,6 +522,7 @@ static double tsls_get_ldet (gretl_matrix *S, int *err)
     mask = gretl_matrix_rank_mask(S, err);
     if (mask != NULL) {
         *err = gretl_matrix_cut_rows_cols(S, mask);
+        free(mask);
     }
     if (!*err) {
         ret = gretl_matrix_log_determinant(S, err);
@@ -732,6 +733,10 @@ static int tsls_matrix_hausman_test (iv_info *ivi,
     */
 
     xlist = gretl_list_new(ivi->reglist[0] - 1);
+    if (xlist == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
     for (i=1; i<=xlist[0]; i++) {
 	xlist[i] = ivi->reglist[i+1];
     }
@@ -912,6 +917,10 @@ static int tsls_hausman_test (iv_info *ivi, gretlopt opt, DATASET *dset)
        U-model, regressors are from @reglist */
     free(HT_list);
     HT_list = gretl_list_copy(ivi->reglist);
+    if (HT_list == NULL) {
+        err = E_ALLOC;
+        goto bailout;
+    }
     HT_list[1] = nv;
 
 #if TDEBUG
