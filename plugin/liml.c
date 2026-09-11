@@ -164,7 +164,7 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
 
     ymod = malloc(dset->n * sizeof *ymod);
     if (ymod == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
     for (t=0; t<dset->n; t++) {
@@ -184,7 +184,8 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
 	    }
 	    Xi = model_get_Xi(pmod, dset, i);
 	    if (Xi == NULL) {
-		err = 1;
+		gretl_errmsg_set(_("LIML: failed to retrieve k-class data"));
+		err = E_DATA;
 		break;
 	    }
 	    xit = dset->Z[vi][s];
@@ -217,6 +218,7 @@ static double liml_get_ldet (gretl_matrix *W1, int *err)
     if (mask != NULL) {
 	fprintf(stderr, "note: LIML W1 is rank deficient\n");
         *err = gretl_matrix_cut_rows_cols(W1, mask);
+	free(mask);
     }
     if (!*err) {
         ret = gretl_matrix_log_determinant(W1, err);

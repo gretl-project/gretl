@@ -95,7 +95,10 @@ static fiml_system *fiml_system_new (equation_system *sys, int *err)
     }
 
     fsys = malloc(sizeof *fsys);
-    if (fsys == NULL) return NULL;
+    if (fsys == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
 
     fsys->sys = sys;
 
@@ -147,9 +150,10 @@ static fiml_system *fiml_system_new (equation_system *sys, int *err)
     fsys->WB2 = gretl_matrix_alloc(fsys->n, fsys->nendo);
 
     if (get_gretl_matrix_err()) {
+	*err = get_gretl_matrix_err();
 	fiml_system_destroy(fsys);
 	fsys = NULL;
-    }	
+    }
 
     return fsys;
 }
