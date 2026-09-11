@@ -546,6 +546,7 @@ static void multiply_by_VC (gretl_matrix *y,
 	gretl_matrix_free(EVC);
     } else if (m > 0) {
 	/* fallback */
+	gretl_matrix_reuse(y, sN+m, 1);
 	for (i=0; i<m; i++) {
 	    y->val[sN+i] = NADBL;
 	}
@@ -900,7 +901,9 @@ static int prepare_OLS_stats (struct gls_info *G)
     int n = G->CX->rows;
     int err = 0;
 
-    G->se = gretl_matrix_alloc(k, 1);
+    if (G->se == NULL) {
+	G->se = gretl_matrix_alloc(k, 1);
+    }
     if (G->se == NULL) {
 	return E_ALLOC;
     }
@@ -987,7 +990,10 @@ static int cl_ols (struct gls_info *G,
 	/* add C'(CC')^{-1} * \hat{u}_{OLS} */
 	make_alt_VC(G->VC, G->s, G->agg, R_ACF1);
 	make_CVC(G->W, G->VC, G->s, G->agg);
-	gretl_invert_symmetric_matrix(G->W);
+	err = gretl_invert_symmetric_matrix(G->W);
+	if (err) {
+	    goto bailout;
+	}
 	gretl_matrix_reuse(G->Tmp1, N, 1);
 	gretl_matrix_multiply(G->W, G->u, G->Tmp1);
 	multiply_by_VC(y, G, m, 0);
@@ -1007,6 +1013,8 @@ static int cl_ols (struct gls_info *G,
 	    show_regression_results(G, a, 0, prn);
 	}
     }
+
+ bailout:
 
     *rho = a;
 
@@ -1510,7 +1518,11 @@ static gretl_matrix *real_tdisagg (const gretl_matrix *Y0,
 	    /* as per R, tempdisagg, use a constant if
 	       X is not provided */
 	    X0 = gretl_unit_matrix_new(s * ylen, 1);
-	    X = X0;
+	    if (X0 == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		X = X0;
+	    }
 	} else {
 	    int xlen = gretl_vector_get_length(X);
 
