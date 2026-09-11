@@ -194,17 +194,18 @@ kmeans_sil_plot(b, X)
 \end{code}
 
 In the $K$-means context a \textbf{scree plot} provides a perspective on
-whether the right number of clusters has been specified. For 1 to some
+whether the optimal number of clusters has been specified. For 1 to some
 chosen maximum value of $K$ the minimized within-cluster distance is
 computed and plotted against number of clusters. The idea is to look for
 a so-called ``elbow'' where the slope of the curve becomes markedly less
-steep. A scree plot for $K = 1,2,\dots,5$, accepting the default values of
-the associated options, can be produced as follows.
+steep. A scree plot for $K = 1,2,\dots,5$, accepting the default values
+of the associated options, can be produced as follows.
 \begin{code}
 kmeans_screeplot(X, 5)
 \end{code}
 
-You can also obtain the scree data as a two-column matrix:
+You can also use the \dtk{kmeans_scree} function to obtain the scree
+data as a two-column matrix:
 \begin{code}
 matrix S = kmeans_scree(X, 5)
 print S
@@ -222,14 +223,14 @@ of plot described in section~\ref{sec:scripting}.
 
 \begin{figure}[p]
   \centering
-  \includegraphics[scale=0.65]{kmeans_dialog.png}
+  \includegraphics[scale=0.60]{kmeans_dialog.png}
   \caption{K-Means dialog}
   \label{fig:dialog}
 \end{figure}
 
 \begin{figure}[p]
   \centering
-  \includegraphics[scale=0.65]{kmeans_results.png}
+  \includegraphics[scale=0.60]{kmeans_results.png}
   \caption{K-Means results window}
   \label{fig:results}
 \end{figure}
@@ -240,7 +241,7 @@ of plot described in section~\ref{sec:scripting}.
 \label{sec:funcref}
 
 In the function signatures below bundles named \texttt{kmb} are assumed
-to have been obtained via \texttt{kmeans()} or \dtk{kmeans_fit()}. Lists
+to have been obtained from \texttt{kmeans()} or \dtk{kmeans_fit()}. Lists
 named \texttt{X} are assumed to be lists of ``feature'' series.
 
 \begin{funcdoc}
@@ -264,13 +265,14 @@ bundle kmeans_fit (list X, numeric clusters, bundle opts[null])
       \texttt{euclidean}. Alternatives includes
       \texttt{manhattan} and \texttt{chebyshev}; see the help for
       gretl's \texttt{distance()} function for a full list. \\
-    \texttt{init} & string & TBD \\
+    \texttt{init} & string & specifies the initializer for the algorithm:
+                             \texttt{random} (the default) or \texttt{pc} \\
     \dtk{n_draws} & scalar & integer specifying how many times the
       $K$-means algorithm will be run with different randomly
-      selected initial centroids, default 8. \\
+      selected initial centroids, default 10. \\
     \texttt{tolerance} & scalar & value for the improvement in
-      the objective function below which the algorithm is considered as
-      having converged, default 0.0001.\\
+      the objective function below which the algorithm is taken to
+      have converged, default 0.0001.\\
     \texttt{verbosity} & scalar & integer governing printed output: 0 means
       don't print anything; 1, print some details; 2, print more details.
   \end{tabular}
@@ -283,21 +285,28 @@ Table~\ref{tab:fit-return}.
 
 \begin{table}[htbp]
   \centering
+  \vspace{1em}
   \begin{tabular}{llp{0.6\textwidth}}
     \dtk{within_variation} & scalar & sum of within-cluster variation \\
     \dtk{total_variation} & scalar & sum of variation around the global
                                      mean \\
-    \texttt{centroids} & matrix & holds the optimized centroids, $K
-                                  \times n$.\\
-    \dtk{cluster_id} & matrix & $m$-vector recording for each data-point
+    \texttt{centroids} & matrix & the optimized centroids, $K \times n$.\\
+    \dtk{cluster_id} & matrix & $m$-vector indicating for each data-point
                                 the cluster to which it is assigned \\
-    \texttt{distances} & matrix & $m$-vector recording for each
+    \texttt{distances} & matrix & $m$-vector indicating for each
                                   data-point the distance to its
                                   associated centroid\\
-    \texttt{error} & scalar & error code: either 0 for no error
-                              or a positive integer.\\
-    \texttt{nobs} & scalar & the number of observations used.\\
-    \dots & \dots & TO BE COMPLETED
+    \texttt{error} & scalar & error code: 0 for no error,
+                              or a positive integer\\
+    \texttt{nobs} & scalar & the number of observations used\\
+    \texttt{maxiter} & scalar & the maximum number ofiterations
+                                to allow\\
+    \texttt{tolerance} & scalar & threshold for change in objective function
+                                  below which the algorithm is taken to have
+                                  converged\\
+    \texttt{init} & string & the initializer that was used\\
+    \texttt{metric} & string & the metric that was employed\\
+    \texttt{xlist} & list & the list of features
   \end{tabular}
   \caption{Members of the bundle returned by \dtk{kmeans_fit}}
   \label{tab:fit-return}
@@ -344,7 +353,7 @@ void kmeans_plot (list X, bundle kmb)
 \end{verbatim}
   Produces an array of scatter plots, one per pair of features in
   \texttt{X}, factorized by the \dtk{cluster_id} series in
-  \texttt{kmb}. MORE NEEDED.
+  \texttt{kmb}. MORE NEEDED on the options?
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -369,11 +378,11 @@ void kmeans_screeplot (list X, int Kmax[3::5],
 matrix kmeans_scree (list X, int Kmax, bundle opts[null])
 \end{verbatim}
   Produces a two-column matrix representing the ``scree'' field for a
-  $K$-means problem.  The first column holds number of clusters, $K$,
-  from 1 to \texttt{Kmax} and the second holds the minimized
+  $K$-means problem.  The first column holds the number of clusters,
+  $K$, from 1 to \texttt{Kmax} and the second holds the minimized
   within-cluster distance. The \texttt{opts} bundle can hold options
-  relevant to \dtk{kmeans_fit}, which is called several times to fill
-  the matrix.
+  pertaining to \dtk{kmeans_fit}, which is called \texttt{Kmax} times to
+  fill the matrix.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -391,13 +400,12 @@ series kmeans_sil_samples (bundle kmb, list X)
 \begin{verbatim}
 numeric kmeans_sil_score (bundle kmb, list X, bool global[TRUE])
 \end{verbatim}
-  If the \texttt{global} argument has its default value of TRUE or 1
-  this function returns a scalar value, the mean silhouette score for
-  all the observations in \texttt{X}, based on the cluster information
-  in \texttt{kmb}, which should be obtained from \texttt{kmeans} or
-  \dtk{kmeans_fit}. If \texttt{global} is set to FALSE or 0 the return
-  value is a vector holding the mean silhouette score for each of the
-  clusters.
+  If the \texttt{global} argument has its default value of \texttt{TRUE}
+  or 1 this function returns a scalar value, the mean silhouette score
+  for all the observations in \texttt{X}, based on the cluster
+  information in \texttt{kmb}. If \texttt{global} is set to
+  \texttt{FALSE} or 0 the return value is a vector holding the mean
+  silhouette score for each of the clusters.
 \end{funcdoc}
 
 \begin{funcdoc}
@@ -417,10 +425,10 @@ void kmeans_sil_plot (bundle kmb, list X, bundle opts[null])
 \section{Changelog}
 
 \begin{itemize}
-\item Version 2026c (July 2026): first release as an official gretl addon.
+\item Version 2026c (September 2026): first release as an official gretl addon.
 \end{itemize}
 
 FIXME add an account of the changes from the last release as a
-contributed package.
+contributed package?
 
 \end{document}
