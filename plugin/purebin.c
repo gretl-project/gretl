@@ -445,7 +445,9 @@ static int read_purebin_tail (DATASET *bset,
 	for (i=0; i<bset->n; i++) {
 	    j = 0;
 	    while ((c = fgetc(fp)) != '\0') {
-		bset->S[i][j++] = c;
+		if (j < OBSLEN - 1) {
+		    bset->S[i][j++] = c;
+		}
 	    }
 	    bset->S[i][j] = '\0';
 	}
@@ -518,7 +520,9 @@ int purebin_read_data (const char *fname, DATASET *dset,
     for (i=1; i<bset->v; i++) {
 	j = 0;
 	while ((c = fgetc(fp)) != '\0') {
-	    bset->varname[i][j++] = c;
+	    if (j < VNAMELEN - 1) {
+		bset->varname[i][j++] = c;
+	    }
 	}
 	bset->varname[i][j] = '\0';
     }
@@ -620,7 +624,7 @@ int purebin_read_subset (const char *fname, DATASET *dset,
     for (i=1, k=1; i<gh.nvars; i++) {
 	j = 0;
 	while ((c = fgetc(fp)) != '\0') {
-	    if (sel[i]) {
+	    if (sel[i] && j < VNAMELEN - 1) {
 		tmpset->varname[k][j++] = c;
 	    }
 	}
@@ -699,7 +703,9 @@ int purebin_read_varnames (const char *fname,
     for (i=1; i<gh.nvars; i++) {
 	j = 0;
 	while ((c = fgetc(fp)) != '\0') {
-	    vname[j++] = c;
+	    if (j < VNAMELEN - 1) {
+		vname[j++] = c;
+	    }
 	}
 	vname[j] = '\0';
 	S[i] = gretl_strdup(vname);
