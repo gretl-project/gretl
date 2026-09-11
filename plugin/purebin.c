@@ -232,7 +232,11 @@ static char *read_string_with_size (FILE *fp, int skip, int *err)
 	    }
 	} else {
 	    ret = malloc(len + 1);
-	    read_string(ret, len, fp);
+	    if (ret == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		read_string(ret, len, fp);
+	    }
 	}
     } else {
 	fprintf(stderr, "purebin: read_string_with_size failed\n");
@@ -273,6 +277,10 @@ static int read_string_tables (DATASET *dset, int nsv,
 #endif
 	if (sel == NULL || sel[vi]) {
 	    S = calloc(ns, sizeof *S);
+	    if (S == NULL) {
+		err = E_ALLOC;
+		break;
+	    }
 	    for (j=0; j<ns; j++) {
 		S[j] = read_string_with_size(fp, 0, &err);
 	    }
@@ -577,6 +585,10 @@ static int *make_selection_array (int nv, int *vlist)
 {
     int i, *sel = malloc(nv * sizeof *sel);
 
+    if (sel == NULL) {
+	return NULL;
+    }
+
     sel[0] = 0;
     for (i=1; i<nv; i++) {
 	sel[i] = in_gretl_list(vlist, i);
@@ -619,6 +631,11 @@ int purebin_read_subset (const char *fname, DATASET *dset,
     gh_to_bset_transcribe(&gh, tmpset);
 
     sel = make_selection_array(gh.nvars, vlist);
+    if (sel == NULL) {
+	gretl_errmsg_set("gdtb: out of memory");
+	err = E_ALLOC;
+	goto bailout;
+    }
 
     /* variable names */
     for (i=1, k=1; i<gh.nvars; i++) {
