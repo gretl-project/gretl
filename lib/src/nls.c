@@ -1243,7 +1243,7 @@ static int get_nls_derivs (int T, double *g, DATASET *gdset, void *p)
 	    gretl_matrix *m = get_derivative_matrix(spec, j, &err);
 	    int i;
 
-	    for (i=0; i<m->cols && !err; i++) {
+	    for (i=0; !err && i<m->cols; i++) {
 		x = gretl_matrix_get(m, 0, i);
 		for (t=0; t<T; t++) {
 		    if (t > 0 && t < m->rows) {
@@ -1321,7 +1321,7 @@ static int get_mle_gradient (double *b, double *g, int n,
 	}
 	if (matrix_deriv(spec, j)) {
 	    m = get_derivative_matrix(spec, j, &err);
-	    for (k=0; k<m->cols && !err; k++) {
+	    for (k=0; !err && k<m->cols; k++) {
 		g[i] = 0.0;
 		for (t=0; t<m->rows; t++) {
 		    x = gretl_matrix_get(m, t, k);
@@ -3389,7 +3389,7 @@ static int check_spec_requirements (nlspec *spec)
     if (spec->nparam < 1) {
 	gretl_errmsg_set(_("No parameters have been specified"));
 	err = 1;
-    } if (spec->ci == GMM) {
+    } else if (spec->ci == GMM) {
 	err = check_gmm_requirements(spec);
     }
 
