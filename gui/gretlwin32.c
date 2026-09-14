@@ -992,3 +992,56 @@ static int dde_open_pdf (const char *exename,
 
     return err;
 }
+
+// #include <gio/gio.h>
+
+#if GTK_MAJOR_VERSION >= 3
+
+/**
+ * win32_list_subdirs:
+ * @dir_path: path to the directory to scan
+ *
+ * Returns a newly allocated, NULL-terminated array of strings containing
+ * the names of the subdirectories found directly inside @dir_path.
+ * Entries are unsorted (in whatever order GDir returns them).
+ *
+ * Returns: (transfer full): a %NULL-terminated string array, or %NULL on
+ * error. Free with g_strfreev().
+ */
+
+GStrv win32_list_subdirs (const char *dir_path)
+{
+    GDir *dir;
+    const char *name;
+    GStrvBuilder *builder;
+    GStrv result;
+
+    g_return_val_if_fail(dir_path != NULL, NULL);
+
+    dir = g_dir_open(dir_path, 0, NULL);
+    if (dir == NULL) {
+	return NULL;
+    }
+
+    builder = g_strv_builder_new();
+
+    while ((name = g_dir_read_name (dir)) != NULL) {
+	char *full_path = g_build_filename (dir_path, name, NULL);
+
+	if (g_file_test(full_path, G_FILE_TEST_IS_DIR)) {
+	    g_strv_builder_add(builder, name);
+	}
+	g_free(full_path);
+    }
+
+    g_dir_close(dir);
+
+    result = g_strv_builder_end(builder);
+    g_strv_builder_unref(builder);
+
+    return result;
+}
+
+#endif /* GTK3 */
+
+

@@ -60,4 +60,10 @@ int win32_rename_dir (const char *oldname, const char *newname);
 
 void get_default_windows_app_font (char *target, size_t targlen);
 
+# if GTK_MAJOR_VERSION >= 3
+
+GStrv win32_list_subdirs (const char *dir_path);
+
+# endif
+
 #endif /* GRETLWIN32_H */

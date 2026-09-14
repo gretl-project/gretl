@@ -1530,6 +1530,7 @@ static const char **get_list_setting_strings (void *var, int *n)
     }
 #elif defined(G_OS_WIN32) && GTK_MAJOR_VERSION == 3
     else if (var == themepref) {
+
 	static const char *theme_strs[] = {
             "Windows-10", "Windows-10-Dark", "Adwaita",
             "Windows 7"
@@ -1991,6 +1992,29 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 		    strvar = (char *) rc->var;
 		}
 
+#if defined(G_OS_WIN32) && GTK_MAJOR_VERSION >= 3
+		if (rc->var == themepref) {
+		    gchar *theme_dir = NULL;
+		    GStrv themes = NULL;
+
+		    theme_dir = g_build_filename(gretl_home(), "themes", NULL);
+		    themes = win32_list_subdirs(theme_dir);
+		    if (themes != NULL) {
+			int nopt = g_strv_length(themes);
+
+			for (j=0; j<nopt; j++) {
+			    combo_box_append_text(rc->widget, themes[j]);
+			    if (strvar != NULL && !strcmp(themes[j], strvar)) {
+				active = j;
+			    } else if (intvar != NULL && j == *intvar) {
+				active = j;
+			    }
+			}
+			g_strfreev(themes);
+		    }
+		    g_free(theme_dir);
+		}
+#else
 		strs = get_list_setting_strings(rc->var, &nopt);
 		for (j=0; j<nopt; j++) {
 		    combo_box_append_text(rc->widget, _(strs[j]));
@@ -2000,6 +2024,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 			active = j;
 		    }
 		}
+#endif
 	    }
 	    if (tab == TAB_VCV) {
 		int ww = get_string_width("XXArellanoXXXXX");
