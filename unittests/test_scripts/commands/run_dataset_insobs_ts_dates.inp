@@ -1,0 +1,145 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test for a bug in real_insert_observation() (lib/src/dataset.c),
+# reached via "dataset insobs N": when N == 1, a new observation is
+# prepended and everything after it is shifted along by one place, but
+# for a time-series dataset dset->sd0 (and hence dset->stobs) was left
+# untouched. Since observation dates are derived from sd0 plus the
+# observation index, that meant every pre-existing observation silently
+# took on the date of the *next* period, rather than keeping its own
+# date with the new observation dated one period before the old start.
+
+# Given: an annual dataset
+nulldata 10
+setobs 1 1959 --time-series
+string old_first = obslabel(1)
+string old_last = obslabel($nobs)
+
+# When
+dataset insobs 1
+
+# Then: the new first obs is dated one year before the old start, and
+# every pre-existing observation keeps its original date
+assert($nobs == 11)
+assert(obslabel(1) == "1958")
+assert(obslabel(2) == old_first)
+assert(obslabel($nobs) == old_last)
+
+# Given: a quarterly dataset
+nulldata 8
+setobs 4 1990:1 --time-series
+string old_first = obslabel(1)
+
+# When
+dataset insobs 1
+
+# Then
+assert(obslabel(1) == "1989:4")
+assert(obslabel(2) == old_first)
+
+# Given: a monthly dataset
+nulldata 6
+setobs 12 1990:01 --time-series
+string old_first = obslabel(1)
+
+# When
+dataset insobs 1
+
+# Then
+assert(obslabel(1) == "1989:12")
+assert(obslabel(2) == old_first)
+
+# Given: undated daily (5-day) data
+nulldata 10
+setobs 5 1 --time-series
+string old_first = obslabel(1)
+
+# When
+dataset insobs 1
+
+# Then
+assert(obslabel(1) == "0")
+assert(obslabel(2) == old_first)
+
+# Given: dated daily (5-day) data starting on a Monday
+nulldata 10
+setobs 5 2024-01-01 --time-series
+string old_first = obslabel(1)
+string old_last = obslabel($nobs)
+
+# When
+dataset insobs 1
+
+# Then: back up to the preceding business day (Friday, skipping the
+# weekend), not simply the calendar day before
+assert(obslabel(1) == "2023-12-29")
+assert(obslabel(2) == old_first)
+assert(obslabel($nobs) == old_last)
+
+# Given: dated daily (6-day) data starting on a Monday
+nulldata 8
+setobs 6 2024-01-01 --time-series
+string old_first = obslabel(1)
+
+# When
+dataset insobs 1
+
+# Then: back up to the preceding Saturday (Sunday is skipped, but not
+# Saturday, since this is 6-day data)
+assert(obslabel(1) == "2023-12-30")
+assert(obslabel(2) == old_first)
+
+# Given: dated daily (7-day) data
+nulldata 10
+setobs 7 2024-01-01 --time-series
+string old_first = obslabel(1)
+
+# When
+dataset insobs 1
+
+# Then
+assert(obslabel(1) == "2023-12-31")
+assert(obslabel(2) == old_first)
+
+# Given: dated weekly data
+nulldata 10
+setobs 52 2024-01-01 --time-series
+string old_first = obslabel(1)
+
+# When
+dataset insobs 1
+
+# Then
+assert(obslabel(1) == "2023-12-25")
+assert(obslabel(2) == old_first)
+
+# Given: undated weekly data
+nulldata 10
+setobs 52 1 --time-series
+string old_first = obslabel(1)
+
+# When
+dataset insobs 1
+
+# Then
+assert(obslabel(1) == "0")
+assert(obslabel(2) == old_first)
+
+# Given: repeated inserts should keep composing correctly
+nulldata 5
+setobs 1 2000 --time-series
+
+# When
+dataset insobs 1
+dataset insobs 1
+
+# Then
+assert($nobs == 7)
+assert(obslabel(1) == "1998")
+assert(obslabel(2) == "1999")
+assert(obslabel(3) == "2000")
+
+print "Successfully finished tests."
+quit

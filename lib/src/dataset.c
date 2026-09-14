@@ -1356,6 +1356,61 @@ int dataset_add_observations (DATASET *dset, int n, gretlopt opt)
     }
 }
 
+/* When inserting a new observation at the very start of a time-series
+   dataset (@pos == 0), the pre-existing observations must keep their
+   original dates: the effect should be that of prepending one period,
+   not sliding the whole series forward relative to a fixed start date.
+   This works out the value @dset->sd0 must take on to achieve that,
+   i.e. the date one period prior to the current start.
+*/
+
+static double sd0_one_period_back (const DATASET *dset)
+{
+    double sd0 = dset->sd0;
+
+    if (dataset_is_decennial(dset)) {
+	return sd0 - 10;
+    } else if (calendar_data(dset)) {
+	guint32 ed0 = (guint32) sd0;
+
+	if (dset->pd == 52) {
+	    ed0 -= 7;
+	} else if (dset->pd == 7) {
+	    ed0 -= 1;
+	} else {
+	    /* 5- or 6-day daily data: back up, skipping non-trading days */
+	    do {
+		ed0 -= 1;
+	    } while (weekday_from_epoch_day(ed0) == 0 ||
+		     weekday_from_epoch_day(ed0) > dset->pd);
+	}
+	return (double) ed0;
+    } else if (dataset_is_daily(dset) || dataset_is_weekly(dset)) {
+	/* undated daily or weekly data: plain consecutive index */
+	return sd0 - 1;
+    } else if (dset->pd == 1) {
+	return sd0 - 1;
+    } else {
+	/* quarterly, monthly, or other regular sub-annual frequency */
+	int p10 = 10;
+	int pp = dset->pd;
+	int yy = (int) sd0;
+	int subp;
+
+	while ((pp = pp / 10)) {
+	    p10 *= 10;
+	}
+	subp = (int) lrint((sd0 - yy) * p10);
+	if (subp > 1) {
+	    subp--;
+	} else {
+	    subp = dset->pd;
+	    yy--;
+	}
+	return yy + (double) subp / p10;
+    }
+}
+
 static int real_insert_observation (int pos, DATASET *dset)
 {
     double *x;
@@ -1390,6 +1445,20 @@ static int real_insert_observation (int pos, DATASET *dset)
     }
 
     dataset_set_nobs(dset, n);
+
+    if (pos == 0 && dataset_is_time_series(dset)) {
+	/* preserve the dates of the pre-existing observations by
+	   pushing the start date back by one period, rather than
+	   letting them silently shift forward to the next date
+	*/
+	dset->sd0 = sd0_one_period_back(dset);
+	if (calendar_data(dset)) {
+	    calendar_date_string(dset->stobs, 0, dset);
+	} else {
+	    ntolabel(dset->stobs, 0, dset);
+	}
+    }
+
     ntolabel(dset->endobs, n - 1, dset);
 
     return err;
