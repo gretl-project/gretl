@@ -312,8 +312,6 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 
 #ifdef HAVE_MPI /* start common MPI-driver code block */
 
-#include <omp.h>
-
 enum {
     MPI_OPENMPI,
     MPI_MPICH,
