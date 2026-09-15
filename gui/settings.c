@@ -176,9 +176,9 @@ static double graph_scales[] = {
 static int n_graph_scales = G_N_ELEMENTS(graph_scales);
 
 #if defined(MAC_THEMING)
-static char themepref[16] = "Adwaita";
+static char themepref[32] = "Adwaita";
 #elif defined(G_OS_WIN32)
-static char themepref[16] = "Windows-10";
+static char themepref[32] = "Windows-10";
 #endif
 
 /* model table display variables */
@@ -240,7 +240,7 @@ RCVAR rc_vars[] = {
 #endif
 #if defined(MAC_THEMING) || defined(G_OS_WIN32)
     { "themepref", N_("Theme preference"), NULL, themepref,
-      LISTSET | RESTART, 16, TAB_MAIN, NULL },
+      LISTSET | RESTART, 32, TAB_MAIN, NULL },
 #endif
 #if !defined(G_OS_WIN32) && !defined(__APPLE__)
     { "browser", N_("Web browser"), NULL, Browser,
@@ -945,9 +945,9 @@ static int alt_ok (const char *prog)
     }
 
     if (tr) {
-         strcat(test, "tramo/tramo");
+	strcat(test, "tramo/tramo");
     } else {
-         strcat(test, "x12arima/x12a");
+	strcat(test, "x12arima/x12a");
     }
 
     ok = check_for_program(test);
@@ -967,7 +967,7 @@ static int alt_ok (const char *prog)
 
 #if defined(HAVE_TRAMO) && !defined(GRETL_EDIT)
 
-#define tramo_ts(d) ((d)->structure == TIME_SERIES && \
+#define tramo_ts(d) ((d)->structure == TIME_SERIES &&		\
                      (d->pd == 1 || d->pd == 4 || d->pd == 12))
 
 static int tramo_ok = 0;
@@ -1011,7 +1011,7 @@ static void set_tramo_status (void)
 
 #if defined(HAVE_X12A) && !defined(GRETL_EDIT)
 
-#define x12_ts(d) ((d)->structure == TIME_SERIES && \
+#define x12_ts(d) ((d)->structure == TIME_SERIES &&	\
                    (d->pd == 4 || d->pd == 12))
 
 static int x12a_ok = 0;
@@ -1530,14 +1530,24 @@ static const char **get_list_setting_strings (void *var, int *n)
     }
 #elif defined(G_OS_WIN32) && GTK_MAJOR_VERSION == 3
     else if (var == themepref) {
-
+	static const char *all_theme_strs[] = {
+            "Windows-10", "Windows-10-Dark", "Adwaita",
+	    "Win11-round-compact",
+	    "Win11-round-Dark-compact",
+            "Windows 7"
+	};
 	static const char *theme_strs[] = {
             "Windows-10", "Windows-10-Dark", "Adwaita",
             "Windows 7"
 	};
 
-	strs = theme_strs;
-	*n = sizeof theme_strs / sizeof theme_strs[0];
+	if (have_win11_themes()) {
+	    strs = all_theme_strs;
+	    *n = sizeof all_theme_strs / sizeof all_theme_strs[0];
+	} else {
+	    strs = theme_strs;
+	    *n = sizeof theme_strs / sizeof theme_strs[0];
+	}
     }
 #endif
 
@@ -1950,7 +1960,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 #else
             rc->widget = gtk_combo_box_text_new();
 #endif
-
 	    if (tab == TAB_PLOTS || tab == TAB_MAIN) {
 		GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
 
@@ -1992,29 +2001,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 		    strvar = (char *) rc->var;
 		}
 
-#if defined(G_OS_WIN32) && GTK_MAJOR_VERSION >= 3
-		if (rc->var == themepref) {
-		    gchar *theme_dir = NULL;
-		    GStrv themes = NULL;
-
-		    theme_dir = g_build_filename(gretl_home(), "themes", NULL);
-		    themes = win32_list_subdirs(theme_dir);
-		    if (themes != NULL) {
-			int nopt = g_strv_length(themes);
-
-			for (j=0; j<nopt; j++) {
-			    combo_box_append_text(rc->widget, themes[j]);
-			    if (strvar != NULL && !strcmp(themes[j], strvar)) {
-				active = j;
-			    } else if (intvar != NULL && j == *intvar) {
-				active = j;
-			    }
-			}
-			g_strfreev(themes);
-		    }
-		    g_free(theme_dir);
-		}
-#else
 		strs = get_list_setting_strings(rc->var, &nopt);
 		for (j=0; j<nopt; j++) {
 		    combo_box_append_text(rc->widget, _(strs[j]));
@@ -2024,7 +2010,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
 			active = j;
 		    }
 		}
-#endif
 	    }
 	    if (tab == TAB_VCV) {
 		int ww = get_string_width("XXArellanoXXXXX");
@@ -3649,7 +3634,8 @@ void set_up_windows_look (void)
     GtkSettings *settings = gtk_settings_get_default();
     const char *theme_name;
 
-    if (!strncmp(themepref, "Windows-10", 10)) {
+    if (!strncmp(themepref, "Windows-10", 10) ||
+	!strncmp(themepref, "Win11", 5)) {
         g_setenv("GTK_CSD", "0", 1);
     } else {
         g_setenv("GTK_CSD", "1", 1);

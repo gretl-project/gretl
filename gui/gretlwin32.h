@@ -62,7 +62,7 @@ void get_default_windows_app_font (char *target, size_t targlen);
 
 # if GTK_MAJOR_VERSION >= 3
 
-GStrv win32_list_subdirs (const char *dir_path);
+gboolean have_win11_themes (void);
 
 # endif
 

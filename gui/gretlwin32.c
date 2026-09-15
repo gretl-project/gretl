@@ -993,55 +993,38 @@ static int dde_open_pdf (const char *exename,
     return err;
 }
 
-// #include <gio/gio.h>
-
 #if GTK_MAJOR_VERSION >= 3
 
-/**
- * win32_list_subdirs:
- * @dir_path: path to the directory to scan
- *
- * Returns a newly allocated, NULL-terminated array of strings containing
- * the names of the subdirectories found directly inside @dir_path.
- * Entries are unsorted (in whatever order GDir returns them).
- *
- * Returns: (transfer full): a %NULL-terminated string array, or %NULL on
- * error. Free with g_strfreev().
- */
-
-GStrv win32_list_subdirs (const char *dir_path)
+gboolean have_win11_themes (void)
 {
+    const char *test[2] = {
+	"Win11-round-compact",
+	"Win11-round-Dark-compact"
+    };
+    gchar *theme_dir;
+    const gchar *name;
     GDir *dir;
-    const char *name;
-    GStrvBuilder *builder;
-    GStrv result;
+    int i, n = 0;
 
-    g_return_val_if_fail(dir_path != NULL, NULL);
-
-    dir = g_dir_open(dir_path, 0, NULL);
+    theme_dir = g_build_filename(gretl_home(), "share",
+				 "themes", NULL);
+    dir = gretl_opendir(theme_dir);
     if (dir == NULL) {
-	return NULL;
+	return FALSE;
     }
 
-    builder = g_strv_builder_new();
-
-    while ((name = g_dir_read_name (dir)) != NULL) {
-	char *full_path = g_build_filename (dir_path, name, NULL);
-
-	if (g_file_test(full_path, G_FILE_TEST_IS_DIR)) {
-	    g_strv_builder_add(builder, name);
+    while ((name = g_dir_read_name(dir)) != NULL && n < 2) {
+	for (i=0; i<2; i++) {
+	    if (!strcmp(name, test[i])) {
+		n++;
+		break;
+	    }
 	}
-	g_free(full_path);
     }
 
     g_dir_close(dir);
 
-    result = g_strv_builder_end(builder);
-    g_strv_builder_unref(builder);
-
-    return result;
+    return (n == 2);
 }
 
 #endif /* GTK3 */
-
-
