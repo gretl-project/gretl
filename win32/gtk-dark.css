@@ -1,4 +1,5 @@
 * {
+  -GtkComboBox-appears-as-list: true;
   -GtkScrollbar-has-backward-stepper: true;
   -GtkScrollbar-has-forward-stepper: true;
   -GtkScrollbar-has-secondary-backward-stepper: false;
