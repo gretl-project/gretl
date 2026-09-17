@@ -218,7 +218,7 @@ applied literature (see Table \ref{tab:densities}).
     \hline
   \end{tabular}
   \end{footnotesize}
-
+  \begin{small}
 \begin{eqnarray*}
   K(\nu) & = &
   \frac{\Gamma\left[(\nu + 1)/2\right]}  {\sqrt{\pi (\nu - 2)}\Gamma(\nu/2)} \\
@@ -240,6 +240,8 @@ applied literature (see Table \ref{tab:densities}).
   \left(\frac{1 + \lambda}{1 - \lambda}\right)^3 -
   \left(2 \lambda \Gamma(2/\nu)\right)^2 }
 \end{eqnarray*}
+    
+  \end{small}
   \caption{Conditional densities for $\stdu_t$}
   \label{tab:densities}
 \end{table}
@@ -929,12 +931,18 @@ subsection \ref{sec:GUI}).
 The \dtk{gig_plot} function produces a plot that is very similar to
 the one that \app{gretl}'s native GARCH routine gives you after
 estimation, that is a time-plot of the model residuals and the
-estimated conditional standard deviation.
+estimated conditional standard deviation. The \dtk{gig_dplot}
+function, instead, compares the estimated density of the standardised
+innovations to their non-parametric kernel estimate and can be used
+for judging visually how adequate the choice of a conditional
+distribution is.
 
-The \dtk{gig_plot} function, instead, compares the estimated density
-of the standardised innovations to their non-parametric kernel
-estimate and can be used for judging visually how adequate the choice
-of a conditional distribution is.
+The behaviour of both functions can be inflected by means of an
+optional bundle as their second argument. The accepted keys are
+``\texttt{output}'' (a string for storing the output into a graphical
+file) and ``\texttt{fontsize}'' (an integer for changing the font size
+used in the plot). The key ``\texttt{title}'', for changing the plot
+title is available only for the \dtk{gig_plot} function. 
 
 The following code
 fragment exemplifies of their usage in a script; the input code:
@@ -983,10 +991,10 @@ and the plots shown in Figure \ref{fig:ex-plots}.
 The function \dtk{gig_vfgraph}, instead, is a little more complex: it
 takes four arguments. The first one is a matrix with the results of
 the simulations used to forecast the variances, such as the one
-produced by the \dtk{gig_var_fcast} function. The other two are two
-scalars indicating how many observation of the in-sample fitted
-variants you want in the graph and the width of the coverage region
-(between 0 and 1).
+produced by the \dtk{gig_var_fcast} function, followed by the model
+bundle. The last two arguments are two scalars indicating how many
+observation of the in-sample fitted variants you want in the graph and
+the width of the coverage region (between 0 and 1).
 
 \section{Numerical issues}
 \label{sec:numerical}
@@ -1104,7 +1112,7 @@ appreciated, if any of you know of any.
 
 \bibliography{gig}
 
-%\clearpage
+\clearpage
 \appendix
 
 \section{List of functions}
@@ -1211,20 +1219,47 @@ Its arguments are:
 \label{sec:syntax_output}
 
 Note: these functions assume that the bundle they refer to contain a
-model that has already been estimated. No checks is performed.
+model that has already been estimated. No check is performed.
 
 \begin{funcdoc}{gig_print(bundle *b, scalar verbose)}
   Prints out a model.
 \end{funcdoc}
 
-\begin{funcdoc}{gig_plot(bundle *b)}
-  Plots the residuals/conditional SE graph.
+\begin{funcdoc}{gig_plot(bundle *b, bundle opts)}
+  Plots the residuals/conditional SE graph. The \texttt{opts} bundle
+  is optional; the possible options are:
+  \begin{description}
+  \item[fontsize] a non-negative integer (default=9);
+  \item[output] a string with an output file name
+    (default="\texttt{display}");
+  \item[title] a title string for the plot.
+  \end{description}
 \end{funcdoc}
 
-\begin{funcdoc}{gig_dplot(bundle *b)}
+\begin{funcdoc}{gig_dplot(bundle *b, bundle opts)}
   Plots the estimated density of the standardized residuals versus its
-  nonparametric estimate.
+  nonparametric estimate.  The \texttt{opts} bundle
+  is optional; the possible options are:
+  \begin{description}
+  \item[fontsize] a non-negative integer (default=9);
+  \item[output] a string with an output file name
+    (default="\texttt{display}").
+  \end{description}
 \end{funcdoc}
+
+\begin{funcdoc}{gig_vfgraph(const matrix f, bundle mod, scalar before,
+    scalar alpha)}
+  \begin{enumerate}
+  \item a matrix with the results of the simulations used to forecast
+    the variances, such as the one produced by the \dtk{gig_var_fcast}
+    function;
+  \item the model bundle; 
+  \item number of observation of the in-sample to plot; 
+  \item width of the coverage region (between 0 and 1).
+  \end{enumerate}
+\end{funcdoc}
+
+
 
 \clearpage
 

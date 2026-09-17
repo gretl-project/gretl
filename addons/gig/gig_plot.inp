@@ -1,97 +1,3 @@
-function scalar dateton(scalar t)
-    scalar ret dd mm yy
-    string s = obslabel(t)
-    scalar pd = $pd
-
-    if $version<10913
-        string datefmt = "%d/%d/%d"
-    else
-        string datefmt = "%d-%d-%d"
-    endif
-
-    if (pd==5) || (pd==6) || (pd==7)
-        sscanf(s,datefmt, yy, mm, dd)
-        ret = yy + ok(mm)*(mm-1)/12 + ok(dd)*(dd-1)*12/365
-    elif (pd==12) || (pd==4)
-        sscanf(s,"%d:%d", yy, mm)
-        ret = yy + ok(mm)*(mm-1)/pd
-    else
-        ret = t
-    endif
-
-    return ret
-end function
-
-function string do_xtics(scalar t1, scalar t2, scalar d1, scalar d2,
-                         scalar n)
-
-    string ret = "set xtics("
-    s = seq(1,n)/n - 1/(2*n)
-    s_d = d1 + s .* (d2 - d1)
-    t = t1 + (t2 - t1)/(2*n)
-
-    loop i = 1 .. n
-        string tmp = sprintf("'%s' %g", obslabel(round(t)), s_d[i])
-        ret += tmp
-        if i==n
-            ret += ")"
-        else
-            ret += ", "
-        endif
-        t += (t2 - t1)/n
-    endloop
-
-    return ret
-end function
-
-function string gig_grph(string yname, series u, series h)
-
-    series s = sqrt(h)
-    smpl ok(s) --restrict
-
-    scalar t1 = $t1
-    scalar t2 = $t2
-
-    ### FIXME 10/11/2020: this can probably be made much smarter by using
-    ### more recent calendar functions
-    scalar d1 = dateton(t1)
-    scalar d2 = dateton(t2)
-    scalar incr = (d2-d1)/($nobs-1)
-    series xt = d1 + incr*(time - min(time))
-
-    set force_decpoint on
-    string gpbuf = ""
-
-    outfile --buffer=gpbuf
-        printf "set nokey\n"
-        #    printf "unset xzeroaxis\n"
-
-        printf "set title '%s: Residuals and conditional sd'\n", yname
-        printf "%s\n", do_xtics(t1, t2, d1, d2, 6)
-
-        printf "plot '-' using 1:2 title 'residual' w lines, \\\n"
-        printf "'-' using 1:2 w lines lt 2, \\\n"
-        printf "'-' using 1:2 w lines lt 2 \n"
-
-        loop t = t1 .. t2
-            printf "%12.6f %12.6f\n", xt[t], u[t]
-        endloop
-        printf "e\n"
-        loop t = t1 .. t2
-            printf "%12.6f %12.6f\n", xt[t], s[t]
-        endloop
-        printf "e\n"
-        loop t = t1 .. t2
-            printf "%12.6f %12.6f\n", xt[t], -s[t]
-        endloop
-        printf "e\n"
-
-    end outfile
-    set force_decpoint off
-
-    return gpbuf
-end function
-
 function string gig_dgrph(matrix X, string desc)
 
     n = rows(X)
@@ -126,9 +32,36 @@ function string gig_dgrph(matrix X, string desc)
     return gpbuf
 end function
 
-function void gig_plot(bundle *model)
-    string buffer = gig_grph(model.depvarname, model.uhat, model.h)
-    gnuplot --inbuf=buffer --output="display"
+function void gig_plot(bundle *model, bundle opts_in[null])
+
+    # process options
+    opts = _(output="display",
+      title=sprintf("%s: Residuals and conditional sd", model.depvarname),
+      fontsize=9)
+
+    if exists(opts_in)
+        opts = opts_in + opts
+    endif
+    out = opts.output
+    fspec = sprintf("sans,%d", round(opts.fontsize))
+
+    series u = model.uhat
+    series s = sqrt(model.h)
+    smpl ok(s) --restrict
+
+    scalar t1 = $t1
+    scalar t2 = $t2
+
+    lo = -s
+    list PLT = u s lo
+
+    plot PLT
+        options with-lines time-series single-yaxis
+        option font="@fspec"
+        literal set nokey
+        literal set linetype 3 pt 2 lc rgb "#0000FF"
+        printf "set title '%s'\n", opts.title
+    end plot --output="@out"
 end function
 
 function matrix pdf_skt(matrix *e, scalar df, scalar ht_skew)
@@ -173,7 +106,17 @@ function matrix pdf_skged(matrix *x, scalar ni, scalar ta)
     return exp(ret)
 end function
 
-function void gig_dplot(bundle *model)
+function void gig_dplot(bundle *model, bundle opts_in[null])
+    # process options
+    opts = _(output="display",
+      fontsize=9)
+
+    if exists(opts_in)
+        opts = opts_in + opts
+    endif
+    out = opts.output
+    fspec = sprintf("sans,%d", round(opts.fontsize))
+
     series eps = model.stduhat
     matrix X = kdensity(eps)
     scalar dtype = model.cdist
@@ -218,7 +161,7 @@ function void gig_dplot(bundle *model)
     endif
 
     string buffer = gig_dgrph(X~d, descstr)
-    gnuplot --inbuf=buffer --output="display"
+    gnuplot --inbuf=buffer --output="@out" --font="@fspec"
 end function
 
 function void GUI_gig_plot(bundle *model, int ptype[0:2:0] \
