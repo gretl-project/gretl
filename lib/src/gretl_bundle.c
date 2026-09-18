@@ -2931,16 +2931,18 @@ gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
 
 /* serialize a gretl bundled item as XML */
 
-static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
+static int xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 {
     const char *key = keyp;
     bundled_item *item = value;
+    size_t length;
     PRN *prn = p;
+    int err = 0;
 
     if (item->type == GRETL_TYPE_STRING) {
         if (item->data == NULL) {
             fprintf(stderr, "bundle -> XML: skipping NULL string %s\n", key);
-            return;
+            return 0;
         }
     }
 
@@ -2963,7 +2965,13 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
     }
 
     if (item->type == GRETL_TYPE_STRING || item->is_virtual) {
-        gretl_xml_put_string((char *) item->data, prn);
+	length = strlen((char *) item->data);
+	if (length > 1000000000) {
+	    gretl_errmsg_sprintf("string %s: exceeds maximum string length", key);
+	    err = E_DATA;
+	} else {
+	    gretl_xml_put_string((char *) item->data, prn);
+	}
     } else if (item->type == GRETL_TYPE_DOUBLE) {
         double x = *(double *) item->data;
 
@@ -2988,11 +2996,14 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 	       item->type == GRETL_TYPE_SERIES) {
         gretl_matrix *m = (gretl_matrix *) item->data;
 
-        gretl_matrix_serialize(m, NULL, prn);
+	err = gretl_matrix_serialize(m, NULL, prn);
+	if (err) {
+	    gretl_errmsg_sprintf("matrix %s: exceeds maximum XML size", key);
+	}
     } else if (item->type == GRETL_TYPE_BUNDLE) {
         gretl_bundle *b = (gretl_bundle *) item->data;
 
-        gretl_bundle_serialize(b, NULL, prn);
+        err = gretl_bundle_serialize(b, NULL, prn);
     } else if (item->type == GRETL_TYPE_ARRAY) {
         gretl_array *a = (gretl_array *) item->data;
 
@@ -3006,11 +3017,15 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
     }
 
     pputs(prn, "</bundled-item>\n");
+
+    return err;
 }
 
-void gretl_bundle_serialize (gretl_bundle *b, const char *name,
-                             PRN *prn)
+int gretl_bundle_serialize (gretl_bundle *b, const char *name,
+			    PRN *prn)
 {
+    int err = 0;
+
     pputs(prn, "<gretl-bundle");
     if (name != NULL) {
         pprintf(prn, " name=\"%s\"", name);
@@ -3028,10 +3043,18 @@ void gretl_bundle_serialize (gretl_bundle *b, const char *name,
     }
 
     if (b->ht != NULL) {
-        g_hash_table_foreach(b->ht, xml_put_bundled_item, prn);
+	GHashTableIter iter;
+	gpointer keyp, value;
+
+	g_hash_table_iter_init(&iter, b->ht);
+	while (g_hash_table_iter_next(&iter, &keyp, &value) && !err) {
+	    err = xml_put_bundled_item(keyp, value, prn);
+	}
     }
 
     pputs(prn, "</gretl-bundle>\n");
+
+    return err;
 }
 
 static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
@@ -3280,9 +3303,12 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
     if (prn != NULL) {
         gretl_push_c_numeric_locale();
         gretl_xml_header(prn);
-        gretl_bundle_serialize(b, NULL, prn);
+        err = gretl_bundle_serialize(b, NULL, prn);
         gretl_print_destroy(prn);
         gretl_pop_c_numeric_locale();
+	if (err) {
+	    gretl_remove(fullname);
+	}
     }
 
     return err;

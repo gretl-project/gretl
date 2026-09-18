@@ -579,19 +579,23 @@ void gretl_xml_put_tagged_list (const char *tag, const int *list,
  * @name: name for matrix, or NULL.
  * @fp: stream to which to print.
  *
+ * Returns: 0 on success, non-zero if the size of the
+ * serialization exceeds XML_MAX_HUGE_LENGTH.
  */
 
-void gretl_matrix_serialize (const gretl_matrix *m,
-			     const char *name,
-			     PRN *prn)
+int gretl_matrix_serialize (const gretl_matrix *m,
+			    const char *name,
+			    PRN *prn)
 {
     int is_complex = 0;
     const char **S;
+    size_t len = 0;
     double x;
     int i, j;
+    int err = 0;
 
     if (m == NULL) {
-	return;
+	return 0;
     }
 
     if (name == NULL) {
@@ -643,13 +647,13 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 	    x = gretl_matrix_get(m, i, j);
 #ifdef WIN32
 	    if (na(x)) {
-		win32_pprint_nonfinite(prn, x, ' ');
+		len += win32_pprint_nonfinite(prn, x, ' ');
 		continue;
 	    }
 #endif
-	    pprintf(prn, "%.17g ", x);
+	    len += pprintf(prn, "%.17g ", x);
 	}
-	pputs(prn, "\n");
+	len += pputs(prn, "\n");
     }
 
     if (is_complex) {
@@ -657,6 +661,15 @@ void gretl_matrix_serialize (const gretl_matrix *m,
     }
 
     pputs(prn, "</gretl-matrix>\n");
+
+    if (len > (size_t) 1000000000) {
+	if (name != NULL) {
+	    gretl_errmsg_sprintf("matrix %s: exceeds maximum XML size", name);
+	}
+	err = E_DATA;
+    }
+
+    return err;
 }
 
 /**

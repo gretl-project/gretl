@@ -151,9 +151,9 @@ void gretl_xml_put_tagged_list (const char *tag,
 				const int *list,
 				PRN *prn);
 
-void gretl_matrix_serialize (const gretl_matrix *m,
-			     const char *name,
-			     PRN *prn);
+int gretl_matrix_serialize (const gretl_matrix *m,
+			    const char *name,
+			    PRN *prn);
 
 void gretl_list_serialize (const int *list,
 			   const char *name,

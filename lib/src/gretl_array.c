@@ -2200,12 +2200,13 @@ int gretl_array_print_range (gretl_array *A, int imin, int imax, PRN *prn)
    which contains one or more arrays.
 */
 
-void gretl_array_serialize (gretl_array *A, PRN *prn)
+int gretl_array_serialize (gretl_array *A, PRN *prn)
 {
     GretlType type;
     const char *subname;
     void *ptr;
     int i;
+    int err = 0;
 
     type = gretl_type_get_singular(A->type);
     subname = gretl_type_get_name(type);
@@ -2213,24 +2214,26 @@ void gretl_array_serialize (gretl_array *A, PRN *prn)
     pprintf(prn, "<gretl-array type=\"%s\" length=\"%d\">\n",
 	    gretl_type_get_name(A->type), A->n);
 
-    for (i=0; i<A->n; i++) {
+    for (i=0; i<A->n && !err; i++) {
 	ptr = A->data[i];
 	if (ptr == NULL) {
 	    pprintf(prn, "<%s placeholder=\"true\"/>\n", subname);
 	} else if (type == GRETL_TYPE_STRING) {
 	    gretl_xml_put_tagged_string("string", ptr, prn);
 	} else if (type == GRETL_TYPE_MATRIX) {
-	    gretl_matrix_serialize(ptr, NULL, prn);
+	    err = gretl_matrix_serialize(ptr, NULL, prn);
 	} else if (type == GRETL_TYPE_BUNDLE) {
-	    gretl_bundle_serialize(ptr, NULL, prn);
+	    err = gretl_bundle_serialize(ptr, NULL, prn);
 	} else if (type == GRETL_TYPE_ARRAY) {
-	    gretl_array_serialize(ptr, prn);
+	    err = gretl_array_serialize(ptr, prn);
 	} else if (type == GRETL_TYPE_LIST) {
 	    gretl_xml_put_tagged_list("list", ptr, prn);
 	}
     }
 
     pputs(prn, "</gretl-array>\n");
+
+    return err;
 }
 
 static int name_matches_array_type (char *s, GretlType type)

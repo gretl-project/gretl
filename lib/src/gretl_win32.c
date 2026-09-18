@@ -2132,19 +2132,23 @@ double win32_sscan_nonfinite (const char *s, int *err)
     }
 }
 
-void win32_pprint_nonfinite (PRN *prn, double x, char c)
+int win32_pprint_nonfinite (PRN *prn, double x, char c)
 {
+    int n = 0;
+
     if (isnan(x)) {
-	pputs(prn, "nan");
+	n += pputs(prn, "nan");
     } else if (x < 0) {
-	pputs(prn, "-inf");
+	n += pputs(prn, "-inf");
     } else {
-	pputs(prn, "inf");
+	n += pputs(prn, "inf");
     }
 
     if (c != 0) {
-	pputc(prn, c);
+	n += pputc(prn, c);
     }
+
+    return n;
 }
 
 double win32_get_time (void)

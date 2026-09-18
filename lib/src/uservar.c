@@ -1551,11 +1551,15 @@ char *temp_name_for_bundle (void)
     return gretl_strdup(tmpname);
 }
 
-static void xml_put_user_matrix (user_var *u, PRN *prn)
+static int xml_put_user_matrix (user_var *u, PRN *prn)
 {
+    int err = 0;
+
     if (u != NULL && u->ptr != NULL) {
-        gretl_matrix_serialize(u->ptr, u->name, prn);
+        err = gretl_matrix_serialize(u->ptr, u->name, prn);
     }
+
+    return err;
 }
 
 static void write_scalar_value (double x, const char *fmt, PRN *prn)
@@ -2159,15 +2163,17 @@ static void write_user_lists (PRN *prn)
 
 static void write_user_bundles (PRN *prn)
 {
-    int i;
+    int i, err = 0;
 
-    for (i=0; i<n_vars; i++) {
+    for (i=0; i<n_vars && !err; i++) {
         if (uvars[i]->type == GRETL_TYPE_BUNDLE) {
-            gretl_bundle_serialize(uvars[i]->ptr,
-                                   uvars[i]->name,
-                                   prn);
+            err = gretl_bundle_serialize(uvars[i]->ptr,
+					 uvars[i]->name,
+					 prn);
         }
     }
+
+    // return err; NOT YET
 }
 
 static int read_user_scalars (xmlDocPtr doc, xmlNodePtr cur)

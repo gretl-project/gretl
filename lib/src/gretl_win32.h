@@ -104,7 +104,7 @@ double win32_fscan_nonfinite (FILE *fp, int *err);
 
 double win32_sscan_nonfinite (const char *s, int *err);
 
-void win32_pprint_nonfinite (PRN *prn, double x, char c);
+int win32_pprint_nonfinite (PRN *prn, double x, char c);
 
 double win32_get_time (void);
 
