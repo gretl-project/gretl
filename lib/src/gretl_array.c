@@ -132,6 +132,13 @@ void gretl_array_nullify_elements (gretl_array *A)
     }
 }
 
+void gretl_array_nullify_element (gretl_array *A, int i)
+{
+    if (A != NULL && A->data != NULL) {
+        A->data[i] = NULL;
+    }
+}
+
 static int array_allocate_storage (gretl_array *A)
 {
     int i, err = 0;

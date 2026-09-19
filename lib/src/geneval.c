@@ -18379,6 +18379,34 @@ static int empty_ok (NODE *n, parser *p)
     }
 }
 
+static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
+{
+    /* Marcin */
+    GretlType type = GRETL_TYPE_NONE;
+    int idx = node_get_int(r, p) - 1;
+    void *val = gretl_array_get_element(l->v.a, idx, &type, &p->err);
+    if (p->err) {
+        return NULL;
+    }
+
+    NODE *ret = aux_node_for_type(type, p);
+
+    if (type == GRETL_TYPE_STRING) {
+        ret->v.str = (char *) val;
+    } else if (type == GRETL_TYPE_MATRIX) {
+        ret->v.m = (gretl_matrix *) val;
+    } else if (type == GRETL_TYPE_BUNDLE) {
+        ret->v.b = (gretl_bundle *) val;
+    } else {
+        p->err = E_DATA;
+    }
+
+    /* finally we NULL the source */
+    gretl_array_nullify_element(l->v.a, idx);
+
+    return ret;
+}
+
 /* core function: evaluate the parsed syntax tree */
 
 static NODE *eval (NODE *t, parser *p)
@@ -19661,12 +19689,11 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_STEAL:
-        /* two new functions by Marcin */
+        /* Marcin */
         if (l->t == BUNDLE && r->t == STR) {
             ret = get_or_steal_bundle_member(l, r, p, 1);
         } else if (l->t == ARRAY && r->t == NUM) {
-            printf("\n *** steal from array *** \n");
-            ret = newempty();
+            ret = gretl_array_steal_element(l, r, p);
         } else {
             p->err = E_INVARG;
         }
