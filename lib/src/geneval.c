@@ -18399,10 +18399,13 @@ static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
         ret->v.b = (gretl_bundle *) val;
     } else {
         p->err = E_DATA;
+        return NULL;
     }
 
     /* finally we NULL the source */
-    gretl_array_nullify_element(l->v.a, idx);
+    if (gretl_array_nullify_element(l->v.a, idx)) {
+        return NULL;
+    }
 
     return ret;
 }

@@ -28,7 +28,7 @@ void gretl_array_nullify_content (gretl_array *A);
 
 void gretl_array_nullify_elements (gretl_array *A);
 
-void gretl_array_nullify_element (gretl_array *A, int i);
+int gretl_array_nullify_element (gretl_array *A, int i);
 
 gretl_array *gretl_array_new (GretlType type, int n, int *err);
 
