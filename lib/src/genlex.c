@@ -613,6 +613,7 @@ struct str_table funcs[] = {
     { F_WHICH,     "which"},
     { F_GPCOLORS,  "gpcolors"},
     { F_PERMUTE,   "permute"},
+    { F_STEAL,      "steal"},
     { 0,           NULL }
 };
 

@@ -11891,9 +11891,10 @@ static NODE *virtual_object_node (NODE *n,
 /* Getting an object from within a bundle: on the left is the bundle
    reference, on the right should be a string: the key to look up to get
    content.
+   @steal means we steal value from a bundle
 */
 
-static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
+static NODE *get_or_steal_bundle_member (NODE *l, NODE *r, parser *p, int steal)
 {
     char *key = r->v.str;
     GretlType type;
@@ -11916,8 +11917,13 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
         return ret;
     }
 
-    val = gretl_bundle_get_element(l->v.b, key, &type,
-				   &is_virtual, &p->err);
+    /* steal get item from a bundle */
+    if (steal) {
+        val = gretl_bundle_steal_data(l->v.b, key, &type, &p->err);
+    } else {
+        val = gretl_bundle_get_element(l->v.b, key, &type, &is_virtual, &p->err);
+    }
+
     if (p->err) {
         return ret;
     }
@@ -11933,22 +11939,25 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     }
 
     if (is_virtual) {
-	ret = virtual_object_node(l, (const char *) val,
-				  type, &is_tmp, p);
+        ret = virtual_object_node(l, (const char *) val, type, &is_tmp, p);
     } else if (gretl_is_scalar_type(type)) {
-        ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
+        if (steal) {
+            ret->v.xval = *(double *) val;
+        } else {
+            ret->v.xval = gretl_bundle_get_scalar(l->v.b, key, NULL);
+        }
     } else if (type == GRETL_TYPE_STRING) {
         ret->v.str = (char *) val;
     } else if (type == GRETL_TYPE_MATRIX) {
         ret->v.m = (gretl_matrix *) val;
     } else if (type == GRETL_TYPE_SERIES) {
-	ret = bundled_series_node(l, (gretl_matrix *) val, 0, &is_tmp, p);
+        ret = bundled_series_node(l, (gretl_matrix *) val, 0, &is_tmp, p);
     } else if (type == GRETL_TYPE_BUNDLE) {
         ret->v.b = (gretl_bundle *) val;
     } else if (type == GRETL_TYPE_ARRAY) {
         ret->v.a = (gretl_array *) val;
     } else if (type == GRETL_TYPE_LIST) {
-	attach_bundled_list(ret, (int *) val, &is_tmp, p);
+        attach_bundled_list(ret, (int *) val, &is_tmp, p);
     } else {
         p->err = E_DATA;
     }
@@ -16235,7 +16244,7 @@ static NODE **multi_node_from_bundle (gretl_bundle *b, int *pargc,
                 nn[i] = fevalb_get_bundled_series(b, S[i], p);
             } else {
                 sn.v.str = S[i];
-                nn[i] = get_bundle_member(&bn, &sn, p);
+                nn[i] = get_or_steal_bundle_member(&bn, &sn, p, 0);
             }
             if (p->err) {
                 break;
@@ -19047,7 +19056,7 @@ static NODE *eval (NODE *t, parser *p)
                 if (t->flags & LHT_NODE) {
                     ret = lhs_terminal_node(t, l, r, p);
                 } else {
-                    ret = get_bundle_member(l, r, p);
+                    ret = get_or_steal_bundle_member(l, r, p, 0);
                 }
             } else {
                 ret = test_bundle_key(l, r, p);
@@ -19069,7 +19078,7 @@ static NODE *eval (NODE *t, parser *p)
     case DBMEMB:
         /* name of $-bundle plus string */
         if (l->t == BUNDLE && r->t == STR) {
-            ret = get_bundle_member(l, r, p);
+            ret = get_or_steal_bundle_member(l, r, p, 0);
         } else if (l->t == DBUNDLE && r->t == STR) {
             ret = model_var_node(l, r, p);
         } else if (r->t != STR) {
@@ -19649,6 +19658,17 @@ static NODE *eval (NODE *t, parser *p)
             }
         } else {
             p->err = E_TYPES;
+        }
+        break;
+    case F_STEAL:
+        /* two new functions by Marcin */
+        if (l->t == BUNDLE && r->t == STR) {
+            ret = get_or_steal_bundle_member(l, r, p, 1);
+        } else if (l->t == ARRAY && r->t == NUM) {
+            printf("\n *** steal from array *** \n");
+            ret = newempty();
+        } else {
+            p->err = E_INVARG;
         }
         break;
     case F_MSHAPE:

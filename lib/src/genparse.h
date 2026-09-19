@@ -399,6 +399,7 @@ enum {
     F_MNORM,
     F_LNMGAMMA,
     F_NULLSPC,
+    F_STEAL,
     HF_VCNORM,
     HF_GLASSO,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
