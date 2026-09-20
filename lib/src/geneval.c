@@ -14342,7 +14342,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         } else if (m->t == ARRAY && r->t == NUM) {
             idx = node_get_int(r, p) - 1;
 
-            if (!gen_type_is_arrayable(l->t) || !is_null_array_element(m->v.a, idx)) {
+            if (!gen_type_is_arrayable(l->t) || is_not_null_array_element(m->v.a, idx)) {
                 p->err = E_INVARG;
                 return NULL;
             }
