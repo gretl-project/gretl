@@ -14323,13 +14323,14 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	}
     } else if (f == F_DONATE) {
         /* Marcin
-         * note: we require the first argument be a uservar
+         * note: we require the first argument to be a uservar
          */
         if (l->uv == NULL) {
             p->err = E_INVARG;
             return NULL;
         }
         int donate_mode; /* 1: BUNDLE, 2: ARRAY */
+        int idx = 0;
 
         /* we work with either bundle or array */
         if (m->t == BUNDLE && r->t == STR) {
@@ -14339,8 +14340,9 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             }
             donate_mode = 1;
         } else if (m->t == ARRAY && r->t == NUM) {
-            printf("\t *** we donate to ARRAY **\n");
-            if (!gen_type_is_arrayable(l->t)) {
+            idx = node_get_int(r, p) - 1;
+
+            if (!gen_type_is_arrayable(l->t) || !is_null_array_element(m->v.a, idx)) {
                 p->err = E_INVARG;
                 return NULL;
             }
@@ -14354,6 +14356,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 
         if (donate_mode == 1) {
             p->err = gretl_bundle_donate_data(m->v.b, r->v.str, val, type);
+        } else if (donate_mode == 2) {
+            p->err = gretl_array_set_element(m->v.a, idx, val, type, 0);
         }
     }
 

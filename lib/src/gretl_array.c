@@ -2696,3 +2696,15 @@ int arglist_validate (gretl_array *keys, gretl_array *args)
 
     return found == n_keys;
 }
+
+int is_null_array_element (gretl_array *A, int i)
+{
+    if (A == NULL || A->data == NULL) {
+        return E_DATA;
+    }
+    if (i < 0 || i >= A->n) {
+        return E_BOUNDS;
+    }
+
+    return A->data[i] == NULL ? 1 : 0;
+}
