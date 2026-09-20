@@ -132,6 +132,10 @@ void gretl_array_nullify_elements (gretl_array *A)
     }
 }
 
+/* Specialized version of the above which works for
+ * given index. Used when stealing element of array.
+ */
+
 int gretl_array_nullify_element (gretl_array *A, int i)
 {
     if (A == NULL || A->data == NULL) {

@@ -18379,6 +18379,12 @@ static int empty_ok (NODE *n, parser *p)
     }
 }
 
+/* steal element of array and nullify position
+ * we assume @l is valid ARRAY and @r is valid NUM
+ * note, that element is returned _only_ if nothing
+ * went wrong (including nullifying position in array)
+ */
+
 static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
 {
     /* Marcin */
@@ -18402,7 +18408,7 @@ static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
         return NULL;
     }
 
-    /* finally we NULL the source */
+    /* finally we nullify the position in array */
     p->err = gretl_array_nullify_element(l->v.a, idx);
     if (p->err) {
         return NULL;
