@@ -14321,6 +14321,40 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	    free(alist);
 	}
+    } else if (f == F_DONATE) {
+        /* Marcin
+         * note: we require the first argument be a uservar
+         */
+        if (l->uv == NULL) {
+            p->err = E_INVARG;
+            return NULL;
+        }
+        int donate_mode; /* 1: BUNDLE, 2: ARRAY */
+
+        /* we work with either bundle or array */
+        if (m->t == BUNDLE && r->t == STR) {
+            if (!ok_bundled_type(l->t) || gretl_bundle_has_key(m->v.b, r->v.str)) {
+                p->err = E_INVARG;
+                return NULL;
+            }
+            donate_mode = 1;
+        } else if (m->t == ARRAY && r->t == NUM) {
+            printf("\t *** we donate to ARRAY **\n");
+            if (!gen_type_is_arrayable(l->t)) {
+                p->err = E_INVARG;
+                return NULL;
+            }
+            donate_mode = 2;
+        } else {
+            p->err = E_INVARG;
+            return NULL;
+        }
+        GretlType type = gretl_type_from_gen_type(l->t);
+        void *val = user_var_unstack_value(l->uv);
+
+        if (donate_mode == 1) {
+            p->err = gretl_bundle_donate_data(m->v.b, r->v.str, val, type);
+        }
     }
 
     if (post_process) {
@@ -19746,6 +19780,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_CDEMEAN:
     case F_TSOLVEPD:
     case F_KMEANS:
+    case F_DONATE:
     case HF_REGLS:
         /* built-in functions taking three args */
         if (t->t == F_REPLACE) {
