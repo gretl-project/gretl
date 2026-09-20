@@ -14352,12 +14352,23 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             return NULL;
         }
         GretlType type = gretl_type_from_gen_type(l->t);
+        const char *uv_name = user_var_get_name(l->uv);
         void *val = user_var_unstack_value(l->uv);
+
+        if (val == NULL) {
+            p->err = E_DATA;
+            return NULL;
+        }
 
         if (donate_mode == 1) {
             p->err = gretl_bundle_donate_data(m->v.b, r->v.str, val, type);
         } else if (donate_mode == 2) {
             p->err = gretl_array_set_element(m->v.a, idx, val, type, 0);
+        }
+
+        /* we restore uservar if there was an error */
+        if (p->err) {
+            l->uv = alt_user_var_add(uv_name, type, val);
         }
     }
 
