@@ -11938,6 +11938,12 @@ static NODE *get_or_steal_bundle_member (NODE *l, NODE *r, parser *p, int steal)
 	ret = aux_node_for_type(type, p);
     }
 
+    /* in steal mode, we check if we deal with same types */
+    if (steal && (p->targ != ret->t)) {
+        p->err = E_TYPES;
+        return NULL;
+    }
+
     if (is_virtual) {
         ret = virtual_object_node(l, (const char *) val, type, &is_tmp, p);
     } else if (gretl_is_scalar_type(type)) {
@@ -18445,6 +18451,12 @@ static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
     }
 
     NODE *ret = aux_node_for_type(type, p);
+
+    /* we check if we deal with same types */
+    if (p->targ != ret->t) {
+        p->err = E_TYPES;
+        return NULL;
+    }
 
     if (type == GRETL_TYPE_STRING) {
         ret->v.str = (char *) val;
