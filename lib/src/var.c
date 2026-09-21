@@ -5233,13 +5233,13 @@ static int inject_params (GRETL_VAR *var)
     }
 
     gretl_matrix_free(var->jinfo->Alpha);
-    var->jinfo->Alpha = gretl_bundle_steal_data(b, "alpha", NULL, NULL, &err);
+    var->jinfo->Alpha = gretl_bundle_steal_data(b, "alpha", NULL, &err);
     gretl_matrix_free(var->jinfo->Beta);
-    var->jinfo->Beta = gretl_bundle_steal_data(b, "beta", NULL, NULL, &err);
+    var->jinfo->Beta = gretl_bundle_steal_data(b, "beta", NULL, &err);
     gretl_matrix_free(var->jinfo->Gamma);
-    var->jinfo->Gamma = gretl_bundle_steal_data(b, "Gamma", NULL, NULL, &err);
+    var->jinfo->Gamma = gretl_bundle_steal_data(b, "Gamma", NULL, &err);
     gretl_matrix_free(var->S);
-    var->S = gretl_bundle_steal_data(b, "Omega", NULL, NULL, &err);
+    var->S = gretl_bundle_steal_data(b, "Omega", NULL, &err);
 
     return err;
 }
