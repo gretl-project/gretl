@@ -14328,22 +14328,22 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    free(alist);
 	}
     } else if (f == F_DONATE) {
-	NODE *src = NULL;
-	GretlType type;
-	void *val = NULL;
-	int target = 0;
-	int idx = 0;
+        NODE *src = NULL;
+        GretlType type;
+        void *val = NULL;
+        int target = 0;
+        int idx = 0;
 
-	post_process = 0;
+        post_process = 0;
 
-	if (l->t != U_ADDR) {
-	    p->err = E_INVARG;
-	} else {
-	    src = ptr_node_get_referent_node(l, p);
-	}
-	if (p->err) {
-	    return NULL;
-	}
+        if (l->t != U_ADDR) { /* this condition looks invalid */
+            p->err = E_INVARG;
+        } else {
+            src = ptr_node_get_referent_node(l, p);
+        }
+        if (p->err) {
+            return NULL;
+        }
 
         if (m->t == BUNDLE && r->t == STR) {
             if (!ok_bundled_type(src->t) || gretl_bundle_has_key(m->v.b, r->v.str)) {
@@ -14353,7 +14353,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             target = BUNDLE;
         } else if (m->t == ARRAY && r->t == NUM) {
             idx = node_get_int(r, p) - 1;
-	    /* Is the second restriction below really wanted? */
+            /* Is the second restriction below really wanted? */
             if (!gen_type_is_arrayable(src->t) || !is_null_array_element(m->v.a, idx)) {
                 p->err = E_INVARG;
                 return NULL;
@@ -14364,25 +14364,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             return NULL;
         }
 
-	val = user_var_steal_value(src->uv);
+        val = user_var_steal_value(src->uv);
         if (val == NULL) {
             p->err = E_DATA;
             return NULL;
         }
 
-	type = gretl_type_from_gen_type(src->t);
+        type = gretl_type_from_gen_type(src->t);
         if (target == BUNDLE) {
             p->err = gretl_bundle_donate_data(m->v.b, r->v.str, val, type);
         } else if (target == ARRAY) {
             p->err = gretl_array_set_element(m->v.a, idx, val, type, 0);
         }
 
-	if (p->err) {
-	    /* restore the uservar's data */
-	    user_var_set_pointer(src->uv, val);
-	} else {
-	    user_var_delete(src->uv);
-	}
+        if (p->err) {
+            /* restore the uservar's data */
+            user_var_set_pointer(src->uv, val);
+        } else {
+            user_var_delete(src->uv);
+        }
     }
 
     if (post_process) {
