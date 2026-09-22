@@ -700,6 +700,13 @@ void *gretl_bundle_steal_data (gretl_bundle *bundle, const char *key,
             bundled_item *item = p;
             gchar *keycpy = NULL;
 
+	    if (item->is_virtual) {
+		if (err != NULL) {
+		    *err = E_INVARG;
+		}
+		return NULL;
+	    }
+
             ret = item->data;
             if (type != NULL) {
                 *type = item->type;
@@ -715,6 +722,10 @@ void *gretl_bundle_steal_data (gretl_bundle *bundle, const char *key,
                 }
             }
             g_hash_table_steal(bundle->ht, key);
+	    /* g_hash_table_steal() frees neither the data nor
+	       the associated key: here we free the key manually,
+	       having saved a pointer to it.
+	    */
             g_free(keycpy);
             g_list_free(keys);
             free(item);
