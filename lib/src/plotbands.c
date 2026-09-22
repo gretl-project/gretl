@@ -429,18 +429,17 @@ static band_info *band_info_from_bundle (int matrix_mode,
 static int band_matrices_differ (const gretl_matrix *a,
                                  const gretl_matrix *b)
 {
-    const void *p0 = a;
-    const void *p1 = b;
+    int n = a->rows * a->cols;
 
-    if (p1 - p0 == 0) {
-        return 0;
-    } else if (a->rows * a->cols != b->rows * b->cols) {
+    if (n != b->rows * b->cols) {
         return 1;
     } else {
-        int i, n = a->rows * a->cols;
+        int i;
 
         for (i=0; i<n; i++) {
-            if (a->val[i] != b->val[i]) {
+	    if (na(a->val[i]) && na(b->val[i])) {
+		continue;
+	    } else if (a->val[i] != b->val[i]) {
                 return 1;
             }
         }
@@ -486,8 +485,7 @@ static int swap_bands_order (gretl_array *a, int *err)
         const gretl_matrix *m0 = retrieve_bandmat(b0, err);
         const gretl_matrix *m1 = retrieve_bandmat(b1, err);
 
-        if (m0 == NULL || m1 == NULL ||
-            band_matrices_differ(m0, m1)) {
+        if (m0 == NULL || m1 == NULL || band_matrices_differ(m0, m1)) {
             return 0;
         }
     } else if (gretl_bundle_has_key(b0, "center") &&
@@ -525,10 +523,10 @@ static band_info **get_band_info_array (int matrix_mode,
     const char *s = get_optval_string(GNUPLOT, OPT_a);
     gretl_array *a = get_array_by_name(s);
     band_info **pbi = NULL;
-    int n = 0;
+    int nb = 0;
     int swap = 0;
 
-    if ((n = gretl_array_get_length(a)) < 1) {
+    if ((nb = gretl_array_get_length(a)) < 1) {
 	fprintf(stderr, "get_band_info_array: array has no content\n");
         *err = E_DATA;
         return NULL;
@@ -538,18 +536,18 @@ static band_info **get_band_info_array (int matrix_mode,
         return NULL;
     }
 
-    if (n == 2) {
+    if (nb == 2) {
         swap = swap_bands_order(a, err);
     }
 
-    pbi = calloc(n, sizeof *pbi);
+    pbi = calloc(nb, sizeof *pbi);
     if (pbi == NULL) {
         *err = E_ALLOC;
     } else {
 	gretl_bundle *b;
         int i, j;
 
-        for (i=0; i<n && !*err; i++) {
+        for (i=0; i<nb && !*err; i++) {
             b = gretl_array_get_data(a, swap ? 1 - i : i);
             pbi[i] = band_info_from_bundle(matrix_mode, b, gi, dset, err);
         }
@@ -560,7 +558,7 @@ static band_info **get_band_info_array (int matrix_mode,
             free(pbi);
             pbi = NULL;
         } else {
-            *n_bands = n;
+            *n_bands = nb;
         }
     }
 
