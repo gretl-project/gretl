@@ -14328,7 +14328,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    free(alist);
 	}
     } else if (f == F_DONATE) {
-	NODE *src;
+	NODE *src = NULL;
 	GretlType type;
 	void *val = NULL;
 	int target = 0;
