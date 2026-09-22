@@ -14336,7 +14336,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 
         post_process = 0;
 
-        if (l->t != U_ADDR) { /* this condition looks invalid */
+        if (l->t != U_ADDR) {
             p->err = E_INVARG;
         } else {
             src = ptr_node_get_referent_node(l, p);
