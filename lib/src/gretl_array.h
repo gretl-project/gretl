@@ -213,6 +213,6 @@ int gretl_arrays_are_equal (const gretl_array *a,
 
 int arglist_validate (gretl_array *keys, gretl_array *args);
 
-int is_not_null_array_element (gretl_array *a, int i);
+int is_null_array_element (gretl_array *a, int i);
 
 #endif /* GRETL_ARRAY_H_ */

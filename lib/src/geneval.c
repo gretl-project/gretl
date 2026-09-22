@@ -14328,54 +14328,61 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    free(alist);
 	}
     } else if (f == F_DONATE) {
-        /* Marcin
-         * note: we require the first argument to be a uservar
-         */
-        if (l->uv == NULL) {
-            p->err = E_INVARG;
-            return NULL;
-        }
-        int donate_mode; /* 1: BUNDLE, 2: ARRAY */
-        int idx = 0;
+	NODE *src;
+	GretlType type;
+	void *val = NULL;
+	int target = 0;
+	int idx = 0;
 
-        /* we work with either bundle or array */
+	post_process = 0;
+
+	if (l->t != U_ADDR) {
+	    p->err = E_INVARG;
+	} else {
+	    src = ptr_node_get_referent_node(l, p);
+	}
+	if (p->err) {
+	    return NULL;
+	}
+
         if (m->t == BUNDLE && r->t == STR) {
-            if (!ok_bundled_type(l->t) || gretl_bundle_has_key(m->v.b, r->v.str)) {
+            if (!ok_bundled_type(src->t) || gretl_bundle_has_key(m->v.b, r->v.str)) {
                 p->err = E_INVARG;
                 return NULL;
             }
-            donate_mode = 1;
+            target = BUNDLE;
         } else if (m->t == ARRAY && r->t == NUM) {
             idx = node_get_int(r, p) - 1;
-
-            if (!gen_type_is_arrayable(l->t) || is_not_null_array_element(m->v.a, idx)) {
+	    /* Is the second restriction below really wanted? */
+            if (!gen_type_is_arrayable(src->t) || !is_null_array_element(m->v.a, idx)) {
                 p->err = E_INVARG;
                 return NULL;
             }
-            donate_mode = 2;
+            target = ARRAY;
         } else {
             p->err = E_INVARG;
             return NULL;
         }
-        GretlType type = gretl_type_from_gen_type(l->t);
-        const char *uv_name = user_var_get_name(l->uv);
-        void *val = user_var_unstack_value(l->uv);
 
+	val = user_var_steal_value(src->uv);
         if (val == NULL) {
             p->err = E_DATA;
             return NULL;
         }
 
-        if (donate_mode == 1) {
+	type = gretl_type_from_gen_type(src->t);
+        if (target == BUNDLE) {
             p->err = gretl_bundle_donate_data(m->v.b, r->v.str, val, type);
-        } else if (donate_mode == 2) {
+        } else if (target == ARRAY) {
             p->err = gretl_array_set_element(m->v.a, idx, val, type, 0);
         }
 
-        /* we restore uservar if there was an error */
-        if (p->err) {
-            l->uv = alt_user_var_add(uv_name, type, val);
-        }
+	if (p->err) {
+	    /* restore the uservar's data */
+	    user_var_set_pointer(src->uv, val);
+	} else {
+	    user_var_delete(src->uv);
+	}
     }
 
     if (post_process) {
@@ -18434,25 +18441,30 @@ static int empty_ok (NODE *n, parser *p)
     }
 }
 
-/* steal element of array and nullify position
- * we assume @l is valid ARRAY and @r is valid NUM
- * note, that element is returned _only_ if nothing
- * went wrong (including nullifying position in array)
+/* Steal an element of an array and nullify its position.  We assume @l
+ * holds a valid ARRAY and @r a valid NUM. The stolen element is
+ * returned only if nothing went wrong (including nullifying the array
+ * position).
  */
 
 static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
 {
-    /* Marcin */
+    NODE *ret = NULL;
     GretlType type = GRETL_TYPE_NONE;
-    int idx = node_get_int(r, p) - 1;
-    void *val = gretl_array_get_element(l->v.a, idx, &type, &p->err);
+    int idx = node_get_int(r, p);
+    void *val = NULL;
+
+    if (!p->err) {
+	idx--; /* convert to zero-based */
+	val = gretl_array_get_element(l->v.a, idx, &type, &p->err);
+    }
     if (p->err) {
         return NULL;
     }
 
-    NODE *ret = aux_node_for_type(type, p);
+    ret = aux_node_for_type(type, p);
 
-    /* we check if we deal with same types */
+    /* we check if we're dealing with the same types */
     if ((p->targ != UNK) && (p->targ != ret->t)) {
         p->err = E_TYPES;
         return NULL;
@@ -18464,15 +18476,16 @@ static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
         ret->v.m = (gretl_matrix *) val;
     } else if (type == GRETL_TYPE_BUNDLE) {
         ret->v.b = (gretl_bundle *) val;
+    } else if (type == GRETL_TYPE_ARRAY) {
+	ret->v.a = (gretl_array *) val;
     } else {
         p->err = E_DATA;
         return NULL;
     }
 
-    /* finally we nullify the position in array */
-    p->err = gretl_array_nullify_element(l->v.a, idx);
-    if (p->err) {
-        return NULL;
+    if (!p->err) {
+	/* finally we nullify the position in array */
+	p->err = gretl_array_nullify_element(l->v.a, idx);
     }
 
     return ret;
@@ -19760,7 +19773,6 @@ static NODE *eval (NODE *t, parser *p)
         }
         break;
     case F_STEAL:
-        /* Marcin */
         if (l->t == BUNDLE && r->t == STR) {
             ret = get_or_steal_bundle_member(l, r, p, 1);
         } else if (l->t == ARRAY && r->t == NUM) {
