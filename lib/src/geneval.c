@@ -11939,7 +11939,7 @@ static NODE *get_or_steal_bundle_member (NODE *l, NODE *r, parser *p, int steal)
     }
 
     /* in steal mode, we check if we deal with same types */
-    if (steal && (p->targ != ret->t)) {
+    if (steal && (p->targ != UNK) && (p->targ != ret->t)) {
         p->err = E_TYPES;
         return NULL;
     }
@@ -18453,7 +18453,7 @@ static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_node_for_type(type, p);
 
     /* we check if we deal with same types */
-    if (p->targ != ret->t) {
+    if ((p->targ != UNK) && (p->targ != ret->t)) {
         p->err = E_TYPES;
         return NULL;
     }
