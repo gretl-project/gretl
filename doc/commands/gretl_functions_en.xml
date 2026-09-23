@@ -5625,13 +5625,21 @@
 	<para>
 	  A specialized function (<quote>factorized OLS</quote>)
 	  offering optimal treatment of least squares regression where
-	  one of the regressors is a factor variable with a large
-	  number of distinct values. This case may be handled by
-	  including among the regressors a set of dummy variables
-	  coding for the factor values, but it can be a great deal
-	  more efficient to carry out OLS on data that have the per
-	  factor-value means removed, which is what this function
-	  does.
+	  one of the regressors is a discrete variable (a
+	  <quote>factor</quote>) with a large number of distinct
+	  values.
+	</para>
+	<para>
+	  This case may be handled by including among the regressors a
+	  set of dummy variables coding for the factor values, but it
+	  can be a great deal more efficient to carry out OLS on data
+	  that have the per factor-value means removed, which is what
+	  this function does. If the demeaned version of
+	  <argname>X</argname> turns out to be singular, the function
+	  returns an error.  In a panel context, the output of this
+	  function would be the fixed-effects OLS estimator, if one
+	  takes the factor <argname>f</argname> as identifying the
+	  panel units.
 	</para>
 	<para>
 	  The arguments are as follows.
@@ -5684,6 +5692,56 @@
 	    </para>
 	  </li>
 	</ilist>
+	<para>
+	  For example, the code:
+	</para>
+	<code>
+	  set seed 23072026
+
+	  N = 100
+	  k = 4
+	  X = mnormal(N,k)
+	  y = mnormal(N)
+	  f = mrandgen(i, 1, k, N, 1)
+
+	  a = {}
+
+	  # use fols()
+	  b0 = fols(y, X, f,,, &amp;a)
+
+	  # use dummies
+	  D = f .= seq(1, k)
+	  b1 = mols(y, X~D)
+	</code>
+	<para>
+	  produces the following three vectors:
+	</para>
+	<code>
+	  b0 (4 x 1)
+
+	     0.0018742
+	     -0.040486
+	      -0.17669
+	      0.098311
+
+	  a (4 x 1)
+
+	       0.13923
+	      -0.12611
+	      0.065511
+	     0.0036843
+
+	  b1 (8 x 1)
+
+             0.0018742
+             -0.040486
+              -0.17669
+              0.098311
+               0.13923
+              -0.12611
+              0.065511
+             0.0036843
+	</code>
 	<para>
 	  By default, estimates are obtained via Cholesky
 	  decomposition, with a fallback to QR decomposition if the
@@ -11188,8 +11246,8 @@
 	  returns
 	</para>
 	<code>
-	    1     1    10    10   100   100 
-	   10   100     1   100    10     1 
+	    1     1    10    10   100   100
+	   10   100     1   100    10     1
 	  100    10   100     1     1    10
 	</code>
 	<para>
@@ -14772,7 +14830,7 @@ d =  8.0000000
 	</para>
       </description>
     </function>
-    
+
     <function name="typename" section="data-utils" output="string">
       <fnargs>
 	<fnarg type="string">expr</fnarg>
