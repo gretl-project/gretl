@@ -102,19 +102,14 @@
 
 \title{The \gig\ package}
 \author{Jack Lucchetti \and Stefano Balietti}
-\date{December 2023}
+\date{September 2027}
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
 The \gig\ package is a collection of \app{gretl} scripts to estimate
-univariate conditional heteroskedasticity models. % What is described
-% here is \gig\ version 2.0, which is substantially different from the
-% previous version: it makes use of several new \app{gretl} features and
-% is totally incompatible with the old version. In return, you get a
-% package that is considerably simpler to use, maintain and extend and
-% integrates in a much smoother way with the \app{gretl} GUI.
+univariate conditional heteroskedasticity models. 
 \end{abstract}
 
 \tableofcontents
@@ -231,8 +226,8 @@ applied literature (see Table \ref{tab:densities}).
   \lambda & = & \tanh(\xi) \\
   \zeta_t & = & \left\{
     \begin{array}{ll}
-        \frac{b \stdu_t + a}{1-\lambda} & \mathrm{for\ } \stdu_t < -a/b \\
-        \frac{b \stdu_t + a}{1+\lambda} & \mathrm{for\ } \stdu_t > -a/b
+        \frac{a + b \stdu_t}{1-\lambda} & \mathrm{for\ } \stdu_t < -a/b \\
+        \frac{a + b \stdu_t}{1+\lambda} & \mathrm{for\ } \stdu_t > -a/b
       \end{array}
       \right. \\
   D(\nu) & = &
@@ -433,15 +428,15 @@ clear, except perhaps for a few that require some explanation.
 \item[The regressors lists] These are two lists holding the exogenous
   variables in the conditional mean ($x_t$ in equation
   \ref{eq:meaneq}) and conditional variance equation ($z_t$ in
-  equation \ref{eq:vareq}), respectively. They both default to
-  \texttt{null}, an empty list, although in the variance regressors
-  list a constant term is automatically included if absent. If some
-  lists are already defined, you can pick them from the list;
-  alternatively, you can create lists on the fly by using the ``+''
-  button.  Note that, from version 1.9.3 of \app{gretl} onwards, you
-  can use a single series in lieu of a list proper, so for example if
-  you want a constant to appear in your conditional mean, you may just
-  type \texttt{const} in the ``mean regressors'' text box.
+  equation \ref{eq:vareq}), respectively. They both default to empty
+  lists, although in the variance regressors list a constant term is
+  automatically included if absent. If some lists are already defined,
+  you can pick them from the list; alternatively, you can create lists
+  on the fly by using the ``+'' button.  Note that, from version 1.9.3
+  of \app{gretl} onwards, you can use a single series in lieu of a
+  list proper, so for example if you want a constant to appear in your
+  conditional mean, you may just type \texttt{const} in the ``mean
+  regressors'' text box.
 
   Note, however, that you you have two separate GUI elements for
   including in your mean specification the most common choices, that
@@ -493,6 +488,7 @@ estimate should appear.\footnote{Note that the GJR model is presented
   \ref{sec:APARCH}.} The asterisk at the end of the first line of the
 output indicates that the analytical score was used for estimation.:
 
+\begin{small}
 \begin{code}
 Model: GJR(1,1) [Glosten et al.] (Student's t)*
 Dependent variable: y
@@ -531,6 +527,7 @@ Sample: 1980/01/03-1989/12/29 (T = 2527), VCV method: Robust
 	Llik:  -3408.87517	 AIC:   6829.75034
 	BIC:    6864.75906	 HQC:   6842.45322
 \end{code}
+\end{small}
 
 In fact, the estimate above will be contained in a window on top of
 which you get several icons: the most interesting are
@@ -636,6 +633,7 @@ Once the model is set up, we pass the address of the bundle which
 contains it as the argument to the function
 \dtk{gig_estimate}. This function performs the actual estimation
 via maximum likelihood and (by default) prints out the results:
+\begin{small}
 \begin{code}
 Model: GARCH(1,1) [Bollerslev] (Normal)*
 Dependent variable: y
@@ -652,6 +650,7 @@ Sample: 1980/01/03-1989/12/29 (T = 2527), VCV method: Robust
 	Llik:  -3575.27720	 AIC:   7156.55440
 	BIC:    7174.05876	 HQC:   7162.90584
 \end{code}
+\end{small}
 
 Note that the main purpose of \dtk{gig_estimate} is to run the
 maximum likelihood estimation routine and store its output into the
@@ -739,6 +738,7 @@ the density. In this example, 4 stands for the skewed GED
 distribution; see Table \ref{tab:modelcodes}, right-hand side for the
 full list. The output follows:
 
+\begin{small}
 \begin{code}
 Model: GARCH(1,1) [Bollerslev] (Skewed GED)
 Dependent variable: r
@@ -771,6 +771,7 @@ Sample: 1990/01/04-2009/02/11 (T = 4817), VCV method: Robust
 	Llik:  -9964.53237	 AIC:  19947.06473
 	BIC:   20005.38389	 HQC:  19967.54332
 \end{code}
+\end{small}
 
 \subsection{Tweaking the model specification}
 \label{sec:tweak}
@@ -957,6 +958,7 @@ gig_plot(&epicurus)
 gig_dplot(&epicurus)
 \end{code}
 produces the following output
+\begin{small}
 \begin{code}
 Model: EGARCH(1,1) [Nelson] (Student's t)
 Dependent variable: Y
@@ -986,6 +988,7 @@ Sample: 1-1974 (T = 1974), VCV method: Robust
 	Llik:   -986.08927	 AIC:   1984.17853
 	BIC:    2017.70544	 HQC:   1996.49706
 \end{code}
+\end{small}
 and the plots shown in Figure \ref{fig:ex-plots}.
 
 The function \dtk{gig_vfgraph}, instead, is a little more complex: it
