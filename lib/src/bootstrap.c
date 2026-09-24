@@ -1522,12 +1522,12 @@ gretl_matrix *bootstrap_ci_matrix (const MODEL *pmod,
     p -= 1;
 
     if (p < 0 || p >= pmod->ncoeff) {
-	*err = E_DATA;
+	*err = E_INVARG;
 	return NULL;
     }
 
     if (!na(alpha) && (alpha < .001 || alpha > .999)) {
-	*err = E_DATA;
+	*err = E_INVARG;
 	return NULL;
     }
 
