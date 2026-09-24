@@ -109,13 +109,13 @@ ifeq ($(USE_NLS),yes)
 endif
 
 ifeq ($(MKLANG),) 
-  MKLANG = ./mklang
+  MKLANG = ./mklang$(EXEEXT)
 endif
 ifeq ($(MKNEWS),) 
-  MKNEWS = ./mknews
+  MKNEWS = ./mknews$(EXEEXT)
 endif
 ifeq ($(MKPNGLIST),)
-  MKPNGLIST = ./mkpnglist
+  MKPNGLIST = ./mkpnglist$(EXEEXT)
 endif
 ifeq ($(COMPRES),)
   COMPRES = glib-compile-resources
@@ -288,13 +288,13 @@ gretlres.o: $(GRETLRC)
 mklang.o: mklang.c $(LANGDEPS)
 	$(AMP)$(CC) $(CFLAGS) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
 
-mklang: mklang.o $(GRETLLIB)
+$(MKLANG): mklang.o $(GRETLLIB)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
 
-mknews: mknews.c
+$(MKNEWS): mknews.c
 	$(AMP)$(CC) -o $@ $<
 
-mkpnglist: mkpnglist.c
+$(MKPNGLIST): mkpnglist.c
 	$(AMP)$(CC) -o $@ $<
 
 gretl.lang: $(MKLANG)
@@ -377,10 +377,9 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(uidir)
 
 clean:
-	rm -f *.o $(PROG) mklang mknews gretl.lang NEWS
-	rm -f mkpnglist gretl-icons.xml gretl-icons.gresource
+	rm -f *.o $(PROG) mklang$(EXEEXT) mknews$(EXEEXT) gretl.lang NEWS
+	rm -f mkpnglist$(EXEEXT) gretl-icons.xml gretl-icons.gresource
 	rm -rf .libs .deps
 
 distclean: clean
 	rm -f Makefile debug
-
