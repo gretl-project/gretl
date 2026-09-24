@@ -4151,6 +4151,15 @@
 	  <effect>Mira abaixo</effect>
         </option>
         <option>
+	  <flag>--exponentiate</flag>
+	  <optparm optional="true">axustar</optparm>
+	  <effect>Mira abaixo</effect>
+        </option>
+        <option>
+	  <flag>--integrate</flag>
+	  <effect>Mira abaixo</effect>
+        </option>
+        <option>
 	  <flag>--all-probs</flag>
 	  <effect>Mira abaixo</effect>
         </option>
@@ -4245,6 +4254,55 @@
 	que debes de indicar o argumento <repl>pasosadiante</repl>
 	unicamente xunto coa opción <opt>recursive</opt>.
       </para>
+
+      <subhead context="cli">Predicións transformadas</subhead>
+      <para context="cli">
+	Esta sección aplícase especificamente a modelos con unha única
+	ecuación, estimados mediante MCO. Por defecto, a instrución
+	<lit>fcast</lit> xera predicións da propia variable dependente,
+	<math>y</math>, pero admítense dous tipos de predicións transformadas.
+      </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    Cando se admite que <math>y</math> coincide co logaritmo doutra
+	    variable do conxunto de datos, pódese usar a opción
+	    <opt>exponentiate</opt> para xerar unha predición da variable no seu
+	    <emphasis>nivel</emphasis> orixinal, en troques de facelo como
+	    logaritmo. Neste caso, á predición en logaritmos se lle aplica a
+	    transformación exponecial e, por defecto, os valores puntuais
+	    multiplícanse por un factor de corrección do nesgo (pero non os
+	    límites dos intervalos de confianza, no seu caso). Este factor é
+	    exp(<math>s</math><sup>2</sup>), onde <math>s</math> é o erro padrón
+	    da regresión, se a proba de Doornik&ndash;Hansen falla en rexeitar a
+	    Normalidade da perturbación aleatoria, a un nivel do 10 por cento.
+	    Doutro xeito, sería o <quote>estimador de retransformación</quote>
+	    non paramétrico suxerido por <cite key="duan83">Duan (1983)</cite>;
+	    en concreto, a media mostral dos erros aos que se lles aplicou a
+	    transformación exponencial. Para obter máis detalles sobre este
+	    asunto, consulta a sección 6-4c de
+	    <cite key="wooldridge-intro">Wooldridge (2016)</cite>.
+	    Podes forzar que o factor de corrección do nesgo sexa o da variante
+	    Normal, o da variante de retransformación ou que se omita (de feito,
+	    fixándose en 1) engadindo o parámetro (enteiro) opcional
+	    <lit>axustar</lit> á opción <opt>exponentiate</opt> co valor
+	    1, 2 ou 3, respectivamente.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Cando se admite que <math>y</math> coincide coa primeira diferenza
+	    doutra variable do conxunto de datos, pódese usar a opción
+	    <opt>integrate</opt> para xerar unha predición da variable no seu
+	    <emphasis>nivel</emphasis> orixinal, en troques de facelo como
+	    diferenza. Unha predición <quote>integrada</quote> pode ser estática
+	    (a predición para o momento <math>t</math>+1 é igual ao nivel
+	    vixente da variable no momento <math>t</math> máis a diferenza
+	    predita); ou dinámica, en cuxo caso a predición previa do nivel no
+	    momento <math>t</math> substitúe ao nivel vixente nese momento.
+	  </para>
+	</li>
+      </ilist>
 
       <subhead>Modelos ordenados e modelo multinomial</subhead>
       <para>

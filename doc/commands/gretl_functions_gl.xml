@@ -5616,7 +5616,7 @@
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">F</fnarg>
+	<fnarg type="matrix">f</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;A</fnarg>
@@ -5624,14 +5624,22 @@
       <description>
 	<para>
 	  Función especializada (<quote>MCO factorizados</quote>) que
-	  ofrece un tratamento óptimo da regresión de mínimos cadrados
-	  cando un dos regresores é unha variable de factor cun gran número
-	  de valores diferentes. Este caso pódese manexar incluíndo,
-	  entre os regresores, un conxunto de variables ficticias que
-	  codifiquen os valores dos factores; pero pode ser unha operación
-	  máis eficiente realizar a estimación MCO sobre os datos aos que
-	  se lles restaron as medias dos valores por factor, que é o que
-	  fai esta función.
+	  ofrece un tratamento óptimo da regresión de mínimos
+	  cadrados cando un dos regresores é unha variable discreta
+	  (un <quote>factor</quote>) cun número grande de valores
+	  diferentes.
+	</para>
+	<para>
+	  Este caso pódese manexar incluíndo, entre os regresores, un
+	  conxunto de variables ficticias que codifiquen os valores dos
+	  factores; pero pode ser unha operación máis eficiente realizar a
+	  estimación MCO sobre os datos aos que se lles restaron as medias
+	  dos valores por factor, que é o que fai esta función. Se a versión
+	  coa media detraída de <argname>X</argname> resulta ser singular,
+	  a función devolve un fallo. No contexto dun panel, o resultado
+	  desta función sería o estimador de efectos fixos de MCO, cando se
+	  considera que o factor <argname>f</argname> identifica as unidades
+	  do panel.
 	</para>
 	<para>
 	  Os argumentos son os seguintes.
@@ -5684,6 +5692,56 @@
 	    </para>
 	  </li>
 	</ilist>
+	<para>
+	  Por exemplo, o código:
+	</para>
+	<code>
+	  set seed 23072026
+
+	  N = 100
+	  k = 4
+	  X = mnormal(N,k)
+	  y = mnormal(N)
+	  f = mrandgen(i, 1, k, N, 1)
+
+	  a = {}
+
+	  # usar fols()
+	  b0 = fols(y, X, f,,, &amp;a)
+
+	  # usar ficticias
+	  D = f .= seq(1, k)
+	  b1 = mols(y, X~D)
+	</code>
+	<para>
+	  xera os seguintes tres vectores:
+	</para>
+	<code>
+	  b0 (4 x 1)
+
+	     0.0018742
+	     -0.040486
+	      -0.17669
+	      0.098311
+
+	  a (4 x 1)
+
+	       0.13923
+	      -0.12611
+	      0.065511
+	     0.0036843
+
+	  b1 (8 x 1)
+
+             0.0018742
+             -0.040486
+              -0.17669
+              0.098311
+               0.13923
+              -0.12611
+              0.065511
+             0.0036843
+	</code>
 	<para>
 	  Por defecto, as estimacións obtéñense por medio da descomposición
 	  de Cholesky, cun último recurso á descomposición QR se as columnas
@@ -11188,8 +11246,8 @@
 	  devolve
 	</para>
 	<code>
-	    1     1    10    10   100   100 
-	   10   100     1   100    10     1 
+	    1     1    10    10   100   100
+	   10   100     1   100    10     1
 	  100    10   100     1     1    10
 	</code>
 	<para>
