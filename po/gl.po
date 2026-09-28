@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-03 12:21-0400\n"
-"PO-Revision-Date: 2026-01-28 16:15+0100\n"
+"PO-Revision-Date: 2026-09-05 02:31+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -551,7 +551,7 @@ msgstr "Sintaxe rachada en %s: non coincide %s"
 
 #: lib/src/compare.c:78
 msgid "The model for testing lacks an xlist"
-msgstr ""
+msgstr "O modelo para probar carece dunha xlist"
 
 #: lib/src/compare.c:286
 #, c-format
@@ -709,9 +709,8 @@ msgid "No coefficient has a p-value less than %g"
 msgstr "Ningún coeficiente ten un valor p menor que %g"
 
 #: lib/src/compare.c:1780
-#, fuzzy
 msgid "There are no variables to omit"
-msgstr "Escolle as variables a omitir"
+msgstr "Non hai variables que omitir"
 
 #: lib/src/compare.c:2113 lib/src/estimate.c:2825 lib/src/gretl_model.c:4284
 #: lib/src/gretl_model.c:4290 lib/src/modelprint.c:921 gui/library.c:3155
@@ -1338,7 +1337,7 @@ msgstr "   Número de liñas que non están en branco: %d\n"
 
 #: lib/src/csvdata.c:3651 lib/src/dataio.c:3460 lib/src/dataio.c:3540
 msgid "Invalid data file\n"
-msgstr "Ficheiro de datos incorrecto\n"
+msgstr "Ficheiro incorrecto de datos\n"
 
 #: lib/src/csvdata.c:3705
 #, c-format
@@ -1394,9 +1393,8 @@ msgstr "Fóra de memoria\n"
 
 #: lib/src/csvdata.c:3934 lib/src/interact.c:1286 gui/gpt_control.c:6031
 #: gui/gpt_control.c:6146 gui/winstack.c:1745
-#, fuzzy
 msgid "Filename is too long"
-msgstr "O nome a gardar é longo de mais"
+msgstr "O nome do ficheiro é longo de máis"
 
 #: lib/src/csvdata.c:3964
 msgid "Couldn't find all variable names"
@@ -1464,7 +1462,7 @@ msgstr "Carácter %d incorrecto en etiqueta de datas"
 #: lib/src/dataio.c:418 lib/src/dataio.c:423 lib/src/dataio.c:436
 #, c-format
 msgid "'%s': invalid observation index"
-msgstr "'%s': Índice de observación incorrecto"
+msgstr "'%s': Índice incorrecto de observacións"
 
 #: lib/src/dataio.c:455 lib/src/forecast.c:3266 lib/src/genfuncs.c:4344
 msgid "Observation number out of bounds"
@@ -1900,9 +1898,8 @@ msgid "This command needs panel data"
 msgstr "Esta instrución necesita datos de panel"
 
 #: lib/src/dataset.c:6159
-#, fuzzy
 msgid "Group names have not been set"
-msgstr "Non se especificaron parámetros"
+msgstr "Non se especificaron os nomes dos grupos"
 
 #: lib/src/dataset.c:6246
 #, c-format
@@ -1928,7 +1925,7 @@ msgstr "%s: Non se atoparon datos"
 
 #: lib/src/dbread.c:205
 msgid "Database data: buffer shorter than expected"
-msgstr ""
+msgstr "Datos do banco de datos: búfer máis curto do agardado"
 
 #: lib/src/dbread.c:326 lib/src/foreign_db.c:682
 msgid "Couldn't open database index file"
@@ -2071,9 +2068,9 @@ msgid "Error expanding daily data with missing observations"
 msgstr "Erro expandindo datos diarios con observacións ausentes"
 
 #: lib/src/dbwrite.c:500
-#, fuzzy, c-format
+#, c-format
 msgid "Filename too long, %d bytes"
-msgstr "Nome de ficheiro longo de máis (%d bytes)"
+msgstr "Nome de ficheiro longo de máis, %d bytes"
 
 #: lib/src/dbwrite.c:526 lib/src/dbwrite.c:535 lib/src/gretl_xml.c:1952
 #: plugin/geoplot.c:1070
@@ -2128,7 +2125,7 @@ msgstr "Eliminando %s: non é unha variable discreta\n"
 #: lib/src/var.c:857
 #, c-format
 msgid "Invalid lag order %d"
-msgstr "Nivel de retardo %d incorrecto"
+msgstr "Nivel incorrecto de retardo %d"
 
 #: lib/src/describe.c:3636
 msgid "Residual autocorrelation function"
@@ -2790,7 +2787,7 @@ msgstr "               ITERACIÓN    RHO       SCE"
 #: lib/src/estimate.c:2332
 #, c-format
 msgid "Prais-Winsten: invalid rho value %g (explosive error)"
-msgstr "Prais-Winsten: Valor de rho incorrecto %g (perturbación explosiva)"
+msgstr "Prais-Winsten: Valor incorrecto de rho%g (perturbación explosiva)"
 
 #: lib/src/estimate.c:2444
 #, c-format
@@ -2839,7 +2836,7 @@ msgstr ""
 #: lib/src/estimate.c:3756 lib/src/estimate.c:3900
 #, c-format
 msgid "Invalid lag order for arch (%d)"
-msgstr "Nivel de retardo incorrecto para ARCH (%d)"
+msgstr "Nivel incorrecto de retardo para ARCH (%d)"
 
 #: lib/src/estimate.c:4247 lib/src/genfuncs.c:1409 plugin/tramo-x12a.c:1887
 #, c-format
@@ -2977,19 +2974,19 @@ msgid "Matrix is not symmetric"
 msgstr "A matriz non é simétrica"
 
 #: lib/src/geneval.c:5479
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid row index"
-msgstr "'%s': Índice de observación incorrecto"
+msgstr "'%s': Índice incorrecto de fila"
 
 #: lib/src/geneval.c:5481
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid column index"
-msgstr "'%s': Índice de observación incorrecto"
+msgstr "'%s': Índice incorrecto de columna"
 
 #: lib/src/geneval.c:5483
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid index"
-msgstr "'%s': Índice de observación incorrecto"
+msgstr "'%s': Índice incorrecto"
 
 #: lib/src/geneval.c:5787 lib/src/geneval.c:5901 lib/src/geneval.c:10648
 #: lib/src/geneval.c:12737 lib/src/geneval.c:12885 lib/src/geneval.c:12957
@@ -3036,9 +3033,9 @@ msgid "Assertion '%s' failed"
 msgstr "Afirmación *%s* errada"
 
 #: lib/src/geneval.c:9917
-#, fuzzy, c-format
+#, c-format
 msgid "Unrecognized content '%s' in time string"
-msgstr "Sistema de ecuacións de tipo descoñecido"
+msgstr "Contido '%s' descoñecido na cadea do tempo"
 
 #: lib/src/geneval.c:10134
 msgid "comma(s) found in atof() input"
@@ -3047,7 +3044,7 @@ msgstr "Atopada(s) coma(s) na entrada de atof()"
 #: lib/src/geneval.c:10636
 #, c-format
 msgid "Invalid observation specifier \"%s\""
-msgstr "Indicador \"%s\" de observación incorrecto"
+msgstr "Indicador \"%s\" incorrecto de observacións"
 
 #: lib/src/geneval.c:10724 lib/src/transforms.c:914 lib/src/transforms.c:1239
 msgid "The constant cannot be lagged"
@@ -3092,7 +3089,7 @@ msgstr "'%s' : Non está preparado para este tipo"
 
 #: lib/src/geneval.c:12904
 msgid "Invalid list element"
-msgstr "Elemento de lista incorrecto"
+msgstr "Elemento incorrecto de lista"
 
 #: lib/src/geneval.c:13097
 #, c-format
@@ -3113,13 +3110,12 @@ msgid "%s: requires an even number of arguments"
 msgstr "%s: require un número par de argumentos"
 
 #: lib/src/geneval.c:15981
-#, fuzzy
 msgid "defarray: no type was specified"
-msgstr "Arranxo: Non se especificou ningún tipo"
+msgstr "defarray: Non se especificou ningún tipo"
 
 #: lib/src/geneval.c:15990
 msgid "defarray: at least one argument must be given"
-msgstr ""
+msgstr "defarray: Débese proporcionar un argumento, cando menos"
 
 #: lib/src/geneval.c:16374
 #, c-format
@@ -3152,7 +3148,7 @@ msgstr "%s: Non se determinaron suficientes argumentos"
 #: lib/src/geneval.c:18271
 #, c-format
 msgid "%s: invalid argument type %s"
-msgstr "%s: Tipo de argumento incorrecto %s"
+msgstr "%s: Tipo %s incorrecto de argumento"
 
 #: lib/src/geneval.c:18274
 #, c-format
@@ -3442,17 +3438,15 @@ msgstr "Fallo ao calcular o gradiente de MIDAS: %s"
 
 #: lib/src/genfuncs.c:5196
 msgid "Invalid MIDAS term index"
-msgstr "Índice de termos MIDAS incorrecto"
+msgstr "Índice incorrecto de termos de MIDAS"
 
 #: lib/src/genfuncs.c:5276
 msgid "Not a valid midasreg bundle"
 msgstr "Feixe (bundle) midasreg que non é válido"
 
 #: lib/src/genfuncs.c:5442
-#, fuzzy
 msgid "The constructed series name is too long"
-msgstr ""
-"Os nomes das series xeradas poderían chocar cos dos obxectos xa existentes"
+msgstr "O nome da serie xerada é longo de máis"
 
 #: lib/src/genfuncs.c:5452
 msgid ""
@@ -3480,12 +3474,12 @@ msgstr "Outro"
 #: lib/src/genfuncs.c:8222 lib/src/genfuncs.c:8225
 #, c-format
 msgid "Invalid observation %s"
-msgstr "Observación *%s* incorrecta"
+msgstr "Observación incorrecta *%s*"
 
 #: lib/src/genfuncs.c:8275
 #, c-format
 msgid "Invalid number of draws %d"
-msgstr "Número de extraccións %d incorrecto"
+msgstr "Número %d incorrecto de extraccións"
 
 #: lib/src/genlex.c:818
 msgid "deprecated alias 'fft2': please call fft()"
@@ -3858,14 +3852,14 @@ msgid "Group means"
 msgstr "Medias de grupo"
 
 #: lib/src/graphing.c:7630
-#, fuzzy, c-format
+#, c-format
 msgid "%s by %s"
-msgstr "Por %s"
+msgstr "%s por %s"
 
 #: lib/src/graphing.c:7632
-#, fuzzy, c-format
+#, c-format
 msgid "%s by group"
-msgstr "Series temporais por grupos"
+msgstr "%s por grupo"
 
 #: lib/src/graphing.c:7757
 msgid "time"
@@ -4821,7 +4815,7 @@ msgstr "Tipo de datos '%s' non recoñecido"
 #: lib/src/gretl_func.c:8223
 #, c-format
 msgid "%s: invalid parameter type"
-msgstr "%s: Tipo de parámetro incorrecto"
+msgstr "%s: Tipo incorrecto de parámetro"
 
 #: lib/src/gretl_func.c:8237
 #, c-format
@@ -5020,9 +5014,9 @@ msgid "Couldn't delete %s"
 msgstr "Non se puido eliminar *%s*"
 
 #: lib/src/gretl_func.c:11562
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid package name '%s'"
-msgstr "Nome de paquete incorrecto (máx. 31 bytes)"
+msgstr "Nome '%s' incorrecto do paquete"
 
 #: lib/src/gretl_func.c:11580 gui/fnsave.c:3300 gui/textbuf.c:2247
 #, c-format
@@ -5046,7 +5040,7 @@ msgstr "gpbuild: Non pode aniñarse"
 #: lib/src/gretl_gridplot.c:184
 #, c-format
 msgid "%s: invalid (multiplot) plot specification"
-msgstr "%s: Especificación de gráfica (multiplot) incorrecta"
+msgstr "%s: Especificación incorrecta de gráfica (multiplot)"
 
 #: lib/src/gretl_gridplot.c:370
 msgid "Invalid layout specification"
@@ -5268,9 +5262,8 @@ msgstr ""
 "redefinidas"
 
 #: lib/src/gretl_matrix.c:13090
-#, fuzzy
 msgid "The factor variable must be integer-valued"
-msgstr "Os valores da serie deben ser enteiros"
+msgstr "A variable do factor debe ter valores enteiros"
 
 #: lib/src/gretl_midas.c:208 lib/src/subsample.c:3616 gui/dialogs.c:4137
 #: gui/dialogs.c:4265
@@ -5565,7 +5558,7 @@ msgstr "O modelo presenta un axuste linear exacto"
 #: lib/src/gretl_mpi.c:474
 #, c-format
 msgid "Invalid MPI rank %d"
-msgstr "Rango MPI %d incorrecto"
+msgstr "Rango%d incorrecto de MPI"
 
 #: lib/src/gretl_mt.c:137
 #, c-format
@@ -5709,7 +5702,7 @@ msgstr "A matriz da proba de Hausman non é definida positiva"
 #: lib/src/gretl_panel.c:4572 lib/src/options.c:1381 lib/src/options.c:1414
 #, c-format
 msgid "%s: invalid option argument"
-msgstr "%s: Opción de argumento incorrecta"
+msgstr "%s: Opción incorrecta de argumento"
 
 #: lib/src/gretl_panel.c:4675
 #, c-format
@@ -6299,9 +6292,9 @@ msgid "%s: error %s"
 msgstr "%s: Fallo *%s*"
 
 #: lib/src/gretl_zip.c:144
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid archive entry name '%s'"
-msgstr "Obtívose un nome de variable *%s* incorrecto"
+msgstr "Nome '%s' incorrecto de entrada de ficheiro"
 
 #: lib/src/gretl_zip.c:545
 #, c-format
@@ -6322,13 +6315,12 @@ msgid "Input must have extension \".gfn\""
 msgstr "A entrada debe ter a extensión \".gfn\""
 
 #: lib/src/gretl_zip.c:655
-#, fuzzy
 msgid "Path name is too long"
-msgstr "O nome a gardar é longo de mais"
+msgstr "O nome da ruta é longo de máis"
 
 #: lib/src/gretl_zip.c:676
 msgid "Invalid package name (31 bytes max)"
-msgstr "Nome de paquete incorrecto (máx. 31 bytes)"
+msgstr "Nome incorrecto de paquete (máx. 31 bytes)"
 
 #: lib/src/gretl_zip.c:693
 msgid "Getting in place... "
@@ -6487,9 +6479,9 @@ msgid "You cannot delete series in this context\n"
 msgstr "Neste contexto non podes borrar series\n"
 
 #: lib/src/interact.c:2745 lib/src/interact.c:2757
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': filename is too long"
-msgstr "O nome a gardar é longo de mais"
+msgstr "'%s': O nome do ficheiro é longo de máis"
 
 #: lib/src/interact.c:2796
 #, c-format
@@ -6665,9 +6657,8 @@ msgid "%s: invalid value '%s'"
 msgstr "%s: Valor incorrecto '%s'"
 
 #: lib/src/libset.c:1315
-#, fuzzy
 msgid "set logfile: filename is too long"
-msgstr "O nome a gardar é longo de mais"
+msgstr "Fixar o ficheiro do historial: o nome do ficheiro é longo de máis"
 
 #: lib/src/libset.c:1475
 msgid "Variables that can be set using \"set\""
@@ -8674,7 +8665,7 @@ msgstr "O ficheiro de datas non concorda coa especificación"
 
 #: lib/src/plotspec.c:2334
 msgid "No bars fall within the plot range"
-msgstr ""
+msgstr "Ningunha barra cae dentro do rango da gráfica"
 
 #: lib/src/plugins.c:422
 #, c-format
@@ -8944,11 +8935,11 @@ msgstr " Para intervalos co %g%% de confianza, t(%d; %g) = %.3f\n"
 
 #: lib/src/printout.c:3406
 msgid "Normal correction applied to point forecast"
-msgstr ""
+msgstr "Corrección Normal aplicada á predición puntual"
 
 #: lib/src/printout.c:3408
 msgid "Smearing correction applied to point forecast"
-msgstr ""
+msgstr "Corrección de retransformación aplicada á predición puntual"
 
 #: lib/src/printout.c:3429
 msgid " std. error"
@@ -9232,7 +9223,7 @@ msgstr "Variable *%s* non definida"
 #: lib/src/subsample.c:1325
 #, c-format
 msgid "Invalid number of cases %d"
-msgstr "Número de casos incorrecto %d"
+msgstr "Número %d incorrecto de casos"
 
 #: lib/src/subsample.c:1780
 msgid "No observations were dropped!"
@@ -9619,7 +9610,7 @@ msgstr "entre parénteses, os estadísticos $t$"
 #: lib/src/tokenize.c:1969
 #, c-format
 msgid "Invalid lag order %g"
-msgstr "Nivel de retardo %g incorrecto"
+msgstr "Nivel %g incorrecto de retardo"
 
 #: lib/src/tokenize.c:2122
 msgid "catch: cannot be applied to this command"
@@ -9627,7 +9618,7 @@ msgstr "catch: non pode aplicarse a esta instrución"
 
 #: lib/src/tokenize.c:2139
 msgid "savename is too long"
-msgstr "O nome a gardar é longo de mais"
+msgstr "O nome a gardar é longo de máis"
 
 #: lib/src/tokenize.c:2493
 #, c-format
@@ -9837,17 +9828,16 @@ msgstr "Engadiuse a lista '%s'\n"
 
 #: lib/src/var.c:539
 msgid "ylist, xlist and rxlist must be disjoint"
-msgstr ""
+msgstr "ylist, xlist e rxlist deben ser disxuntas"
 
 #: lib/src/var.c:541
-#, fuzzy
 msgid "ylist and xlist must be disjoint"
-msgstr "As variables índices de unidade e de tempo deben de ser distintas"
+msgstr "ylist e xlist deben ser disxuntas"
 
 #: lib/src/var.c:551
-#, fuzzy, c-format
+#, c-format
 msgid "duplicate term %s in %s"
-msgstr "%s: O nome do parámetro '%s' está duplicado"
+msgstr "Termo %s duplicado en %s"
 
 #: lib/src/var.c:885 lib/src/var.c:3603
 #, c-format
@@ -13936,9 +13926,8 @@ msgid "You can also record a dependency on R."
 msgstr "Tamén podes gravar unha dependencia de R."
 
 #: gui/fnsave.c:2736
-#, fuzzy
 msgid "You can record the name of a conflicting package."
-msgstr "Aquí non podes trocar o nome dunha función"
+msgstr "Podes rexistrar o nome dun paquete conflictivo."
 
 #: gui/fnsave.c:2756
 msgid "provider?"
@@ -15096,19 +15085,16 @@ msgid "factorized"
 msgstr "Factorizado"
 
 #: gui/gretl.c:1956
-#, fuzzy
 msgid "_Correlations"
-msgstr "Correlacións"
+msgstr "_Correlacións"
 
 #: gui/gretl.c:1957
-#, fuzzy
 msgid "_Pearson"
-msgstr "Anos"
+msgstr "_Pearson"
 
 #: gui/gretl.c:1958
-#, fuzzy
 msgid "_Nonparametric"
-msgstr "Estatística non paramétrica"
+msgstr "_Non paramétrico"
 
 #: gui/gretl.c:1959
 msgid "Cross _Tabulation"
@@ -15623,9 +15609,8 @@ msgid "On _server..."
 msgstr "No _servidor..."
 
 #: gui/gretl.c:2120
-#, fuzzy
 msgid "Install from file..."
-msgstr "Instalar paquete local..."
+msgstr "Instalar desde o ficheiro..."
 
 #: gui/gretl.c:2121
 msgid "Edit package..."
@@ -16826,9 +16811,9 @@ msgid "Sorry, no help is available"
 msgstr "Non hai axuda dispoñible"
 
 #: gui/helpfiles.c:1566
-#, fuzzy, c-format
+#, c-format
 msgid "Belongs to package: %s"
-msgstr "Paquete %s de función"
+msgstr "Pertence ao paquete: %s"
 
 #: gui/helpfiles.c:1604
 msgid "Sorry, help not found"
@@ -17852,9 +17837,9 @@ msgid "Unterminated comment in script"
 msgstr "No guión hai un comentario sen rematar"
 
 #: gui/library.c:9977
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid package name '%s'\n"
-msgstr "Nome de paquete incorrecto (máx. 31 bytes)"
+msgstr "Nome '%s' incorrecto do paquete\n"
 
 #: gui/library.c:10000
 #, c-format
@@ -18272,9 +18257,8 @@ msgid "You must select a dependent variable"
 msgstr "Debes de elixir unha variable dependente"
 
 #: gui/selector.c:3443
-#, fuzzy
 msgid "You must specify at least one MIDAS term"
-msgstr "Debes de elixir cando menos un regresor"
+msgstr "Debes especificar cando menos un termo de MIDAS"
 
 #: gui/selector.c:3571 gui/selector.c:6709
 msgid "Elastic net"
@@ -18294,7 +18278,7 @@ msgstr "Debes de especificar un cuantil"
 
 #: gui/selector.c:3638
 msgid "Invalid quantile specification"
-msgstr "Especificación de cuantil incorrecta"
+msgstr "Especificación incorrecta de cuantil"
 
 #: gui/selector.c:3813 gui/selector.c:5924
 msgid "Cluster"
@@ -18546,6 +18530,9 @@ msgid ""
 "dependent variable by double-clicking\n"
 "on a series."
 msgstr ""
+"Escoller. Tamén podes escoller a variable\n"
+"dependente premendo un dobre clic\n"
+"sobre unha serie."
 
 #: gui/selector.c:4942
 msgid "lag order:"
@@ -18592,6 +18579,8 @@ msgid ""
 "Add. You can also add a series\n"
 "by right-clicking on it."
 msgstr ""
+"Engadir. Tamén podes engadir unha serie\n"
+"premendo co clic dereito sobre elo."
 
 #: gui/selector.c:5175
 msgid "All ->"
@@ -19358,14 +19347,12 @@ msgid "gretl: rename object"
 msgstr "GRETL: Cambiar o nome do obxecto"
 
 #: gui/session.c:3525
-#, fuzzy
 msgid "matrix is null"
-msgstr "A matriz é singular"
+msgstr "A matriz é nula"
 
 #: gui/session.c:3527
-#, fuzzy
 msgid "matrix is complex"
-msgstr "A matriz é NULA"
+msgstr "A matriz é complexa"
 
 #: gui/session.c:3849
 msgid "Data set"
@@ -19400,9 +19387,9 @@ msgid "icon view"
 msgstr "Vista de iconas"
 
 #: gui/session.c:4417
-#, fuzzy, c-format
+#, c-format
 msgid "Properties of complex matrix %s"
-msgstr "Propiedades da matriz *%s*"
+msgstr "Propiedades da matriz complexa *%s*"
 
 #: gui/session.c:4419
 #, c-format
@@ -19466,9 +19453,8 @@ msgid "Not positive definite"
 msgstr "Non definida positiva"
 
 #: gui/session.c:4468
-#, fuzzy
 msgid "Hermitian"
-msgstr "Determinante"
+msgstr "Hermitiana"
 
 #: gui/session.c:4477
 msgid "Idempotent"
@@ -19921,21 +19907,21 @@ msgid "_Divide by scalar"
 msgstr "_Dividir por un escalar"
 
 #: gui/ssheet.c:962
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for new scalar\n"
 "(max. %d characters)"
 msgstr ""
-"Inserir un nome para unha nova variable\n"
+"Inserir un nome para un novo escalar\n"
 "(máx. %d caracteres)"
 
 #: gui/ssheet.c:969
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for new series\n"
 "(max. %d characters)"
 msgstr ""
-"Inserir un nome para unha nova variable\n"
+"Inserir un nome para unha nova serie\n"
 "(máx. %d caracteres)"
 
 #: gui/ssheet.c:984
@@ -20189,9 +20175,8 @@ msgid "Execute line"
 msgstr "Executar liña"
 
 #: gui/textbuf.c:4587
-#, fuzzy
 msgid "Auto-indent function"
-msgstr "Sangrar a rexión automaticamente"
+msgstr "Función de autoidentidade"
 
 #: gui/textbuf.c:4595
 msgid "Auto-indent region"
@@ -20551,7 +20536,7 @@ msgstr ""
 
 #: gui/update.c:69
 msgid "Received an invalid update message"
-msgstr ""
+msgstr "Recibida unha mensaxe incorrecta de actualización"
 
 #: gui/update.c:72
 msgid "No new files"
@@ -20846,9 +20831,8 @@ msgid "Sargan test: Chi-square(%d) = %g [%.4f]\n"
 msgstr "Proba de Sargan: Khi-cadrado(%d) = %g [%.4f]\n"
 
 #: plugin/eviews_import.c:311
-#, fuzzy
 msgid "warning: too many variables in workfile\n"
-msgstr "Aviso: Duplicáronse algúns nomes de variables\n"
+msgstr "Aviso: Demasiadas variables no ficheiro de traballo\n"
 
 #: plugin/eviews_import.c:371
 msgid "No variables were read\n"
@@ -21356,7 +21340,7 @@ msgstr "Densidade estimada de *%s*"
 #: plugin/kmeans.c:153
 #, c-format
 msgid "Cluster %d is empty; stopping."
-msgstr ""
+msgstr "O conglomerado %d está baleiro; parando."
 
 #: plugin/leverage.c:113 plugin/pca.c:112
 msgid "Variables to save:"
@@ -21804,9 +21788,8 @@ msgid "upper tail"
 msgstr "cola superior"
 
 #: plugin/stepwise.c:574 plugin/stepwise.c:757
-#, fuzzy
 msgid "Baseline"
-msgstr "Usar liñas"
+msgstr "Punto de referencia"
 
 #: plugin/stepwise.c:609 plugin/stepwise.c:970
 msgid "Add"
@@ -21814,7 +21797,7 @@ msgstr "Engadir"
 
 #: plugin/stepwise.c:780 plugin/stepwise.c:1097
 msgid "Drop"
-msgstr ""
+msgstr "Prescindir"
 
 #: plugin/svm.c:323
 #, c-format
@@ -22049,7 +22032,7 @@ msgstr "A variable dependente é NA nas obs %d"
 
 #: plugin/svm.c:3436
 msgid "svm: invalid list argument"
-msgstr "SVM: Argumento de lista incorrecto"
+msgstr "SVM: Argumento incorrecto de lista"
 
 #: plugin/svm.c:3489
 msgid "Allocating problem space... "
