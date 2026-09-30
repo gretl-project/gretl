@@ -12481,13 +12481,12 @@ msgstr ""
 "di dati qualsiasi sia l'intestazione"
 
 #: gui/dialogs.c:4426
-#, fuzzy
 msgid "Data file options:"
-msgstr "File di dati"
+msgstr "Opzioni del file di dati:"
 
 #: gui/dialogs.c:4443
 msgid "\"View\": view the first few lines of the file"
-msgstr ""
+msgstr "\"Visualizza\": mostra le prime righe del file"
 
 #: gui/dialogs.c:4450 gui/session.c:216 gui/session.c:220 gui/session.c:230
 #: gui/session.c:3507 gui/session.c:3545 gui/textutil.c:580
@@ -12495,19 +12494,16 @@ msgid "View"
 msgstr "Visualizza"
 
 #: gui/dialogs.c:4482
-#, fuzzy
 msgid "view code in this package"
-msgstr "Salva pacchetto di funzioni"
+msgstr "visualizza il codice di questo pacchetto"
 
 #: gui/dialogs.c:4483
-#, fuzzy
 msgid "install this package"
-msgstr "Torna al pacchetto installato"
+msgstr "installa questo pacchetto"
 
 #: gui/dialogs.c:4484
-#, fuzzy
 msgid "edit this package"
-msgstr "questa pagina"
+msgstr "modifica questo pacchetto"
 
 #: gui/dialogs.c:4555
 msgid "density estimation options"
@@ -12764,14 +12760,14 @@ msgid "Base period:"
 msgstr "Periodo base:"
 
 #: gui/dialogs.c:6810
-#, fuzzy, c-format
+#, c-format
 msgid "Cross-sectional mean of %s"
-msgstr "Dati cross section"
+msgstr "Media cross section di %s"
 
 #: gui/dialogs.c:6812
-#, fuzzy, c-format
+#, c-format
 msgid "Time mean of %s"
-msgstr "Dimensione temporale:"
+msgstr "Media temporale di %s"
 
 # Si riferisce alla specificazione MIDAS
 #: gui/dialogs.c:6922
@@ -12977,9 +12973,8 @@ msgid "Add equation"
 msgstr "Aggiungi equazione"
 
 #: gui/dlgutils.c:817
-#, fuzzy
 msgid "New equation"
-msgstr "equazione"
+msgstr "Nuova equazione"
 
 #: gui/dlgutils.c:821
 msgid "Add derivative"
@@ -13202,14 +13197,12 @@ msgid "select file"
 msgstr "scelta file"
 
 #: gui/fileselect.c:1373
-#, fuzzy
 msgid "Select package"
-msgstr "Tutti i pacchetti"
+msgstr "Seleziona pacchetto"
 
 #: gui/fileselect.c:1374
-#, fuzzy
 msgid "install function package"
-msgstr "Salva pacchetto di funzioni"
+msgstr "installa pacchetto di funzioni"
 
 #: gui/fileselect.c:1378
 msgid "open file"
@@ -13515,9 +13508,8 @@ msgid "Argument %d (%s) is missing"
 msgstr "L'argomento %d (%s) è mancante"
 
 #: gui/fncall.c:698
-#, fuzzy
 msgid "The return value must be assigned"
-msgstr "I valori della serie devono essere interi"
+msgstr "Il valore restituito deve essere assegnato"
 
 #: gui/fncall.c:738 gui/gretl.c:2114
 msgid "State space model"
@@ -15169,9 +15161,8 @@ msgid "_Panel"
 msgstr "_Panel"
 
 #: gui/gretl.c:1986
-#, fuzzy
 msgid "_Unit index"
-msgstr "Indice panel degli individui"
+msgstr "_Indice delle unità"
 
 #: gui/gretl.c:1987
 msgid "_Unit dummies"
@@ -15424,18 +15415,16 @@ msgid "ARI_MA"
 msgstr "ARI_MA"
 
 #: gui/gretl.c:2067 gui/selector.c:4427
-#, fuzzy
 msgid "ARIMA lag selection"
-msgstr "Selezione ritardi del VAR"
+msgstr "Selezione dei ritardi ARIMA"
 
 #: gui/gretl.c:2068
 msgid "_GARCH"
 msgstr "GARCH"
 
 #: gui/gretl.c:2069
-#, fuzzy
 msgid "GARCH variants"
-msgstr "tutte le varianti"
+msgstr "Varianti GARCH"
 
 #: gui/gretl.c:2071
 msgid "_AR errors (GLS)"
@@ -15498,9 +15487,8 @@ msgid "FE logistic"
 msgstr "Logistica a effetti fissi"
 
 #: gui/gretl.c:2087
-#, fuzzy
 msgid "Panel IV model"
-msgstr "Modello panel"
+msgstr "Modello IV per panel"
 
 #: gui/gretl.c:2088
 msgid "_Limited dependent variable"
@@ -15607,9 +15595,8 @@ msgid "On _server..."
 msgstr "Sul _server"
 
 #: gui/gretl.c:2120
-#, fuzzy
 msgid "Install from file..."
-msgstr "Carica il pacchetto"
+msgstr "Installa da file..."
 
 #: gui/gretl.c:2121
 msgid "Edit package..."
@@ -15796,6 +15783,12 @@ msgid ""
 "Do you want to download and install the current\n"
 "addons now?"
 msgstr ""
+"È stata selezionata un'azione che richiede l'accesso agli\n"
+"addon di gretl. Questi pacchetti però sono mancanti,\n"
+"incompleti o non aggiornati.\n"
+"\n"
+"Scaricare e installare ora gli addon\n"
+"aggiornati?"
 
 #: gui/guiprint.c:218 gui/guiprint.c:265
 #, c-format
@@ -15816,9 +15809,8 @@ msgid "95% Perc."
 msgstr "95% Perc."
 
 #: gui/guiprint.c:485
-#, fuzzy
 msgid "sum of abs. residuals"
-msgstr "Somma dei quadrati dei residui"
+msgstr "somma dei residui in valore assoluto"
 
 #: gui/guiprint.c:501
 msgid "t-ratios in parentheses"
@@ -16267,9 +16259,8 @@ msgid "simple append"
 msgstr "aggiunta semplice"
 
 #: gui/gui_utils.c:874
-#, fuzzy
 msgid "append with fixed sample range"
-msgstr "Impostare un intervallo per il campione:"
+msgstr "accoda con intervallo campionario fisso"
 
 #: gui/gui_utils.c:875
 msgid "\"join\" (advanced)"
@@ -16326,12 +16317,15 @@ msgid "gretl: model %d"
 msgstr "gretl: modello %d"
 
 #: gui/gui_utils.c:1171
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Estimated outcome probabilities for %s\n"
 "\n"
-msgstr "Probabilità del risultato"
+msgstr ""
+"\n"
+"Probabilità stimate degli esiti per %s\n"
+"\n"
 
 #: gui/gui_utils.c:1198 gui/gui_utils.c:1211
 msgid "Outcome probabilities"
@@ -16784,9 +16778,8 @@ msgid "this window"
 msgstr "Questa finestra"
 
 #: gui/helpfiles.c:1020
-#, fuzzy
 msgid "this provider"
-msgstr "fornitore?"
+msgstr "questo provider"
 
 #: gui/helpfiles.c:1022
 msgid "selected dataset"
@@ -16797,9 +16790,8 @@ msgid "this dataset"
 msgstr "questo dataset"
 
 #: gui/helpfiles.c:1026
-#, fuzzy
 msgid "selected provider"
-msgstr "dataset selezionato"
+msgstr "provider selezionato"
 
 #: gui/helpfiles.c:1027
 msgid "all DB.NOMICS"
@@ -16810,9 +16802,9 @@ msgid "Sorry, no help is available"
 msgstr "Spiacente, aiuto non disponibile"
 
 #: gui/helpfiles.c:1566
-#, fuzzy, c-format
+#, c-format
 msgid "Belongs to package: %s"
-msgstr "Pacchetto di funzioni %s"
+msgstr "Appartiene al pacchetto: %s"
 
 #: gui/helpfiles.c:1604
 msgid "Sorry, help not found"
@@ -17155,9 +17147,8 @@ msgstr ""
 "campione su cui viene stimato il modello (menù Campione)."
 
 #: gui/library.c:2181
-#, fuzzy
 msgid "The group-means dataset is not available"
-msgstr "La statistica richiesta non è disponibile"
+msgstr "Il dataset delle medie di gruppo non è disponibile"
 
 #: gui/library.c:2270 gui/selector.c:8854
 msgid "No variables are selected"
@@ -17310,9 +17301,8 @@ msgid "linear restrictions"
 msgstr "Vincoli lineari"
 
 #: gui/library.c:3673
-#, fuzzy
 msgid "No system was specified"
-msgstr "%s: non è stato specificato alcun sistema"
+msgstr "Non è stato specificato alcun sistema"
 
 #: gui/library.c:3780
 msgid ""
@@ -17359,9 +17349,8 @@ msgid "Set %d observations to \"missing\""
 msgstr "%d osservazioni assegnate come \"mancanti\""
 
 #: gui/library.c:5305
-#, fuzzy
 msgid "No name was given"
-msgstr "Nessuna formula fornita"
+msgstr "Non è stato indicato alcun nome"
 
 #: gui/library.c:5451
 msgid "gretl: residual dist."
@@ -17406,9 +17395,8 @@ msgid "gretl: Hurst exponent"
 msgstr "gretl: esponente di Hurst"
 
 #: gui/library.c:5924
-#, fuzzy
 msgid "Show partial autocorrelations"
-msgstr "Autocorrelazioni parziali"
+msgstr "Mostra le autocorrelazioni parziali"
 
 #: gui/library.c:5925
 msgid "Use Bartlett standard errors"
@@ -17847,14 +17835,14 @@ msgid "Unterminated comment in script"
 msgstr "Commento non chiuso nello script"
 
 #: gui/library.c:9977
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid package name '%s'\n"
-msgstr "Nome di pacchetto non valido (31 byte al massimo)"
+msgstr "Nome di pacchetto '%s' non valido\n"
 
 #: gui/library.c:10000
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find %s\n"
-msgstr "Non trovo %s"
+msgstr "Impossibile trovare %s\n"
 
 #: gui/library.c:10425
 msgid "No series were deleted"
@@ -17938,14 +17926,12 @@ msgid "Add percent change..."
 msgstr "Aggiungi differenza percentuale..."
 
 #: gui/menustate.c:605
-#, fuzzy
 msgid "Add time mean..."
-msgstr "Aggiungi al menu"
+msgstr "Aggiungi media temporale..."
 
 #: gui/menustate.c:606
-#, fuzzy
 msgid "Add cross-sectional mean..."
-msgstr "cross section"
+msgstr "Aggiungi media cross section..."
 
 #: gui/menustate.c:607 gui/menustate.c:612
 msgid "Add index values..."
@@ -18008,19 +17994,16 @@ msgid "Daily (7 days, incomplete)"
 msgstr "Giornaliero (7 giorni, incompleto)"
 
 #: gui/menustate.c:1034
-#, fuzzy
 msgid "Daily (5 days, undated)"
-msgstr "Giornaliero (5 giorni, incompleto)"
+msgstr "Giornaliero (5 giorni, senza date)"
 
 #: gui/menustate.c:1035
-#, fuzzy
 msgid "Daily (6 days, undated)"
-msgstr "Giornaliero (6 giorni, incompleto)"
+msgstr "Giornaliero (6 giorni, senza date)"
 
 #: gui/menustate.c:1036
-#, fuzzy
 msgid "Daily (7 days, undated)"
-msgstr "Giornaliero (7 giorni, incompleto)"
+msgstr "Giornaliero (7 giorni, senza date)"
 
 #: gui/menustate.c:1077
 msgid "Unknown"
@@ -18029,7 +18012,7 @@ msgstr "Ignoto"
 #: gui/menustate.c:1102
 #, c-format
 msgid "Panel: units %d:%d, time %s:%s"
-msgstr ""
+msgstr "Panel: unità %d:%d, tempo %s:%s"
 
 #: gui/menustate.c:1134
 #, c-format
@@ -18128,9 +18111,8 @@ msgid "Adj. R{\\super 2}"
 msgstr "R{\\super 2} corretto"
 
 #: gui/model_table.c:944
-#, fuzzy
 msgid "Adj. R^2"
-msgstr "R**2 Corr."
+msgstr "R^2 corretto"
 
 #: gui/model_table.c:1091 gui/model_table.c:1155 gui/model_table.c:1162
 #: gui/model_table.c:1169
@@ -18282,9 +18264,8 @@ msgid "You must select a dependent variable"
 msgstr "Occorre scegliere una variabile dipendente"
 
 #: gui/selector.c:3443
-#, fuzzy
 msgid "You must specify at least one MIDAS term"
-msgstr "Scegliere almeno una variabile esplicativa"
+msgstr "Occorre specificare almeno un termine MIDAS"
 
 #: gui/selector.c:3571 gui/selector.c:6709
 msgid "Elastic net"
@@ -18535,9 +18516,8 @@ msgid "Variable to plot"
 msgstr "Variabile da disegnare"
 
 #: gui/selector.c:4836
-#, fuzzy
 msgid "Primary variable"
-msgstr "Trend temporale"
+msgstr "Variabile primaria"
 
 #: gui/selector.c:4876
 msgid "Lower bound variable"
@@ -18557,6 +18537,9 @@ msgid ""
 "dependent variable by double-clicking\n"
 "on a series."
 msgstr ""
+"Scegli. È possibile scegliere la variabile\n"
+"dipendente anche facendo doppio clic\n"
+"su una serie."
 
 #: gui/selector.c:4942
 msgid "lag order:"
@@ -18603,6 +18586,8 @@ msgid ""
 "Add. You can also add a series\n"
 "by right-clicking on it."
 msgstr ""
+"Aggiungi. È possibile aggiungere una serie\n"
+"anche cliccandoci con il tasto destro."
 
 #: gui/selector.c:5175
 msgid "All ->"
@@ -18686,9 +18671,8 @@ msgid "Orders"
 msgstr "Ordini"
 
 #: gui/selector.c:5733
-#, fuzzy
 msgid "Maxima"
-msgstr "Massimo"
+msgstr "Massimi"
 
 #: gui/selector.c:5772
 msgid "I"
@@ -18795,9 +18779,8 @@ msgid "Prefer NLS via Levenberg-Marquardt"
 msgstr "Usa di preferenza NLS via Levenberg-Marquardt"
 
 #: gui/selector.c:6389
-#, fuzzy
 msgid "Show all statistics"
-msgstr "Statistiche descrittive complete"
+msgstr "Mostra tutte le statistiche"
 
 #: gui/selector.c:6421
 msgid "Show lagged variables"
@@ -18886,7 +18869,7 @@ msgstr "Test LM usando regressione ausiliaria"
 
 #: gui/selector.c:6929
 msgid "Stepwise add, using"
-msgstr ""
+msgstr "Aggiunta stepwise, usando"
 
 #: gui/selector.c:6960
 msgid "Estimate reduced model"
@@ -18897,19 +18880,16 @@ msgid "Wald test, based on covariance matrix"
 msgstr "Test di Wald, basato sulla matrice di covarianza"
 
 #: gui/selector.c:6977
-#, fuzzy
 msgid "Or stepwise elimination"
-msgstr "Stima a un passo"
+msgstr "Oppure eliminazione stepwise"
 
 #: gui/selector.c:6986
-#, fuzzy
 msgid "using two-sided p-value:"
-msgstr "p-value a due code"
+msgstr "usando il p-value a due code:"
 
 #: gui/selector.c:6995
-#, fuzzy
 msgid "using information criterion: "
-msgstr "Criterio di informazione di Akaike"
+msgstr "usando il criterio di informazione: "
 
 #: gui/selector.c:7007
 msgid "Test only selected variables"
@@ -19036,9 +19016,8 @@ msgid "Select format"
 msgstr "Selezionare il formato"
 
 #: gui/selector.c:7426
-#, fuzzy
 msgid "At least two series are needed"
-msgstr "Non sono definite serie\n"
+msgstr "Occorrono almeno due serie"
 
 #: gui/selector.c:7585
 msgid "New variable"
@@ -19069,9 +19048,8 @@ msgid "factorized boxplot"
 msgstr "boxplot con fattore"
 
 #: gui/selector.c:7638
-#, fuzzy
 msgid "factorized statistics"
-msgstr "Statistiche descrittive"
+msgstr "statistiche fattorizzate"
 
 #: gui/selector.c:7640
 msgid "scatterplot with control"
@@ -19166,9 +19144,8 @@ msgid "Define named list"
 msgstr "Definire una lista"
 
 #: gui/selector.c:8056
-#, fuzzy
 msgid "Select coefficients to track (max 25)"
-msgstr "Selezionare i coefficienti da seguire"
+msgstr "Selezionare i coefficienti da seguire (max 25)"
 
 #: gui/selector.c:8323
 msgid "Name of list"
@@ -19273,7 +19250,7 @@ msgstr "Salva come TeX..."
 
 #: gui/session.c:194 gui/session.c:3651
 msgid "View using gnuplot"
-msgstr ""
+msgstr "Visualizza con gnuplot"
 
 #: gui/session.c:195 gui/session.c:3645
 msgid "Edit plot commands"
@@ -19378,14 +19355,12 @@ msgid "gretl: rename object"
 msgstr "gretl: rinomina oggetto"
 
 #: gui/session.c:3525
-#, fuzzy
 msgid "matrix is null"
-msgstr "La matrice è singolare"
+msgstr "la matrice è nulla"
 
 #: gui/session.c:3527
-#, fuzzy
 msgid "matrix is complex"
-msgstr "la matrice è NULL"
+msgstr "la matrice è complessa"
 
 #: gui/session.c:3849
 msgid "Data set"
@@ -19420,9 +19395,9 @@ msgid "icon view"
 msgstr "finestra icone"
 
 #: gui/session.c:4417
-#, fuzzy, c-format
+#, c-format
 msgid "Properties of complex matrix %s"
-msgstr "Proprietà della matrice %s"
+msgstr "Proprietà della matrice complessa %s"
 
 #: gui/session.c:4419
 #, c-format
@@ -19486,9 +19461,8 @@ msgid "Not positive definite"
 msgstr "Non definita positiva"
 
 #: gui/session.c:4468
-#, fuzzy
 msgid "Hermitian"
-msgstr "Determinante"
+msgstr "Hermitiana"
 
 #: gui/session.c:4477
 msgid "Idempotent"
@@ -19683,9 +19657,8 @@ msgid "Menu font"
 msgstr "Carattere del menù"
 
 #: gui/settings.c:341
-#, fuzzy
 msgid "Graph font"
-msgstr "carattere per i grafici PNG"
+msgstr "Carattere per i grafici"
 
 #: gui/settings.c:343
 msgid "Gnuplot extra colors"
@@ -19803,7 +19776,7 @@ msgstr "Generali"
 
 #: gui/settings.c:1715
 msgid "Plots"
-msgstr ""
+msgstr "Grafici"
 
 #: gui/settings.c:1717
 msgid "Programs"
@@ -19939,21 +19912,21 @@ msgid "_Divide by scalar"
 msgstr "_Dividi per scalare"
 
 #: gui/ssheet.c:962
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for new scalar\n"
 "(max. %d characters)"
 msgstr ""
 "Inserire un nome per il nuovo scalare\n"
-"(max. 15 caratteri)"
+"(max. %d caratteri)"
 
 #: gui/ssheet.c:969
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter name for new series\n"
 "(max. %d characters)"
 msgstr ""
-"Inserire un nome per la nuova variabile\n"
+"Inserire un nome per la nuova serie\n"
 "(max. %d caratteri)"
 
 #: gui/ssheet.c:984
@@ -20087,9 +20060,8 @@ msgid "complex matrix"
 msgstr "Matrice complessa"
 
 #: gui/ssheet.c:3911
-#, fuzzy
 msgid "matrix"
-msgstr "Nuova matrice"
+msgstr "matrice"
 
 #: gui/ssheet.c:3931 plugin/geoplot.c:1167 plugin/geoplot.c:1172
 #: plugin/geoplot.c:1177
@@ -20208,9 +20180,8 @@ msgid "Execute line"
 msgstr "Esegui riga"
 
 #: gui/textbuf.c:4587
-#, fuzzy
 msgid "Auto-indent function"
-msgstr "Indenta automaticamente regione"
+msgstr "Indenta automaticamente la funzione"
 
 #: gui/textbuf.c:4595
 msgid "Auto-indent region"
@@ -20332,25 +20303,23 @@ msgstr "Matrice salvata con il nome %s"
 
 #: gui/toolbar.c:946 gui/toolbar.c:1665
 msgid "Preview as markdown"
-msgstr ""
+msgstr "Anteprima come markdown"
 
 #: gui/toolbar.c:963
 msgid "Return to editing"
-msgstr ""
+msgstr "Torna alla modifica"
 
 #: gui/toolbar.c:972
-#, fuzzy
 msgid "plain literal text"
-msgstr "Testo semplice"
+msgstr "testo semplice"
 
 #: gui/toolbar.c:973
 msgid "markdown"
-msgstr ""
+msgstr "markdown"
 
 #: gui/toolbar.c:978
-#, fuzzy
 msgid "Text status"
-msgstr "Statistica test"
+msgstr "Stato del testo"
 
 #: gui/toolbar.c:1065
 msgid "New window"
@@ -20490,9 +20459,8 @@ msgid "New tab"
 msgstr "Nuovo tab"
 
 #: gui/toolbar.c:1664
-#, fuzzy
 msgid "Set markdown status"
-msgstr "Mostra _stato"
+msgstr "Imposta lo stato markdown"
 
 #: gui/toolbar.c:1829
 msgid "launch calculator"
@@ -20573,7 +20541,7 @@ msgstr ""
 
 #: gui/update.c:69
 msgid "Received an invalid update message"
-msgstr ""
+msgstr "Ricevuto un messaggio di aggiornamento non valido"
 
 #: gui/update.c:72
 msgid "No new files"
@@ -20660,9 +20628,8 @@ msgid "Buffer is empty"
 msgstr "Il buffer è vuoto"
 
 #: gui/viewers.c:494
-#, fuzzy
 msgid "Go to line"
-msgstr "Commenta riga"
+msgstr "Vai alla riga"
 
 #: gui/viewers.c:892
 msgid "gretl: edit plot commands"
@@ -21771,11 +21738,13 @@ msgid "unknown data type"
 msgstr "tipo di dati sconosciuto"
 
 #: plugin/stata_import.c:954
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Value -> label mappings for variable %d (%s)\n"
-msgstr "Il p-value è massimo per la variabile %d (%s)"
+msgstr ""
+"\n"
+"Corrispondenze valore -> etichetta per la variabile %d (%s)\n"
 
 #: plugin/stata_import.c:957
 #, c-format
@@ -21783,10 +21752,12 @@ msgid ""
 "\n"
 "Value -> label mappings for the following %d variables\n"
 msgstr ""
+"\n"
+"Corrispondenze valore -> etichetta per le seguenti %d variabili\n"
 
 #: plugin/stata_import.c:1679
 msgid "breaking on end of value labels\n"
-msgstr ""
+msgstr "interruzione alla fine delle etichette dei valori\n"
 
 #: plugin/stata_import.c:1852
 msgid ""
@@ -21797,14 +21768,13 @@ msgstr ""
 "(caratteristica \"Type 0\" con lunghezza non nulla)"
 
 #: plugin/stata_import.c:2061
-#, fuzzy
 msgid "This dta version not yet supported\n"
-msgstr "Libsvm non è supportata"
+msgstr "Questa versione del formato dta non è ancora supportata\n"
 
 #: plugin/stata_import.c:2197
-#, fuzzy, c-format
+#, c-format
 msgid "Stata file version %d\n"
-msgstr "gretl versione %s\n"
+msgstr "File Stata versione %d\n"
 
 #: plugin/stata_import.c:2243
 msgid "cannot read Stata .dta on this platform"
@@ -21823,9 +21793,8 @@ msgid "upper tail"
 msgstr "coda superiore"
 
 #: plugin/stepwise.c:574 plugin/stepwise.c:757
-#, fuzzy
 msgid "Baseline"
-msgstr "Usa linee"
+msgstr "Baseline"
 
 #: plugin/stepwise.c:609 plugin/stepwise.c:970
 msgid "Add"
@@ -21833,224 +21802,213 @@ msgstr "Aggiungi"
 
 #: plugin/stepwise.c:780 plugin/stepwise.c:1097
 msgid "Drop"
-msgstr ""
+msgstr "Elimina"
 
 #: plugin/svm.c:323
-#, fuzzy, c-format
+#, c-format
 msgid "%s: unrecognized SVM type\n"
-msgstr "'%s': nome non riconosciuto"
+msgstr "%s: tipo SVM non riconosciuto\n"
 
 #: plugin/svm.c:332
-#, fuzzy, c-format
+#, c-format
 msgid "%s: unrecognized kernel type\n"
-msgstr "'%s': nome non riconosciuto"
+msgstr "%s: tipo di kernel non riconosciuto\n"
 
 #: plugin/svm.c:402
 msgid "Sorry, svm weighting not handled yet\n"
-msgstr ""
+msgstr "Spiacente, la ponderazione in svm non è ancora disponibile\n"
 
 #: plugin/svm.c:706
-#, fuzzy, c-format
+#, c-format
 msgid "svm model: required matrix %s was not found"
-msgstr "%s: colonna '%s' non trovata"
+msgstr "modello svm: matrice richiesta %s non trovata"
 
 #: plugin/svm.c:736
-#, fuzzy, c-format
+#, c-format
 msgid "svm model: required list %s was not found"
-msgstr "%s: colonna '%s' non trovata"
+msgstr "modello svm: lista richiesta %s non trovata"
 
 #: plugin/svm.c:1444
 msgid "Calling prediction function (this may take a while)\n"
 msgstr ""
+"Funzione di previsione (potrebbe volerci un po')\n"
 
 #: plugin/svm.c:1496
-#, fuzzy
 msgid "Training data"
-msgstr "dati originali"
+msgstr "Dati di addestramento"
 
 #: plugin/svm.c:1496
-#, fuzzy
 msgid "Test data"
-msgstr "Tipo di dati"
+msgstr "Dati di test"
 
 #: plugin/svm.c:1501
 #, c-format
 msgid "%s: miss ratio = %g (MSE = %g, R^2 = %g)\n"
-msgstr ""
+msgstr "%s: tasso di errore = %g (MSE = %g, R^2 = %g)\n"
 
 #: plugin/svm.c:1512
-#, fuzzy
 msgid "correct predictions"
-msgstr "Previsione"
+msgstr "previsioni corrette"
 
 #: plugin/svm.c:1529
-#, fuzzy
 msgid "Cross validation"
-msgstr "Tabulazione _incrociata"
+msgstr "Cross-validazione"
 
 #: plugin/svm.c:1805
 msgid "parameter search grid (start, stop, step):\n"
-msgstr ""
+msgstr "griglia di ricerca dei parametri (inizio, fine, passo):\n"
 
 #: plugin/svm.c:1813
-#, fuzzy
 msgid "values"
-msgstr "Valore"
+msgstr "valori"
 
 #: plugin/svm.c:1814
-#, fuzzy
 msgid "linear"
-msgstr "linea"
+msgstr "lineare"
 
 #: plugin/svm.c:1814
-#, fuzzy
 msgid "log2-based"
-msgstr "Basata sui dati"
+msgstr "basato su log2"
 
 #: plugin/svm.c:1993
 msgid "Non-RBF kernel, don't know how to tune parameters\n"
-msgstr ""
+msgstr "Kernel non RBF: impossibile calibrare i parametri\n"
 
 #: plugin/svm.c:2050
 #, c-format
 msgid "*** Criterion optimized at %g: C=%g"
-msgstr ""
+msgstr "*** Criterio ottimizzato a %g: C=%g"
 
 #: plugin/svm.c:2220
 #, c-format
 msgid "MPI: dividing %d parameter specifications between %d processes\n"
-msgstr ""
+msgstr "MPI: suddivisione di %d specificazioni di parametri tra %d processi\n"
 
 #: plugin/svm.c:2401
-#, fuzzy
 msgid "Cross-validation"
-msgstr "Criterio di cross-validazione"
+msgstr "Cross-validazione"
 
 #: plugin/svm.c:2403
-#, fuzzy, c-format
+#, c-format
 msgid "using %d consecutive blocks"
-msgstr "usando %d osservazioni"
+msgstr "usando %d blocchi consecutivi"
 
 #: plugin/svm.c:2405
-#, fuzzy, c-format
+#, c-format
 msgid "using %d values of %s"
-msgstr ""
-"Usati %d sotto-campioni di dimensione %d\n"
-"\n"
+msgstr "usando %d valori di %s"
 
 #: plugin/svm.c:2407
-#, fuzzy, c-format
+#, c-format
 msgid "using %d random folds"
-msgstr "seme per il folding casuale"
+msgstr "usando %d fold casuali"
 
 #: plugin/svm.c:2409
 msgid "(may take a while)"
-msgstr ""
+msgstr "(potrebbe volerci un po')"
 
 #: plugin/svm.c:2537
-#, fuzzy, c-format
+#, c-format
 msgid "%s: found %d folds\n"
-msgstr "%s: l'argomento %d dovrebbe essere %s"
+msgstr "%s: trovati %d fold\n"
 
 #: plugin/svm.c:2622
-#, fuzzy, c-format
+#, c-format
 msgid "svm: unrecognized parameter '%s'"
-msgstr "Tipo di dati '%s' non riconosciuto"
+msgstr "svm: parametro '%s' non riconosciuto"
 
 #: plugin/svm.c:2663
-#, fuzzy, c-format
+#, c-format
 msgid "svm: invalid 'loadmod' value %d\n"
-msgstr "%s: valore non valido '%s'"
+msgstr "svm: valore %d non valido per 'loadmod'\n"
 
 #: plugin/svm.c:2673
-#, fuzzy, c-format
+#, c-format
 msgid "svm: invalid 'scaling' value %d\n"
-msgstr "%s: valore non valido '%s'"
+msgstr "svm: valore %d non valido per 'scaling'\n"
 
 #: plugin/svm.c:2682
-#, fuzzy, c-format
+#, c-format
 msgid "svm: invalid 'predict' value %d\n"
-msgstr "%s: valore non valido '%s'"
+msgstr "svm: valore %d non valido per 'predict'\n"
 
 #: plugin/svm.c:2701
 msgid "no training will be done"
-msgstr ""
+msgstr "non verrà eseguito alcun addestramento"
 
 #: plugin/svm.c:2706
-#, fuzzy, c-format
+#, c-format
 msgid "svm: n_train must be at least %d"
-msgstr "Il numero di prove deve essere almeno 1"
+msgstr "svm: n_train deve essere almeno %d"
 
 #: plugin/svm.c:2709
-#, fuzzy, c-format
+#, c-format
 msgid "svm: n_train cannot exceed the number of complete observations, %d"
-msgstr ""
-"Il numero degli strumenti (%d) eccede il numero delle osservazioni (%d)"
+msgstr "svm: n_train non può superare il numero di osservazioni complete, %d"
 
 #: plugin/svm.c:2719
 #, c-format
 msgid "n_train = %d; use observations %s to %s for training\n"
-msgstr ""
+msgstr "n_train = %d; uso delle osservazioni da %s a %s per l'addestramento\n"
 
 #: plugin/svm.c:2728
-#, fuzzy, c-format
+#, c-format
 msgid "svm: invalid 'folds' value %d\n"
-msgstr "%s: valore non valido '%s'"
+msgstr "svm: valore %d non valido per 'folds'\n"
 
 #: plugin/svm.c:2773
-#, fuzzy, c-format
+#, c-format
 msgid "svm: invalid regcrit value %d"
-msgstr "%s: valore non valido '%s'"
+msgstr "svm: valore %d non valido per regcrit"
 
 #: plugin/svm.c:2839
 msgid "The foldvar and consecutive options are incompatible"
-msgstr ""
+msgstr "Le opzioni 'foldvar' e 'consecutive' sono incompatibili"
 
 #: plugin/svm.c:2920
 msgid "svm: 'use_mpi' option ignored in the absence of search"
-msgstr ""
+msgstr "svm: opzione 'use_mpi' ignorata in assenza di ricerca"
 
 #: plugin/svm.c:2980
 #, c-format
 msgid "Getting data ranges from %s... "
-msgstr ""
+msgstr "Lettura degli intervalli dei dati da %s... "
 
 #: plugin/svm.c:2986
 #, c-format
 msgid "Getting data ranges (sample = %d to %d)... "
-msgstr ""
+msgstr "Lettura degli intervalli dei dati (campione = da %d a %d)... "
 
 #: plugin/svm.c:3011
 msgid "Loading svm model from bundle... "
-msgstr ""
+msgstr "Caricamento del modello svm dal bundle... "
 
 #: plugin/svm.c:3014
 #, c-format
 msgid "Loading svm model from %s... "
-msgstr ""
+msgstr "Caricamento del modello svm da %s... "
 
 #: plugin/svm.c:3030
 msgid "Saving svm model to bundle... "
-msgstr ""
+msgstr "Salvataggio del modello svm nel bundle... "
 
 #: plugin/svm.c:3034
 #, c-format
 msgid "Saving svm model as %s... "
-msgstr ""
+msgstr "Salvataggio del modello svm come %s... "
 
 #: plugin/svm.c:3061
 msgid "Checking parameter values... "
-msgstr ""
+msgstr "Controllo dei valori dei parametri... "
 
 #: plugin/svm.c:3068
-#, fuzzy
 msgid "svm: probability estimates not supported for this specification"
-msgstr "%s: localizzazione non supportata su questo sistema"
+msgstr "svm: stime di probabilità non supportate per questa specificazione"
 
 #: plugin/svm.c:3073 plugin/svm.c:3078
-#, fuzzy, c-format
+#, c-format
 msgid "svm: cross validation criterion %d not applicable"
-msgstr "Criterio di cross-validazione"
+msgstr "svm: criterio di cross-validazione %d non applicabile"
 
 #: plugin/svm.c:3086
 #, c-format
@@ -22060,11 +22018,12 @@ msgstr "parametri iniziali: C = %g"
 #: plugin/svm.c:3186
 msgid "Calling training function (this may take a while)\n"
 msgstr ""
+"Funzione di addestramento (potrebbe volerci un po')\n"
 
 #: plugin/svm.c:3195
 #, c-format
 msgid "Training done, err = %d\n"
-msgstr ""
+msgstr "Addestramento completato, err = %d\n"
 
 #: plugin/svm.c:3226
 #, c-format
@@ -22462,43 +22421,38 @@ msgid "Unexpected error reading the file\n"
 msgstr "Errore inatteso durante la lettura del file\n"
 
 #: plugin/xlsx_import.c:159
-#, fuzzy
 msgid "Couldn't find shared strings table\n"
-msgstr "Impossibile trovare un programma di terminale utilizzabile"
+msgstr "Tabella delle stringhe condivise non trovata\n"
 
 #: plugin/xlsx_import.c:170
-#, fuzzy
 msgid "didn't get sst count\n"
-msgstr "Impossibile leggere la descrizione da %s\n"
+msgstr "conteggio sst non trovato\n"
 
 #: plugin/xlsx_import.c:175
 msgid "didn't get valid sst count\n"
-msgstr ""
+msgstr "conteggio sst valido non trovato\n"
 
 #: plugin/xlsx_import.c:215 plugin/xlsx_import.c:229
-#, fuzzy, c-format
+#, c-format
 msgid "failed reading string %d\n"
-msgstr "Generata la stringa %s\n"
+msgstr "lettura della stringa %d fallita\n"
 
 #: plugin/xlsx_import.c:249
-#, fuzzy, c-format
+#, c-format
 msgid "expected %d shared strings but only found %d\n"
-msgstr "Al posto di %s è stato trovato %s"
+msgstr "attese %d stringhe condivise ma ne sono state trovate solo %d\n"
 
 #: plugin/xlsx_import.c:700
-#, fuzzy
 msgid "couldn't find 'r' property"
-msgstr "Impossibile trovare xterm o rxvt"
+msgstr "proprietà 'r' non trovata"
 
 #: plugin/xlsx_import.c:706
-#, fuzzy
 msgid "couldn't find coordinates"
-msgstr "Impossibile trovare lo script '%s'\n"
+msgstr "coordinate non trovate"
 
 #: plugin/xlsx_import.c:872
-#, fuzzy
 msgid "no data value"
-msgstr "%s: non ci sono dati disponibili"
+msgstr "nessun dato"
 
 #: plugin/xlsx_import.c:977
 #, c-format
@@ -22511,22 +22465,22 @@ msgstr "Il file non contiene dati\n"
 
 #: plugin/xlsx_import.c:1048
 msgid "didn't get worksheet\n"
-msgstr ""
+msgstr "foglio di lavoro non trovato\n"
 
 #: plugin/xlsx_import.c:1324
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': couldn't find filename\n"
-msgstr "'%s': nome non riconosciuto"
+msgstr "'%s': nome di file non trovato\n"
 
 #: plugin/xlsx_import.c:1331
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': contains no data\n"
-msgstr "Il file non contiene dati\n"
+msgstr "'%s': non contiene dati\n"
 
 #: plugin/xlsx_import.c:1344
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': couldn't find file Id\n"
-msgstr "'%s' e '%s': impossibile avere date\n"
+msgstr "'%s': Id del file non trovato\n"
 
 #: plugin/xlsx_import.c:1369
 msgid "Found no sheets\n"
@@ -22538,13 +22492,12 @@ msgid "'%s': no such worksheet"
 msgstr "%s: nessun foglio di lavoro"
 
 #: plugin/xlsx_import.c:1431
-#, fuzzy
 msgid ""
 "\n"
 "Found no valid sheets\n"
 msgstr ""
 "\n"
-"Trovati %d fogli validi\n"
+"Nessun foglio valido trovato\n"
 
 #: plugin/xlsx_import.c:1434
 #, c-format
@@ -22556,14 +22509,13 @@ msgstr ""
 "Trovati %d fogli validi\n"
 
 #: plugin/xlsx_import.c:1672
-#, fuzzy, c-format
+#, c-format
 msgid "Name missing for variable %d\n"
-msgstr "Dati mancanti per la variabile '%s'"
+msgstr "Nome mancante per la variabile %d\n"
 
 #: plugin/xlsx_import.c:1790
-#, fuzzy
 msgid "Error reading xlsx data\n"
-msgstr "Errore nella lettura di %s\n"
+msgstr "Errore nella lettura dei dati xlsx\n"
 
 #: doc/commands/matfuncs.c:44
 msgid "Matrix algebra"
@@ -22870,109 +22822,90 @@ msgid "Verbosity level"
 msgstr "Verbosità"
 
 #: addons/addons-i18n.c:112
-#, fuzzy
 msgid "dbnomics"
-msgstr "binomiale"
+msgstr "dbnomics"
 
 #: addons/addons-i18n.c:116
 msgid "Don't"
-msgstr ""
+msgstr "Non riempire"
 
 #: addons/addons-i18n.c:117
-#, fuzzy
 msgid "Fill method"
-msgstr "Metodi numerici"
+msgstr "Metodo di riempimento"
 
 #: addons/addons-i18n.c:118
-#, fuzzy
 msgid "Linear interpolation"
-msgstr "Vincoli lineari"
+msgstr "Interpolazione lineare"
 
 #: addons/addons-i18n.c:119
-#, fuzzy
 msgid "Mean value"
-msgstr "Autovalore"
+msgstr "Valore medio"
 
 #: addons/addons-i18n.c:120
-#, fuzzy
 msgid "Number of random variables"
-msgstr "Nome della variabile:"
+msgstr "Numero di variabili casuali"
 
 #: addons/addons-i18n.c:121
-#, fuzzy
 msgid "Number of selected choices"
-msgstr "Numero di replicazioni:"
+msgstr "Numero di scelte selezionate"
 
 #: addons/addons-i18n.c:122
-#, fuzzy
 msgid "Repetition"
-msgstr "Vincolo"
+msgstr "Ripetizione"
 
 #: addons/addons-i18n.c:123
-#, fuzzy
 msgid "Series to fill"
-msgstr "Salva al file"
+msgstr "Serie da riempire"
 
 #: addons/addons-i18n.c:124
-#, fuzzy
 msgid "Set of all choices"
-msgstr "Somma dei coefficienti AR"
+msgstr "Insieme di tutte le scelte"
 
 #: addons/addons-i18n.c:125
-#, fuzzy
 msgid "Std. deviation"
 msgstr "Scarto quadratico medio"
 
 #: addons/addons-i18n.c:126
-#, fuzzy
 msgid "Vector of values"
-msgstr "Valori previsti"
+msgstr "Vettore di valori"
 
 #: addons/addons-i18n.c:127
-#, fuzzy
 msgid "W test stat"
-msgstr "Statistica test"
+msgstr "Statistica test W"
 
 #: addons/addons-i18n.c:128
 msgid "always use normal approx"
-msgstr ""
+msgstr "usa sempre l'approssimazione normale"
 
 #: addons/addons-i18n.c:129
-#, fuzzy
 msgid "bootstrap type code"
-msgstr "tipo di bootstrap"
+msgstr "codice tipo bootstrap"
 
 #: addons/addons-i18n.c:130
-#, fuzzy
 msgid "left truncation value"
-msgstr "Troncamento di Bartlett a %d ritardi\n"
+msgstr "valore di troncamento a sinistra"
 
 #: addons/addons-i18n.c:132
-#, fuzzy
 msgid "number of trials"
-msgstr "Numero di intervalli:"
+msgstr "numero di prove"
 
 #: addons/addons-i18n.c:133
-#, fuzzy
 msgid "options"
-msgstr "Opzioni"
+msgstr "opzioni"
 
 #: addons/addons-i18n.c:134
-#, fuzzy
 msgid "resampling"
-msgstr "Ricampionamento residui"
+msgstr "ricampionamento"
 
 #: addons/addons-i18n.c:135
-#, fuzzy
 msgid "right truncation value"
-msgstr "Troncamento del ritardo automatico\n"
+msgstr "valore di troncamento a destra"
 
 #: addons/addons-i18n.c:136
 msgid "two-sided prob mass"
-msgstr ""
+msgstr "massa di probabilità bilaterale"
 
 #: addons/addons-i18n.c:137
-#, fuzzy
 msgid "wildM"
 msgstr "wild/Mammen"
 
