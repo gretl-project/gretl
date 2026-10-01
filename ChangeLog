@@ -1,13 +1,21 @@
 version 2026c, in progress
-- matrix code: drop the experimental hand-crafted OpenMP
-  paths for multiplication, X'X and element-wise add/subtract,
-  relying on the BLAS and native single-threaded code; lower
-  the default blas_mnk_min threshold to 80000 accordingly
-- the "omp_mnk_min" set-variable is now an obsolete no-op
+- new addons "kmeans" and "PairPlot", from A. Tarassow's
+  function packages of the same names, with various
+  enhancements and speedups
 - new function kmeans(): algorithm ASA136 for the k-means
   problem
 - new function permute(): calculate all permutations of a
   vector of up to 8 elements
+- "fcast" command: introduce the --exponentiate and
+  --integrate options for forecasting levels from a model in
+  logarithms and/or first differences
+- matrix code: drop the experimental hand-crafted OpenMP
+  paths for multiplication, X'X and element-wise add/subtract,
+  relying on the BLAS and native single-threaded code; lower
+  the default blas_mnk_min threshold to 80000 accordingly
+- extra addon: new function convex_hull()
+- the "omp_mnk_min" set-variable is now an obsolete no-op
+- GUI: promote the "Packages" entry to top level
 - GUI: forecast from single-equation model, support write
   and copy in CSV format
 - GUI: fix for call to function package with no arguments
@@ -28,7 +36,8 @@ version 2026c, in progress
   given string-valued series as input
 - fix bug: potential crash or memory leak with the "smpl"
   command in certain cases of compounding restrictions
-- gretl_edit: support loading of function definitions
+- gretl_edit: support loading of function definitions and
+  emacs-style "jump to declaration"
 - MS Windows: update doc regarding use of MS-MPI
 
 2026-04-30 version 2026b
