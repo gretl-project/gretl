@@ -1055,7 +1055,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     double L2;
 #endif
     double fmax, f, f0, s, steplen = 0.0;
-    double fdiff, D1, D2;
+    double fshow, fdiff, D1, D2;
     int i, j, ilast, iter, done = 0;
     int err = 0;
 
@@ -1126,7 +1126,8 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
             break;
         }
         if (bfgs_print_iter(verbose, verbskip, iter)) {
-            print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
+	    fshow = minimize ? -f : f;
+            print_iter_info(iter, fshow, crittype, n, b, g, steplen, prn);
         }
         if (show_activity && (iter % 10 == 0)) {
             show_activity_callback();
@@ -1330,7 +1331,8 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     *grcount += gcount;
 
     if (verbose) {
-        print_iter_info(-1, f, crittype, n, b, g, steplen, prn);
+	fshow = minimize ? -f : f;
+        print_iter_info(-1, fshow, crittype, n, b, g, steplen, prn);
         /* pputc(prn, '\n'); */
     }
 
@@ -1426,7 +1428,7 @@ int LBFGS_max (double *b, int n,
     int i, m, dim;
     char task[60];
     char csave[60];
-    double f, pgtol;
+    double f, fshow, pgtol;
     double factr;
     double gradmax;
     double dsave[29];
@@ -1559,8 +1561,9 @@ int LBFGS_max (double *b, int n,
             if (iter != ibak) {
                 double steplen = (iter == 1)? NADBL : dsave[13];
 
+		fshow = (crittype == C_OTHER && (opt & OPT_I)) ? f : -f;
                 if (maximize) reverse_gradient(g, n);
-                print_iter_info(iter, -f, crittype, n, b, g, steplen, prn);
+                print_iter_info(iter, fshow, crittype, n, b, g, steplen, prn);
                 if (maximize) reverse_gradient(g, n);
             }
             ibak = iter;
@@ -1582,7 +1585,8 @@ int LBFGS_max (double *b, int n,
 
     if (opt & OPT_V) {
         if (maximize) reverse_gradient(g, n);
-        print_iter_info(-1, -f, crittype, n, b, g, dsave[13], prn);
+	fshow = (crittype == C_OTHER && (opt & OPT_I)) ? f : -f;
+        print_iter_info(-1, fshow, crittype, n, b, g, dsave[13], prn);
         pputc(prn, '\n');
     }
 
