@@ -11929,13 +11929,13 @@ static NODE *get_or_steal_bundle_member (NODE *l, NODE *r, parser *p, int steal)
     }
 
     if (querying) {
-	ret = aux_empty_node(p);
-	ret->t = gen_type_from_gretl_type(type);
-	return ret;
+        ret = aux_empty_node(p);
+        ret->t = gen_type_from_gretl_type(type);
+        return ret;
     }
 
     if (type != GRETL_TYPE_SERIES && !is_virtual) {
-	ret = aux_node_for_type(type, p);
+        ret = aux_node_for_type(type, p);
     }
 
     /* in steal mode, we check if we deal with same types */
@@ -18474,8 +18474,8 @@ static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
     void *val = NULL;
 
     if (!p->err) {
-	idx--; /* convert to zero-based */
-	val = gretl_array_get_element(l->v.a, idx, &type, &p->err);
+        idx--; /* convert to zero-based */
+        val = gretl_array_get_element(l->v.a, idx, &type, &p->err);
     }
     if (p->err) {
         return NULL;
@@ -18496,15 +18496,15 @@ static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_BUNDLE) {
         ret->v.b = (gretl_bundle *) val;
     } else if (type == GRETL_TYPE_ARRAY) {
-	ret->v.a = (gretl_array *) val;
+        ret->v.a = (gretl_array *) val;
     } else {
         p->err = E_DATA;
         return NULL;
     }
 
     if (!p->err) {
-	/* finally we nullify the position in array */
-	p->err = gretl_array_nullify_element(l->v.a, idx);
+        /* finally we nullify the position in array */
+        p->err = gretl_array_nullify_element(l->v.a, idx);
     }
 
     return ret;
