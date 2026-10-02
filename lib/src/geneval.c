@@ -14338,12 +14338,9 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 
         if (l->t != U_ADDR) {
             p->err = E_INVARG;
-        } else {
-            src = ptr_node_get_referent_node(l, p);
-        }
-        if (p->err) {
             return NULL;
         }
+        src = ptr_node_get_referent_node(l, p);
 
         if (m->t == BUNDLE && r->t == STR) {
             if (!ok_bundled_type(src->t) || gretl_bundle_has_key(m->v.b, r->v.str)) {
@@ -14351,12 +14348,19 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
                 return NULL;
             }
             target = BUNDLE;
-        } else if (m->t == ARRAY && r->t == NUM) {
-            idx = node_get_int(r, p) - 1;
-            /* Is the second restriction below really wanted? */
-            if (!gen_type_is_arrayable(src->t) || !is_null_array_element(m->v.a, idx)) {
+        } else if (m->t == ARRAY && (r->t == NUM || r->t == EMPTY)) {
+            /* if EMPTY, push-like version, i.e. we extend existing array by one element */
+            if (!gen_type_is_arrayable(src->t)) {
                 p->err = E_INVARG;
                 return NULL;
+            }
+
+            if (r->t == NUM) {
+                idx = node_get_int(r, p) - 1;
+                if (!is_null_array_element(m->v.a, idx)) {
+                    p->err = E_INVARG;
+                    return NULL;
+                }
             }
             target = ARRAY;
         } else {
@@ -14374,7 +14378,22 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         if (target == BUNDLE) {
             p->err = gretl_bundle_donate_data(m->v.b, r->v.str, val, type);
         } else if (target == ARRAY) {
-            p->err = gretl_array_set_element(m->v.a, idx, val, type, 0);
+            if (r->t == NUM) {
+                p->err = gretl_array_set_element(m->v.a, idx, val, type, 0);
+            } else {
+                if (type == GRETL_TYPE_STRING) {
+                    p->err = gretl_array_append_string(m->v.a, val, 0);
+                } else if (type == GRETL_TYPE_MATRIX) {
+                    p->err = gretl_array_append_matrix(m->v.a, val, 0);
+                } else if (type == GRETL_TYPE_BUNDLE) {
+                    p->err = gretl_array_append_bundle(m->v.a, val, 0);
+                } else if (type == GRETL_TYPE_ARRAY) {
+                    p->err = gretl_array_append_array(m->v.a, val, 0);
+                } else {
+                    p->err = E_INVARG;
+                    return NULL;
+                }
+            }
         }
 
         if (p->err) {
