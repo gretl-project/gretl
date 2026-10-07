@@ -39,6 +39,8 @@ version 2026c, in progress
 - gretl_edit: support loading of function definitions and
   emacs-style "jump to declaration"
 - MS Windows: update doc regarding use of MS-MPI
+- Numerous cases of blocking potential buffer overruns,
+  and minor bug fixes, suggested by Claude
 
 2026-04-30 version 2026b
 - new function which() to determine which elements of a
