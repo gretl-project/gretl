@@ -1830,8 +1830,9 @@ void close_session (gretlopt opt)
     int logcode = LOG_NULL;
     int iview = 0;
 
-#if SESSION_DEBUG
-    fprintf(stderr, "close_session: starting cleanup\n");
+#if 1 || SESSION_DEBUG
+    fprintf(stderr, "close_session: starting cleanup, preserve = %d\n",
+	    preserve);
 #endif
 
     if (dataset != NULL && dataset->v > 0) {

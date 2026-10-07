@@ -716,9 +716,8 @@ gboolean window_list_exit_check (void)
     return ret;
 }
 
-/* windows that should _not_ be automatically closed when
-   closing the current gretl session (e.g. on opening a
-   new data file)
+/* Windows that should _not_ be automatically closed when closing the
+   current gretl session (e.g. on opening a new data file).
 */
 
 #define other_dont_close(r) (r == SCRIPT_OUT ||		\
@@ -749,9 +748,9 @@ static int keep_window_open (GtkWidget *w, gretlopt opt)
     /* FIXME maybe keep plot windows open if opt & OPT_P? */
 }
 
-/* called from session.c on switching the session: close all
-   windows that ought to be closed, but be careful not to
-   close ones that need to stay open!
+/* Called from session.c on switching the session: close all windows
+   that ought to be closed, but be careful not to close ones that need
+   to stay open!
 */
 
 void close_session_windows (gretlopt opt)

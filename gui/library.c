@@ -9724,12 +9724,11 @@ static void handle_gui_pkg_install (gretl_bundle *b)
     gretl_bundle_destroy(b);
 }
 
-/* Callbacks for when lib_open_append() is invoked. In
-   the first case we're just checking if OPEN is going
-   to destroy any unsaved data, and if so giving the user
-   the option of aborting the command. In the second
-   case we're prompting the GUI program to update its
-   state in response to opening a new dataset.
+/* Callbacks for when lib_open_append() is invoked. In the first case
+   we're just checking if OPEN is going to destroy any unsaved data, and
+   if so giving the user the option of aborting the command. In the
+   second case we're prompting the GUI program to update its state in
+   response to opening a new dataset.
 */
 
 static int handle_data_open_callback (CMD *cmd, void *ptr,
@@ -9778,8 +9777,8 @@ static int handle_data_open_callback (CMD *cmd, void *ptr,
     return 0;
 }
 
-/* Callback from libgretl to update the GUI in light of
-   execution of commands executed via script.
+/* Callback from libgretl to update the GUI in light of execution of
+   commands executed via script.
 */
 
 static int gui_exec_callback (ExecState *s, void *ptr,
@@ -9789,6 +9788,7 @@ static int gui_exec_callback (ExecState *s, void *ptr,
     int err = 0;
 
     if (ci == OPEN) {
+	// fprintf(stderr, "gui_exec_callback -> handle_data_open_callback\n");
         return handle_data_open_callback(s->cmd, ptr, type);
     } else if (ci == FLUSH) {
         handle_flush_callback(s->cmd->opt);

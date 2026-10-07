@@ -587,8 +587,8 @@ static void protect_against_ubuntu (void)
 }
 
 /* Check for the combination of (KDE || Plasma) plus Wayland, which is
-   not going to work properly with GTK3 and requires a
-   workaround. Note that KDE/Plasma with x11 is not problematic.
+   not going to work properly with GTK3 and requires a workaround. Note
+   that KDE/Plasma with x11 is not problematic.
 */
 
 static void check_for_plasma_wayland (void)
@@ -624,9 +624,8 @@ static void check_for_plasma_wayland (void)
 
 #endif /* end Linux-specific checks */
 
-/* callback from within potentially lengthy libgretl
-   operations: try to avoid having the GUI become
-   totally unresponsive
+/* Callback from within potentially lengthy libgretl operations: try to
+   avoid having the GUI become totally unresponsive.
 */
 
 static void gui_show_activity (void)
@@ -710,13 +709,12 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 
 #ifdef G_OS_WIN32
 
-/* The point of the following special code: when gretl is
-   invoked by the OS (via double-click on a file associated
-   with gretl in the registry) the command-line may contain
-   a "mixed language" filename that is not representable in
-   the locale Code Page. Such a filename will appear in
-   mangled form in the argv array, and we need to call on
-   Windows APIs to get a UTF-16 version of this array.
+/* The point of the following special code: when gretl is invoked by the
+   OS (via double-click on a file associated with gretl in the registry)
+   the command-line may contain a "mixed language" filename that is not
+   representable in the locale Code Page. Such a filename will appear in
+   mangled form in the argv array, and we need to call on Windows APIs
+   to get a UTF-16 version of this array.
 */
 
 static void alt_gtk_init (int *pargc,
@@ -2510,9 +2508,8 @@ static void real_make_mainwin_list (const int *list,
     }
 }
 
-/* respond to "Define list", selected from main window
-   right-click popup menu when two or more series are
-   selected
+/* Respond to "Define list", selected from main window right-click popup
+   menu when two or more series are selected.
 */
 
 void make_list_from_main (void)
