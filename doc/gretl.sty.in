@@ -190,10 +190,7 @@
 %% The rest of the material below is specific to the book
 %% document class
 
-\ifcsname c@chapter\endcsname
-\else
- \endinput
-\fi
+\ifcsname c@chapter\endcsname\else\expandafter\endinput\fi
 
 %% Make TOC match revised chapter style
 \renewcommand\tableofcontents{%
