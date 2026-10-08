@@ -356,6 +356,9 @@ static double kanzler_eps (const double *x, int n, double e)
 
     qsort(dist, smax, sizeof *dist, gretl_compare_doubles);
     i = (int) round(e * smax);
+    if (i < 1) {
+	i = 1;
+    }
     eps = dist[i-1];
     free(dist);
 
