@@ -170,7 +170,7 @@ static int make_words_matrix (const double *x, int n, kinfo *ki)
     int *p2b;
     int nw, bvlen;
     int i, j, k, jj;
-    int err;
+    int err = 0;
 
     if (ki->wmat == NULL) {
 	/* allocate not already done */
