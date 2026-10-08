@@ -8542,7 +8542,7 @@ static int maybe_stop_script (GtkWidget *parent)
 {
     int resp, stop = 0;
 
-    if (oh.vwin != NULL) {
+    if (oh.vwin != NULL && oh.vwin->role != CONSOLE) {
         gtk_widget_hide(oh.vwin->main);
     }
 

@@ -1493,39 +1493,6 @@ void window_add_winlist (GtkWidget *window, GtkWidget *hbox)
     }
 }
 
-#if 0 /* specific to "swallow" and unused at present */
-
-static void menubar_add_closer (windata_t *vwin)
-{
-    GtkWidget *hbox = gtk_widget_get_parent(vwin->mbar);
-    GtkWidget *button, *img, *tbar;
-    GtkWidget *sibling = NULL;
-    GtkToolItem *item;
-
-    button = gtk_button_new();
-    item = gtk_tool_item_new();
-
-    if (vwin != NULL && vwin->mbar != NULL &&
-	GTK_IS_MENU_BAR(vwin->mbar)) {
-	sibling = vwin->mbar;
-    }
-
-    tbar = gretl_toolbar_new(sibling);
-    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
-    img = gtk_image_new_from_stock(GRETL_STOCK_CLOSE, GTK_ICON_SIZE_MENU);
-    gtk_container_add(GTK_CONTAINER(button), img);
-    gtk_container_add(GTK_CONTAINER(item), button);
-
-    g_signal_connect_swapped(G_OBJECT(button), "button-press-event",
-			     G_CALLBACK(gtk_widget_destroy), vwin->main);
-
-    gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
-    gtk_widget_show_all(tbar);
-    gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
-}
-
-#endif
-
 static void destroy_hbox_child (GtkWidget *w, gpointer p)
 {
     if (GTK_IS_SPINNER(w)) {
@@ -1593,9 +1560,6 @@ void vwin_pack_toolbar (windata_t *vwin)
 	    vwin_add_finder(vwin);
 	}
 	if (vwin->flags & VWIN_SWALLOW) {
-#if 0 /* don't show a close for swallowed console */
-	    menubar_add_closer(vwin);
-#endif
 	    if (vwin->role == CONSOLE) {
 		GtkWidget *lbl = gtk_label_new(_("gretl console"));
 
@@ -1669,6 +1633,8 @@ void gretl_viewer_present (windata_t *vwin)
 {
     if (window_is_tab(vwin)) {
 	tabwin_tab_present(vwin);
+    } else if (swallow && vwin->role == CONSOLE) {
+	gtk_widget_grab_focus(vwin->text);
     } else {
 	gtk_window_present(GTK_WINDOW(vwin->main));
     }

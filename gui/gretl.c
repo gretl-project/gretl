@@ -1311,7 +1311,7 @@ int n_ok_series (void)
     return nv;
 }
 
-/* populate the list of series in the main gretl window */
+/* Populate the list of series in the main gretl window. */
 
 void populate_varlist (void)
 {
@@ -1615,11 +1615,15 @@ static void set_main_window_scale (void)
     }
 }
 
-static void mainwin_insert_vwin (windata_t *vwin)
+static void mainwin_insert_console (void)
 {
-    if (vwin == NULL) {
-	return;
-    }
+    windata_t *vwin = NULL;
+
+    g_return_if_fail(mdata->hpanes != NULL);
+
+    vwin = gretl_console();
+    g_return_if_fail(vwin != NULL);
+
     if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes)) == NULL) {
 	gtk_paned_add2(GTK_PANED(mdata->hpanes), vwin->vbox);
 	gtk_paned_set_position(GTK_PANED(mdata->hpanes), mainwin_width/2);
@@ -1628,12 +1632,7 @@ static void mainwin_insert_vwin (windata_t *vwin)
 
 static void gretl_show_console (void)
 {
-    /* FIXME */
-    if (swallow) {
-	mainwin_insert_vwin(gretl_console());
-    } else {
-	gretl_console();
-    }
+    gretl_console();
 }
 
 static void make_main_window (void)
@@ -1763,7 +1762,7 @@ static void make_main_window (void)
     add_mainwin_toolbar(mdata->vbox);
 
     if (swallow) {
-	mainwin_insert_vwin(gretl_console());
+	mainwin_insert_console();
     }
 
     gtk_widget_show_all(mdata->main);
