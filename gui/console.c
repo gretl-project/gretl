@@ -509,6 +509,11 @@ static gboolean console_destroy_check (void)
     return console_protected ? TRUE : FALSE;
 }
 
+/* If the (unique) GUI console already exists, just try to ensure
+   that it's visible and focused, and return NULL. If it hasn't been
+   created already, build it and return its windata_t pointer.
+*/
+
 windata_t *gretl_console (void)
 {
     static char cbuf[MAXLINE];
@@ -519,14 +524,32 @@ windata_t *gretl_console (void)
         N_("gretl console: type 'help' for a list of commands");
 
     if (cvwin != NULL) {
+	/* The console already exists */
+#if CDEBUG
+	fprintf(stderr, "existing console: cvwin->main type is '%s'\n",
+		g_type_name(G_OBJECT_TYPE(cvwin->main)));
+	fprintf(stderr, "gretl_console(): cvwin = %p\n", (void *) cvwin);
+	fprintf(stderr, " cvwin->main: %p, IS_WINDOW %d, visible %d\n",
+		(void *) cvwin->main,
+		cvwin->main == NULL ? 0 : GTK_IS_WINDOW(cvwin->main),
+		cvwin->main == NULL ? 0 : gtk_widget_is_visible(cvwin->main));
+	fprintf(stderr, " cvwin->text: %p, IS_WINDOW %d, visible %d\n",
+		(void *) cvwin->text,
+		cvwin->text == NULL ? 0 : GTK_IS_WINDOW(cvwin->text),
+		cvwin->text == NULL ? 0 : gtk_widget_is_visible(cvwin->text));
+#endif
         if (GTK_IS_WINDOW(cvwin->main)) {
+	    /* the console is in its own window */
             gtk_window_present(GTK_WINDOW(cvwin->main));
         } else {
+	    /* the console is swallowed by the main window */
             cvwin = g_object_get_data(G_OBJECT(cvwin->main), "vwin");
             gtk_widget_grab_focus(cvwin->text);
         }
-        return NULL;
+	return NULL; /* done */
     }
+
+    /* Beyond this point we're constructing the console. */
 
     state = console_init(cbuf);
     if (state == NULL) {
@@ -538,6 +561,11 @@ windata_t *gretl_console (void)
     }
     cvwin = console_window(78, 450);
     cvwin->data = state;
+
+#if CDEBUG
+    fprintf(stderr, "new console: cvwin->main type is '%s'\n",
+	    g_type_name(G_OBJECT_TYPE(cvwin->main)));
+#endif
 
     g_signal_connect(G_OBJECT(cvwin->text), "paste-clipboard",
                      G_CALLBACK(console_paste_handler), NULL);
@@ -572,7 +600,7 @@ windata_t *gretl_console (void)
     }
 
 #if CDEBUG
-    fprintf(stderr, "gretl_console: returning\n");
+    fprintf(stderr, "gretl_console: returning %p\n", (void *) cvwin);
 #endif
 
     return cvwin;

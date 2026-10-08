@@ -1018,26 +1018,22 @@ gboolean verify_open_session (void)
 
 windata_t *console_window (int hsize, int vsize)
 {
+    gchar *title = NULL;
     windata_t *vwin;
 
-    if (swallow) {
-	vwin = gretl_viewer_new(CONSOLE, NULL, NULL);
-    } else {
-	gchar *title = NULL;
 #ifdef GRETL_PID_FILE
-	int seqno = gretl_sequence_number();
+    int seqno = gretl_sequence_number();
 
-	if (seqno > 1) {
-	    title = g_strdup_printf("%s (%d)", _("gretl console"), seqno);
-	}
-#endif
-	if (title != NULL) {
-	    vwin = gretl_viewer_new(CONSOLE, title, NULL);
-	    g_free(title);
-	} else {
-	    vwin = gretl_viewer_new(CONSOLE, _("gretl console"), NULL);
-	}
+    if (seqno > 1) {
+	title = g_strdup_printf("%s (%d)", _("gretl console"), seqno);
     }
+#endif
+    if (!swallow && title == NULL) {
+	title = g_strdup(_("gretl console"));
+    }
+
+    vwin = gretl_viewer_new(CONSOLE, title, NULL);
+    g_free(title);
 
     if (vwin == NULL) {
 	return NULL;
