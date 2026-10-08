@@ -1311,56 +1311,17 @@ windata_t *vwin_new (int role, gpointer data)
     return vwin;
 }
 
-static int should_swallow_vwin (int role)
-{
-    if (swallow) {
-	/* can add others here, after a lot of work! */
-	return role == CONSOLE;
-    } else {
-	return 0;
-    }
-}
-
-/* special setup for the case where the gretl main window
-   will/may contain additional panes besides the dataset
+/* Special treatment of the main window when we're going to
+   swallow the console. We need a GTK_HPANED apparatus.
 */
 
-#define TWO_ROWS 0 /* not yet! */
-
-#if TWO_ROWS
-
-static void mainwin_swallow_setup (windata_t *vwin)
-{
-    GtkWidget *BigV = gtk_vbox_new(FALSE, 0);
-    GtkWidget *vp = gtk_vpaned_new();
-    GtkWidget *topbox = gtk_hbox_new(FALSE, 5);
-
-    g_object_set_data(G_OBJECT(vwin->main), "topbox", topbox);
-    vwin->hpanes1 = gtk_hpaned_new();
-    vwin->hpanes2 = gtk_hpaned_new();
-
-    gtk_box_pack_start(GTK_BOX(BigV), topbox, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(BigV), vp, TRUE, TRUE, 0);
-    gtk_paned_add1(GTK_PANED(vp), vwin->hpanes1);
-    gtk_paned_add2(GTK_PANED(vp), vwin->hpanes2);
-    gtk_paned_set_position(GTK_PANED(vp), mainwin_height);
-    gtk_container_add(GTK_CONTAINER(vwin->main), BigV);
-    gtk_paned_add1(GTK_PANED(vwin->hpanes1), vwin->vbox);
-#if GTK_MAJOR_VERSION == 3
-    gtk_paned_set_wide_handle(GTK_PANED(vwin->hpanes1), TRUE);
-    gtk_paned_set_wide_handle(GTK_PANED(vwin->hpanes2), TRUE);
-#endif
-}
-
-#else /* single row, just two panes total */
-
 static void mainwin_swallow_setup (windata_t *vwin)
 {
     GtkWidget *BigV = gtk_vbox_new(FALSE, 0);
     GtkWidget *topbox = gtk_hbox_new(FALSE, 5);
 
     g_object_set_data(G_OBJECT(vwin->main), "topbox", topbox);
-    vwin->hpanes1 = gtk_hpaned_new();
+    vwin->hpanes = gtk_hpaned_new();
 
     /* BigV contains a top slot to hold the "global" menubar,
        and under this a paned horizontal box to hold the
@@ -1369,15 +1330,13 @@ static void mainwin_swallow_setup (windata_t *vwin)
        added later.
     */
     gtk_box_pack_start(GTK_BOX(BigV), topbox, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(BigV), vwin->hpanes1, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(BigV), vwin->hpanes, TRUE, TRUE, 0);
     gtk_container_add(GTK_CONTAINER(vwin->main), BigV);
-    gtk_paned_add1(GTK_PANED(vwin->hpanes1), vwin->vbox);
+    gtk_paned_add1(GTK_PANED(vwin->hpanes), vwin->vbox);
 #if GTK_MAJOR_VERSION == 3
-    gtk_paned_set_wide_handle(GTK_PANED(vwin->hpanes1), TRUE);
+    gtk_paned_set_wide_handle(GTK_PANED(vwin->hpanes), TRUE);
 #endif
 }
-
-#endif
 
 static int main_winpos = GTK_WIN_POS_CENTER;
 
@@ -1398,7 +1357,7 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 	return NULL;
     }
 
-    if (should_swallow_vwin(role) || (vwin->flags & VWIN_SWALLOW)) {
+    if (vwin->flags & VWIN_SWALLOW) {
 	toplevel = 0;
     }
 
@@ -1462,12 +1421,13 @@ GtkWidget *vwin_toplevel (windata_t *vwin)
     if (vwin == NULL) {
 	return NULL;
     } else if (vwin->flags & VWIN_SWALLOW) {
-	/* vwin swallowed by main */
+	/* vwin is swallowed by main */
 	return mdata->main;
     } else if (vwin->topmain != NULL) {
 	/* the tabbed case */
 	return vwin->topmain;
     } else {
+	/* the 'regular' case */
 	return gtk_widget_get_toplevel(vwin->main);
     }
 }
