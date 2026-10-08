@@ -9788,7 +9788,6 @@ static int gui_exec_callback (ExecState *s, void *ptr,
     int err = 0;
 
     if (ci == OPEN) {
-	// fprintf(stderr, "gui_exec_callback -> handle_data_open_callback\n");
         return handle_data_open_callback(s->cmd, ptr, type);
     } else if (ci == FLUSH) {
         handle_flush_callback(s->cmd->opt);
