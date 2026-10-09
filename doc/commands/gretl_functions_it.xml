@@ -4271,8 +4271,15 @@
 	<ilist>
 	  <li>
 	    <para>
-	      <lit>seats</lit>: 1 per usare l'algoritmo SEATS anziché
-	      il default (X11), oppure 0.
+	      <lit>verbose</lit>: controlla l'output stampato 0 = niente
+	      (il default); 1 = conferma le opzioni selezionate; 2 =
+	      conferma delle opzioni e l'output di X-13ARIMA.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>seats</lit>: 1 per usare l'algoritmo SEATS
+	      anziché il default (X11), oppure 0.
 	    </para>
 	  </li>
 	  <li>
@@ -5098,7 +5105,7 @@
 	</para>
 	<code>
 	  1  Errore Medio (Mean Error, ME)
-	  2  Errore Quadratico Medio (Mean Squared Error, MSE)
+	  2  Radice Errore Quadratico Medio (Root Mean Squared Error, RMSE)
 	  3  Errore Medio Assoluto (Mean Absolute Error, MAE)
 	  4  Errore Medio Percentuale (Mean Percentage Error, MPE)
 	  5  Errore Medio Assoluto Percentuale (Mean Absolute Percentage Error, MAPE)
@@ -5404,6 +5411,7 @@
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">b</fnarg>
 	<fnarg optional="true" type="scalar">y0</fnarg>
+	<fnarg optional="true" type="scalar-or-vec">x0</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5459,9 +5467,13 @@
 	  L'argomento scalare opzionale <argname>y0</argname>
 	  rappresenta i valori di <math>y</math> antecedenti
 	  all'inizio del campione (usato solo se <math>p>0</math>). Se
-	  omesso, si intende 0.  Valori di <argname>x</argname>
-	  antecedenti all'inizio del campione sono sempre considerati
-	  0.
+	  omesso, si intende 0. Analogamente, l'argomento opzionale
+	  <argname>x0</argname> serve a specificare uno o più valori
+	  di <math>x</math> precedenti al campione; si tratta di
+	  un'informazione rilevante solo quando <math>q &gt;
+	  0</math>. Se non specificato, i valori di
+	  <argname>x</argname> antecedenti all'inizio del campione
+	  sono sempre considerati 0.
 	</para>
 	<para>
 	  <seelist>
@@ -5664,7 +5676,7 @@
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">F</fnarg>
+	<fnarg type="matrix">f</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;A</fnarg>
@@ -5676,17 +5688,18 @@
 	  minimi quadrati quando uno dei regressori è una fattore
 	  discreto con molti valori distinti.
 	</para>
-	<para> Questo caso può essere gestito includendo tra i
-	regressori un insieme di variabili dummy che codificano i
-	valori del fattore, ma in certi casi è molto più efficiente
-	eseguire l'OLS su dati da cui sono state rimosse le medie per
-	ciascun valore del fattore, il che è ciò che questa funzione
-	fa. Se la versione di <argname>X</argname> depurata dalle
-	medie risulta di rango ridotto, la funzione restituisce un
-	errore. In un contesto di dati panel, l'output di questa
-	funzione corrisponderebbe allo stimatore OLS a effetti fissi,
-	qualora si consideri il fattore <argname>f</argname> come
-	identificativo delle unità del panel.
+	<para>
+	  Questo caso può essere gestito includendo tra i regressori
+	  un insieme di variabili dummy che codificano i valori del
+	  fattore, ma in certi casi è molto più efficiente eseguire
+	  l'OLS su dati da cui sono state rimosse le medie per ciascun
+	  valore del fattore, il che è ciò che questa funzione fa. Se
+	  la versione di <argname>X</argname> depurata dalle medie
+	  risulta di rango ridotto, la funzione restituisce un
+	  errore. In un contesto di dati panel, l'output di questa
+	  funzione corrisponderebbe allo stimatore OLS a effetti
+	  fissi, qualora si consideri il fattore <argname>f</argname>
+	  come identificativo delle unità del panel.
 	</para>
 	<para>
 	  Gli argomenti sono i seguenti:
@@ -5694,7 +5707,7 @@
 	<ilist>
 	  <li>
 	    <para>
-	      <argname>Y</argname>: una matrice <by r="T" c="k"/>
+	      <argname>Y</argname>: una matrice <by r="T" c="g"/>
 	      contenente le variabili dipendenti.
 	    </para>
 	  </li>
@@ -5722,9 +5735,11 @@
 	  <li>
 	    <para>
 	      <argname>&amp;V</argname>: puntatore a matrice per
-	      ricevere la matrice di covarianza delle stime dei
-	      parametri, o <lit>null</lit> se non è richiesta. FIXME:
-	      ancora da fare.
+	      ricevere una matrice <by r="k" c="k"/> che contiene (a)
+	      la matrice di covarianza delle stime dei parametri, se
+	      <argname>Y</argname> ha una sola colonna, oppure (b)
+	      <math>X'X</math><sup>-1</sup> se <argname>Y</argname> ha
+	      più colonne.
 	    </para>
 	  </li>
 	  <li>
@@ -7956,7 +7971,7 @@
 
     <function name="kmeans" section="stats" output="bundle">
       <fnargs>
-	<fnarg type="matrix">X</fnarg>
+	<fnarg type="list-or-mat">X</fnarg>
 	<fnarg type="scalar-or-matrix">c</fnarg>
 	<fnarg optional="true" type="bundle">opts</fnarg>
       </fnargs>
@@ -8093,18 +8108,18 @@
 	  </li>
 	  <li>
 	    <para>
-	     <lit>cluster_SST</lit>: la somma dei quadrati degli
+	     <lit>within_variation</lit>: la somma dei quadrati degli
 	     scarti dei punti rispetto al centroide del cluster a cui
 	     sono stati assegnati.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <lit>global_SST</lit>: la somma dei quadrati degli
+	      <lit>total_variation</lit>: la somma dei quadrati degli
 	      scarti dei punti rispetto al centroide globale. Questo
 	      valore può essere confrontato con
-	      <lit>cluster_SST</lit>, che risulterà tanto più piccolo
-	      quanto più la classificazione è efficace.
+	      <lit>within_variation</lit>, che risulterà tanto più
+	      piccolo quanto più la classificazione è efficace.
 	    </para>
 	  </li>
 	</ilist>
@@ -8176,7 +8191,6 @@
 	<fnarg type="scalar-or-matrix">Z</fnarg>
 	<fnarg type="scalar-or-matrix">T</fnarg>
 	<fnarg type="scalar-or-matrix">Q</fnarg>
-	<fnarg optional="true" type="matrix">C</fnarg>
 	<fnarg optional="true" type="matrix">R</fnarg>
       </fnargs>
       <description>
@@ -8188,7 +8202,7 @@
 		    tex="\[y_t= Z \alpha_t + u_t\]"
 		    ascii="y(t) = Z a(t) + u(t)"
 		    graphic="kalman1"/>
-          con equazione di transizione
+          dove Var<math>(u) = R</math>, con equazione di transizione
 	  <equation status="display"
 		    tex="\[\alpha_{t+1} = T \alpha_t + v_t\]"
 		    ascii="a(t+1) = T a(t) + v(t)"
@@ -8223,7 +8237,7 @@
       </description>
     </function>
 
-    <function name="ksimul" section="sspace" output="scalar">
+    <function name="ksimul" section="sspace" output="matrix">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
 	<fnarg type="matrix">U</fnarg>
@@ -10843,26 +10857,29 @@
 	  alternative disponibili: <lit>swilk</lit> per il test di
 	  Shapiro&ndash;Wilk test, <lit>jbera</lit> per quello di
 	  Jarque&ndash;Bera, oppure <lit>lillie</lit> per il test di
-	  Lilliefors.
+	  Lilliefors.  Dando <lit>all</lit> come
+	  <argname>method</argname>, vengono effettuati tutti e
+	  quattro i test.
 	</para>
 	<para>
 	  Il secondo argomento può essere fornito con o senza
 	  virgolette. Nel secondo caso, tuttavia, se l'argomento
 	  corrisponde al nome di una variabile stringa esistente,
-	  verrà usato il valore di tale variabile. L'esempio seguente
-	  mostra tre modi possibili di eseguire un test di
-	  Shapiro&ndash;Wilk:
+	  verrà usato il valore di tale variabile.
 	</para>
-	<code>
-	  matrix nt = normtest(y, swilk)
-	  matrix nt = normtest(y, "swilk")
-	  string testtype = "swilk"
-	  matrix nt = normtest(y, testtype)
-	</code>
 	<para>
-	  La matrice risultato è <by r="1" c="2"/>; contiene la
-	  statistica test  e il suo p-value. Vedi anche il
-	  comando <cmdref targ="normtest"/>.
+	  La matrice restituita è <by r="1" c="2"/> per un test
+	  singolo, oppure <by r="4" c="2"/> se vengono eseguiti tutti
+	  i test. Le statistiche test sono riportate nella prima
+	  colonna e i p-value nella seconda. La statistica test non
+	  segue la stessa distribuzione in tutti i casi. Per
+	  Doornik&ndash;Hansen e Jarque&ndash;Bera si tratta di una
+	  distribuzione chi-quadro con due gradi di libertà; per gli
+	  altri metodi è una statistica specifica il cui p-value
+	  richiede un calcolo particolare.
+	</para>
+	<para> Vedi anche
+	  il comando <cmdref targ="normtest"/>.
 	</para>
       </description>
     </function>
@@ -11312,15 +11329,16 @@
 	  Calcola funzioni di densità o di probabilità. Restituisce la
 	  densità (se continue) o la probabilità (se discrete) in
 	  <argname>x</argname> della distribuzione identificata dal
-	  carattere <argname>c</argname>.  Si veda <fncref targ="cdf"/>
-	  per dettagli sugli argomenti.  Le distribuzioni supportate
-	  dalla funzione <lit>pdf</lit> sono la normale,
+	  carattere <argname>c</argname>.  Si veda <fncref
+	  targ="cdf"/> per dettagli sugli argomenti.  Le distribuzioni
+	  supportate dalla funzione <lit>pdf</lit> sono la normale,
 	  <math>t</math> di Student, chi-quadro, <math>F</math>,
-	  gamma, Weibull, Generalized Error, binomiale and Poisson. Si
-	  noti che per la binomiale e la Poisson ciò che viene
-	  calcolato è in effetti la probabilità nel punto specificato.
-	  Per la <math>t</math> di Student, la chi quadro e la
-	  <math>F</math> tanche le varianti non centrali sono ammesse.
+	  gamma, beta, esponenziale, Weibull, Laplace, Generalized
+	  Error, binomiale and Poisson. Si noti che per la binomiale e
+	  la Poisson ciò che viene calcolato è in effetti la
+	  probabilità nel punto specificato.  Per la <math>t</math> di
+	  Student, la chi quadro e la <math>F</math> tanche le
+	  varianti non centrali sono ammesse.
 	</para>
 	<para>
 	  Per la normale, si veda anche la funzione <fncref
@@ -11556,10 +11574,8 @@
 	  <math>x</math><sup>p</sup>.
 	</para>
 	<para>
-	  Se tutte le radici sono reali vengono restituite in un vettore colonna
-	  di lunghezza <math>p</math>; in caso contrario viene restituita una
-	  matrice <by r="p" c="2"/> con la parte reale delle radici nella prima colonna
-	  e la parte immaginaria nella seconda.
+	  Viene restituito in un vettore colonna complesso di
+	  lunghezza <math>p</math>.
 	</para>
       </description>
     </function>
@@ -11873,16 +11889,18 @@
       </examples>
       <description>
 	<para>
-	  Calcola un <math>P</math>-value. Restituisce
-	  <equation status="inline" ascii="P(X > x)" tex="$P(X > x)$"/>,
-	  dove la distribuzione <math>X</math> è determinata dal carattere
-	  <argname>c</argname>. Fra gli argomenti
-	  <argname>c</argname> e <argname>x</argname> è necessario indicare
-	  zero o più argomenti aggiuntivi per specificare i parametri della
-	  distribuzione; v. <fncref targ="cdf"/> per ulteriori dettagli.
-	  Le distribuzioni che la funzione <lit>pval</lit> può gestire sono
-	  la normale standard, <math>t</math>, chi quadrato, <math>F</math>,
-	  gamma, binomiale, Poisson, Weibull e Generalized Error.
+	  Calcola un <math>P</math>-value. Restituisce <equation
+	  status="inline" ascii="P(X > x)" tex="$P(X > x)$"/>, dove la
+	  distribuzione <math>X</math> è determinata dal carattere
+	  <argname>c</argname>. Fra gli argomenti <argname>c</argname>
+	  e <argname>x</argname> è necessario indicare zero o più
+	  argomenti aggiuntivi per specificare i parametri della
+	  distribuzione; v. <fncref targ="cdf"/> per ulteriori
+	  dettagli.  Le distribuzioni che la funzione
+	  <lit>pvalue</lit> può gestire sono la normale standard,
+	  <math>t</math>, chi quadro, <math>F</math>, gamma,
+	  binomiale, Poisson, esponenziale, Weibull, Laplace e
+	  Generalized Error.
 	</para>
 	<para>
 	  <seelist>
@@ -12476,7 +12494,7 @@
 	  Weibull &amp; \texttt{w} o \texttt{W} &amp; forma &amp; scala &amp; --\\
 	  Laplace &amp; \texttt{l} o \texttt{L} &amp; media &amp; scala &amp; --\\
 	  Generalized Error &amp; \texttt{e} o \texttt{E} &amp; forma &amp; -- &amp; --\\
-	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma1 &amp; --\\
+	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma2 &amp; --\\
 	  Beta-Binomiale &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma1 \\
 	  Generic discrete &amp; \texttt{disc} &amp; $\mathbf{p}$ &amp; -- &amp; --
 	</tabular>
@@ -14199,8 +14217,8 @@
     <function name="strsplit" section="strings" output="string-or-strings">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg optional="true" type="int">i</fnarg>
 	<fnarg optional="true" type="string">sep</fnarg>
+	<fnarg optional="true" type="int">i</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -14225,7 +14243,7 @@
 	</para>
 	<code>
 	  string basket = "banana,apple,jackfruit,orange"
-	  strings S = strsplit(basket,,",")
+	  strings S = strsplit(basket,",")
 	</code>
 	<para>
 	  dividerà l'input in un array di 4 stringhe in base alle
@@ -14940,7 +14958,6 @@ d =  8.0000000
       </description>
     </function>
 
-
     <function name="trigamma" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -14952,7 +14969,7 @@ d =  8.0000000
 	</para>
 	<para context="tex">
 	  Restituisce la funzione trigamma di $x$, cioè
-	  $\frac {\mathrm{d}?2} {\mathrm{d} x^2}\, \log \Gamma(x)$.
+	  $\frac {\mathrm{d}^2} {\mathrm{d} x^2}\, \log \Gamma(x)$.
 	</para>
 	<para>
 	  <seelist>
