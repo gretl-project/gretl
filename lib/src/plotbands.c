@@ -1012,7 +1012,9 @@ int plot_with_band (BPMode mode,
         print_x_range(gi, fp);
     }
 
-    print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
+    if (literal != NULL) {
+	print_gnuplot_literal_lines(literal, fp);
+    }
 
     if (show_zero && bi->style != BAND_FILL) {
 	/* in the "fill" case xzeroaxis won't be visible */

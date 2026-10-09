@@ -759,7 +759,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
     fputs("set boxwidth 0.4 absolute\n", fp);
 
     if (grp->literal != NULL) {
-        print_gnuplot_literal_lines(grp->literal, BXPLOT, opt, fp);
+        print_gnuplot_literal_lines(grp->literal, fp);
     }
 
     fputs("plot \\\n", fp);

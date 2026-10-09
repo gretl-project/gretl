@@ -245,7 +245,7 @@ int gnuplot_3d (int *list, const char *literal,
 		DATASET *dset, int show_surface,
 		int *interactive);
 
-int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt);
+int plot_freq (FreqDist *freq, DistCode dist);
 
 int plot_corrmat (VMatrix *corr, const DATASET *dset, gretlopt opt);
 
@@ -333,8 +333,7 @@ int xy_plot_with_control (const int *list, const char *literal,
 
 int gnuplot_process_input (const char *literal, gretlopt opt, PRN *prn);
 
-int print_gnuplot_literal_lines (const char *s, int ci,
-				 gretlopt opt, FILE *fp);
+void print_gnuplot_literal_lines (const char *s, FILE *fp);
 
 int is_auto_fit_string (const char *s);
 
