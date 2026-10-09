@@ -278,13 +278,15 @@ function bundle kmeans_fit (const list xlist,
 
     if save_init == "pc" || save_init == "user"
         bundle b = compute_kmeans(self, features, &iters)
-        scalar self.within_variation = b.within_variation
-        matrix self.centroids = b.centroids
-        matrix cluster_id = b.cluster_id
-        matrix distances = b.distances
-        if self.verbosity == 2
-            printf "%s init: within variation = %g (%d iterations)\n",
-              save_init == "pc" ? "pc" : "user", b.within_variation, iters
+        if !b.error
+            scalar self.within_variation = b.within_variation
+            matrix self.centroids = b.centroids
+            matrix cluster_id = b.cluster_id
+            matrix distances = b.distances
+            if self.verbosity == 2
+                printf "%s init: within variation = %g (%d iterations)\n",
+                  save_init == "pc" ? "pc" : "user", b.within_variation, iters
+            endif
         endif
         # hand off to random for n_draws > 0
         self.init = "random"
