@@ -208,7 +208,7 @@ function bundle kmeans_fit (const list xlist,
         errorif(cols(clusters) != nelem(xlist),
           sprintf("Columns of clusters (%d) doesn't match number of features (%d)",
           cols(clusters), nelem(xlist)))
-        matrix clusters0 = clusters
+        matrix centroids0 = clusters
         n_clusters = rows(clusters)
     elif typeof(clusters) == 1
         # got a scalar
@@ -233,8 +233,8 @@ function bundle kmeans_fit (const list xlist,
     self.init = tolower(self.init)
 
     scalar self.n_clusters = n_clusters
-    if exists(clusters0)
-        matrix self.clusters0 = clusters0
+    if exists(centroids0)
+        matrix self.centroids0 = centroids0
         self.init = "user"
     endif
     matrix features = {xlist}
@@ -280,7 +280,9 @@ function bundle kmeans_fit (const list xlist,
 
     if save_init == "pc" || save_init == "user"
         bundle b = compute_kmeans(self, features, &iters, &nuniq)
-        if !b.error
+        if b.error
+            printf "%s initializer failed\n", save_init
+        else
             scalar self.within_variation = b.within_variation
             matrix self.centroids = b.centroids
             matrix cluster_id = b.cluster_id
