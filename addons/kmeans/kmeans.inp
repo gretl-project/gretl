@@ -410,10 +410,12 @@ function bundle compute_kmeans (const bundle self,
         prev_distance = this_distance
     endloop
 
-    matrix Model.distances = min_dists
+    if !Model.error
+        matrix Model.centroids = centroids
+        matrix Model.distances = min_dists
+    endif
     scalar Model.within_variation = this_distance
     matrix Model.cluster_id = cluster_id
-    matrix Model.centroids = centroids
 
     return Model
 end function
