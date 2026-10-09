@@ -8,9 +8,9 @@
     <function name="$ahat" section="access" output="series">
       <description>
         <para>
-          Deve seguire la stima di un modello panel a effetti fissi. Produce le
-          stime degli effetti fissi individuali (intercette delle singole
-          unità).
+          Deve seguire la stima di un modello panel a effetti fissi o
+          random. Produce le stime degli effetti fissi individuali
+          (intercette delle singole unità).
         </para>
       </description>
     </function>
@@ -83,10 +83,12 @@
 	  macoef = $coeff(theta_1)
 	</code>
 	<para>
-	  Se il <quote>modello</quote> in questione è effettivamente
-	  un sistema (un VAR o un VECM, o un sistema di equazioni
-	  simultanee), <lit>$coeff</lit> senza parametri produce la
-	  matrice dei coefficienti, una colonna per equazione.
+	  Se il <quote>modello</quote> in questione è un sistema, Il
+	  risultato dipende dalle caratteristiche del sistema: per i
+	  modelli VAR e VECM, il valore restituito è una matrice con
+	  una colonna per equazione; altrimenti, è un vettore colonna
+	  contenente i coefficienti della prima equazione seguiti da
+	  quelli della seconda, e così via.
 	</para>
       </description>
     </function>
@@ -204,11 +206,11 @@
 	<para>
 	  A causa della limitata precisione dell'aritmetica digitale,
 	  l'integrale di Imhof può diventare negativo quando la
-	  statistica di Durbin&ndash;Watson è vicina a 0. Se questo
-	  accade, l'accessore restituisce <lit>NA</lit>. Poiché
-	  qualsiasi altro malfunzionamento porta a un codice di
-	  errore, si può ritenere con una certa sicurezza che un
-	  valore NA indica che il p-value è
+	  statistica di Durbin&ndash;Watson è vicina a al suo limite
+	  inferiore. Se questo accade, l'accessore restituisce
+	  <lit>NA</lit>. Poiché qualsiasi altro malfunzionamento porta
+	  a un codice di errore, si può ritenere con una certa
+	  sicurezza che un valore NA indica che il p-value è
 	  <quote>piccolissimo</quote>, benché gretl non sia in grado
 	  di quantificarlo esattamente.
 	</para>
@@ -1455,9 +1457,10 @@
 	  Quando segue la stima di un VAR o di un VECM, restituisce
 	  <math>X'X</math><sup>-1</sup>, dove <math>X</math> è la
 	  matrice comune dei regressori usati in ciascuna delle
-	  equazioni. Questo accessore non è disponibile per un VECM
-	  stimato con una restrizione imposta su &agr;, la matrice dei
-	  <quote>loading</quote>.
+	  equazioni. Questo accessore è disponibile anche modelli VECM
+	  stimati con restrizioni su &agr;, la matrice dei
+	  <quote>loading</quote>; in questo caso, tuttavia, va tenuto
+	  a mente che non tutti i cofficienti sono liberi in variazione.
 	</para>
       </description>
     </function>
@@ -5671,12 +5674,19 @@
 	  Una funzione specializzata (<quote>OLS fattorizzato</quote>)
 	  che offre un trattamento ottimale della regressione coi
 	  minimi quadrati quando uno dei regressori è una fattore
-	  discreto con molti valori distinti. Questo caso può essere
-	  gestito includendo tra i regressori un insieme di variabili
-	  dummy che codificano i valori del fattore, ma in certi casi
-	  è più efficiente eseguire l'OLS su dati da cui sono state
-	  rimosse le medie per ciascun valore del fattore, il che è
-	  ciò che questa funzione fa.
+	  discreto con molti valori distinti.
+	</para>
+	<para> Questo caso può essere gestito includendo tra i
+	regressori un insieme di variabili dummy che codificano i
+	valori del fattore, ma in certi casi è molto più efficiente
+	eseguire l'OLS su dati da cui sono state rimosse le medie per
+	ciascun valore del fattore, il che è ciò che questa funzione
+	fa. Se la versione di <argname>X</argname> depurata dalle
+	medie risulta di rango ridotto, la funzione restituisce un
+	errore. In un contesto di dati panel, l'output di questa
+	funzione corrisponderebbe allo stimatore OLS a effetti fissi,
+	qualora si consideri il fattore <argname>f</argname> come
+	identificativo delle unità del panel.
 	</para>
 	<para>
 	  Gli argomenti sono i seguenti:
@@ -5727,6 +5737,56 @@
 	    </para>
 	  </li>
 	</ilist>
+	<para>
+	  Per esempio, il codice:
+	</para>
+	<code>
+	  set seed 23072026
+
+	  N = 100
+	  k = 4
+	  X = mnormal(N,k)
+	  y = mnormal(N)
+	  f = mrandgen(i, 1, k, N, 1)
+
+	  a = {}
+
+	  # use fols()
+	  b0 = fols(y, X, f,,, &amp;a)
+
+	  # use dummies
+	  D = f .= seq(1, k)
+	  b1 = mols(y, X~D)
+	</code>
+	<para>
+	  produce i tre vettori seguenti:
+	</para>
+	<code>
+	  b0 (4 x 1)
+
+	     0.0018742
+	     -0.040486
+	      -0.17669
+	      0.098311
+
+	  a (4 x 1)
+
+	       0.13923
+	      -0.12611
+	      0.065511
+	     0.0036843
+
+	  b1 (8 x 1)
+
+             0.0018742
+             -0.040486
+              -0.17669
+              0.098311
+               0.13923
+              -0.12611
+              0.065511
+             0.0036843
+	</code>
 	<para>
 	  Per default, le stime vengono ottenute tramite
 	  decomposizione di Cholesky, facendo ricorso alla

@@ -23,7 +23,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>non mostra le stime del modello aumentato</effect>
+	  <effect>mostra solo il risultato del test</effect>
 	</option>
  	<option>
  	  <flag>--silent</flag>
@@ -31,7 +31,7 @@
  	</option>
 	<option>
 	  <flag>--vcv</flag>
-	  <effect>mostra la matrice di covarianza</effect>
+	  <effect>mostra la matrice di covarianza per il modello aumentato</effect>
 	</option>
         <option>
           <flag>--both</flag>
@@ -18497,18 +18497,15 @@ del comando <cmdref targ="set"/>.
 	della frequenza dei dati e del numero di osservazioni.
       </para>
       <para>
-	Di default, viene prodotto un grafico del correlogramma
-	incrociato: un grafico gnuplot in modo interattivo o un
-	grafico ASCII in modalità batch. Questo comportamento può
-	essere aggiustato con l'opzione <opt>plot</opt>. Per essa, i
-	valori accettabili dei parametri sono <lit>none</lit> (pr
-	sopprimere il grafico); <lit>ascii</lit> (per produrre un
-	grafico testuale anche se in modo interattivo);
-	<lit>display</lit> (per produrre un grafico gnuplot anche se
-	in modo batch), o il nome di un file. L'effetto di
-	quest'ultima scelta è identico a quello descritto sotto
-	l'opzione <opt>output</opt> del comando <cmdref
-	targ="gnuplot"/>.
+	Di default, se gretl non è in modalità batch, viene prodotto
+	un grafico del correlogramma incrociato. Questo comportamento
+	può essere aggiustato con l'opzione <opt>plot</opt>. Per essa,
+	i valori accettabili dei parametri sono <lit>none</lit> (per
+	sopprimere il grafico); <lit>display</lit> (per produrre un
+	grafico gnuplot anche se in modo batch), o il nome di un
+	file. L'effetto di quest'ultima scelta è identico a quello
+	descritto sotto l'opzione <opt>output</opt> del comando
+	<cmdref targ="gnuplot"/>.
       </para>
       <para>
 	Se il comando va a buon fine, <fncref targ="$result"/>
@@ -18554,7 +18551,7 @@ del comando <cmdref targ="set"/>.
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>vedi il caso bivariato più sotto</effect>
+	  <effect>sopprime l'output</effect>
 	</option>
 	<option>
 	  <flag>--tex</flag>
