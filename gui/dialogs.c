@@ -3292,9 +3292,9 @@ static void set_ci_choice (GtkComboBox *depvar_combo,
    system_forecast_callback() in gui_utils.c. The @pmod argument will
    be non-NULL in the former case, NULL in the latter.
 
-   The @optp argument is mainly to do with plotting the forecast,
-   but can accept OPT_I (integrate) or OPT_X (exponentiate log
-   dependent variable).
+   The @optp argument is mainly to do with plotting the forecast, but
+   can accept OPT_I (integrate differenced dependent variable) or OPT_X
+   (exponentiate log dependent variable).
 */
 
 int forecast_dialog (int t1min, int t1max, int *t1,
