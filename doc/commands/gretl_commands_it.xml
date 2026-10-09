@@ -3093,7 +3093,7 @@
       </para>
     </description>
   </command>
-  
+
   <command name="delete" section="Dataset" label="Elimina variabili" context="cli">
 
     <usage>
@@ -4297,11 +4297,27 @@
     </usage>
 
     <description>
+
       <para context="gui">
-	Deve seguire un comando di stima.  Calcola previsioni
-	per l'intervallo specificato. A seconda del tipo di modello, calcola
-	anche gli errori standard (si veda oltre).
+	Genera previsioni per l'intervallo di osservazioni
+	specificato. A seconda della natura del modello, possono
+	essere generati anche gli errori standard (vedi sotto).
       </para>
+
+      <subhead context="gui">Previsioni trasformate</subhead>
+      <para context="gui">
+	Se la variabile dipendente è riconosciuta come il logaritmo di
+	una serie presente nel dataset, è possibile scegliere se
+	produrre una previsione per il logaritmo o per la variabile in
+	livelli. In quest'ultimo caso, la previsione in logaritmi
+	viene esponenziata, applicando una correzione della
+	distorsione. La natura di quest'ultima dipende dal rifiuto o
+	meno di un test di normalità del termine di
+	errore. Analogamente, se la variabile dipendente è
+	riconosciuta come una differenza prima, è possibile scegliere
+	di produrre una previsione integrata (in livelli).
+      </para>
+
       <para context="cli">
 	Deve seguire un comando di stima.  Calcola previsioni
 	per un certo intervallo delle osservazioni. L'intervallo può essere
@@ -4316,6 +4332,7 @@
 	L'opzione <opt>recursive</opt> produce un comportamento speciale
 	spiegato oltre.
       </para>
+
       <para context="cli">
 	Se l'ultimo modello stimato consiste in un'equazione singola,
 	l'argomento opzionale <repl>nome-variabile</repl> ha l'effetto seguente:
@@ -4330,7 +4347,7 @@
 	accessoria <fncref targ="$fcast"/>, mentre gli errori standard, se
 	disponibili, sono recuperabili con <fncref targ="$fcse"/>.
       </para>
-      
+
       <subhead>Previsioni statiche e dinamiche</subhead>
       <para>
 	La scelta tra previsione statica e dinamica è rilevante solo nel caso di
@@ -4348,7 +4365,7 @@
       </para>
       <para>
 	La scelta predefinita consiste nel fornire una previsione statica per
-	ogni porzione dell'intervallo di previsione che fa parte 
+	ogni porzione dell'intervallo di previsione che fa parte
 	del campione su cui il modello è stato stimato, e una previsione
 	dinamica (se rilevante) fuori dal campione. L'opzione
 	<lit>dynamic</lit> richiede di produrre previsioni dinamiche a partire
@@ -4684,8 +4701,8 @@
     </para>
     <para>
       Se viene indicata l'opzione <opt>matrix</opt>, <repl>var</repl>
-      (un numero intero in questo caso) viene invece interpretato come 
-      un indice di base 1 che individua una colonna nella matrice indicata. 
+      (un numero intero in questo caso) viene invece interpretato come
+      un indice di base 1 che individua una colonna nella matrice indicata.
       Nel caso in cui la matrice in questione sia un vettore colonna allora
       l'argomento <repl>var</repl> può essere omesso.
     </para>
@@ -4713,12 +4730,12 @@
       distribuzione gamma in gretl è (forma, scala).
     </para>
     <para>
-      Se il programma non è in batch mode, viene mostrato di default un 
-      grafico della distribuzione in modalità interattiva. 
-      Questo comportamento può essere modulato con l'opzione <opt>plot</opt>. 
-      I parametri accettabili per questa opzione sono <lit>none</lit>, 
-      per sopprimere il grafico; <lit>display</lit>, per mostrare il 
-      grafico a video anche in batch mode; un nome di file. L'effetto 
+      Se il programma non è in batch mode, viene mostrato di default un
+      grafico della distribuzione in modalità interattiva.
+      Questo comportamento può essere modulato con l'opzione <opt>plot</opt>.
+      I parametri accettabili per questa opzione sono <lit>none</lit>,
+      per sopprimere il grafico; <lit>display</lit>, per mostrare il
+      grafico a video anche in batch mode; un nome di file. L'effetto
       del fornire un nome di file è lo stesso di quello descritto dall'opzione
       <opt>output</opt> del comando <cmdref targ="gnuplot"/>.
     </para>
@@ -4734,9 +4751,9 @@
       del testo.
     </para>
     <para>
-      Si noti che in gretl non è disponibile una funzione analoga 
-      a questo comando, anche se la funzione generica <fncref targ="aggregate"/> 
-      consente di raggiungere un risultato equivalente. 
+      Si noti che in gretl non è disponibile una funzione analoga
+      a questo comando, anche se la funzione generica <fncref targ="aggregate"/>
+      consente di raggiungere un risultato equivalente.
       Inoltre, la distribuzione di frequenza costruita con il comando
       <lit>freq</lit> può essere ottenuta in forma matriciale
       attraverso l'utilizzo dell'accessore <fncref targ="$result"/>.
@@ -5419,7 +5436,7 @@
         <argument>burnin</argument>
         <argument>N</argument>
         <argument>output</argument>
-      </arguments>  
+      </arguments>
       <options>
 	<option>
 	  <flag>--keep</flag>
@@ -5439,7 +5456,7 @@
 	  <demo>casella_ex1.inp</demo>
 	</demos>
       </examples>
-    </usage>  
+    </usage>
 
     <description>
       <para>
@@ -5594,7 +5611,7 @@
       </ilist>
     </description>
 </command>
-  
+
   <command name="gmm" section="Estimation" label="Stima GMM">
 
     <usage>
@@ -6612,7 +6629,7 @@
 	All'interno di un blocco <lit>gpbuild</lit> solo i comandi che
 	producono grafici ricevono un trattamento speciale; tutti gli
 	altri comandi vengono eseguiti normalmente. Ci sono solo due
-	restrizioni di cui tener conto. 
+	restrizioni di cui tener conto.
       </para>
       <ilist>
 	<li>
@@ -6666,7 +6683,7 @@
       </code>
     </description>
   </command>
-  
+
   <command name="3-D" section="Graphs" context="gui"
 	   label="Grafici tridimensionali">
 
@@ -6774,7 +6791,7 @@
 
   <command name="gui-htest" section="Tests" context="gui"
 	   label="Calcolatore per le statistiche test">
-    
+
     <description>
       <para>
 	Il calcolatore dei test di Gretl calcola statistiche test e
@@ -6843,7 +6860,7 @@
 
   <command name="gui-htest-np" section="Tests" context="gui"
            label="Test non parametrici">
-    
+
     <description>
       <para>
         Tre tipologie di test non parametrici sono disponibili
@@ -7699,7 +7716,7 @@ il numero delle relazioni di cointegrazione.
   risultati del test nel caso di 3 variabili. $H_0$ denota
   l'ipotesi nulla, $H_1$ l'ipotesi alternativa e $c$
   il numero delle relazioni di cointegrazione.
-  
+
   \begin{center}
   \begin{tabular}{cllll}
   &amp; \multicolumn{2}{c}{Test traccia} &amp;
@@ -7949,7 +7966,7 @@ il numero delle relazioni di cointegrazione.
       con l'opzione <opt>alt</opt> viene usato il kernel di
       Epanechnikov. L'opzione <opt>scale</opt>, il cui valore predefinito è
       1.0, serve a controllare quanto sia liscio il risultato
-      (valori più alti producono un risultato più liscio). 
+      (valori più alti producono un risultato più liscio).
     </para>
     <para context="cli">
       L'opzione <opt>output</opt> ha l'effetto di salvare il output
@@ -10259,7 +10276,7 @@ contenga un percorso completo.
        </li>
        <li>
 	 <para>
-	   <lit>pvalues</lit>: booleano, include o meno i 
+	   <lit>pvalues</lit>: booleano, include o meno i
 	   <math>P</math>-vaue (default 0).
          </para>
        </li>
@@ -11723,7 +11740,7 @@ del comando <cmdref targ="set"/>.
       </para>
     </li>
   </ilist>
-  
+
   <subhead>Reindirizzamento a un buffer</subhead>
   <para>
     L'opzione <opt>buffer</opt> serve a mandare l'ouput a una
@@ -11789,7 +11806,7 @@ del comando <cmdref targ="set"/>.
     contenuto della variabile stringa passato tramite l'opzione
     viene modificato così da contenere l'intero percorso.
   </para>
-  
+
   <subhead>L'opzione quiet</subhead>
   <para>
     L'effetto dell'opzione <opt>quiet</opt> è quello di disattivare la
@@ -12607,7 +12624,7 @@ del comando <cmdref targ="set"/>.
       Comando per installare, rimuovere dalla memoria, disinstallare o
       ottenere informazioni sui pacchetti di funzioni . Il
       parametro <repl>azione</repl> deve essere uno
-      fra <lit>install</lit>, <lit>query</lit>, <lit>run&#8209;sample</lit>, 
+      fra <lit>install</lit>, <lit>query</lit>, <lit>run&#8209;sample</lit>,
       <lit>unload</lit>, <lit>remove</lit> o <lit>index</lit>. Più
 	sotto è anche descritta un'estensione per i pacchetti
 	contenenti dati.
@@ -13093,7 +13110,7 @@ del comando <cmdref targ="set"/>.
 	  <flag>--tail</flag>
 	  <optparm optional="true">linee</optparm>
 	  <effect>vedi sotto</effect>
-	</option>   
+	</option>
       <option>
 	<flag>--midas</flag>
 	<effect>vedi sotto</effect>
@@ -13111,7 +13128,7 @@ del comando <cmdref targ="set"/>.
       <example>print hflist --midas</example>
     </examples>
   </usage>
-  
+
   <description>
     <para>
       Si noti che <lit>print</lit> è un comando relativamente
@@ -13212,15 +13229,15 @@ del comando <cmdref targ="set"/>.
       <quote>nativa</quote>.
     </para>
   </description>
-  
+
   <gui-access>
     <menu-path>/Dati/Mostra valori</menu-path>
   </gui-access>
-  
+
 </command>
 
 <command name="printf" section="Printing" label="Stampa formattata" context="cli">
-  
+
   <usage>
     <arguments>
       <argument>formato</argument>
@@ -13263,7 +13280,7 @@ del comando <cmdref targ="set"/>.
       genr se_b = $stderr(2)
       printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
     </code>
-    
+
     <para>
       Le prossime righe mostrano l'uso delle funzioni varname e date,
       che mostrano rispettivamente il nome di una variabile dato il
@@ -13303,7 +13320,7 @@ del comando <cmdref targ="set"/>.
       printf "x = %*.*f\n", larghezza, precisione, x
     </code>
   </description>
-  
+
 </command>
 
 <command name="probit" section="Estimation"
@@ -13474,15 +13491,15 @@ del comando <cmdref targ="set"/>.
       implementato in	<program>gretl</program>.
     </para>
   </description>
-  
+
   <gui-access>
     <menu-path>/Modello/Modelli non lineari/Probit</menu-path>
   </gui-access>
-  
+
 </command>
 
 <command name="pvalue" section="Statistics" label="Calcola p-value" context="cli">
-  
+
   <usage>
     <arguments>
       <argument>distribuzione</argument>
@@ -13504,7 +13521,7 @@ del comando <cmdref targ="set"/>.
       </demos>
     </examples>
   </usage>
-  
+
   <description>
     <para>
       Calcola l'area alla destra del <repl>valore-x</repl> nella
@@ -13541,11 +13558,11 @@ del comando <cmdref targ="set"/>.
       divisa per la scala.
     </para>
   </description>
-  
+
   <gui-access>
     <menu-path>/Strumenti/Calcola p-value</menu-path>
   </gui-access>
-  
+
 </command>
 
 <command name="qlrtest" section="Tests" label="Test del rapporto di verosimiglianza di Quandt">
@@ -13568,7 +13585,7 @@ del comando <cmdref targ="set"/>.
       </option>
     </options>
   </usage>
-  
+
   <description>
     <para>
       Per un modello stimato con OLS su serie storiche, esegue il
@@ -13616,11 +13633,11 @@ del comando <cmdref targ="set"/>.
       <opt>output</opt> del comando <cmdref targ="gnuplot"/>.
     </para>
   </description>
-  
+
   <gui-access>
     <menu-path>Finestra del modello, /Test/QLR</menu-path>
   </gui-access>
-  
+
 </command>
 
 <command name="qqplot" section="Graphs" label="Q-Q plot">
@@ -13691,12 +13708,12 @@ del comando <cmdref targ="set"/>.
     <menu-path>/Variabile/Q-Q normale</menu-path>
     <menu-path>/Visualizza/Grafico/Q-Q</menu-path>
   </gui-access>
-  
+
 </command>
 
 <command name="quantreg" section="Estimation"
 	 label="Regressione quantile">
-  
+
   <usage>
     <arguments>
       <argument>tau</argument>
@@ -13732,7 +13749,7 @@ del comando <cmdref targ="set"/>.
       </demos>
     </examples>
   </usage>
-  
+
   <description context="gui">
     <para>
       Regressione a quantili. Per default, gli errori standard sono
@@ -13764,7 +13781,7 @@ del comando <cmdref targ="set"/>.
       Per un approfondimento, si veda <guideref targ="chap:quantreg"/>.
     </para>
   </description>
-  
+
   <description context="cli">
     <para>
       Regressione a quantili. Il primo argomento, <repl>tau</repl>, è il
@@ -13821,11 +13838,11 @@ del comando <cmdref targ="set"/>.
       <lit>rq_sequence</lit> nel bundle <fncref targ="$model"/>.
     </para>
   </description>
-  
+
   <gui-access>
     <menu-path>/Modello/Stima robusta/Regressione quantile</menu-path>
   </gui-access>
-  
+
 </command>
 
 <command name="quit" section="Utilities" label="Esce dal programma" context="cli">
@@ -14050,7 +14067,7 @@ del comando <cmdref targ="set"/>.
     rename y x
     rename --case=upper
   </code>
-    
+
   </description>
 
   <gui-access>
@@ -14121,7 +14138,7 @@ del comando <cmdref targ="set"/>.
       <opt>random-effects</opt>.
     </para>
   </description>
-  
+
 </command>
 
 <command name="reset" section="Tests" label="Test RESET di Ramsey">
@@ -15595,7 +15612,7 @@ del comando <cmdref targ="set"/>.
 	sì che gretl rifiuti di procedere. Si veda <guideref
 	targ="chap:robust_vcv"/> per dettagli.
 	</para>
-      </li>	
+      </li>
       <li>
 	<para>
 	  <lit>hc_version</lit>: 0, 1, 2, 3 o 3a. Imposta la variante
@@ -15691,7 +15708,7 @@ del comando <cmdref targ="set"/>.
 	</para>
       </li>
     </ilist>
-    
+
     <subhead>Varie</subhead>
 
     <ilist>
@@ -16772,7 +16789,7 @@ del comando <cmdref targ="set"/>.
       magari con frequenze diverse e diversi intervalli di
       osservazioni. Al momento questa opzione è disponibile solo per
       dati in serie storiche annuali, trimestrali o mensili, oppure
-      per dati cross-sezionali. Un database gretl 
+      per dati cross-sezionali. Un database gretl
       consiste di due file: uno con estensione <lit>.bin</lit>
       che contiene i dati in formato binario e un file di testo
       con estensione <lit>.idx</lit> per i metadati.  Quando si
@@ -16887,7 +16904,7 @@ del comando <cmdref targ="set"/>.
       Se si usa la forma alternativa in cui il parametro è una
       matrice, allora le statistiche descrittive sono calcolate per
       le colonne della matrice. L'opzione <opt>by</opt> non è
-      disponibile per questo caso. 
+      disponibile per questo caso.
     </para>
     <para>
       La tavola prodotta dal comando <lit>summary</lit> è
@@ -17485,7 +17502,7 @@ del comando <cmdref targ="set"/>.
 	quadrati a due stadi sull'intera lista degli
 	strumenti. L'ipotesi nulla è che tutti gli strumenti siano
 	validi, cosa di cui si dovrebbe dubitare se la regressione
-	ausiliaria ha un significativo potere esplicativo. 
+	ausiliaria ha un significativo potere esplicativo.
       </para>
       <para>
 	Queste due statistiche sono disponibili, una volta completato
@@ -17946,14 +17963,14 @@ del comando <cmdref targ="set"/>.
     </para>
     <code>
       Equality of variances test
-      
+
       EEN: Number of observations = 192
       EXR: Number of observations = 188
       Ratio of sample variances = 3.70707
       Null hypothesis: The two population variances are equal
       Test statistic: F(191,187) = 3.70707
       p-value (two-tailed) = 1.94866e-18
-      
+
       3.7070716
       1.9486605e-18
     </code>
@@ -18005,7 +18022,7 @@ del comando <cmdref targ="set"/>.
 	  del 5 percento.
 	</para>
       </li>
-    </ilist>    
+    </ilist>
     <para context="gui">
 	Calcola la statistica <math>F</math> per l'ipotesi nulla
 	che le varianze della popolazione per le variabili selezionate
