@@ -2815,6 +2815,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="bool" optional="true">standardize</fnarg>
+	<fnarg type="bool" optional="true">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5550,6 +5551,7 @@
     <function name="fixname" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">rawname</fnarg>
+	<fnarg type="bool" optional="true">underscore</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6839,12 +6841,13 @@
       </fnargs>
       <description>
 	<para>
-	  Controlla se il bundle  <argname>b</argname> contiene un elemento di nome
-	  <argname>key</argname>. Il valore restituito è un intero diverso a seconda del
-	  tipo di elemento: 0 indica nessun elemento, 1 scalare, 2 variabile,
-	  3 matrice, 4 stringa e 5 bundle. Per recuperare la stringa associata
-	  al codice può essere utilizzata la funzione <fncref
-	  targ="typestr"/>.
+	  Controlla se il bundle <argname>b</argname> contiene un
+	  elemento di nome <argname>key</argname>. Il valore
+	  restituito è un intero diverso a seconda del tipo di
+	  elemento: 0 indica nessun elemento, 1 scalare, 2 variabile,
+	  3 matrice, 4 stringa, 5 bundle, 6 array e 7 lista. Per
+	  recuperare la stringa associata al codice può essere
+	  utilizzata la funzione <fncref targ="typestr"/>.
 	</para>
       </description>
     </function>
@@ -8314,8 +8317,8 @@
 
     <function name="lags" section="transforms" output="list-or-mat">
       <fnargs>
-	<fnarg type="int">p</fnarg>
-	<fnarg type="series-or-list">y</fnarg>
+	<fnarg type="scalar-or-vec">p</fnarg>
+	<fnarg type="series-list-or-mat">y</fnarg>
 	<fnarg type="bool" optional="true">bylag</fnarg>
       </fnargs>
       <description>
@@ -9612,13 +9615,14 @@
     <function name="mnormal" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Restituisce una matrice di <argname>r</argname> righe e
 	  <argname>c</argname> colonne, contenente numeri pseudocasuali
-	  generati da una normale standardizzata.
+	  generati da una normale standardizzata. Se il numero di
+	  colonne è omesso, si intende 1.
 	  <seelist>
 	    <fncref targ="normal"/>
 	    <fncref targ="muniform"/>
@@ -10376,15 +10380,16 @@
     <function name="muniform" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Restituisce una matrice di <argname>r</argname> righe e
 	  <argname>c</argname> colonne contenente numeri pseudocasuali
-	  estratti da una uniforme (0,1). Nota: per generare uno
-	  scalare pseudocasuale uniforme è consigliabile usare la
-	  funzione <fncref targ="randgen1"/>.
+	  estratti da una uniforme (0,1). Se il numero di colonne è
+	  omesso, si intende 1. Nota: per generare uno scalare
+	  pseudocasuale uniforme è consigliabile usare la funzione
+	  <fncref targ="randgen1"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -11263,12 +11268,13 @@
     <function name="ones" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Restituisce una matrice con <math>r</math> righe e <math>c</math>
-	  colonne con elementi tutti pari a 1.
+	  colonne con elementi tutti pari a 1. Se il numero di
+	  colonne è omesso, si intende 1.
 	</para>
 	<para>
 	  <seelist>
@@ -13298,9 +13304,9 @@
 
     <function name="seq" section="matrix" output="rvec">
       <fnargs>
-	<fnarg type="int">a</fnarg>
-	<fnarg type="int">b</fnarg>
-	<fnarg optional="true" type="int">k</fnarg>
+	<fnarg type="scalar">a</fnarg>
+	<fnarg type="scalar">b</fnarg>
+	<fnarg optional="true" type="scalar">k</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -13308,8 +13314,7 @@
 	  interi consecutivi, con <argname>a</argname> come primo
 	  elemento e <argname>b</argname> come ultimo. Se
 	  <argname>a</argname> è maggiore di <argname>b</argname>, la
-	  sequenza sarà decrescente. L'eventuale parte non intera
-	  viene ignorata per entrambi gli argomenti.
+	  sequenza sarà decrescente.
 	</para>
 	<para>
 	  In caso sia presente il terzo argomento, la funzione
@@ -13322,8 +13327,7 @@
 	  della sequenza minore o uguale a <argname>b</argname> (o
 	  mutatis mutandis, nel caso in cui <argname>a</argname> sia
 	  maggiore di <argname>b</argname>). L'argomento
-	  <argname>k</argname> deve essere positivo; nel caso non sia
-	  un intero la parte decimale è ignorata.
+	  <argname>k</argname> deve essere positivo.
 	</para>
 	<para>
 	  <seelist>
@@ -14125,7 +14129,7 @@
 
     <function name="strpday" section="calendar" output="scalar">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string" optional="true">formato</fnarg>
       </fnargs>
       <description>
@@ -14143,26 +14147,34 @@
 
     <function name="strptime" section="calendar" output="scalar">
       <fnargs>
-	<fnarg type="int-or-string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string" optional="true">formato</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Questa funzione è l'inverso di <fncref targ="strftime"/>;
-	  analizza la stringa <argname>s</argname> come data/ora usando
-	  il <argname>formato</argname> specificato e restituisce  il
-	  numero di secondi dall'inizio del 1970 (UTC).
+	  analizza la stringa <argname>s</argname> come data/ora
+	  usando il <argname>formato</argname> specificato e
+	  restituisce il numero di secondi dall'inizio del 1970
+	  (UTC). Il tipo del risultato dipende da quello di
+	  <argname>s</argname>: se <argname>s</argname> è una stringa,
+	  un array di stringhe o una serie di stringhe, l'output è,
+	  rispettivamente, uno scalare, un vettore colonna o una serie
+	  numerica.
 	</para>
 	<para>
 	  Se l'argomento <argname>formato</argname> viene omesso, il
 	  default è il formato ISO 8601 <quote>esteso</quote>, e cioè
 	  <lit>YYYY-MM-DD</lit> (che sarebbe
 	  <quote><lit>%Y-%m-%d</lit></quote> come formato
-	  <argname>strptime</argname>).  In alternativa, il primo
-	  argomento può essere un intero ad 8 cifre conforme alla
-	  specificazione ISO 8601 <quote>di base</quote>,
-	  <lit>YYYYMMDD</lit> (per esempio, 20221220). In questo case
-	  l'argomento <argname>formato</argname> deve essere omesso.
+	  <argname>strptime</argname>).
+	</para>
+	<para>
+	  In alternativa, il primo argomento può essere un intero ad 8
+	  cifre conforme alla specificazione ISO 8601 <quote>di
+	  base</quote>, <lit>YYYYMMDD</lit> (per esempio,
+	  20221220). In questo case l'argomento
+	  <argname>formato</argname> deve essere omesso.
 	</para>
 	<para>
 	  Si noti il valore restituito da questa funzione dipende dal
@@ -14176,13 +14188,6 @@
 	  sarà 1234567890 solo se l'ora è impostata a UTC. Se invece,
 	  per esempio, l'ora è impostata alla zona pacifica degli USA
 	  (ad esempio, la California), l'output sarà 1234596690.
-	</para>
-	<para>
-	  Attenzione: a causa di differenze nell'implementazione,
-	  questa funzione si comporta in modo diverso su sistemi
-	  Windows e Unix-like per date precedenti al 1 gennaio
-	  1970. Su sistemi Unix-like (Linux, Mac) saranno generate
-	  cifre negative in secondi; su windows, il risultato sarà NA.
 	</para>
 	<para>
 	  Le opzioni per il <argname>formato</argname> sono elencate sulla
@@ -14468,15 +14473,20 @@
 
     <function name="substr" section="strings" output="string">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="int">start</fnarg>
 	<fnarg type="int">end</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce la sottostringa di <argname>s</argname> dal
-	  carattere <argname>start</argname> al carattere
-	  <argname>end</argname> compresi. L'indicizzazione è a base 1.
+	  Se <argname>s</argname> è una stringa, restituisce la
+	  sottostringa di <argname>s</argname> dal carattere
+	  <argname>start</argname> al carattere <argname>end</argname>
+	  compresi. L'indicizzazione è a base 1. Il parametro
+	  <argname>end</argname> può essere &minus;1 per indicare la
+	  fine della stringa. Se <argname>s</argname> è una array di
+	  stringhe o una serie a valori stringa, l'operazione è
+	  applicata ad ogni elemento.
 	</para>
 	<para>
 	  Ad esempio, il codice seguente
@@ -14886,12 +14896,15 @@ d =  8.0000000
 
     <function name="tolower" section="strings" output="string">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce una copia di <argname>s</argname> in cui ogni
-	  lettera maiuscola è convertita in minuscola.
+	  Se <argname>s</argname> è una stringa, restituisce una copia
+	  di <argname>s</argname> in cui ogni lettera maiuscola è
+	  convertita in minuscola. Se <argname>s</argname> è una array
+	  di stringhe o una serie a valori stringa, l'operazione è
+	  applicata ad ogni elemento.
 	</para>
 	<para>
 	  Esempi:
@@ -14909,12 +14922,15 @@ d =  8.0000000
 
     <function name="toupper" section="strings" output="string">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce una copia di <argname>s</argname> in cui ogni
-	  lettera minuscola è convertita in maiuscola.
+	  Se <argname>s</argname> è una stringa, restituisce una copia
+	  di <argname>s</argname> in cui ogni lettera minuscola è
+	  convertita in maiuscola. Se <argname>s</argname> è una array
+	  di stringhe o una serie a valori stringa, l'operazione è
+	  applicata ad ogni elemento.
 	</para>
 	<para>
 	  Esempi:
@@ -15105,12 +15121,13 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Restituisce il nome del tipo di dati di gretl corrispondente
-	  a <argname>typecode</argname>. È utilizzata insieme alla
-	  funzione <fncref targ="inbundle"/>. Il valore restituito è:
-	  <quote>scalar</quote>, <quote>series</quote>,
-	  <quote>matrix</quote>, <quote>string</quote>,
-	  <quote>bundle</quote>, <quote>array</quote> o
+	  Dato un codice di tipo (ad esempio, ottenuto tramite <fncref
+	  targ="typeof"/> o <fncref targ="inbundle"/>), restituisce
+	  una stringa che indica il nome del tipo. La corrispondenza
+	  tra codici e stringhe è: 1 = <quote>scalar</quote>, 2 =
+	  <quote>series</quote>, 3 = <quote>matrix</quote>, 4 =
+	  <quote>string</quote>, 5 = <quote>bundle</quote>, 6 =
+	  <quote>array</quote>, 7 = <quote>list</quote> e 0 =
 	  <quote>null</quote>.
 	</para>
 	<para>
@@ -15821,12 +15838,13 @@ d =  8.0000000
     <function name="zeros" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Genera una matrice di zero con <math>r</math> righe e
-	  <math>c</math> colonne.
+	  <math>c</math> colonne. Se il numero di colonne è omesso, si
+	  intende 1.
 	  <seelist>
 	    <fncref targ="ones"/>
 	    <fncref targ="seq"/>
