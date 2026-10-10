@@ -601,8 +601,9 @@
 	  (UTC), che una misura molto comune nel mondo
 	  dell'informatica per rappresentare l'ora. Il secondo è la
 	  data attuale nel formato ISO 8601 <quote>di base</quote>, e
-	  cioè <lit>YYYYMMDD</lit>; per processare il secondo elemento
-	  si può usare la funzione <fncref targ="epochday"/>.
+	  cioè <lit>YYYYMMDD</lit>; per processare il primo elemento
+	  si può usare la funzione <fncref targ="strftime"/>, e la
+	  funzione <fncref targ="epochday"/> per il secondo.
 	</para>
       </description>
     </function>
@@ -651,7 +652,9 @@
 	  trimestrali (anno:trimestre), mensili (anno:mese), orarie
 	  (giorno:ora) e dati panel (individuo:periodo). Restituisce una
 	  variabile contenente la componente maggiore (a frequenza più
-	  bassa, come l'anno).
+	  bassa, come l'anno). Se i dati sono di tipo cross-sectional,
+	  la serie restituita è semplicemente un indice delle
+	  osservazioni a base 1.
 	</para>
 	<para>
 	  <seelist>
@@ -1066,7 +1069,7 @@
 	  </li>
 	  <li>
             <para>
-              <lit>ncores</lit>: integer, il numero di processori
+              <lit>ncores</lit>: intero, il numero di processori
 	      fisici disponibili.
             </para>
 	  </li>
@@ -1143,7 +1146,7 @@
 	  </li>
 	  <li>
 	    <para>
-              <lit>compilatore</lit>: una stringa che identifica il compilatore
+              <lit>compiler</lit>: una stringa che identifica il compilatore
               utilizzato durante la creazione di libgretl.
             </para>
 	  </li>
@@ -1446,7 +1449,8 @@
 	  predeterminate (nello stesso ordine con cui compaiono in
 	  <fncref targ="$sysB"/>). Se l'ultimo modello è un VAR,
 	  restituisce la lista dei regressori esogeni, laddove
-	  presenti.
+	  presenti, a parte i termini deterministici standard
+	  (constante, trend e dummy stagionali).
 	</para>
       </description>
     </function>
@@ -1580,7 +1584,7 @@
 	  targ="workdir"/>. Si noti che questa stringa può essere
 	  impostata tramite il comando <cmdref targ="set"/>. Per usare
 	  questa stringa in modalità sostituzione, si usi la
-	  chiocciola (<lit>@tramodir</lit>).
+	  chiocciola (<lit>@workdir</lit>).
         </para>
       </description>
     </function>
@@ -1838,11 +1842,12 @@
 	  Funzione <quote>costruttrice</quote> di base per una nuova
 	  variabile di tipo array. Nell'uso di questa funzione, si
 	  deve specificare un tipo (in forma plurale) per l'array:
-	  <lit>strings</lit>, <lit>matrices</lit>, <lit>bundles</lit>
-	  oppure <lit>lists</lit>.  Il valore prodotto è un array del
-	  tipo specificato con <argname>n</argname> elementi, ognuno
-	  dei quali è inizializzato come <quote>vuoto</quote> (ad
-	  esempio, stringhe nulle, matrici 0x0). Esempi d'uso:
+	  <lit>strings</lit>, <lit>matrices</lit>, <lit>bundles</lit>,
+	  <lit>lists</lit> o <lit>arrays</lit>.  Il valore prodotto è
+	  un array del tipo specificato con <argname>n</argname>
+	  elementi, ognuno dei quali è inizializzato come
+	  <quote>vuoto</quote> (ad esempio, stringhe nulle, matrici
+	  0x0). Esempi d'uso:
 	</para>
 	<code>
 	  strings S = array(5)
@@ -1999,9 +2004,8 @@
 	  la cui tangente è <argname>x</argname>.  Il risultato è in
 	  radianti.
 	  <seelist>
-            <fncref targ="cos"/>
-            <fncref targ="sin"/>
-            <fncref targ="tan"/>
+	    <fncref targ="tan"/>
+	    <fncref targ="atan2"/>
 	  </seelist>
 	</para>
       </description>
@@ -2270,8 +2274,8 @@
 	  Massimizzazione numerica con il metodo di Broyden, Fletcher,
 	  Goldfarb e Shanno. Il vettore <argname>b</argname> deve
 	  contenere i valori iniziali di un insieme di parametri,
-	  mentre la stringa <argname>s</argname> deve specificare la
-	  chiamata a una funzione che calcola il criterio (scalare) da
+	  mentre <argname>f</argname> deve specificare la chiamata a
+	  una funzione che calcola il criterio (scalare) da
 	  massimizzare, dati i valori correnti dai parametri e
 	  qualsiasi altro dato rilevante. Se l'oggetto è di fatto una
 	  minimizzazione, è sufficiente ridefinire la funzione
@@ -2842,7 +2846,7 @@
 
     <function name="cdf" section="probdist" output="asinput">
       <fnargs>
-	<fnarg type="char">c</fnarg>
+	<fnarg type="string">d</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
@@ -2854,17 +2858,19 @@
       <description>
 	<para>
 	  Calcola funzioni di ripartizione. Restituisce <equation
-	  status="inline" ascii="P(X &lt; x)" tex="$P(X \le x)$"/>,
-	  dove la distribuzione di <math>X</math> è determinata dal
-	  carattere <argname>c</argname>. Tra gli argomenti
-	  <argname>c</argname> e <argname>x</argname>, possono essere
+	  status="inline" ascii="P(X &le; x)" tex="$P(X \le x)$"/>,
+	  dove la distribuzione di <math>X</math> è determinata dalla
+	  stringa <argname>d</argname>. Tra gli argomenti
+	  <argname>d</argname> e <argname>x</argname>, possono essere
 	  richiesti parametri aggiuntivi a seconda della
-	  distribuzione, come specificato qui di seguito.
+	  distribuzione, come specificato qui di seguito (si noti però
+	  che la distribuzione normale ha anche una propria funzione
+	  dedicata, <fncref targ="cnorm"/>).
 	</para>
 	<ilist context="notex">
 	  <li>
             <para>
-              Normale standard (c = z, n, o N): nessun argomento supplementare
+              Normale standard (d = z, n, o N): nessun argomento supplementare
             </para>
 	  </li>
 	  <li>
@@ -2880,7 +2886,7 @@
 	  </li>
 	  <li>
             <para>
-              Logistica (lgt): nessun argomento supplementare
+              Logistica (lgt o s): nessun argomento supplementare
             </para>
 	  </li>
 	  <li>
@@ -2916,7 +2922,7 @@
 	  </li>
 	  <li>
             <para>
-              Poisson (p o P): Media
+              Poisson (p o P): media
             </para>
 	  </li>
 	  <li>
@@ -2958,33 +2964,33 @@
 	  </li>
 	</ilist>
 	<tabular colspec="lllll">
-	  \textit{Distribuzione} &amp; \textsl{c} &amp;
-	  \textit{Arg} 2 &amp; \textit{Arg} 3 \\[4pt]
+	  \textit{Distribuzione} &amp; \textsl{d} &amp;
+	  \textit{Arg} 2 &amp; \textit{Arg} 3 &amp; \textit{Arg} 4 \\[4pt]
 	  Normale standardizzata &amp; \texttt{z}, \texttt{n} o \texttt{N} &amp;
-	  -- &amp; -- \\
+	  -- &amp; -- &amp; -- \\
 	  Normale bivariata &amp; \texttt{D} &amp;
-	  $\rho$ &amp; -- \\
+	  $\rho$ &amp; -- &amp; --\\
 	  Normale troncata &amp; \texttt{tn} &amp;
 	  $l$ &amp; $h$ &amp; --\\
 	  Logistica &amp; \texttt{lgt} &amp;
 	  -- &amp; -- &amp; --\\
 	  $t$ di Student (centrale) &amp; \texttt{t} &amp;
-	  gradi di libertà &amp; -- \\
+	  gradi di libertà &amp; -- &amp; -- \\
 	  Chi quadro &amp; \texttt{c}, \texttt{x} o \texttt{X} &amp;
-	  gradi di libertà &amp; -- \\
+	  gradi di libertà &amp; -- &amp; --\\
 	  $F$ di Snedecor &amp; \texttt{f} o \texttt{F} &amp;
-	  gdl (num.) &amp; gdl (den.) \\
+	  gdl (num.) &amp; gdl (den.) &amp; --\\
 	  Gamma &amp; \texttt{g} o \texttt{G} &amp;
-	  forma &amp; scala \\
+	  forma &amp; scala &amp; --\\
 	  Binomiale &amp; \texttt{b} o \texttt{B} &amp;
-	  probabilit\`a &amp; prove \\
+	  probabilit\`a &amp; prove &amp; --\\
 	  Poisson &amp; \texttt{p} o \texttt{P} &amp;
-	  media &amp; -- \\
+	  media &amp; -- &amp; --\\
 	  Esponenziale &amp; \texttt{exp} &amp;
 	  scala &amp; -- &amp; --\\
 	  Weibull &amp; \texttt{w} o \texttt{W} &amp;
 	  forma &amp; scala &amp; --\\
-	  Laplace &amp; \texttt{l} or \texttt{L} &amp;
+	  Laplace &amp; \texttt{l} o \texttt{L} &amp;
 	  media &amp; scala &amp; --\\
 	  Generalized Error &amp; \texttt{E} &amp;
 	  forma &amp; -- &amp; --\\
@@ -3155,10 +3161,10 @@
 	<para>
 	  Il secondo argomento rappresenta il fattore di espansione:
 	  deve essere 3 per espandere la frequenza della serie da
-	  trimestrale a mensile, o 4 per espansioni da annuale a
-	  trimestrale. Il terzo argomento opzionale può essere
-	  utilizzato per generare una matrice di regressori con una
-	  frequenza (obiettivo) maggiore.
+	  trimestrale a mensile, 4 per espansioni da annuale a
+	  trimestrale o 12 da annuale a mensile. Il terzo argomento
+	  opzionale può essere utilizzato per generare una matrice di
+	  regressori con una frequenza (obiettivo) maggiore.
 	</para>
 	<para>
 	  I regressori utilizzati di default sono una costante e un
@@ -3187,6 +3193,7 @@
 	</para>
 	<para>
 	  <seelist>
+	    <fncref targ="abs"/>
 	    <fncref targ="carg"/>
 	  </seelist>
 	</para>
@@ -3776,7 +3783,7 @@
 	  </li>
 	  <li>
             <para>
-              Poisson (p o P): Media
+              Poisson (p o P): media
             </para>
 	  </li>
 	  <li>
@@ -4074,8 +4081,8 @@
 	  valore 5 omette sabati e domeniche).
 	</para>
 	<para>
-	  Per convertire date formato epocale, vedi <fncref
-	  targ="epochday"/>.
+	  Per convertire date dal formato epocale, vedi <fncref
+	  targ="epochday"/>. Si veda anche <fncref targ="smplspan"/>.
 	</para>
       </description>
     </function>
@@ -4542,7 +4549,7 @@
 	  Calcola distanze fra punti, secondo una metrica che può
 	  essere <lit>euclidean</lit> (il default),
 	  <lit>manhattan</lit>, <lit>hamming</lit>,
-	  <lit>chebyshev</lit>, <lit>cosine</lit> oppute
+	  <lit>chebyshev</lit>, <lit>cosine</lit> oppure
 	  <lit>mahalanobis</lit>. La stringa per la metrica può essere
 	  abbreviata, purché non risulti ambigua. Altre metriche, come
 	  quella di correlazione o Euclidea standardizzata possono
@@ -4560,9 +4567,9 @@
 	  Se l'argomento opzionale <argname>Y</argname> non è
 	  specificato, il risultato è un vettore colonna con
 	  <math>m</math>(<math>m</math> &minus; 1)/2 elementi, con
-	  tutte le distanze fra le <math>m</math> righe di
-	  <argname>X</argname>. Dato tale vettore <lit>d</lit>, la
-	  matrice completa delle distanze fra i punti con zero sulla
+	  tutte le distanze (non ripetute) fra le <math>m</math> righe
+	  di <argname>X</argname>. Dato tale vettore <lit>d</lit>, la
+	  matrice completa delle distanze fra i punti (con zero sulla
 	  diagonale) può essere ottenuta col comando
 	</para>
 	<code>
@@ -4581,15 +4588,16 @@
 	  dimensioni. In questo caso il risultato è una matrice <by
 	  r="m" c="p"/>, il cui elemento <math>i,j</math> contiene la
 	  distanza fra la <math>i</math>-esima riga di
-	  <argname>X</argname> e la <math>i</math>-esima di
+	  <argname>X</argname> e la <math>j</math>-esima di
 	  <argname>Y</argname>.
 	</para>
 	<para>
 	  Per ottenere le distanze da un punto di riferimento dato (ad
-	  esempio il centroide) a ognuno degli <math>n</math> punti,
-	  si può specificare <argname>Y</argname> come vettore
-	  riga. Se il punto di riferimento è il centroide comunemente
-	  inteso (il vettore delle medie aritmetiche), si può usare
+	  esempio il centroide) a ognuno degli <math>m</math> punti,
+	  si può specificare <argname>Y</argname> come vettore riga;
+	  il risultato sarà un vettore a <math>m</math> dimensioni. Se
+	  il punto di riferimento è il centroide comunemente inteso
+	  (il vettore delle medie aritmetiche), si può usare
 	  <lit>meanc(X)</lit> come argomento <argname>Y</argname>.
 	</para>
 	<subhead>Definizione delle metriche</subhead>
@@ -4609,7 +4617,7 @@
 	  <li>
 	    <para>
 	      <lit>hamming</lit>: la proporzione di coordinate per cui
-	      la differenza è zero (quindi, compresa fra 0 e 1).
+	      la differenza è non-zero (quindi, compresa fra 0 e 1).
 	    </para>
 	  </li>
 	  <li>
@@ -4629,7 +4637,7 @@
 	    <lit>Mahalanobis</lit>: funziona come
 	    <lit>euclidean</lit>, tranne per il fatto che le distanze
 	    sono scalate dall'inversa della matrice di covarianza,
-	    così da ottenere l'equivalebnte multivariato della
+	    così da ottenere l'equivalente multivariato della
 	    standardizzazione. Vedi anche le <emphasis>note sulla
 	    distanza di Mahalanobis</emphasis> qui sotto e
 	    <url>https://it.wikipedia.org/wiki/Distanza_di_Mahalanobis</url>
@@ -4649,8 +4657,12 @@
 	  ottenere questo risultato, si può usare:
 	</para>
 	<code>
-	  dmahal2 = distance(X, "mahal", meanc(X))
+	  dmahal = distance(X, "mahal", meanc(X))
 	</code>
+        <para>
+	  Per un argomento di tipo serie o lista, il comando <cmdref
+	  targ="mahal"/> produce lo stesso risultato.
+        </para>
 	<para>
 	  Per ottenere le distanze di Mahalanobis delle righe di
 	  <argname>X</argname> da un centroide arbitrario,
@@ -4669,7 +4681,7 @@
 	</para>
 	<code>
 	  # euclidea standardizzata
-	  dseu = distance(stdize(X), "eu")
+	  dseu = distance(stdize(X), "euc")
 	  # correlazione (basata sul coseno)
 	  dcor = distance(stdize(X', -1)', "cos")
 	</code>
@@ -4994,8 +5006,10 @@
 	  eval epochday(19171107)
 	</code>
 	<para>
-	  Per la funzione inversa, vedi <fncref targ="isodate"/> e anche
-	  (per il calendario giuliano) <fncref targ="juldate"/>.
+	  Per la funzione inversa, vedi <fncref targ="isodate"/> e
+	  anche (per il calendario giuliano) <fncref targ="juldate"/>.
+	  Per altri modi di convertire date al formato epocale, si
+	  veda <fncref targ="strpday"/>.
 	</para>
       </description>
     </function>
@@ -5198,7 +5212,7 @@
 	<para>
 	  Per maggiori dettagli ed esempi si veda il capitolo sulle
 	  funzioni speciali in <lit>genr</lit> in <guideref
-	  targ="chap:genr"/>.
+	  targ="chap:numerical"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -6137,7 +6151,7 @@
     <function name="getline" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">source</fnarg>
-	<fnarg type="stringref">target</fnarg>
+	<fnarg type="stringref">&amp;target</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6188,6 +6202,7 @@
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="matrix">B</fnarg>
 	<fnarg type="matrix">U</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;dP</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -7094,11 +7109,11 @@
 	  \ge u$"/>.
 	</para>
 	<para>
-	  The distribution of <math>X</math> is determined by the
-	  string <argname>d</argname>.  Between the arguments
-	  <argname>d</argname> and <argname>u</argname>, zero or more
-	  additional scalar arguments are required to specify the
-	  parameters of the distribution, as follows.
+	  La distribuzione di <math>X</math> è determinata dalla
+	  stringa <argname>d</argname>. Tra gli argomenti
+	  <argname>d</argname> e <argname>u</argname> sono richiesti
+	  zero o più argomenti scalari aggiuntivi per specificare i
+	  parametri della distribuzione, come segue.
 	</para>
 	<ilist context="notex">
 	  <li>
@@ -7607,7 +7622,8 @@
 	  più flessibile, si veda <fncref targ="strfday"/>.
         </para>
 	<para>
-	  Per la funzione inversa, si veda <fncref targ="epochday"/>.
+	  Per la funzione inversa, si veda <fncref
+	  targ="epochday"/>. Si veda anche <fncref targ="juldate"/>.
 	</para>
       </description>
     </function>
@@ -7718,7 +7734,7 @@
 	  JsonPath. Inoltre, la funzionalità precisa di
 	  <lit>json-glib</lit> può dipendere dalla versione installata
 	  sul vostro sistema. Per maggiori dettagli, vedi
-	  <url>http://developer.gnome.org/json-glib/</url>.
+	  <url>https://wiki.gnome.org/Projects/JsonGlib</url>.
 	</para>
 	<para>
 	  Ciò premesso, <lit>jsonget</lit> dovrebbe mettere a
@@ -7995,11 +8011,11 @@
 	  specificati come segue.
 	</para>
 	<para>
-	  <argname>X</argname>: una matrice <by r="m" c="n"/>
-	  contenente i <quote>punti</quote>, cioè <math>m</math>
-	  osservazioni per ciascuna delle <math>n</math>
-	  variabili. Viene generato un errore se la matrice contiene
-	  valori mancanti.
+	  <argname>X</argname>: una lista, o una matrice <by r="m"
+	  c="n"/> contenente i <quote>punti</quote>, cioè
+	  <math>m</math> osservazioni per ciascuna delle
+	  <math>n</math> variabili. Viene generato un errore se la
+	  matrice contiene valori mancanti.
 	</para>
 	<para>
 	  <argname>c</argname>: può assumere una delle due forme
@@ -9458,7 +9474,7 @@
 
     <function name="misszero" section="data-utils" output="asinput">
       <fnargs>
-	<fnarg type="scalar-or-series">x</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -9674,6 +9690,7 @@
 	  <seelist>
 	    <fncref targ="mpols"/>
 	    <fncref targ="mrls"/>
+	    <fncref targ="fols"/>
 	  </seelist>
 	</para>
       </description>
@@ -9725,14 +9742,16 @@
 	  <argname>x</argname>.
 	</para>
 	<para context="notex">
-	  Se <argname>p</argname> &gt; 1, viene calcolata una media mobile
-	  semplice a <argname>p</argname> termini; in altre parole, la
-	  media aritmetica da x(t) a x(t+p-1). Se viene indicato un valore
-	  non nullo per il parametro opzionale <argname>control</argname>
-	  la media mobile è centrata, in caso contrario è
-	  <quote>retrospettiva</quote> (usa solo l'osservazione corrente e
-	  quelle passate, ma non quelle future). L'argomento opzionale
-	  <argname>y0</argname> viene ignorato.
+	  Se <argname>p</argname> &gt; 1, viene calcolata una media
+	  mobile semplice a <argname>p</argname> termini; in altre
+	  parole, la media aritmetica da <math>t</math> a
+	  <math>t-p+1</math>. Se viene indicato un valore non nullo
+	  per il parametro opzionale <argname>control</argname> la
+	  media mobile è centrata, in caso contrario è
+	  <quote>retrospettiva</quote> (usa solo l'osservazione
+	  corrente e quelle passate, ma non quelle
+	  future). L'argomento opzionale <argname>y0</argname> viene
+	  ignorato.
 	</para>
 	<para context="tex">
 	  Se $p&gt;1$, viene calcolata una media mobile semplice a
@@ -9978,7 +9997,7 @@
 	  La chiamata di questa funzione deve essere sempre accoppiata
 	  con una chiamata a <fncref targ="mpirecv"/> nel processo
 	  <argname>dest</argname>, come nel seguente esempio che manda
-	  una matrice dal pèrocesso di rango 2 al a quello di rango 3.
+	  una matrice dal processo di rango 2 a quello di rango 3.
 	</para>
 	<code>
 	  if $mpirank == 2
@@ -10213,7 +10232,7 @@
 	  di stime dei parametri ottenute regredendo con il metodo dei
 	  minimi quadrati
 	  la matrice <by r="T" c="n"/> <argname>Y</argname> sulla matrice
-	  <by r="T" c="k"/> m<argname>X</argname> sotto i vincoli lineari
+	  <by r="T" c="k"/> <argname>X</argname> sotto i vincoli lineari
 	  <math>RB</math> = <math>q</math>, dove
 	  <math>B</math> indica il vettore dei coefficienti incolonnati.
 	  <argname>R</argname> deve avere <math>k</math> *
@@ -10351,7 +10370,7 @@
 	  L'output recita:
 	</para>
 	<code>
-	  Vettore di marici, lunghezza 3
+	  Vettore di matrici, lunghezza 4
 	  [1] 2 x 3
 	  [2] null
 	  [3] 1 x 3
@@ -10500,7 +10519,7 @@
 	  <guideref targ="chap:matrices"/> per ulteriori dettagli.
 	</para>
 	<para>
-	  Sono disponibili due estensioni (mutuamente esclusive) del
+	  Sono disponibili tre estensioni (mutuamente esclusive) del
 	  comportamento base di questa funzione.
 	</para>
 	<ilist>
@@ -10575,6 +10594,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="values"/>
+	    <fncref targ="corresp"/>
 	  </seelist>
 	</para>
       </description>
@@ -10709,7 +10729,7 @@
       <description>
 	<para>
 	  Restituisce il numero di elementi nell'argomento, che può
-	  essewre una lista, una matrice, un bundle, una array o una
+	  essewre una lista, una matrice, un bundle, un array o una
 	  stringa, ma non una serie. Se l'argomento è una stringa, il
 	  risultato è dato dal numero di byte, che può essere maggiore
 	  del numero di caratteri (vedi anche <fncref
@@ -12023,7 +12043,7 @@
 	<para>
 	  Si noti che questa funzione lavora lungo
 	  una dimensione diversa da quella utilizzata dalla funzione
-	  <fncref targ="pmean"/>.
+	  <fncref targ="psum"/>.
 	</para>
       </description>
     </function>
@@ -13173,6 +13193,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar" optional="true">df</fnarg>
+	<fnarg optional="true" type="bool">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -13205,8 +13226,8 @@
 	  Calcola le differenze stagionali: <equation status="inline"
 	  ascii="y(t) - y(t-k)" tex="$y_t - y_{t-k}$"/>, dove
 	  <math>k</math> è la periodicità del dataset corrente (si
-	  veda <fncref targ="$pd"/>). I valori iniziali sono fissati a
-	  <lit>NA</lit>.
+	  veda <fncref targ="$pd"/> o <fncref targ="$panelpd"/>). I
+	  valori iniziali sono fissati a <lit>NA</lit>.
 	</para>
 	<para>
 	  Quando viene restituita una lista alle singole variabili viene
@@ -13529,7 +13550,7 @@
 	<code>
 	  scalar T = smplspan("2010-01-01", "2015-12-31", 5)
 	  nulldata T
-	  setobs 7 2010-01-01
+	  setobs 5 2010-01-01
 	</code>
 	<para>
 	  produce
@@ -13932,6 +13953,7 @@
       <fnargs>
 	<fnarg type="series-list-or-mat">X</fnarg>
 	<fnarg type="int" optional="true">v</fnarg>
+	<fnarg type="bool" optional="true">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -14100,7 +14122,7 @@
 	  printf "strlen(s) = %d, nelem(s) = %d\n", strlen(s), nelem(s)
 	</code>
 	<para>
-	  should return
+	  dovrebbe ritornare
 	</para>
 	<code>
 	  strlen(s) = 5, nelem(s) = 7
@@ -14159,7 +14181,7 @@
       </description>
     </function>
 
-    <function name="strptime" section="calendar" output="scalar">
+    <function name="strptime" section="calendar" output="depends">
       <fnargs>
 	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string" optional="true">formato</fnarg>
@@ -14498,7 +14520,7 @@
 	  <argname>start</argname> al carattere <argname>end</argname>
 	  compresi. L'indicizzazione è a base 1. Il parametro
 	  <argname>end</argname> può essere &minus;1 per indicare la
-	  fine della stringa. Se <argname>s</argname> è una array di
+	  fine della stringa. Se <argname>s</argname> è un array di
 	  stringhe o una serie a valori stringa, l'operazione è
 	  applicata ad ogni elemento.
 	</para>
@@ -14916,7 +14938,7 @@ d =  8.0000000
 	<para>
 	  Se <argname>s</argname> è una stringa, restituisce una copia
 	  di <argname>s</argname> in cui ogni lettera maiuscola è
-	  convertita in minuscola. Se <argname>s</argname> è una array
+	  convertita in minuscola. Se <argname>s</argname> è un array
 	  di stringhe o una serie a valori stringa, l'operazione è
 	  applicata ad ogni elemento.
 	</para>
@@ -14942,7 +14964,7 @@ d =  8.0000000
 	<para>
 	  Se <argname>s</argname> è una stringa, restituisce una copia
 	  di <argname>s</argname> in cui ogni lettera minuscola è
-	  convertita in maiuscola. Se <argname>s</argname> è una array
+	  convertita in maiuscola. Se <argname>s</argname> è un array
 	  di stringhe o una serie a valori stringa, l'operazione è
 	  applicata ad ogni elemento.
 	</para>
@@ -15833,7 +15855,7 @@ d =  8.0000000
 
     <function name="zeromiss" section="transforms" output="asinput">
       <fnargs>
-	<fnarg type="scalar-or-series">x</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
       </fnargs>
       <description>
 	<para>
