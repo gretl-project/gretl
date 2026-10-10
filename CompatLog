@@ -1,3 +1,10 @@
+version 2026c
+
+In the GUI forecast dialog, the option of specifying the
+confidence interval as being for "actual Y" or "mean Y" has
+been removed. The "mean Y" choice meant considering
+parameter uncertainty only and was somewhat obscure.
+
 2026-04-30 version 2026b
 
 The option to suppress the printout from the "corrgm" and

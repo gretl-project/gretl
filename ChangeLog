@@ -36,6 +36,8 @@ version 2026c, in progress
   given string-valued series as input
 - fix bug: potential crash or memory leak with the "smpl"
   command in certain cases of compounding restrictions
+- fix bug: possible crash in the bds command under certain
+  conditions
 - gretl_edit: support loading of function definitions and
   emacs-style "jump to declaration"
 - MS Windows: update doc regarding use of MS-MPI
