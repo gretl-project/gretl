@@ -4628,9 +4628,10 @@
 	    <para>
 	    <lit>Mahalanobis</lit>: funziona come
 	    <lit>euclidean</lit>, tranne per il fatto che le distanze
-	    sono scalate dall'inversa della matrice di
-	    covarianza. Vedi anche le <emphasis>note sulla distanza di
-	    Mahalanobis</emphasis> qui sotto e
+	    sono scalate dall'inversa della matrice di covarianza,
+	    così da ottenere l'equivalebnte multivariato della
+	    standardizzazione. Vedi anche le <emphasis>note sulla
+	    distanza di Mahalanobis</emphasis> qui sotto e
 	    <url>https://it.wikipedia.org/wiki/Distanza_di_Mahalanobis</url>
 	    per ulteriori chiarimenti.</para>
 	  </li>
@@ -4670,7 +4671,7 @@
 	  # euclidea standardizzata
 	  dseu = distance(stdize(X), "eu")
 	  # correlazione (basata sul coseno)
-	  dcor = distance(stdize(X')', "cos")
+	  dcor = distance(stdize(X', -1)', "cos")
 	</code>
       </description>
     </function>
@@ -4829,7 +4830,7 @@
 	<code>
 	  scalar e = easterday(2014)
 	  scalar m = floor(e)
-	  scalar d = 100*(e-m)
+	  scalar d = round(100*(e-m))
 	</code>
       </description>
     </function>
@@ -4906,15 +4907,16 @@
       </fnargs>
       <description>
 	<para>
-	  Funziona esattamente come <fncref targ="eigengen"/>, ma
-	  l'argomento <argname>A</argname> deve essere una matrice
-	  simmetrica (in questo caso i calcoli possono essere
-	  semplificati). A differenza di <fncref targ="eigengen"/>,
-	  gli autovalori sono ordinati in senso crescente. Per avere
-	  l'ordinamento opposto, si può usare la funzione <fncref
-	  targ="mreverse"/>:
+	  Funziona come <fncref targ="eigen"/>, ma l'argomento
+	  <argname>A</argname> deve essere una matrice simmetrica (in
+	  questo caso i calcoli possono essere semplificati). A
+	  differenza di <fncref targ="eigen"/>, gli autovalori sono
+	  ordinati in senso crescente. Per avere l'ordinamento
+	  opposto, si può usare la funzione <fncref targ="mreverse"/>:
 	</para>
 	<code>
+	  matrix U
+	  e = eigensym(A, &amp;U)
 	  # smallest to largest eigenvalues
 	  print e U
 	  e = mreverse(e)
@@ -5018,12 +5020,13 @@
       </fnargs>
       <description>
 	<para>
-	  Applicabile solo nel contesto di una funzione creata dall'utente.
-	  Se la <argname>condizione</argname> è diversa da 0,
-	  termina l'esecuzione della funzione attuale, evidenziando la condizione
-	  di errore; l'argomento <argname>msg</argname>
-	  è poi stampato a video come parte del messaggio mostrato
-	  a chi utilizza la funzione in questione.
+	  Applicabile solo nel contesto di una funzione creata
+	  dall'utente o in un blocco <cmdref targ="mpi"/>.  Se la
+	  <argname>condizione</argname> è diversa da 0, termina
+	  l'esecuzione della funzione attuale, evidenziando la
+	  condizione di errore; l'argomento <argname>msg</argname> è
+	  poi stampato a video come parte del messaggio mostrato a chi
+	  utilizza la funzione in questione.
 	</para>
 	<para>
 	  Il valore (1) ritornato da questa funzione è puramente nominale.
@@ -6134,7 +6137,7 @@
     <function name="getline" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">source</fnarg>
-	<fnarg type="string">target</fnarg>
+	<fnarg type="stringref">target</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6155,7 +6158,7 @@
 	  string s = readfile("data.txt")
 	  string line
 	  scalar i = 1
-	  loop while getline(s, line)
+	  loop while getline(s, &amp;line)
               printf "line %d = '%s'\n", i++, line
           endloop
 	</code>
@@ -6168,13 +6171,13 @@
 	  <lit>null</lit> (o omesso) come segue
 	</para>
 	<code>
-	  getline(s, line)
+	  getline(s, &amp;line)
 	  getline(s, null)
 	</code>
 	<para>
-	  Si noti che, anche se la posizione di lettura avanza ad ogni chiamata di
-	  <lit>getline</lit>, questa funzione non modifica <argname>source</argname>
-	  ma solo <argname>target</argname>.
+	  Si noti che, anche se la posizione di lettura avanza ad ogni
+	  chiamata di <lit>getline</lit>, questa funzione non modifica
+	  <argname>source</argname> ma solo <argname>target</argname>.
 	</para>
       </description>
     </function>
@@ -6401,14 +6404,13 @@
 	<para>
 	  Produce una matrice <by r="m" c="r"/> contenente
 	  <math>m</math> sequenze di Halton di lunghezza
-	  <math>r</math>; <math>m</math> è limitata ad un massimo di
-	  40. Le sequenze sono costruite utilizzando i primi
-	  <math>m</math> numeri primi. Se non diversamente
+	  <math>r</math>. Le sequenze sono costruite utilizzando i
+	  primi <math>m</math> numeri primi. Se non diversamente
 	  specificato, i primi 10 elementi di ogni sequenza sono
 	  scartati: questo valore può essere modificato specificando
 	  l'argomento opzionale <argname>offset</argname> (che deve
-	  essere un numero intero non-negativo). Si veda
-	  <cite key="halton64">Halton e Smith (1964)</cite>.
+	  essere un numero intero non-negativo). Si veda <cite
+	  key="halton64">Halton e Smith (1964)</cite>.
 	</para>
       </description>
     </function>
@@ -6597,7 +6599,8 @@
     <function name="hpfilt" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar" optional="true">lambda</fnarg>
+        <fnarg type="scalar" optional="true">lambda</fnarg>
+	<fnarg type="bool" optional="true">a-un-lato</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6622,6 +6625,9 @@
 	  ma se invece quel che interessa è il trend, basta sottrarre il
 	  risultato dalla serie originale, come di seguito:
 	</para>
+	<code>
+	  series hptrend = y - hpfilt(y)
+	</code>
 	<para>
 	  <seelist>
             <fncref targ="bkfilt"/>
@@ -7763,8 +7769,8 @@
 	<para>
 	  L'argomento <argname>buf</argname> dev'essere un buffer
 	  JSON, così come ad esempio può esser preso da un sito
-	  attraverso la funzione <fncref targ="curl"/>. L'argomento opzionale
-	  <argname>percorso</argname> è discusso più sotto.
+	  attraverso la funzione <fncref targ="curl"/>. L'argomento
+	  opzionale <argname>percorso</argname> è discusso più sotto.
 	</para>
 	<para>
 	  La funzione restituisce un bundle la cui struttura riproduce
@@ -7773,10 +7779,10 @@
 	  loro volta bundle. I nodi JSON <quote>valore</quote>
 	  diventano membri di bundle o elementi di array; nel secondo
 	  caso, i valori numerici sono convertiti in stringhe via
-	  <lit>sprintf</lit>.  Si noti che, dal momento che in gretl
-	  gli array non possono essere annidati, l'input per questa
-	  funzione è un po' più restrittivo della specificazione JSON
-	  completa, in cui ciò è possibile.
+	  <lit>sprintf</lit>.  Si noti che, sebbene la specifica JSON
+	  consenta array di tipo misto, questi non possono essere
+	  gestiti da <lit>jsongetb</lit>, poiché gli array di gretl
+	  devono essere di un unico tipo.
 	</para>
 	<para>
 	  L'argomento opzionale <argname>percorso</argname> viene usato
@@ -8952,11 +8958,12 @@
       </fnargs>
       <description>
 	<para>
-	  Calcola la matrice di covarianza considerando ogni colonna di
-	  <argname>X</argname> come una variabile. Il divisore è
+	  Calcola la matrice di covarianza considerando ogni colonna
+	  di <argname>X</argname> come una variabile. Il divisore è
 	  <math>n</math> &minus; 1, dove <math>n</math> è il numero di
-	  righe di <argname>X</argname>; se però l'argomento opzionale
-	  <argname>dfcorr</argname> è 0, viene usato <math>n</math>.
+	  righe di <argname>X</argname>; se però viene specificato
+	  l'argomento opzionale <argname>dfcorr</argname>, allora esso
+	  viene usato come divisore.
 	</para>
 	<para>
 	  <seelist>
@@ -9875,9 +9882,9 @@
 	<para>
 	  Disponibile solo se gretl è in modalità MPI (si veda<mnu
 	  targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da
-	  tutti i processi. questa funzione raccoglie oggetti (solo scalari o
-	  matrici) dal nome specifico,dati in forma di puntatore,
-	  da tutti i processi e li <quote>riduce</quote> in un singolo
+	  tutti i processi. questa funzione raccoglie oggetti
+	  (scalari, matrici o array), dati in forma di puntatore, da
+	  tutti i processi e li <quote>riduce</quote> in un singolo
 	  oggetto al nodo root.
 	</para>
 	<para>
@@ -9887,7 +9894,8 @@
 	  e <lit>min</lit>. Per le matrici i metodi sono
 	  <lit>sum</lit>, <lit>prod</lit> (prodotto di Hadamard),
 	  <lit>hcat</lit> (concatenazione orizzontale) e
-	  <lit>vcat</lit> (concatenazione verticale).
+	  <lit>vcat</lit> (concatenazione verticale). Per gli array,
+	  l'unica operazione supportata è <lit>acat</lit>.
 	</para>
 	<para>
 	  Di default <quote>root</quote>, il destinatario della riduzione,
@@ -9959,17 +9967,18 @@
       </fnargs>
       <description>
 	<para>
-	  Disponibile solo quando gretl è in modalità MPI (si veda <mnu
-	  targ="gretlMPI">gretl + MPI</mnu>). Manda l'oggetto nominato
-	  (che deve essere una matrice, bundle, vettore o scalare) dal processo
-	  corrente a quello identificato dall'intero
-	  <argname>dest</argname> (da 0 al numero di processi MPI
-	  meno 1).
+	  Disponibile solo quando gretl è in modalità MPI (si veda
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Manda l'oggetto
+	  nominato (che deve essere una matrice, bundle, array,
+	  scalare stringa o lista) dal processo corrente a quello
+	  identificato dall'intero <argname>dest</argname> (da 0 al
+	  numero di processi MPI meno 1).
 	</para>
 	<para>
-	  L chiamata di questa funzione deve essere sempre accoppiata con una chiamata a
-	  <fncref targ="mpirecv"/> nel processo <argname>dest</argname>,
-	  come nel seguente esempio che manda una matrice dal rango2 al rango 3.
+	  La chiamata di questa funzione deve essere sempre accoppiata
+	  con una chiamata a <fncref targ="mpirecv"/> nel processo
+	  <argname>dest</argname>, come nel seguente esempio che manda
+	  una matrice dal pèrocesso di rango 2 al a quello di rango 3.
 	</para>
 	<code>
 	  if $mpirank == 2
@@ -11300,8 +11309,8 @@
 	  struttura panel. Calcola le deviazioni ortogonali in avanti
 	  della variabile <argname>y</argname>; in altre parole,
 	  \[ \tilde{y}_{i,t} =
-	  \sqrt{ \frac{T_i - t + 1}{T_i - t}} \left( y_{i,t} -
-	  \frac{1}{T_i - t - 1} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
+	  \sqrt{ \frac{T_i - t}{T_i - t + 1}} \left( y_{i,t} -
+	  \frac{1}{T_i - t} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
 	</para>
 	<para>
 	  Talvolta questa trasformazione viene utilizzata talvolta al posto delle
@@ -12738,7 +12747,12 @@
 	<para>
 	  Se un file di nome <argname>fname</argname> esiste ed è
 	  leggibile, restituisce una stringa con il contenuto del
-	  file. In caso contrario restituisce un errore.
+	  file. In caso contrario restituisce un errore. Se
+	  <argname>fname</argname> non contiene un percorso completo,
+	  il file verrà cercato in diverse posizioni "probabili", a
+	  partire dalla <cmdref targ="workdir"/> attualmente
+	  impostata. File compressi con gzip vengono gestiti in modo
+	  trasparente.
 	</para>
 	<para>
 	  Nel caso in cui <argname>fname</argname> inizia con
