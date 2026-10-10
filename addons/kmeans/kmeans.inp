@@ -244,6 +244,11 @@ function bundle kmeans_fit (const list xlist,
     matrix self.distances = mshape(NA, $nobs, 1)
     scalar n_errors = 0
 
+    # check for invalidity of cosine metric
+    errorif(self.metric == "cosine" && \
+      maxc(sumr(contains(features, 0))) == cols(features),
+      "Got an all-zeros observation: cosine metric not applicable")
+
     if n_clusters == 1
         # special handling for the trivial case
         self.n_draws = 0
@@ -252,19 +257,21 @@ function bundle kmeans_fit (const list xlist,
         matrix D = distance(features, self.metric, self.centroids)
         matrix self.distances = sumr(D)
         scalar self.total_variation = sumc(self.distances)
-        scalar self.within_variation = self.total_distance
+        scalar self.within_variation = self.total_variation
     endif
 
     if self.verbosity && !metric_is_euclidean(self.metric)
-        printf "kmeans_fit: %d observations, %d features, %d clusters\n",
-          $nobs, nelem(xlist), n_clusters
+        printf "kmeans_fit: %d observations, %d features, %d %s\n",
+          $nobs, nelem(xlist), n_clusters, n_clusters > 1 ? \
+          "clusters" : "cluster"
         printf "metric %s, initializer %s, %d random draws\n\n",
           full_metric_name(self.metric), self.init, self.n_draws
     endif
 
     if n_clusters == 1
         if self.verbosity
-            printf "Sum of within-cluster variation = %g\n", self.within_variation
+            printf "Sum of within-cluster variation = %g\n\n", self.within_variation
+            print self.centroids
         endif
         return self
     endif
@@ -287,12 +294,12 @@ function bundle kmeans_fit (const list xlist,
             matrix self.centroids = b.centroids
             matrix cluster_id = b.cluster_id
             matrix distances = b.distances
-            if self.verbosity == 2
+            if self.verbosity > 1
                 printf "%s init: within variation = %g (%d iterations)\n",
-                  save_init == "pc" ? "pc" : "user", b.within_variation, iters
+                  save_init, b.within_variation, iters
             endif
         endif
-        # hand off to random for n_draws > 0
+        # hand off to random in case n_draws > 0
         self.init = "random"
     endif
 
@@ -458,6 +465,7 @@ function matrix compute_centroids (const matrix features,
     */
 
     matrix tmp = aggregate(features, cluster_id, mean)
+    errorif(sum(ok(tmp)) != nelem(tmp), "aggregate(): got a non-finite result")
     strings row_labels = "Centroid=" ~ tmp[,1]
     centroids = tmp[,3:]
     rnameset(centroids, row_labels)
