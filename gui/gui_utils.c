@@ -2379,11 +2379,7 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
 
     gtk_widget_set_size_request(view, 140 * gui_scale, -1);
 
-    scroller = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroller),
-				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW (scroller),
-					GTK_SHADOW_IN);
+    scroller = gretl_scrolled_window();
     gtk_container_add(GTK_CONTAINER(scroller), view);
 
 #if GTK_MAJOR_VERSION >= 3
@@ -3809,3 +3805,4 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 		     G_CALLBACK(callback), data);
     gtk_widget_show(item);
 }
+
