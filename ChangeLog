@@ -1,5 +1,5 @@
-version 2026c, in progress
-- new addons "kmeans" and "PairPlot", from A. Tarassow's
+2026-10-12 version 2026c
+- new addons kmeans and PairPlot, from A. Tarassow's
   function packages of the same names, with various
   enhancements and speedups
 - new function kmeans(): algorithm ASA136 for the k-means
@@ -36,7 +36,7 @@ version 2026c, in progress
   given string-valued series as input
 - fix bug: potential crash or memory leak with the "smpl"
   command in certain cases of compounding restrictions
-- fix bug: possible crash in the bds command under certain
+- fix bug: possible crash in the "bds" command under certain
   conditions
 - gretl_edit: support loading of function definitions and
   emacs-style "jump to declaration"
