@@ -1698,7 +1698,7 @@ GtkWidget *gretl_scrolled_window (void)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
 				   GTK_POLICY_AUTOMATIC,
 				   GTK_POLICY_AUTOMATIC);
-#if GTK_CHECK_VERSION(3,16,0)
+#if 0 /* not yet, but later: GTK_CHECK_VERSION(3,16,0) */
     gtk_scrolled_window_set_overlay_scrolling(GTK_SCROLLED_WINDOW(sw), FALSE);
 #endif
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
