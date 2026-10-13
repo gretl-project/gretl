@@ -106,7 +106,6 @@ static int gretl_MPI_initted; /* are we initialized or not? */
 /* renamed, pointerized versions of the MPI functions we need */
 static int (*mpi_comm_rank) (MPI_Comm, int *);
 static int (*mpi_comm_size) (MPI_Comm, int *);
-static int (*mpi_error_class) (int, int *);
 static int (*mpi_error_string) (int, char *, int *);
 static int (*mpi_reduce) (void *, void *, int, MPI_Datatype, MPI_Op,
                           int, MPI_Comm);
@@ -176,7 +175,6 @@ int gretl_MPI_init (void)
 
     mpi_comm_rank    = mpiget(MPIhandle, "MPI_Comm_rank", &err);
     mpi_comm_size    = mpiget(MPIhandle, "MPI_Comm_size", &err);
-    mpi_error_class  = mpiget(MPIhandle, "MPI_Error_class", &err);
     mpi_error_string = mpiget(MPIhandle, "MPI_Error_string", &err);
     mpi_reduce       = mpiget(MPIhandle, "MPI_Reduce", &err);
     mpi_allreduce    = mpiget(MPIhandle, "MPI_Allreduce", &err);

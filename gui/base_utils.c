@@ -496,7 +496,7 @@ static void editor_run_other_script (windata_t *vwin,
 
 #endif
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32) && !defined(GRETL_EDIT)
 
 /* MS Windows variants of functions to exec some third-party
    programs */
