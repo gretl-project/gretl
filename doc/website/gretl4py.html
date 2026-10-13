@@ -1,28 +1,31 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head>
+<html>
+<head>
  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
  <meta http-equiv="pragma" content="no-cache">
  <meta name="author" content="Marcin Błażejowski">
- <meta name="description" content="gretl4py: an econometrics module for Python">
+ <meta name="description"
+       content="gretl4py: Python bindings for the gretl econometrics library">
  <meta name="generator" content="Kate, vim, nano">
- <meta name="keywords" content="gretl4py, econometrics with python, libgretl for python">
- <LINK REL=STYLESHEET TYPE="text/css" HREF="css-gretl.html">
- <title>gretl4py -- Python interface to libgretl</title>
- <LINK REL=STYLESHEET TYPE="text/css" HREF="css-gretl.html">
+ <meta name="keywords"
+       content="gretl4py, gretl, libgretl, Python, econometrics, statistics">
+ <link rel="stylesheet" type="text/css" href="css-gretl.html">
+ <title>gretl4py -- Python bindings for gretl</title>
 </head>
 
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-RQZ773RBWY"></script>
+<script async
+ src="https://www.googletagmanager.com/gtag/js?id=G-RQZ773RBWY"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-RQZ773RBWY');
 </script>
 
 <body>
-  <pre>
+
+<pre>
                 _   _   ___
                | | | | /   |
   __ _ _ __ ___| |_| |/ /| |_ __  _   _
@@ -33,124 +36,415 @@
  |___/                     |_|    |___/
 </pre>
 
-  <p>
-  <b>gretl4py</b> is a Python package designed to meet the needs of econometricians and applied
-  economists who wish to use Python in their research. It can be broadly viewed as a complement to
-  the <a href="https://www.statsmodels.org/stable/index.html" target="_blank">statsmodels</a> package,
-  with a more specific orientation toward the inference methods commonly employed in applied
-  economics.
-</p>
 <p>
-  <b>gretl4py</b> provides an interface to
-  <a href="https://gretl.sourceforge.net/API/new/gretl" target="_blank">libgretl</a>
-  for the Python language (versions 3.11, 3.12, 3.13 and 3.14 have been tested). Libgretl is the underlying
-  engine for the <a href="https://gretl.sourceforge.net/" target="_blank">gretl</a> program.
-  At present, gretl4py provides interfaces to all native estimators, several specified functions
-  (like times-series filtering), and gretl packages (including addons).
-  What's more, gretl4py can now deal with gretl bundles.
+  <b>gretl4py</b> provides Python bindings for
+  <a href="https://gretl.sourceforge.net/" target="_blank">gretl</a>,
+  giving Python programs direct access to
+  <a href="https://gretl.sourceforge.net/API/new/gretl"
+     target="_blank">libgretl</a>,
+  the numerical and econometric engine underlying gretl.
 </p>
-<p><b>gretl4py</b> consists of the following elements:</p>
+
+<p>
+  gretl4py brings gretl's econometric, statistical, numerical, and
+  data-management functionality into Python while providing
+  Python-oriented interfaces for datasets, matrices, models, bundles,
+  function packages, and other gretl objects.
+</p>
+
+<p>
+  gretl4py is <b>not a separate reimplementation of gretl in Python</b>.
+  Estimation and many numerical operations are performed directly by
+  libgretl, while Python provides the programming environment and access
+  to the wider scientific-computing ecosystem.
+</p>
+
+<h2>Highlights</h2>
+
+<p>gretl4py provides, among other things:</p>
+
 <ul>
-  <li>binary bindings written in C++,</li>
-  <li><i>_gretl.Model</i>, <i>_gretl.Dataset</i>, <i>_gretl.Bundle</i>, and <i>_gretl.Package</i> classes implemented in C++,</li>
-  <li>a set of utility functions implemented in Python.</li>
+  <li>native C++ bindings to libgretl implemented using
+      <a href="https://pybind11.readthedocs.io/" target="_blank">pybind11</a>;</li>
+  <li>econometric estimation, including OLS, WLS, IV, limited-dependent-variable,
+      count, duration, panel, dynamic-panel, AR/ARIMA, GARCH, MIDAS,
+      VAR/VECM, nonlinear, maximum-likelihood and GMM models;</li>
+  <li>econometric and statistical tests for datasets and fitted models;</li>
+  <li>estimator-specific model classes with post-estimation diagnostics,
+      forecasting, restrictions, residuals, fitted values, and other
+      model functionality;</li>
+  <li>native <kbd>gretl.Dataset</kbd>, <kbd>gretl.Matrix</kbd>,
+      <kbd>gretl.Bundle</kbd>, <kbd>gretl.Model</kbd>, and
+      <kbd>gretl.Package</kbd> objects;</li>
+  <li>Python-style matrix indexing and slicing, including row and column names;</li>
+  <li>NumPy interoperability, including writable zero-copy views of
+      gretl matrices;</li>
+  <li>conversion of datasets and matrices to pandas objects;</li>
+  <li>direct use of gretl function packages from Python;</li>
+  <li>execution of hansl code and scripts from Python;</li>
+  <li>exchange of supported user-defined variables between Python and
+      the libgretl namespace;</li>
+  <li>data transformations, filtering, forecasting, and data-management
+      functionality;</li>
+  <li>plotting support integrated with matplotlib.</li>
 </ul>
 
 <p>
-  Source code (git repository):
-  <a href="https://sourceforge.net/p/gretl/gretl4py/ci/master/tree/" target="_blank">source</a>,
-  official PyPI page:
-  <a href="https://pypi.org/project/gretl4py/" target="_blank">gretl4py</a>.
+  Current releases support Python 3.11, 3.12, 3.13, and 3.14.
+  Pre-built packages are available for the supported operating systems
+  and architectures.
 </p>
 
 <h2>Install</h2>
 
-Gretl4py is distributed via PyPI infrastructure, so all you need to do is to call:
-<b>python(.exe) -m pip install gretl4py</b>.
-
-<p>Notes:
-<ul>
-  <li>
-    macOS users should install <b>gretl4py</b> in user space using the <code>--user</code> option,
-    for example: <code>python -m pip install --user gretl4py</code>
-  </li>
-  <li>
-    On Microsoft Windows, <b>gretl4py</b> requires the Microsoft Visual C++ 2022 Redistributable
-    (v14.x). Please ensure that this runtime is installed on your system. The latest supported
-    version is available
-    <a href="https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist" target="_blank">here</a>.
-    You may also download it directly from
-    <a href="https://aka.ms/vc14/vc_redist.x64.exe" target="_blank">https://aka.ms/vc14/vc_redist.x64.exe</a>.
-  </li>
-  <li>
-   Linux users may encounter security warnings when installing non-system Python packages. This
-   affects distributions such as Debian/Ubuntu and Arch. To comply with these restrictions, you
-   can run the <kbd>webinstall.py</kbd> script available
-   <a href="https://sourceforge.net/p/gretl/gretl4py/ci/master/tree/webinstall.py" target="_blank">here</a>.
-   This script downloads a wheel package from the SourceForge website and installs it locally.
-  </li>
-</ul>
+<p>
+  For normal use, installation of a pre-built package is recommended.
+  gretl4py is distributed via
+  <a href="https://pypi.org/project/gretl4py/" target="_blank">PyPI</a>.
 </p>
 
+<p>On GNU/Linux:</p>
 
-<h2>Building</h2>
+<pre>
+python3 -m pip install gretl4py
+</pre>
+
+<p>On macOS:</p>
+
+<pre>
+python3 -m pip install --user gretl4py
+</pre>
+
+<p>On MS Windows:</p>
+
+<pre>
+python.exe -m pip install gretl4py
+</pre>
+
+<h3>Conda</h3>
 
 <p>
-  Instructions can be found in section 2.3 of the
-  <a href="https://sourceforge.net/projects/gretl/files/gretl4py/gretl4py.pdf">gretl4py documentation</a>.
-  Besides a C++ compiler with support for the C++17 standard,
-  you'll need the following development packages for gretl 2025b or later:
-</p>
-<ul>
-  <li>Debian/Ubuntu: <kbd>libgretl1-dev</kbd>, <kbd>python3-dev</kbd></li>
-  <li>Fedora: <kbd>gretl-devel</kbd>, <kbd>python3-devel</kbd></li>
-  <li>MS Windows: <kbd>MS SDK</kbd>, <kbd>native LLVM/Clang</kbd>, and
-    <kbd>libgretl for MS SDK</kbd>
-    (<a href="https://sourceforge.net/projects/libgretl-for-ms-sdk/" target="_blank">see this webpage</a>)</li>
-</ul>
-<p>Note that we are using <a href="https://mesonbuild.com/" target="_blank">the Meson build system</a>.</p>
-
-<h2>Running gretl4py</h2>
-
-<p>
-  You can find numerous sample <kbd>*.py</kbd> files in the <kbd>demo</kbd> and <kbd>examples</kbd>
-  subdirectories of <kbd>gretl4py</kbd>. These files can be examined in any suitable text editor.
-  Starting from the <kbd>gretl4py</kbd> directory, one way to explore the package is:
+  Pre-built gretl4py packages are also available through Conda:
 </p>
 
 <pre>
-cd demo
-python3 estimators.py
+conda install -c marcin_gretlconference.org gretl4py
+</pre>
+
+<h3>Development snapshots</h3>
+
+<p>
+  Pre-built development snapshots are available from the
+  <a href="https://sourceforge.net/projects/gretl/files/gretl4py/snapshots/"
+     target="_blank">gretl4py snapshots area</a>.
+  Download the wheel matching your Python version, operating system,
+  and architecture and install it using <kbd>pip</kbd>.
+</p>
+
+<h3>Installation notes</h3>
+
+<ul>
+  <li>
+    On macOS, gretl4py should be installed in user space using the
+    <kbd>--user</kbd> option.
+  </li>
+
+  <li>
+    On MS Windows, gretl4py requires the appropriate Microsoft Visual C++
+    2022 Redistributable (v14.x). The latest supported versions are
+    available
+    <a href="https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist"
+       target="_blank">from Microsoft</a>.
+  </li>
+
+  <li>
+    Linux users may encounter restrictions on installing non-system
+    Python packages on distributions that implement externally managed
+    Python environments. In this case the <kbd>webinstall.py</kbd>
+    script available
+    <a href="https://sourceforge.net/p/gretl/gretl4py/ci/master/tree/webinstall.py"
+       target="_blank">in the gretl4py repository</a>
+    can be used to download and install a gretl4py wheel in user space.
+  </li>
+</ul>
+
+<h3>Checking the installation</h3>
+
+<p>On GNU/Linux or macOS:</p>
+
+<pre>
+python3 -c "import gretl; gretl.about(True)"
+</pre>
+
+<p>On MS Windows:</p>
+
+<pre>
+python.exe -c "import gretl; gretl.about(True)"
+</pre>
+
+<h2>Quick start</h2>
+
+<p>
+  A typical gretl4py workflow consists of loading a dataset, specifying
+  a model, fitting it using libgretl, and working with the resulting
+  Python object:
+</p>
+
+<pre>
+import gretl
+
+data = gretl.get_data("denmark.gdt")
+
+model = gretl.ols(
+    ["LRM", "const", "LRY", "IBO"],
+    data=data
+).fit()
+
+print(model)
 </pre>
 
 <p>
-  (Substitute <kbd>python.exe</kbd> for <kbd>python3</kbd> on Windows.)
-  You can also run gretl4py interactively. Start the Python interpreter and
-  type <kbd>import gretl</kbd>. In addition to regular Python commands, you can call
-  any of the functions described in the gretl4py documentation.
+  Estimator functions return model objects; estimation is performed by
+  calling <kbd>.fit()</kbd>. Model specifications can use variable names,
+  variable numbers, or gretl-style specifications where supported.
 </p>
 
-<h2>Documentation</h2>
+<p>For example:</p>
+
+<pre>
+model = gretl.ols([1, 0, 2, 3], data=data).fit()
+</pre>
+
+<p>or:</p>
+
+<pre>
+model = gretl.ols("LRM const LRY IBO", data=data).fit()
+</pre>
+
+<h2>Python objects</h2>
 
 <p>
-  The <a href="https://sourceforge.net/projects/gretl/files/gretl4py/gretl4py.pdf">PDF documentation</a>
-  contains many more details about the <b>gretl4py</b> module, including a listing of the
-  available APIs and several usage examples.
+  The Python API is organized around several classes that correspond
+  closely to native libgretl objects.
 </p>
 
-<h2>Examples</h2>
+<ul>
+  <li>
+    <b>gretl.Dataset</b> represents a gretl dataset and provides data
+    access, transformations, sample handling, statistical tests, and
+    conversion to pandas.
+  </li>
+
+  <li>
+    <b>gretl.Matrix</b> provides Python-style access to native gretl
+    matrices, including indexing, slicing, row and column names, NumPy
+    conversion, and writable zero-copy NumPy views.
+  </li>
+
+  <li>
+    <b>gretl.Bundle</b> provides a dictionary-like interface to gretl
+    bundles and can contain heterogeneous and nested gretl objects.
+  </li>
+
+  <li>
+    <b>gretl.Model</b> and its estimator-specific subclasses represent
+    fitted econometric models and provide access to estimation results
+    and appropriate post-estimation methods.
+  </li>
+
+  <li>
+    <b>gretl.Package</b> provides access to gretl function packages,
+    their functions, metadata, and help.
+  </li>
+</ul>
+
+<h2>NumPy and pandas</h2>
 
 <p>
-  Example data and scripts from the <em>Principles of Econometrics</em>, 4th edition, 
-  are available at
+  gretl4py is designed to work naturally with the Python
+  scientific-computing ecosystem.
+</p>
+
+<p>For example, a gretl matrix can be exposed directly as a NumPy view:</p>
+
+<pre>
+m = gretl.Matrix.ones(3, 3)
+
+a = m.to_numpy()       # independent NumPy array
+v = m.numpy_view       # writable zero-copy view
+</pre>
+
+<p>A gretl dataset can be converted to a pandas DataFrame:</p>
+
+<pre>
+df = data.to_pandas()
+</pre>
+
+<p>
+  This makes it possible to use libgretl for econometric estimation
+  while using NumPy, pandas, matplotlib, and other Python libraries
+  for subsequent processing and visualization.
+</p>
+
+<h2>gretl function packages</h2>
+
+<p>
+  gretl4py provides direct access to the
+  <a href="https://gretl.sourceforge.net/function_packages.html"
+     target="_blank">gretl function-package ecosystem</a>.
+  Functions implemented in hansl packages can therefore be called from
+  Python without being reimplemented as separate Python extensions.
+</p>
+
+<p>For example:</p>
+
+<pre>
+import gretl
+
+gretl.pkg("install", "BMA")
+BMA = gretl.include("BMA")
+
+data = gretl.get_data("FLS_41t72.gdt", frompkg="BMA")
+
+opt = gretl.Bundle()
+opt["Nrep"] = 10**5
+opt["model_prior"] = "binomial"
+opt["Nrank"] = 5
+
+result = gretl.BMA(
+    Y="GDP_growth",
+    X_list=list(range(2, 14)),
+    quiet=True,
+    Options=opt
+)
+
+gretl.BMA_Print(result)
+</pre>
+
+<p>
+  In this example, <kbd>BMA()</kbd> and <kbd>BMA_Print()</kbd> are
+  supplied by the gretl function package rather than being native
+  gretl4py bindings.
+</p>
+
+<h2>Examples and demonstrations</h2>
+
+<p>
+  The gretl4py distribution contains a growing collection of examples.
+  Small examples of individual estimators are available under:
+</p>
+
+<pre>
+gretl/examples/estimators/
+</pre>
+
+<p>
+  Examples demonstrating gretl function packages are available under:
+</p>
+
+<pre>
+gretl/examples/packages/
+</pre>
+
+<p>More extensive demonstrations are available under:</p>
+
+<pre>
+demo/
+</pre>
+
+<p>
+  These cover data handling, matrices, bundles, estimation, model
+  diagnostics, forecasting, VAR/VECM functionality, filters, nonlinear
+  models, function packages, hansl interoperability, and other
+  gretl4py features.
+</p>
+
+<h2>Building from source</h2>
+
+<p>
+  For normal use, the pre-built packages described above are recommended.
+  Source builds use the
+  <a href="https://mesonbuild.com/" target="_blank">Meson</a>
+  build system and Ninja and require a suitable libgretl development
+  environment and a C++17 compiler.
+</p>
+
+<p>
+  On MS Windows (x86-64 and ARM64), native builds use the Microsoft
+  Windows SDK, LLVM/Clang, and the
+  <a href="https://sourceforge.net/projects/libgretl-for-ms-sdk/"
+     target="_blank">libgretl for MS SDK</a> stack.
+  MSVC cannot currently be used to build gretl4py because of an ABI
+  incompatibility involving the representation of complex numbers.
+</p>
+
+<p>
+  The libgretl for MS SDK stack contains the libraries required for
+  compiling and linking gretl4py against libgretl. Additional libraries
+  required at run time by individual gretl plugins must be supplied
+  separately where needed.
+</p>
+
+<p>
+  Complete and current build instructions for GNU/Linux, macOS,
+  MS Windows x86-64, and MS Windows ARM64 are given in the
+  <a href="https://sourceforge.net/projects/gretl/files/gretl4py/gretl4py.pdf"
+     target="_blank">gretl4py documentation</a>.
+</p>
+
+<h2>Documentation and source code</h2>
+
+<p>
+  The
+  <a href="https://sourceforge.net/projects/gretl/files/gretl4py/gretl4py.pdf"
+     target="_blank">gretl4py PDF documentation</a>
+  provides the complete API reference, installation and compilation
+  instructions, and numerous usage examples.
+</p>
+
+<p>
+  Project resources:
+</p>
+
+<ul>
+  <li>
+    <a href="https://sourceforge.net/p/gretl/gretl4py/ci/master/tree/"
+       target="_blank">source repository</a>
+  </li>
+  <li>
+    <a href="https://pypi.org/project/gretl4py/"
+       target="_blank">PyPI</a>
+  </li>
+  <li>
+    <a href="https://sourceforge.net/projects/gretl/files/gretl4py/gretl4py.pdf"
+       target="_blank">PDF reference manual</a>
+  </li>
+  <li>
+    <a href="https://sourceforge.net/projects/gretl/files/gretl4py/snapshots/"
+       target="_blank">development snapshots</a>
+  </li>
+  <li>
+    <a href="https://gretl.sourceforge.net/"
+       target="_blank">gretl project</a>
+  </li>
+</ul>
+
+<h2>Additional examples</h2>
+
+<p>
+  Example data and scripts from <em>Principles of Econometrics</em>,
+  4th edition, are available at
   <a href="https://master.dl.sourceforge.net/project/gretl/gretl4py/Principles_of_Econometrics_4th_edition.zip">
     Principles_of_Econometrics_4th_edition.zip
   </a>.
 </p>
 
-<p>Marcin Błażejowski, marcin(at)gretlconference(dot)org</p>
+<p>
+  Marcin Błażejowski,
+  marcin(at)gretlconference(dot)org
+</p>
 
-<p>Last updated: 2026-01-29</p>
+<p>Last updated: 2026-10-06</p>
 
 </body>
 </html>

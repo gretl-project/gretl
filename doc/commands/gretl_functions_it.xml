@@ -8,9 +8,9 @@
     <function name="$ahat" section="access" output="series">
       <description>
         <para>
-          Deve seguire la stima di un modello panel a effetti fissi. Produce le
-          stime degli effetti fissi individuali (intercette delle singole
-          unità).
+          Deve seguire la stima di un modello panel a effetti fissi o
+          random. Produce le stime degli effetti fissi individuali
+          (intercette delle singole unità).
         </para>
       </description>
     </function>
@@ -83,10 +83,12 @@
 	  macoef = $coeff(theta_1)
 	</code>
 	<para>
-	  Se il <quote>modello</quote> in questione è effettivamente
-	  un sistema (un VAR o un VECM, o un sistema di equazioni
-	  simultanee), <lit>$coeff</lit> senza parametri produce la
-	  matrice dei coefficienti, una colonna per equazione.
+	  Se il <quote>modello</quote> in questione è un sistema, Il
+	  risultato dipende dalle caratteristiche del sistema: per i
+	  modelli VAR e VECM, il valore restituito è una matrice con
+	  una colonna per equazione; altrimenti, è un vettore colonna
+	  contenente i coefficienti della prima equazione seguiti da
+	  quelli della seconda, e così via.
 	</para>
       </description>
     </function>
@@ -204,11 +206,11 @@
 	<para>
 	  A causa della limitata precisione dell'aritmetica digitale,
 	  l'integrale di Imhof può diventare negativo quando la
-	  statistica di Durbin&ndash;Watson è vicina a 0. Se questo
-	  accade, l'accessore restituisce <lit>NA</lit>. Poiché
-	  qualsiasi altro malfunzionamento porta a un codice di
-	  errore, si può ritenere con una certa sicurezza che un
-	  valore NA indica che il p-value è
+	  statistica di Durbin&ndash;Watson è vicina a al suo limite
+	  inferiore. Se questo accade, l'accessore restituisce
+	  <lit>NA</lit>. Poiché qualsiasi altro malfunzionamento porta
+	  a un codice di errore, si può ritenere con una certa
+	  sicurezza che un valore NA indica che il p-value è
 	  <quote>piccolissimo</quote>, benché gretl non sia in grado
 	  di quantificarlo esattamente.
 	</para>
@@ -1455,9 +1457,10 @@
 	  Quando segue la stima di un VAR o di un VECM, restituisce
 	  <math>X'X</math><sup>-1</sup>, dove <math>X</math> è la
 	  matrice comune dei regressori usati in ciascuna delle
-	  equazioni. Questo accessore non è disponibile per un VECM
-	  stimato con una restrizione imposta su &agr;, la matrice dei
-	  <quote>loading</quote>.
+	  equazioni. Questo accessore è disponibile anche modelli VECM
+	  stimati con restrizioni su &agr;, la matrice dei
+	  <quote>loading</quote>; in questo caso, tuttavia, va tenuto
+	  a mente che non tutti i cofficienti sono liberi in variazione.
 	</para>
       </description>
     </function>
@@ -2812,6 +2815,7 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="bool" optional="true">standardize</fnarg>
+	<fnarg type="bool" optional="true">skip_na</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4268,8 +4272,15 @@
 	<ilist>
 	  <li>
 	    <para>
-	      <lit>seats</lit>: 1 per usare l'algoritmo SEATS anziché
-	      il default (X11), oppure 0.
+	      <lit>verbose</lit>: controlla l'output stampato 0 = niente
+	      (il default); 1 = conferma le opzioni selezionate; 2 =
+	      conferma delle opzioni e l'output di X-13ARIMA.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      <lit>seats</lit>: 1 per usare l'algoritmo SEATS
+	      anziché il default (X11), oppure 0.
 	    </para>
 	  </li>
 	  <li>
@@ -4617,9 +4628,10 @@
 	    <para>
 	    <lit>Mahalanobis</lit>: funziona come
 	    <lit>euclidean</lit>, tranne per il fatto che le distanze
-	    sono scalate dall'inversa della matrice di
-	    covarianza. Vedi anche le <emphasis>note sulla distanza di
-	    Mahalanobis</emphasis> qui sotto e
+	    sono scalate dall'inversa della matrice di covarianza,
+	    così da ottenere l'equivalebnte multivariato della
+	    standardizzazione. Vedi anche le <emphasis>note sulla
+	    distanza di Mahalanobis</emphasis> qui sotto e
 	    <url>https://it.wikipedia.org/wiki/Distanza_di_Mahalanobis</url>
 	    per ulteriori chiarimenti.</para>
 	  </li>
@@ -4659,7 +4671,7 @@
 	  # euclidea standardizzata
 	  dseu = distance(stdize(X), "eu")
 	  # correlazione (basata sul coseno)
-	  dcor = distance(stdize(X')', "cos")
+	  dcor = distance(stdize(X', -1)', "cos")
 	</code>
       </description>
     </function>
@@ -4818,7 +4830,7 @@
 	<code>
 	  scalar e = easterday(2014)
 	  scalar m = floor(e)
-	  scalar d = 100*(e-m)
+	  scalar d = round(100*(e-m))
 	</code>
       </description>
     </function>
@@ -4895,15 +4907,16 @@
       </fnargs>
       <description>
 	<para>
-	  Funziona esattamente come <fncref targ="eigengen"/>, ma
-	  l'argomento <argname>A</argname> deve essere una matrice
-	  simmetrica (in questo caso i calcoli possono essere
-	  semplificati). A differenza di <fncref targ="eigengen"/>,
-	  gli autovalori sono ordinati in senso crescente. Per avere
-	  l'ordinamento opposto, si può usare la funzione <fncref
-	  targ="mreverse"/>:
+	  Funziona come <fncref targ="eigen"/>, ma l'argomento
+	  <argname>A</argname> deve essere una matrice simmetrica (in
+	  questo caso i calcoli possono essere semplificati). A
+	  differenza di <fncref targ="eigen"/>, gli autovalori sono
+	  ordinati in senso crescente. Per avere l'ordinamento
+	  opposto, si può usare la funzione <fncref targ="mreverse"/>:
 	</para>
 	<code>
+	  matrix U
+	  e = eigensym(A, &amp;U)
 	  # smallest to largest eigenvalues
 	  print e U
 	  e = mreverse(e)
@@ -5007,12 +5020,13 @@
       </fnargs>
       <description>
 	<para>
-	  Applicabile solo nel contesto di una funzione creata dall'utente.
-	  Se la <argname>condizione</argname> è diversa da 0,
-	  termina l'esecuzione della funzione attuale, evidenziando la condizione
-	  di errore; l'argomento <argname>msg</argname>
-	  è poi stampato a video come parte del messaggio mostrato
-	  a chi utilizza la funzione in questione.
+	  Applicabile solo nel contesto di una funzione creata
+	  dall'utente o in un blocco <cmdref targ="mpi"/>.  Se la
+	  <argname>condizione</argname> è diversa da 0, termina
+	  l'esecuzione della funzione attuale, evidenziando la
+	  condizione di errore; l'argomento <argname>msg</argname> è
+	  poi stampato a video come parte del messaggio mostrato a chi
+	  utilizza la funzione in questione.
 	</para>
 	<para>
 	  Il valore (1) ritornato da questa funzione è puramente nominale.
@@ -5095,7 +5109,7 @@
 	</para>
 	<code>
 	  1  Errore Medio (Mean Error, ME)
-	  2  Errore Quadratico Medio (Mean Squared Error, MSE)
+	  2  Radice Errore Quadratico Medio (Root Mean Squared Error, RMSE)
 	  3  Errore Medio Assoluto (Mean Absolute Error, MAE)
 	  4  Errore Medio Percentuale (Mean Percentage Error, MPE)
 	  5  Errore Medio Assoluto Percentuale (Mean Absolute Percentage Error, MAPE)
@@ -5401,6 +5415,7 @@
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">b</fnarg>
 	<fnarg optional="true" type="scalar">y0</fnarg>
+	<fnarg optional="true" type="scalar-or-vec">x0</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5456,9 +5471,13 @@
 	  L'argomento scalare opzionale <argname>y0</argname>
 	  rappresenta i valori di <math>y</math> antecedenti
 	  all'inizio del campione (usato solo se <math>p>0</math>). Se
-	  omesso, si intende 0.  Valori di <argname>x</argname>
-	  antecedenti all'inizio del campione sono sempre considerati
-	  0.
+	  omesso, si intende 0. Analogamente, l'argomento opzionale
+	  <argname>x0</argname> serve a specificare uno o più valori
+	  di <math>x</math> precedenti al campione; si tratta di
+	  un'informazione rilevante solo quando <math>q &gt;
+	  0</math>. Se non specificato, i valori di
+	  <argname>x</argname> antecedenti all'inizio del campione
+	  sono sempre considerati 0.
 	</para>
 	<para>
 	  <seelist>
@@ -5535,6 +5554,7 @@
     <function name="fixname" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">rawname</fnarg>
+	<fnarg type="bool" optional="true">underscore</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -5661,7 +5681,7 @@
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="matrix">F</fnarg>
+	<fnarg type="matrix">f</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;A</fnarg>
@@ -5671,12 +5691,20 @@
 	  Una funzione specializzata (<quote>OLS fattorizzato</quote>)
 	  che offre un trattamento ottimale della regressione coi
 	  minimi quadrati quando uno dei regressori è una fattore
-	  discreto con molti valori distinti. Questo caso può essere
-	  gestito includendo tra i regressori un insieme di variabili
-	  dummy che codificano i valori del fattore, ma in certi casi
-	  è più efficiente eseguire l'OLS su dati da cui sono state
-	  rimosse le medie per ciascun valore del fattore, il che è
-	  ciò che questa funzione fa.
+	  discreto con molti valori distinti.
+	</para>
+	<para>
+	  Questo caso può essere gestito includendo tra i regressori
+	  un insieme di variabili dummy che codificano i valori del
+	  fattore, ma in certi casi è molto più efficiente eseguire
+	  l'OLS su dati da cui sono state rimosse le medie per ciascun
+	  valore del fattore, il che è ciò che questa funzione fa. Se
+	  la versione di <argname>X</argname> depurata dalle medie
+	  risulta di rango ridotto, la funzione restituisce un
+	  errore. In un contesto di dati panel, l'output di questa
+	  funzione corrisponderebbe allo stimatore OLS a effetti
+	  fissi, qualora si consideri il fattore <argname>f</argname>
+	  come identificativo delle unità del panel.
 	</para>
 	<para>
 	  Gli argomenti sono i seguenti:
@@ -5684,7 +5712,7 @@
 	<ilist>
 	  <li>
 	    <para>
-	      <argname>Y</argname>: una matrice <by r="T" c="k"/>
+	      <argname>Y</argname>: una matrice <by r="T" c="g"/>
 	      contenente le variabili dipendenti.
 	    </para>
 	  </li>
@@ -5712,9 +5740,11 @@
 	  <li>
 	    <para>
 	      <argname>&amp;V</argname>: puntatore a matrice per
-	      ricevere la matrice di covarianza delle stime dei
-	      parametri, o <lit>null</lit> se non è richiesta. FIXME:
-	      ancora da fare.
+	      ricevere una matrice <by r="k" c="k"/> che contiene (a)
+	      la matrice di covarianza delle stime dei parametri, se
+	      <argname>Y</argname> ha una sola colonna, oppure (b)
+	      <math>X'X</math><sup>-1</sup> se <argname>Y</argname> ha
+	      più colonne.
 	    </para>
 	  </li>
 	  <li>
@@ -5727,6 +5757,56 @@
 	    </para>
 	  </li>
 	</ilist>
+	<para>
+	  Per esempio, il codice:
+	</para>
+	<code>
+	  set seed 23072026
+
+	  N = 100
+	  k = 4
+	  X = mnormal(N,k)
+	  y = mnormal(N)
+	  f = mrandgen(i, 1, k, N, 1)
+
+	  a = {}
+
+	  # use fols()
+	  b0 = fols(y, X, f,,, &amp;a)
+
+	  # use dummies
+	  D = f .= seq(1, k)
+	  b1 = mols(y, X~D)
+	</code>
+	<para>
+	  produce i tre vettori seguenti:
+	</para>
+	<code>
+	  b0 (4 x 1)
+
+	     0.0018742
+	     -0.040486
+	      -0.17669
+	      0.098311
+
+	  a (4 x 1)
+
+	       0.13923
+	      -0.12611
+	      0.065511
+	     0.0036843
+
+	  b1 (8 x 1)
+
+             0.0018742
+             -0.040486
+              -0.17669
+              0.098311
+               0.13923
+              -0.12611
+              0.065511
+             0.0036843
+	</code>
 	<para>
 	  Per default, le stime vengono ottenute tramite
 	  decomposizione di Cholesky, facendo ricorso alla
@@ -6057,7 +6137,7 @@
     <function name="getline" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">source</fnarg>
-	<fnarg type="string">target</fnarg>
+	<fnarg type="stringref">target</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6078,7 +6158,7 @@
 	  string s = readfile("data.txt")
 	  string line
 	  scalar i = 1
-	  loop while getline(s, line)
+	  loop while getline(s, &amp;line)
               printf "line %d = '%s'\n", i++, line
           endloop
 	</code>
@@ -6091,13 +6171,13 @@
 	  <lit>null</lit> (o omesso) come segue
 	</para>
 	<code>
-	  getline(s, line)
+	  getline(s, &amp;line)
 	  getline(s, null)
 	</code>
 	<para>
-	  Si noti che, anche se la posizione di lettura avanza ad ogni chiamata di
-	  <lit>getline</lit>, questa funzione non modifica <argname>source</argname>
-	  ma solo <argname>target</argname>.
+	  Si noti che, anche se la posizione di lettura avanza ad ogni
+	  chiamata di <lit>getline</lit>, questa funzione non modifica
+	  <argname>source</argname> ma solo <argname>target</argname>.
 	</para>
       </description>
     </function>
@@ -6324,14 +6404,13 @@
 	<para>
 	  Produce una matrice <by r="m" c="r"/> contenente
 	  <math>m</math> sequenze di Halton di lunghezza
-	  <math>r</math>; <math>m</math> è limitata ad un massimo di
-	  40. Le sequenze sono costruite utilizzando i primi
-	  <math>m</math> numeri primi. Se non diversamente
+	  <math>r</math>. Le sequenze sono costruite utilizzando i
+	  primi <math>m</math> numeri primi. Se non diversamente
 	  specificato, i primi 10 elementi di ogni sequenza sono
 	  scartati: questo valore può essere modificato specificando
 	  l'argomento opzionale <argname>offset</argname> (che deve
-	  essere un numero intero non-negativo). Si veda
-	  <cite key="halton64">Halton e Smith (1964)</cite>.
+	  essere un numero intero non-negativo). Si veda <cite
+	  key="halton64">Halton e Smith (1964)</cite>.
 	</para>
       </description>
     </function>
@@ -6520,7 +6599,8 @@
     <function name="hpfilt" section="timeseries" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-	<fnarg type="scalar" optional="true">lambda</fnarg>
+        <fnarg type="scalar" optional="true">lambda</fnarg>
+	<fnarg type="bool" optional="true">a-un-lato</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -6545,6 +6625,9 @@
 	  ma se invece quel che interessa è il trend, basta sottrarre il
 	  risultato dalla serie originale, come di seguito:
 	</para>
+	<code>
+	  series hptrend = y - hpfilt(y)
+	</code>
 	<para>
 	  <seelist>
             <fncref targ="bkfilt"/>
@@ -6764,12 +6847,13 @@
       </fnargs>
       <description>
 	<para>
-	  Controlla se il bundle  <argname>b</argname> contiene un elemento di nome
-	  <argname>key</argname>. Il valore restituito è un intero diverso a seconda del
-	  tipo di elemento: 0 indica nessun elemento, 1 scalare, 2 variabile,
-	  3 matrice, 4 stringa e 5 bundle. Per recuperare la stringa associata
-	  al codice può essere utilizzata la funzione <fncref
-	  targ="typestr"/>.
+	  Controlla se il bundle <argname>b</argname> contiene un
+	  elemento di nome <argname>key</argname>. Il valore
+	  restituito è un intero diverso a seconda del tipo di
+	  elemento: 0 indica nessun elemento, 1 scalare, 2 variabile,
+	  3 matrice, 4 stringa, 5 bundle, 6 array e 7 lista. Per
+	  recuperare la stringa associata al codice può essere
+	  utilizzata la funzione <fncref targ="typestr"/>.
 	</para>
       </description>
     </function>
@@ -7685,8 +7769,8 @@
 	<para>
 	  L'argomento <argname>buf</argname> dev'essere un buffer
 	  JSON, così come ad esempio può esser preso da un sito
-	  attraverso la funzione <fncref targ="curl"/>. L'argomento opzionale
-	  <argname>percorso</argname> è discusso più sotto.
+	  attraverso la funzione <fncref targ="curl"/>. L'argomento
+	  opzionale <argname>percorso</argname> è discusso più sotto.
 	</para>
 	<para>
 	  La funzione restituisce un bundle la cui struttura riproduce
@@ -7695,10 +7779,10 @@
 	  loro volta bundle. I nodi JSON <quote>valore</quote>
 	  diventano membri di bundle o elementi di array; nel secondo
 	  caso, i valori numerici sono convertiti in stringhe via
-	  <lit>sprintf</lit>.  Si noti che, dal momento che in gretl
-	  gli array non possono essere annidati, l'input per questa
-	  funzione è un po' più restrittivo della specificazione JSON
-	  completa, in cui ciò è possibile.
+	  <lit>sprintf</lit>.  Si noti che, sebbene la specifica JSON
+	  consenta array di tipo misto, questi non possono essere
+	  gestiti da <lit>jsongetb</lit>, poiché gli array di gretl
+	  devono essere di un unico tipo.
 	</para>
 	<para>
 	  L'argomento opzionale <argname>percorso</argname> viene usato
@@ -7896,7 +7980,7 @@
 
     <function name="kmeans" section="stats" output="bundle">
       <fnargs>
-	<fnarg type="matrix">X</fnarg>
+	<fnarg type="list-or-mat">X</fnarg>
 	<fnarg type="scalar-or-matrix">c</fnarg>
 	<fnarg optional="true" type="bundle">opts</fnarg>
       </fnargs>
@@ -8033,18 +8117,18 @@
 	  </li>
 	  <li>
 	    <para>
-	     <lit>cluster_SST</lit>: la somma dei quadrati degli
+	     <lit>within_variation</lit>: la somma dei quadrati degli
 	     scarti dei punti rispetto al centroide del cluster a cui
 	     sono stati assegnati.
 	    </para>
 	  </li>
 	  <li>
 	    <para>
-	      <lit>global_SST</lit>: la somma dei quadrati degli
+	      <lit>total_variation</lit>: la somma dei quadrati degli
 	      scarti dei punti rispetto al centroide globale. Questo
 	      valore può essere confrontato con
-	      <lit>cluster_SST</lit>, che risulterà tanto più piccolo
-	      quanto più la classificazione è efficace.
+	      <lit>within_variation</lit>, che risulterà tanto più
+	      piccolo quanto più la classificazione è efficace.
 	    </para>
 	  </li>
 	</ilist>
@@ -8116,7 +8200,6 @@
 	<fnarg type="scalar-or-matrix">Z</fnarg>
 	<fnarg type="scalar-or-matrix">T</fnarg>
 	<fnarg type="scalar-or-matrix">Q</fnarg>
-	<fnarg optional="true" type="matrix">C</fnarg>
 	<fnarg optional="true" type="matrix">R</fnarg>
       </fnargs>
       <description>
@@ -8128,7 +8211,7 @@
 		    tex="\[y_t= Z \alpha_t + u_t\]"
 		    ascii="y(t) = Z a(t) + u(t)"
 		    graphic="kalman1"/>
-          con equazione di transizione
+          dove Var<math>(u) = R</math>, con equazione di transizione
 	  <equation status="display"
 		    tex="\[\alpha_{t+1} = T \alpha_t + v_t\]"
 		    ascii="a(t+1) = T a(t) + v(t)"
@@ -8163,7 +8246,7 @@
       </description>
     </function>
 
-    <function name="ksimul" section="sspace" output="scalar">
+    <function name="ksimul" section="sspace" output="matrix">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
 	<fnarg type="matrix">U</fnarg>
@@ -8240,8 +8323,8 @@
 
     <function name="lags" section="transforms" output="list-or-mat">
       <fnargs>
-	<fnarg type="int">p</fnarg>
-	<fnarg type="series-or-list">y</fnarg>
+	<fnarg type="scalar-or-vec">p</fnarg>
+	<fnarg type="series-list-or-mat">y</fnarg>
 	<fnarg type="bool" optional="true">bylag</fnarg>
       </fnargs>
       <description>
@@ -8875,11 +8958,12 @@
       </fnargs>
       <description>
 	<para>
-	  Calcola la matrice di covarianza considerando ogni colonna di
-	  <argname>X</argname> come una variabile. Il divisore è
+	  Calcola la matrice di covarianza considerando ogni colonna
+	  di <argname>X</argname> come una variabile. Il divisore è
 	  <math>n</math> &minus; 1, dove <math>n</math> è il numero di
-	  righe di <argname>X</argname>; se però l'argomento opzionale
-	  <argname>dfcorr</argname> è 0, viene usato <math>n</math>.
+	  righe di <argname>X</argname>; se però viene specificato
+	  l'argomento opzionale <argname>dfcorr</argname>, allora esso
+	  viene usato come divisore.
 	</para>
 	<para>
 	  <seelist>
@@ -9538,13 +9622,14 @@
     <function name="mnormal" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Restituisce una matrice di <argname>r</argname> righe e
 	  <argname>c</argname> colonne, contenente numeri pseudocasuali
-	  generati da una normale standardizzata.
+	  generati da una normale standardizzata. Se il numero di
+	  colonne è omesso, si intende 1.
 	  <seelist>
 	    <fncref targ="normal"/>
 	    <fncref targ="muniform"/>
@@ -9797,9 +9882,9 @@
 	<para>
 	  Disponibile solo se gretl è in modalità MPI (si veda<mnu
 	  targ="gretlMPI">gretl + MPI</mnu>). Deve essere chiamata da
-	  tutti i processi. questa funzione raccoglie oggetti (solo scalari o
-	  matrici) dal nome specifico,dati in forma di puntatore,
-	  da tutti i processi e li <quote>riduce</quote> in un singolo
+	  tutti i processi. questa funzione raccoglie oggetti
+	  (scalari, matrici o array), dati in forma di puntatore, da
+	  tutti i processi e li <quote>riduce</quote> in un singolo
 	  oggetto al nodo root.
 	</para>
 	<para>
@@ -9809,7 +9894,8 @@
 	  e <lit>min</lit>. Per le matrici i metodi sono
 	  <lit>sum</lit>, <lit>prod</lit> (prodotto di Hadamard),
 	  <lit>hcat</lit> (concatenazione orizzontale) e
-	  <lit>vcat</lit> (concatenazione verticale).
+	  <lit>vcat</lit> (concatenazione verticale). Per gli array,
+	  l'unica operazione supportata è <lit>acat</lit>.
 	</para>
 	<para>
 	  Di default <quote>root</quote>, il destinatario della riduzione,
@@ -9881,17 +9967,18 @@
       </fnargs>
       <description>
 	<para>
-	  Disponibile solo quando gretl è in modalità MPI (si veda <mnu
-	  targ="gretlMPI">gretl + MPI</mnu>). Manda l'oggetto nominato
-	  (che deve essere una matrice, bundle, vettore o scalare) dal processo
-	  corrente a quello identificato dall'intero
-	  <argname>dest</argname> (da 0 al numero di processi MPI
-	  meno 1).
+	  Disponibile solo quando gretl è in modalità MPI (si veda
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Manda l'oggetto
+	  nominato (che deve essere una matrice, bundle, array,
+	  scalare stringa o lista) dal processo corrente a quello
+	  identificato dall'intero <argname>dest</argname> (da 0 al
+	  numero di processi MPI meno 1).
 	</para>
 	<para>
-	  L chiamata di questa funzione deve essere sempre accoppiata con una chiamata a
-	  <fncref targ="mpirecv"/> nel processo <argname>dest</argname>,
-	  come nel seguente esempio che manda una matrice dal rango2 al rango 3.
+	  La chiamata di questa funzione deve essere sempre accoppiata
+	  con una chiamata a <fncref targ="mpirecv"/> nel processo
+	  <argname>dest</argname>, come nel seguente esempio che manda
+	  una matrice dal pèrocesso di rango 2 al a quello di rango 3.
 	</para>
 	<code>
 	  if $mpirank == 2
@@ -10302,15 +10389,16 @@
     <function name="muniform" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Restituisce una matrice di <argname>r</argname> righe e
 	  <argname>c</argname> colonne contenente numeri pseudocasuali
-	  estratti da una uniforme (0,1). Nota: per generare uno
-	  scalare pseudocasuale uniforme è consigliabile usare la
-	  funzione <fncref targ="randgen1"/>.
+	  estratti da una uniforme (0,1). Se il numero di colonne è
+	  omesso, si intende 1. Nota: per generare uno scalare
+	  pseudocasuale uniforme è consigliabile usare la funzione
+	  <fncref targ="randgen1"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -10783,26 +10871,29 @@
 	  alternative disponibili: <lit>swilk</lit> per il test di
 	  Shapiro&ndash;Wilk test, <lit>jbera</lit> per quello di
 	  Jarque&ndash;Bera, oppure <lit>lillie</lit> per il test di
-	  Lilliefors.
+	  Lilliefors.  Dando <lit>all</lit> come
+	  <argname>method</argname>, vengono effettuati tutti e
+	  quattro i test.
 	</para>
 	<para>
 	  Il secondo argomento può essere fornito con o senza
 	  virgolette. Nel secondo caso, tuttavia, se l'argomento
 	  corrisponde al nome di una variabile stringa esistente,
-	  verrà usato il valore di tale variabile. L'esempio seguente
-	  mostra tre modi possibili di eseguire un test di
-	  Shapiro&ndash;Wilk:
+	  verrà usato il valore di tale variabile.
 	</para>
-	<code>
-	  matrix nt = normtest(y, swilk)
-	  matrix nt = normtest(y, "swilk")
-	  string testtype = "swilk"
-	  matrix nt = normtest(y, testtype)
-	</code>
 	<para>
-	  La matrice risultato è <by r="1" c="2"/>; contiene la
-	  statistica test  e il suo p-value. Vedi anche il
-	  comando <cmdref targ="normtest"/>.
+	  La matrice restituita è <by r="1" c="2"/> per un test
+	  singolo, oppure <by r="4" c="2"/> se vengono eseguiti tutti
+	  i test. Le statistiche test sono riportate nella prima
+	  colonna e i p-value nella seconda. La statistica test non
+	  segue la stessa distribuzione in tutti i casi. Per
+	  Doornik&ndash;Hansen e Jarque&ndash;Bera si tratta di una
+	  distribuzione chi-quadro con due gradi di libertà; per gli
+	  altri metodi è una statistica specifica il cui p-value
+	  richiede un calcolo particolare.
+	</para>
+	<para> Vedi anche
+	  il comando <cmdref targ="normtest"/>.
 	</para>
       </description>
     </function>
@@ -11186,12 +11277,13 @@
     <function name="ones" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Restituisce una matrice con <math>r</math> righe e <math>c</math>
-	  colonne con elementi tutti pari a 1.
+	  colonne con elementi tutti pari a 1. Se il numero di
+	  colonne è omesso, si intende 1.
 	</para>
 	<para>
 	  <seelist>
@@ -11217,8 +11309,8 @@
 	  struttura panel. Calcola le deviazioni ortogonali in avanti
 	  della variabile <argname>y</argname>; in altre parole,
 	  \[ \tilde{y}_{i,t} =
-	  \sqrt{ \frac{T_i - t + 1}{T_i - t}} \left( y_{i,t} -
-	  \frac{1}{T_i - t - 1} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
+	  \sqrt{ \frac{T_i - t}{T_i - t + 1}} \left( y_{i,t} -
+	  \frac{1}{T_i - t} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
 	</para>
 	<para>
 	  Talvolta questa trasformazione viene utilizzata talvolta al posto delle
@@ -11252,15 +11344,16 @@
 	  Calcola funzioni di densità o di probabilità. Restituisce la
 	  densità (se continue) o la probabilità (se discrete) in
 	  <argname>x</argname> della distribuzione identificata dal
-	  carattere <argname>c</argname>.  Si veda <fncref targ="cdf"/>
-	  per dettagli sugli argomenti.  Le distribuzioni supportate
-	  dalla funzione <lit>pdf</lit> sono la normale,
+	  carattere <argname>c</argname>.  Si veda <fncref
+	  targ="cdf"/> per dettagli sugli argomenti.  Le distribuzioni
+	  supportate dalla funzione <lit>pdf</lit> sono la normale,
 	  <math>t</math> di Student, chi-quadro, <math>F</math>,
-	  gamma, Weibull, Generalized Error, binomiale and Poisson. Si
-	  noti che per la binomiale e la Poisson ciò che viene
-	  calcolato è in effetti la probabilità nel punto specificato.
-	  Per la <math>t</math> di Student, la chi quadro e la
-	  <math>F</math> tanche le varianti non centrali sono ammesse.
+	  gamma, beta, esponenziale, Weibull, Laplace, Generalized
+	  Error, binomiale and Poisson. Si noti che per la binomiale e
+	  la Poisson ciò che viene calcolato è in effetti la
+	  probabilità nel punto specificato.  Per la <math>t</math> di
+	  Student, la chi quadro e la <math>F</math> tanche le
+	  varianti non centrali sono ammesse.
 	</para>
 	<para>
 	  Per la normale, si veda anche la funzione <fncref
@@ -11496,10 +11589,8 @@
 	  <math>x</math><sup>p</sup>.
 	</para>
 	<para>
-	  Se tutte le radici sono reali vengono restituite in un vettore colonna
-	  di lunghezza <math>p</math>; in caso contrario viene restituita una
-	  matrice <by r="p" c="2"/> con la parte reale delle radici nella prima colonna
-	  e la parte immaginaria nella seconda.
+	  Viene restituito in un vettore colonna complesso di
+	  lunghezza <math>p</math>.
 	</para>
       </description>
     </function>
@@ -11813,16 +11904,18 @@
       </examples>
       <description>
 	<para>
-	  Calcola un <math>P</math>-value. Restituisce
-	  <equation status="inline" ascii="P(X > x)" tex="$P(X > x)$"/>,
-	  dove la distribuzione <math>X</math> è determinata dal carattere
-	  <argname>c</argname>. Fra gli argomenti
-	  <argname>c</argname> e <argname>x</argname> è necessario indicare
-	  zero o più argomenti aggiuntivi per specificare i parametri della
-	  distribuzione; v. <fncref targ="cdf"/> per ulteriori dettagli.
-	  Le distribuzioni che la funzione <lit>pval</lit> può gestire sono
-	  la normale standard, <math>t</math>, chi quadrato, <math>F</math>,
-	  gamma, binomiale, Poisson, Weibull e Generalized Error.
+	  Calcola un <math>P</math>-value. Restituisce <equation
+	  status="inline" ascii="P(X > x)" tex="$P(X > x)$"/>, dove la
+	  distribuzione <math>X</math> è determinata dal carattere
+	  <argname>c</argname>. Fra gli argomenti <argname>c</argname>
+	  e <argname>x</argname> è necessario indicare zero o più
+	  argomenti aggiuntivi per specificare i parametri della
+	  distribuzione; v. <fncref targ="cdf"/> per ulteriori
+	  dettagli.  Le distribuzioni che la funzione
+	  <lit>pvalue</lit> può gestire sono la normale standard,
+	  <math>t</math>, chi quadro, <math>F</math>, gamma,
+	  binomiale, Poisson, esponenziale, Weibull, Laplace e
+	  Generalized Error.
 	</para>
 	<para>
 	  <seelist>
@@ -12416,7 +12509,7 @@
 	  Weibull &amp; \texttt{w} o \texttt{W} &amp; forma &amp; scala &amp; --\\
 	  Laplace &amp; \texttt{l} o \texttt{L} &amp; media &amp; scala &amp; --\\
 	  Generalized Error &amp; \texttt{e} o \texttt{E} &amp; forma &amp; -- &amp; --\\
-	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma1 &amp; --\\
+	  Beta &amp; \texttt{beta} &amp; forma1 &amp; forma2 &amp; --\\
 	  Beta-Binomiale &amp; \texttt{bb} &amp; $n$ &amp; forma1 &amp; forma1 \\
 	  Generic discrete &amp; \texttt{disc} &amp; $\mathbf{p}$ &amp; -- &amp; --
 	</tabular>
@@ -12654,7 +12747,12 @@
 	<para>
 	  Se un file di nome <argname>fname</argname> esiste ed è
 	  leggibile, restituisce una stringa con il contenuto del
-	  file. In caso contrario restituisce un errore.
+	  file. In caso contrario restituisce un errore. Se
+	  <argname>fname</argname> non contiene un percorso completo,
+	  il file verrà cercato in diverse posizioni "probabili", a
+	  partire dalla <cmdref targ="workdir"/> attualmente
+	  impostata. File compressi con gzip vengono gestiti in modo
+	  trasparente.
 	</para>
 	<para>
 	  Nel caso in cui <argname>fname</argname> inizia con
@@ -13220,9 +13318,9 @@
 
     <function name="seq" section="matrix" output="rvec">
       <fnargs>
-	<fnarg type="int">a</fnarg>
-	<fnarg type="int">b</fnarg>
-	<fnarg optional="true" type="int">k</fnarg>
+	<fnarg type="scalar">a</fnarg>
+	<fnarg type="scalar">b</fnarg>
+	<fnarg optional="true" type="scalar">k</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -13230,8 +13328,7 @@
 	  interi consecutivi, con <argname>a</argname> come primo
 	  elemento e <argname>b</argname> come ultimo. Se
 	  <argname>a</argname> è maggiore di <argname>b</argname>, la
-	  sequenza sarà decrescente. L'eventuale parte non intera
-	  viene ignorata per entrambi gli argomenti.
+	  sequenza sarà decrescente.
 	</para>
 	<para>
 	  In caso sia presente il terzo argomento, la funzione
@@ -13244,8 +13341,7 @@
 	  della sequenza minore o uguale a <argname>b</argname> (o
 	  mutatis mutandis, nel caso in cui <argname>a</argname> sia
 	  maggiore di <argname>b</argname>). L'argomento
-	  <argname>k</argname> deve essere positivo; nel caso non sia
-	  un intero la parte decimale è ignorata.
+	  <argname>k</argname> deve essere positivo.
 	</para>
 	<para>
 	  <seelist>
@@ -14047,7 +14143,7 @@
 
     <function name="strpday" section="calendar" output="scalar">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string" optional="true">formato</fnarg>
       </fnargs>
       <description>
@@ -14065,26 +14161,34 @@
 
     <function name="strptime" section="calendar" output="scalar">
       <fnargs>
-	<fnarg type="int-or-string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="string" optional="true">formato</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Questa funzione è l'inverso di <fncref targ="strftime"/>;
-	  analizza la stringa <argname>s</argname> come data/ora usando
-	  il <argname>formato</argname> specificato e restituisce  il
-	  numero di secondi dall'inizio del 1970 (UTC).
+	  analizza la stringa <argname>s</argname> come data/ora
+	  usando il <argname>formato</argname> specificato e
+	  restituisce il numero di secondi dall'inizio del 1970
+	  (UTC). Il tipo del risultato dipende da quello di
+	  <argname>s</argname>: se <argname>s</argname> è una stringa,
+	  un array di stringhe o una serie di stringhe, l'output è,
+	  rispettivamente, uno scalare, un vettore colonna o una serie
+	  numerica.
 	</para>
 	<para>
 	  Se l'argomento <argname>formato</argname> viene omesso, il
 	  default è il formato ISO 8601 <quote>esteso</quote>, e cioè
 	  <lit>YYYY-MM-DD</lit> (che sarebbe
 	  <quote><lit>%Y-%m-%d</lit></quote> come formato
-	  <argname>strptime</argname>).  In alternativa, il primo
-	  argomento può essere un intero ad 8 cifre conforme alla
-	  specificazione ISO 8601 <quote>di base</quote>,
-	  <lit>YYYYMMDD</lit> (per esempio, 20221220). In questo case
-	  l'argomento <argname>formato</argname> deve essere omesso.
+	  <argname>strptime</argname>).
+	</para>
+	<para>
+	  In alternativa, il primo argomento può essere un intero ad 8
+	  cifre conforme alla specificazione ISO 8601 <quote>di
+	  base</quote>, <lit>YYYYMMDD</lit> (per esempio,
+	  20221220). In questo case l'argomento
+	  <argname>formato</argname> deve essere omesso.
 	</para>
 	<para>
 	  Si noti il valore restituito da questa funzione dipende dal
@@ -14098,13 +14202,6 @@
 	  sarà 1234567890 solo se l'ora è impostata a UTC. Se invece,
 	  per esempio, l'ora è impostata alla zona pacifica degli USA
 	  (ad esempio, la California), l'output sarà 1234596690.
-	</para>
-	<para>
-	  Attenzione: a causa di differenze nell'implementazione,
-	  questa funzione si comporta in modo diverso su sistemi
-	  Windows e Unix-like per date precedenti al 1 gennaio
-	  1970. Su sistemi Unix-like (Linux, Mac) saranno generate
-	  cifre negative in secondi; su windows, il risultato sarà NA.
 	</para>
 	<para>
 	  Le opzioni per il <argname>formato</argname> sono elencate sulla
@@ -14139,8 +14236,8 @@
     <function name="strsplit" section="strings" output="string-or-strings">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg optional="true" type="int">i</fnarg>
 	<fnarg optional="true" type="string">sep</fnarg>
+	<fnarg optional="true" type="int">i</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -14165,7 +14262,7 @@
 	</para>
 	<code>
 	  string basket = "banana,apple,jackfruit,orange"
-	  strings S = strsplit(basket,,",")
+	  strings S = strsplit(basket,",")
 	</code>
 	<para>
 	  dividerà l'input in un array di 4 stringhe in base alle
@@ -14390,15 +14487,20 @@
 
     <function name="substr" section="strings" output="string">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
 	<fnarg type="int">start</fnarg>
 	<fnarg type="int">end</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce la sottostringa di <argname>s</argname> dal
-	  carattere <argname>start</argname> al carattere
-	  <argname>end</argname> compresi. L'indicizzazione è a base 1.
+	  Se <argname>s</argname> è una stringa, restituisce la
+	  sottostringa di <argname>s</argname> dal carattere
+	  <argname>start</argname> al carattere <argname>end</argname>
+	  compresi. L'indicizzazione è a base 1. Il parametro
+	  <argname>end</argname> può essere &minus;1 per indicare la
+	  fine della stringa. Se <argname>s</argname> è una array di
+	  stringhe o una serie a valori stringa, l'operazione è
+	  applicata ad ogni elemento.
 	</para>
 	<para>
 	  Ad esempio, il codice seguente
@@ -14808,12 +14910,15 @@ d =  8.0000000
 
     <function name="tolower" section="strings" output="string">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce una copia di <argname>s</argname> in cui ogni
-	  lettera maiuscola è convertita in minuscola.
+	  Se <argname>s</argname> è una stringa, restituisce una copia
+	  di <argname>s</argname> in cui ogni lettera maiuscola è
+	  convertita in minuscola. Se <argname>s</argname> è una array
+	  di stringhe o una serie a valori stringa, l'operazione è
+	  applicata ad ogni elemento.
 	</para>
 	<para>
 	  Esempi:
@@ -14831,12 +14936,15 @@ d =  8.0000000
 
     <function name="toupper" section="strings" output="string">
       <fnargs>
-	<fnarg type="string">s</fnarg>
+	<fnarg type="all-strings">s</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Restituisce una copia di <argname>s</argname> in cui ogni
-	  lettera minuscola è convertita in maiuscola.
+	  Se <argname>s</argname> è una stringa, restituisce una copia
+	  di <argname>s</argname> in cui ogni lettera minuscola è
+	  convertita in maiuscola. Se <argname>s</argname> è una array
+	  di stringhe o una serie a valori stringa, l'operazione è
+	  applicata ad ogni elemento.
 	</para>
 	<para>
 	  Esempi:
@@ -14880,7 +14988,6 @@ d =  8.0000000
       </description>
     </function>
 
-
     <function name="trigamma" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -14892,7 +14999,7 @@ d =  8.0000000
 	</para>
 	<para context="tex">
 	  Restituisce la funzione trigamma di $x$, cioè
-	  $\frac {\mathrm{d}?2} {\mathrm{d} x^2}\, \log \Gamma(x)$.
+	  $\frac {\mathrm{d}^2} {\mathrm{d} x^2}\, \log \Gamma(x)$.
 	</para>
 	<para>
 	  <seelist>
@@ -15028,12 +15135,13 @@ d =  8.0000000
       </fnargs>
       <description>
 	<para>
-	  Restituisce il nome del tipo di dati di gretl corrispondente
-	  a <argname>typecode</argname>. È utilizzata insieme alla
-	  funzione <fncref targ="inbundle"/>. Il valore restituito è:
-	  <quote>scalar</quote>, <quote>series</quote>,
-	  <quote>matrix</quote>, <quote>string</quote>,
-	  <quote>bundle</quote>, <quote>array</quote> o
+	  Dato un codice di tipo (ad esempio, ottenuto tramite <fncref
+	  targ="typeof"/> o <fncref targ="inbundle"/>), restituisce
+	  una stringa che indica il nome del tipo. La corrispondenza
+	  tra codici e stringhe è: 1 = <quote>scalar</quote>, 2 =
+	  <quote>series</quote>, 3 = <quote>matrix</quote>, 4 =
+	  <quote>string</quote>, 5 = <quote>bundle</quote>, 6 =
+	  <quote>array</quote>, 7 = <quote>list</quote> e 0 =
 	  <quote>null</quote>.
 	</para>
 	<para>
@@ -15744,12 +15852,13 @@ d =  8.0000000
     <function name="zeros" section="matrix" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Genera una matrice di zero con <math>r</math> righe e
-	  <math>c</math> colonne.
+	  <math>c</math> colonne. Se il numero di colonne è omesso, si
+	  intende 1.
 	  <seelist>
 	    <fncref targ="ones"/>
 	    <fncref targ="seq"/>

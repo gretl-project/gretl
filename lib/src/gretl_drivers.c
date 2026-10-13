@@ -393,6 +393,12 @@ int bds_test_driver (int order, int *list, DATASET *dset,
 	if (err) {
 	    return err;
 	}
+	/* @x is a standalone matrix, not a dataset series: its
+	   valid range is [0, n-1], irrespective of the dataset's
+	   current sample range
+	*/
+	t1 = 0;
+	t2 = n - 1;
     } else {
 	v = list[1];
 	x = dset->Z[v];

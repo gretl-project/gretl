@@ -1831,7 +1831,8 @@ void close_session (gretlopt opt)
     int iview = 0;
 
 #if SESSION_DEBUG
-    fprintf(stderr, "close_session: starting cleanup\n");
+    fprintf(stderr, "close_session: starting cleanup, preserve = %d\n",
+	    preserve);
 #endif
 
     if (dataset != NULL && dataset->v > 0) {

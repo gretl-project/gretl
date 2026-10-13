@@ -135,13 +135,8 @@ static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo,
     g_signal_connect(G_OBJECT(view), "button-press-event",
 		     G_CALLBACK(dblclick_series_row), jinfo);
 
-    scroller = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
-				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroller),
-					GTK_SHADOW_IN);
+    scroller = gretl_scrolled_window();
     gtk_container_add(GTK_CONTAINER(scroller), view);
-
     gtk_box_pack_start(box, scroller, TRUE, TRUE, 0);
 
     width *= gui_scale;

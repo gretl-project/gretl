@@ -5451,7 +5451,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
                                     _("gretl: residual dist."),
                                     MODTEST, NULL);
             /* show the graph too */
-            if (plot_freq(freq, D_NORMAL, OPT_NONE) == 0) {
+            if (plot_freq(freq, D_NORMAL) == 0) {
                 register_graph();
             }
         }
@@ -5583,7 +5583,7 @@ void do_freq_dist (void)
         }
 
         if (plot) {
-            err = plot_freq(freq, dist, OPT_NONE);
+            err = plot_freq(freq, dist);
             gui_graph_handler(err);
         }
     }
@@ -8542,7 +8542,7 @@ static int maybe_stop_script (GtkWidget *parent)
 {
     int resp, stop = 0;
 
-    if (oh.vwin != NULL) {
+    if (oh.vwin != NULL && oh.vwin->role != CONSOLE) {
         gtk_widget_hide(oh.vwin->main);
     }
 
@@ -9724,12 +9724,11 @@ static void handle_gui_pkg_install (gretl_bundle *b)
     gretl_bundle_destroy(b);
 }
 
-/* Callbacks for when lib_open_append() is invoked. In
-   the first case we're just checking if OPEN is going
-   to destroy any unsaved data, and if so giving the user
-   the option of aborting the command. In the second
-   case we're prompting the GUI program to update its
-   state in response to opening a new dataset.
+/* Callbacks for when lib_open_append() is invoked. In the first case
+   we're just checking if OPEN is going to destroy any unsaved data, and
+   if so giving the user the option of aborting the command. In the
+   second case we're prompting the GUI program to update its state in
+   response to opening a new dataset.
 */
 
 static int handle_data_open_callback (CMD *cmd, void *ptr,
@@ -9778,8 +9777,8 @@ static int handle_data_open_callback (CMD *cmd, void *ptr,
     return 0;
 }
 
-/* Callback from libgretl to update the GUI in light of
-   execution of commands executed via script.
+/* Callback from libgretl to update the GUI in light of execution of
+   commands executed via script.
 */
 
 static int gui_exec_callback (ExecState *s, void *ptr,

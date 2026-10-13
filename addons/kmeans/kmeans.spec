@@ -1,7 +1,7 @@
 author = Artur Tarassow and Allin Cottrell
 email = atecon@posteo.de
 version = @VERSION@
-date = 2026-07-12
+date = 2026-10-09
 description = K-means clustering algorithm
 tags = C13 C52
 min-version = @VERSION@

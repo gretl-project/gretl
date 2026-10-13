@@ -664,16 +664,10 @@ GtkWidget *edit_dialog_get_window (dialog_t *dlg)
 
 static void dialog_table_setup (dialog_t *dlg, int hsize)
 {
-    GtkWidget *sw;
+    GtkWidget *sw = gretl_scrolled_window();
 
-    sw = gtk_scrolled_window_new(NULL, NULL);
     gtk_widget_set_size_request(sw, hsize, 200);
     gtk_box_pack_start(GTK_BOX(dlg->vbox), sw, TRUE, TRUE, FALSE);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (sw),
-				   GTK_POLICY_AUTOMATIC,
-				   GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW (sw),
-					GTK_SHADOW_IN);
     gtk_container_add(GTK_CONTAINER(sw), dlg->edit);
     gtk_widget_show(dlg->edit);
     gtk_widget_show(sw);
@@ -721,7 +715,7 @@ static void dlg_text_set_from_sys (equation_system *sys,
 enum {
 #if ADD_EXISTING_EQN
     ADD_EQN,
-#endif    
+#endif
     NEW_EQN,
     ADD_DERIV,
     ADD_IDENT,
@@ -764,7 +758,7 @@ static gint edit_popup_click (GtkWidget *w, dialog_t *d)
 	ins = "endog ";
     } else if (action == ADD_INSTR_LIST) {
 	ins = "instr ";
-#if ADD_EXISTING_EQN        
+#if ADD_EXISTING_EQN
     } else if (action == ADD_EQN) {
         GList *list = session_model_list();
 
@@ -775,7 +769,7 @@ static gint edit_popup_click (GtkWidget *w, dialog_t *d)
                            g_list_length(list));
         }
         g_list_free(list);
-#endif        
+#endif
     }
 
     if (ins != NULL) {
@@ -815,9 +809,9 @@ static GtkWidget *build_edit_popup (dialog_t *d)
 #if ADD_EXISTING_EQN
         N_("Add equation"),
         N_("New equation"),
-#else        
+#else
 	N_("Add equation"),
-#endif        
+#endif
 	N_("Add derivative"),
 	N_("Add identity"),
 	N_("Add list of endogenous variables"),
@@ -1695,4 +1689,20 @@ void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
     gtk_box_pack_start(GTK_BOX(base), *pbbox,
 		       FALSE, FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(*pbbox), 5);
+}
+
+GtkWidget *gretl_scrolled_window (void)
+{
+    GtkWidget *sw = gtk_scrolled_window_new(NULL, NULL);
+
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
+				   GTK_POLICY_AUTOMATIC,
+				   GTK_POLICY_AUTOMATIC);
+#if GTK_CHECK_VERSION(3,16,0)
+    gtk_scrolled_window_set_overlay_scrolling(GTK_SCROLLED_WINDOW(sw), FALSE);
+#endif
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
+					GTK_SHADOW_IN);
+
+    return sw;
 }

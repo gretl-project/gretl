@@ -2995,99 +2995,14 @@ static int gnuplot_literal_from_string (const char *s,
     return warn;
 }
 
-/* Alternative (undocumented!) means of supplying "literal"
-   lines to the "gnuplot" command (as opposed to the time-
-   honored "{...}" mechanism). Syntax is
-
-   gnuplot <args> --tweaks=<name-of-array-of-strings>
-
-   FIXME: document this or get rid of it! Although this
-   mechanism has something going for it, maybe it's too
-   late to substitute it for the old method.
-*/
-
-static char **literal_strings_from_opt (int ci, int *ns,
-                                        int *real_ns)
-{
-    const char *aname = get_optval_string(ci, OPT_K);
-    char **S = NULL;
-
-    *ns = *real_ns = 0;
-
-    if (aname != NULL) {
-        GretlType type;
-        gretl_array *A;
-        int i;
-
-        A = user_var_get_value_and_type(aname, &type);
-
-        if (A != NULL && type == GRETL_TYPE_ARRAY) {
-            S = gretl_array_get_strings(A, ns);
-            if (*ns > 0) {
-                for (i=0; i<*ns; i++) {
-                    if (S[i] != NULL && S[i][0] != '\0') {
-                        *real_ns += 1;
-                    }
-                }
-            }
-        }
-    }
-
-    return S;
-}
-
-static int gnuplot_literal_from_opt (int ci, FILE *fp)
-{
-    char *s, **S;
-    int ns, real_ns;
-    int warn = 0;
-
-    S = literal_strings_from_opt(ci, &ns, &real_ns);
-
-    if (real_ns > 0) {
-        int i, n;
-
-        fputs("# start literal lines\n", fp);
-
-        for (i=0; i<ns; i++) {
-            if (S[i] != NULL) {
-                s = S[i];
-                s += strspn(s, " \t");
-                n = strlen(s);
-                if (n > 0) {
-                    if (!strncmp(s, "set term", 8)) {
-                        warn = 1;
-                    } else {
-                        fputs(s, fp);
-                        if (s[n-1] != '\n') {
-                            fputc('\n', fp);
-                        }
-                    }
-                }
-            }
-        }
-
-        fputs("# end literal lines\n", fp);
-    }
-
-    return warn;
-}
-
-int print_gnuplot_literal_lines (const char *s, int ci,
-                                 gretlopt opt, FILE *fp)
+void print_gnuplot_literal_lines (const char *s, FILE *fp)
 {
     if (s != NULL && *s != '\0') {
         gnuplot_literal_from_string(s, fp);
-    } else if (opt & OPT_K) {
-        gnuplot_literal_from_opt(ci, fp);
     }
-
-    return 0;
 }
 
-static void print_extra_literal_lines (char **S,
-                                       int ns,
-                                       FILE *fp)
+static void print_extra_literal_lines (char **S, int ns, FILE *fp)
 {
     int i, n;
 
@@ -3175,7 +3090,9 @@ static int loess_plot (gnuplot_info *gi, const char *literal,
 
     print_auto_fit_string(PLOT_FIT_LOESS, fp);
 
-    print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
+    if (literal != NULL) {
+	print_gnuplot_literal_lines(literal, fp);
+    }
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:2 notitle w points, \\\n", fp);
@@ -3360,7 +3277,7 @@ static int time_fit_plot (gnuplot_info *gi, const char *literal,
     print_keypos_string(GP_KEY_LEFT | GP_KEY_TOP, fp);
     print_axis_label('y', plotname(dset, yno, 1), fp);
     print_auto_fit_string(gi->fit, fp);
-    print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
+    print_gnuplot_literal_lines(literal, fp);
 
     fputs("plot \\\n", fp);
     fputs(" '-' using 1:2 notitle w lines, \\\n", fp);
@@ -4900,7 +4817,7 @@ int gnuplot (const int *plotlist, const char *literal,
         gi.list[2] = gi.list[3];
         gi.list[0] = 2;
     } else {
-        print_gnuplot_literal_lines(literal, GNUPLOT, opt, fp);
+        print_gnuplot_literal_lines(literal, fp);
     }
 
     /* now print the 'plot' lines */
@@ -5256,11 +5173,6 @@ int multi_plots (const int *list, const DATASET *dset,
         fprintf(fp, "set multiplot layout %d,%d\n", rows, cols);
     }
     fputs("set nokey\n", fp);
-
-    if (opt & OPT_K) {
-        /* --tweaks=foo */
-        print_gnuplot_literal_lines(NULL, SCATTERS, opt, fp);
-    }
 
     gretl_push_c_numeric_locale();
 
@@ -5728,7 +5640,7 @@ int gnuplot_3d (int *list, const char *literal,
     gnuplot_missval_string(fp);
 
     if (literal != NULL) {
-        print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
+        print_gnuplot_literal_lines(literal, fp);
     }
 
     surface = maybe_get_surface(list, dset, show_surface);
@@ -5910,7 +5822,7 @@ static double discrete_minskip (FreqDist *freq)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
+int plot_freq (FreqDist *freq, DistCode dist)
 {
     double alpha = 0.0, beta = 0.0, lambda = 1.0;
     FILE *fp = NULL;
@@ -5964,8 +5876,6 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
         endpt = freq->endpt;
         barwidth = freq->endpt[K-1] - freq->endpt[K-2];
     }
-
-    S = literal_strings_from_opt(FREQ, &ns, &real_ns);
 
     gretl_push_c_numeric_locale();
 
@@ -9760,7 +9670,7 @@ static void inbuf_inject_literal (const char *buf,
         int n = p - buf;
 
         fwrite(buf, 1, n, fp);
-        print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
+        print_gnuplot_literal_lines(literal, fp);
         fputs(p + 1, fp);
     } else {
         fputs(buf, fp);
@@ -9775,7 +9685,7 @@ static void infile_inject_literal (FILE *fin,
 
     while (fgets(line, sizeof line, fin)) {
         if (!strncmp(line, "plot ", 5)) {
-            print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fout);
+            print_gnuplot_literal_lines(literal, fout);
         }
         fputs(line, fout);
     }

@@ -79,8 +79,7 @@ typedef struct windata_t_ windata_t;
 struct windata_t_ {
     GtkWidget *main;      /* top-level GTK window */
     GtkWidget *topmain;   /* for use when embedded in tabs */
-    GtkWidget *hpanes1;   /* upper horizontally opposed panes */
-    GtkWidget *hpanes2;   /* lower horizontally opposed panes */
+    GtkWidget *hpanes;    /* horizontally opposed panes */
     GtkWidget *vbox;      /* vbox within main */
     GtkWidget *text;      /* text or sourceview object */
     GtkWidget *listbox;   /* or: box containing tree or list */
