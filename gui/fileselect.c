@@ -111,7 +111,6 @@ static struct extmap action_map[] = {
     { FILE_OP_MAX,       NULL }
 };
 
-static int gdtb_save;
 static char alt_gfndir[FILENAME_MAX];
 
 #if GRETL_EDIT
@@ -130,6 +129,8 @@ static const char *get_extension_for_action (int action, gpointer data)
 }
 
 #else
+
+static int gdtb_save;
 
 static const char *get_extension_for_action (int action, gpointer data)
 {
@@ -1282,8 +1283,6 @@ static void add_compression_level_option (GtkWidget *filesel)
 				      hbox);
 }
 
-#endif /* not GRETL_EDIT */
-
 static void check_native_data_save_filter (GtkWidget *filesel)
 {
     GtkFileFilter *filter;
@@ -1308,6 +1307,8 @@ static void peek_data_open_filter (GtkWidget *filesel)
     open_filter_index = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(filter),
 							  "filter-index"));
 }
+
+#endif /* not GRETL_EDIT */
 
 static void set_up_filesel_filters (GtkWidget *filesel,
 				    int action,
@@ -1349,7 +1350,9 @@ static void gtk_file_selector (int action, FselDataSrc src,
     gboolean plain_open = 0;
     gint response;
 
+#ifndef GRETL_EDIT
     gdtb_save = 0;
+#endif
 
     if (SET_DIR_ACTION(action)) {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
@@ -1478,12 +1481,14 @@ static void gtk_file_selector (int action, FselDataSrc src,
     if (response == GTK_RESPONSE_ACCEPT) {
 	gchar *fname;
 
+#ifndef GRETL_EDIT
 	if (action == SAVE_DATA || action == SAVE_DATA_AS) {
 	    check_native_data_save_filter(filesel);
 	} else if (action == OPEN_DATA) {
 	    /* we'll want to record this choice */
 	    peek_data_open_filter(filesel);
 	}
+#endif
 
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
 

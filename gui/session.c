@@ -258,7 +258,6 @@ static GtkWidget *graph_copy_item;
 
 static GList *iconlist;
 static gui_obj *active_object;
-static gint iconview_width;
 static gint iconview_cols;
 static gint in_icon;
 
@@ -2959,7 +2958,6 @@ static void session_view_init (void)
 {
     iconlist = NULL;
     icon_table = NULL;
-    iconview_width = 0;
     iconview_cols = ICONVIEW_MIN_COLS;
 }
 
