@@ -1453,7 +1453,7 @@ static GtkWidget *var_list_box_new (GtkBox *hbox, selector *sr, int locus)
                          sr);
     }
 
-    scroller = gretl_scrolled_window();
+    scroller = gretl_scrolled_window(TRUE);
     gtk_container_add(GTK_CONTAINER(scroller), view);
     gtk_box_pack_start(hbox, scroller, TRUE, TRUE, 0);
 

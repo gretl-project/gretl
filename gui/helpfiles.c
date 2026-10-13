@@ -543,7 +543,7 @@ int add_help_navigator (windata_t *vwin, GtkWidget *hp)
 		     G_CALLBACK(help_tree_select_row),
 		     vwin);
 
-    sw = gretl_scrolled_window();
+    sw = gretl_scrolled_window(TRUE);
     gtk_container_add(GTK_CONTAINER(sw), view);
     gtk_paned_pack1(GTK_PANED(hp), sw, FALSE, TRUE);
     gtk_widget_set_size_request(sw, 150, -1);

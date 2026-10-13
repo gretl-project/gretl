@@ -135,7 +135,7 @@ static GtkWidget *series_list_box (GtkBox *box, join_info *jinfo,
     g_signal_connect(G_OBJECT(view), "button-press-event",
 		     G_CALLBACK(dblclick_series_row), jinfo);
 
-    scroller = gretl_scrolled_window();
+    scroller = gretl_scrolled_window(TRUE);
     gtk_container_add(GTK_CONTAINER(scroller), view);
     gtk_box_pack_start(box, scroller, TRUE, TRUE, 0);
 

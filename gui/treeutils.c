@@ -728,7 +728,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
         g_object_unref(G_OBJECT(tstore));
     }
 
-    scroller = gretl_scrolled_window();
+    scroller = gretl_scrolled_window(FALSE);
     gtk_container_add(GTK_CONTAINER(scroller), view);
     gtk_box_pack_start(box, scroller, TRUE, TRUE, TRUE);
 

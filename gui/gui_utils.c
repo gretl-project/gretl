@@ -2379,7 +2379,7 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
 
     gtk_widget_set_size_request(view, 140 * gui_scale, -1);
 
-    scroller = gretl_scrolled_window();
+    scroller = gretl_scrolled_window(TRUE);
     gtk_container_add(GTK_CONTAINER(scroller), view);
 
 #if GTK_MAJOR_VERSION >= 3

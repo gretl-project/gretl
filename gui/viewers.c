@@ -1556,7 +1556,7 @@ void help_panes_setup (windata_t *vwin, GtkWidget *text)
 
     add_help_navigator(vwin, hp);
 
-    sw = gretl_scrolled_window();
+    sw = gretl_scrolled_window(TRUE);
     gtk_paned_pack2(GTK_PANED(hp), sw, TRUE, TRUE);
     gtk_container_add(GTK_CONTAINER(sw), text);
 
