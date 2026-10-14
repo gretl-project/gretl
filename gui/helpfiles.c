@@ -1165,7 +1165,6 @@ static void vwin_refocus_text (GtkWidget *w, windata_t *vwin)
 static void vwin_add_footer_finder (windata_t *vwin)
 {
     GtkWidget *hbox, *entry;
-    GtkWidget *button = NULL;
 
     hbox = gtk_hbox_new(FALSE, 5);
     vwin->finder = entry = gtk_entry_new();
@@ -1176,7 +1175,7 @@ static void vwin_add_footer_finder (windata_t *vwin)
 
 #ifdef GRETL_EDIT
     /* pop-up search for function definitions, if any */
-    button = gtk_button_new_with_label(_("Go to definition"));
+    GtkWidget *button = gtk_button_new_with_label(_("Go to definition"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(show_fn_menu), vwin->text);
