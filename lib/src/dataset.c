@@ -1652,42 +1652,46 @@ static int real_add_series (int newvars, double *x,
     }
 
     newZ = realloc(dset->Z, (v0 + newvars) * sizeof *newZ);
-
 #if DDEBUG
     fprintf(stderr, "real_add_series: add %d vars, Z = %p\n",
 	    newvars, (void *) newZ);
 #endif
-
     if (newZ == NULL) {
-	err = E_ALLOC;
-    } else {
-	dset->Z = newZ;
+	return E_ALLOC;
     }
 
-    if (!err) {
-	if (newvars == 1 && x != NULL) {
-	    /* a single new var, storage pre-allocated */
-	    newZ[v0] = x;
-	} else {
-	    for (i=0; i<newvars && !err; i++) {
-		newZ[v0+i] = malloc(dset->n * sizeof **newZ);
-		if (newZ[v0+i] == NULL) {
-		    err = E_ALLOC;
-		}
+    dset->Z = newZ;
+
+    if (newvars == 1 && x != NULL) {
+	/* a single new var, with storage pre-allocated */
+	dset->Z[v0] = x;
+    } else {
+	for (i=0; i<newvars; i++) {
+	    dset->Z[v0+i] = NULL;
+	}
+	for (i=0; i<newvars && !err; i++) {
+	    dset->Z[v0+i] = malloc(dset->n * sizeof **newZ);
+	    if (dset->Z[v0+i] == NULL) {
+		err = E_ALLOC;
 	    }
 	}
     }
 
     if (!err && dset != fetch_full_dataset()) {
-	/* Don't expand varinfo if we're adding a series
-	   to the full dataset when currently sub-sampled,
-	   since in that case varinfo is shared between
-	   the two datasets.
+	/* Expand dset->varinfo, but not if we're adding a series to the
+	   full dataset when currently sub-sampled, since in that case
+	   varinfo is shared between the two datasets.
 	*/
 	err = dataset_expand_varinfo(v0, newvars, dset);
     }
 
-    if (!err) {
+    if (err) {
+	/* avoid leaking memory on failure */
+	for (i=0; i<newvars; i++) {
+	    free(dset->Z[v0+i]);
+	    dset->Z[v0+i] = NULL;
+	}
+    } else {
 	dset->v += newvars;
     }
 
