@@ -125,7 +125,6 @@ extern char Browser[MAXSTR];
 
 extern char calculator[MAXSTR];
 extern char latex[MAXSTR];
-extern char viewdvi[MAXSTR];
 extern char Rcommand[MAXSTR];
 
 /* global GUI equipment */

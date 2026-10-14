@@ -365,13 +365,12 @@ static void protect_against_ubuntu (void)
 
 #ifdef G_OS_WIN32
 
-/* The point of the following special code: when gretl is
-   invoked by the OS (via double-click on a file associated
-   with gretl in the registry) the command-line may contain
-   a "mixed language" filename that is not representable in
-   the locale Code Page. Such a filename will appear in
-   mangled form in the argv array, and we need to call on
-   Windows APIs to get a UTF-16 version of this array.
+/* The point of the following special code: when gretl is invoked by the
+   OS (via double-click on a file associated with gretl in the registry)
+   the command-line may contain a "mixed language" filename that is not
+   representable in the locale Code Page. Such a filename will appear in
+   mangled form in the argv array, and we need to call on Windows APIs
+   to get a UTF-16 version of this array.
 */
 
 static void alt_gtk_init (int *pargc,

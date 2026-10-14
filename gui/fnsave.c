@@ -2554,7 +2554,7 @@ static GtkWidget *add_menu_navigator (GtkWidget *holder,
     }
 
     if (finfo->treewin == NULL) {
-	GtkWidget *sw = gretl_scrolled_window();
+	GtkWidget *sw = gretl_scrolled_window(TRUE);
 
 	gtk_container_add(GTK_CONTAINER(holder), sw);
 	gtk_widget_set_size_request(sw, 150, 200);

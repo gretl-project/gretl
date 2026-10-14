@@ -494,12 +494,14 @@ static void editor_run_other_script (windata_t *vwin,
 				     gchar **argv,
 				     int lang);
 
-#endif
+#endif /* GRETL_EDIT */
 
-#if defined(G_OS_WIN32) && !defined(GRETL_EDIT)
+#if defined(G_OS_WIN32)
 
 /* MS Windows variants of functions to exec some third-party
    programs */
+
+# if !defined(GRETL_EDIT)
 
 static void win32_execute_script (gchar *cmd, int lang)
 {
@@ -533,6 +535,8 @@ static void win32_execute_script (gchar *cmd, int lang)
 	gui_errmsg(err);
     }
 }
+
+# endif /* !GRETL_EDIT */
 
 /* Windows version of run_foreign_script() */
 
@@ -720,7 +724,7 @@ int gretl_fork (const char *progvar, const char *arg,
     }
 #endif
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(GRETL_EDIT)
     if (!strcmp(progvar, "Browser")) {
 	prog = Browser;
     } else if (!strcmp(progvar, "viewpdf")) {
@@ -770,7 +774,7 @@ int gretl_fork (const char *progvar, const char *arg,
 
 int browser_open (const char *url)
 {
-# if defined(__APPLE__)
+# ifdef __APPLE__
     return macos_open_url(url);
 # else
     return gretl_fork("Browser", url, NULL);
