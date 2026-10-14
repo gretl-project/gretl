@@ -5421,7 +5421,7 @@ void text_set_word_wrap (GtkWidget *w, gboolean wrap)
 
 void text_table_setup (GtkWidget *vbox, GtkWidget *w)
 {
-    GtkWidget *sw = gretl_scrolled_window();
+    GtkWidget *sw = gretl_scrolled_window(TRUE);
 
     gtk_box_pack_start(GTK_BOX(vbox), sw, TRUE, TRUE, FALSE);
     g_object_set_data(G_OBJECT(vbox), "sw", sw);
@@ -5456,6 +5456,7 @@ void viewer_split_pane (windata_t *vwin, int vertical)
     GtkWidget *view1 = vwin->text;
     GtkWidget *sw, *paned, *view2;
     GtkWidget *vmain;
+    gboolean overlay = TRUE;
     gint width, height;
 
     vmain = vwin_toplevel(vwin);
@@ -5463,6 +5464,10 @@ void viewer_split_pane (windata_t *vwin, int vertical)
 
     /* extract the original scrolled window */
     sw = g_object_get_data(G_OBJECT(vbox), "sw");
+#if GTK_CHECK_VERSION(3,16,0)
+    overlay =
+	gtk_scrolled_window_get_overlay_scrolling(GTK_SCROLLED_WINDOW(sw));
+#endif
     g_object_ref(sw);
     gtk_container_remove(GTK_CONTAINER(vwin->vbox), sw);
 
@@ -5494,7 +5499,7 @@ void viewer_split_pane (windata_t *vwin, int vertical)
     gtk_paned_add1(GTK_PANED(paned), sw);
     g_object_unref(sw);
 
-    sw = gretl_scrolled_window();
+    sw = gretl_scrolled_window(overlay);
     gtk_paned_add2(GTK_PANED(paned), sw);
     gtk_container_add(GTK_CONTAINER(sw), view2);
 

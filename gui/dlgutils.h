@@ -186,7 +186,7 @@ void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
                                           GtkWidget **pvbox,
                                           GtkWidget **pbbox);
 
-GtkWidget *gretl_scrolled_window (void);
+GtkWidget *gretl_scrolled_window (gboolean overlay);
 
 #ifndef GRETL_EDIT
 

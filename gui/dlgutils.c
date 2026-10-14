@@ -664,7 +664,7 @@ GtkWidget *edit_dialog_get_window (dialog_t *dlg)
 
 static void dialog_table_setup (dialog_t *dlg, int hsize)
 {
-    GtkWidget *sw = gretl_scrolled_window();
+    GtkWidget *sw = gretl_scrolled_window(TRUE);
 
     gtk_widget_set_size_request(sw, hsize, 200);
     gtk_box_pack_start(GTK_BOX(dlg->vbox), sw, TRUE, TRUE, FALSE);
@@ -1691,7 +1691,7 @@ void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
     gtk_container_set_border_width(GTK_CONTAINER(*pbbox), 5);
 }
 
-GtkWidget *gretl_scrolled_window (void)
+GtkWidget *gretl_scrolled_window (gboolean overlay)
 {
     GtkWidget *sw = gtk_scrolled_window_new(NULL, NULL);
 
@@ -1699,7 +1699,8 @@ GtkWidget *gretl_scrolled_window (void)
 				   GTK_POLICY_AUTOMATIC,
 				   GTK_POLICY_AUTOMATIC);
 #if GTK_CHECK_VERSION(3,16,0)
-    gtk_scrolled_window_set_overlay_scrolling(GTK_SCROLLED_WINDOW(sw), FALSE);
+    gtk_scrolled_window_set_overlay_scrolling(GTK_SCROLLED_WINDOW(sw),
+					      overlay);
 #endif
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
 					GTK_SHADOW_IN);

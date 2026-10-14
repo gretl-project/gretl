@@ -2455,10 +2455,6 @@ static void (*R_SET_VECTOR_ELT) (SEXP, int, SEXP);
 
 static const char *(*R_errmsg) (void);
 
-#ifdef WIN32
-static char *(*R_get_HOME) (void);
-#endif
-
 /* utility function to cumulate errors from dlsym */
 
 static void *dlget (void *handle, const char *name, int *err)
@@ -2534,10 +2530,6 @@ static int load_R_symbols (void)
     R_LOGICAL       = dlget(Rhandle, "LOGICAL", &err);
     R_VECTOR_ELT    = dlget(Rhandle, "VECTOR_ELT", &err);
     R_SET_VECTOR_ELT = dlget(Rhandle, "SET_VECTOR_ELT", &err);
-
-#ifdef WIN32
-    R_get_HOME = dlget(Rhandle, "get_R_HOME", &err);
-#endif
 
     if (!err) {
         PR_GlobalEnv    = (SEXP *) dlget(Rhandle, "R_GlobalEnv", &err);

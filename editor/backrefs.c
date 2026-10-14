@@ -337,4 +337,5 @@ void add_funcdef_finder (const char *sig,
 		     G_CALLBACK(show_link_cursor), NULL);
     g_signal_connect(ebox, "leave-notify-event",
 		     G_CALLBACK(revert_cursor), NULL);
+    gtk_widget_show_all(ebox);
 }

@@ -1487,7 +1487,6 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 	    g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 			     G_CALLBACK(query_save_text), vwin);
 	}
-	/* since 2021-05-18 */
 	vwin->flags |= VWIN_USE_FOOTER;
     }
 
@@ -1556,7 +1555,7 @@ void help_panes_setup (windata_t *vwin, GtkWidget *text)
 
     add_help_navigator(vwin, hp);
 
-    sw = gretl_scrolled_window();
+    sw = gretl_scrolled_window(TRUE);
     gtk_paned_pack2(GTK_PANED(hp), sw, TRUE, TRUE);
     gtk_container_add(GTK_CONTAINER(sw), text);
 
