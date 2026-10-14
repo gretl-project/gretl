@@ -30,10 +30,12 @@
 #include "base_utils.h"
 #include "gui_addons.h"
 
-#ifndef GRETL_EDIT
-#include "treeutils.h"
-#include "menustate.h"
-#include "database.h"
+#ifdef GRETL_EDIT
+# include "load_functions.h"
+#else
+# include "treeutils.h"
+# include "menustate.h"
+# include "database.h"
 #endif
 
 #ifdef G_OS_WIN32
@@ -1163,6 +1165,7 @@ static void vwin_refocus_text (GtkWidget *w, windata_t *vwin)
 static void vwin_add_footer_finder (windata_t *vwin)
 {
     GtkWidget *hbox, *entry;
+    GtkWidget *button = NULL;
 
     hbox = gtk_hbox_new(FALSE, 5);
     vwin->finder = entry = gtk_entry_new();
@@ -1170,6 +1173,15 @@ static void vwin_add_footer_finder (windata_t *vwin)
     add_finder_icon(vwin, entry);
 
     gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 10);
+
+#ifdef GRETL_EDIT
+    /* pop-up search for function definitions, if any */
+    button = gtk_button_new_with_label(_("Go to definition"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(show_fn_menu), vwin->text);
+#endif
+
     add_footer_close_button(hbox);
     gtk_box_pack_end(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 2);
 
@@ -2679,4 +2691,3 @@ void display_x13a_help (void)
 	gretl_show_pdf(fname, NULL);
     }
 }
-

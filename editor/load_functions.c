@@ -207,3 +207,124 @@ gboolean textview_has_functions (GtkTextView *tview)
 
     return ret;
 }
+
+/* Apparatus for assembling a list of functions whose definitions appear
+   in the buffer, along with the point in the buffer at which they
+   start.
+*/
+
+typedef struct {
+    gchar *name;  /* name of function */
+    gint offset;  /* character offset of the name in the buffer */
+} fndef;
+
+static GRegex *fndef_re;
+
+static void init_fndef_regex (void)
+{
+    GError *err = NULL;
+
+    fndef_re = g_regex_new("^function[ \\t]+"
+                           "(?:void|scalar|series|matrix|list|string|bundle"
+                           "|strings|matrices|bundles|lists|arrays|numeric)"
+                           "[ \\t]+(?<name>[A-Za-z][A-Za-z0-9_]{0,30})(?![A-Za-z0-9_])",
+                           G_REGEX_MULTILINE | G_REGEX_OPTIMIZE, 0, &err);
+    if (err != NULL) {
+        g_warning("%s", err->message);
+        g_error_free(err);
+    }
+}
+
+/* Collect all function definitions in @buf, in order of appearance */
+
+static GArray *get_fn_definitions (GtkTextBuffer *buf)
+{
+    GArray *defs = g_array_new(FALSE, FALSE, sizeof(fndef));
+    GtkTextIter start, end;
+    GMatchInfo *mi;
+    gchar *text, *prev;
+    gint offset = 0;
+
+    if (fndef_re == NULL) {
+	init_fndef_regex();
+    }
+
+    gtk_text_buffer_get_bounds(buf, &start, &end);
+    text = gtk_text_buffer_get_text(buf, &start, &end, TRUE);
+    prev = text;
+
+    g_regex_match(fndef_re, text, 0, &mi);
+
+    while (g_match_info_matches(mi)) {
+        fndef d;
+        gint bstart;
+
+        g_match_info_fetch_named_pos(mi, "name", &bstart, NULL);
+        /* convert byte offset to char offset incrementally */
+        offset += g_utf8_pointer_to_offset(prev, text + bstart);
+        prev = text + bstart;
+        d.name = g_match_info_fetch_named(mi, "name");
+        d.offset = offset;
+        g_array_append_val(defs, d);
+        g_match_info_next(mi, NULL);
+    }
+
+    g_match_info_free(mi);
+    g_free(text);
+
+    return defs;
+}
+
+static void free_fn_definitions (GArray *defs)
+{
+    guint i;
+
+    for (i=0; i<defs->len; i++) {
+        g_free(g_array_index(defs, fndef, i).name);
+    }
+    g_array_free(defs, TRUE);
+}
+
+static void jump_to_def (GtkMenuItem *item, GtkTextView *view)
+{
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
+    gint offset = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(item), "offset"));
+    GtkTextIter it;
+
+    gtk_text_buffer_get_iter_at_offset(buf, &it, offset);
+    gtk_text_buffer_place_cursor(buf, &it);
+    gtk_text_view_scroll_to_mark(view, gtk_text_buffer_get_insert(buf),
+                                 0.0, TRUE, 0.0, 0.3);
+    gtk_widget_grab_focus(GTK_WIDGET(view));
+}
+
+void show_fn_menu (GtkWidget *button, GtkTextView *view)
+{
+    GArray *defs = get_fn_definitions(gtk_text_view_get_buffer(view));
+    GtkWidget *menu = gtk_menu_new();
+    GtkWidget *item;
+    guint i;
+
+    if (defs->len == 0) {
+        item = gtk_menu_item_new_with_label(_("No functions defined"));
+        gtk_widget_set_sensitive(item, FALSE);
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    }
+
+    for (i=0; i<defs->len; i++) {
+        fndef *d = &g_array_index(defs, fndef, i);
+
+        item = gtk_menu_item_new_with_label(d->name);
+        g_object_set_data(G_OBJECT(item), "offset", GINT_TO_POINTER(d->offset));
+        g_signal_connect(item, "activate", G_CALLBACK(jump_to_def), view);
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    }
+    free_fn_definitions(defs);
+
+    /* storing the menu on the button destroys the previous one */
+    g_object_set_data_full(G_OBJECT(button), "fn-menu", menu,
+                           (GDestroyNotify) gtk_widget_destroy);
+    gtk_widget_show_all(menu);
+    gtk_menu_popup_at_widget(GTK_MENU(menu), button, GDK_GRAVITY_SOUTH_WEST,
+                             GDK_GRAVITY_NORTH_WEST, NULL);
+}
