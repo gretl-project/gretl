@@ -170,7 +170,7 @@ static int make_words_matrix (const double *x, int n, kinfo *ki)
     int *p2b;
     int nw, bvlen;
     int i, j, k, jj;
-    int err;
+    int err = 0;
 
     if (ki->wmat == NULL) {
 	/* allocate not already done */
@@ -356,6 +356,9 @@ static double kanzler_eps (const double *x, int n, double e)
 
     qsort(dist, smax, sizeof *dist, gretl_compare_doubles);
     i = (int) round(e * smax);
+    if (i < 1) {
+	i = 1;
+    }
     eps = dist[i-1];
     free(dist);
 

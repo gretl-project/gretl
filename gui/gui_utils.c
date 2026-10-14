@@ -1018,26 +1018,22 @@ gboolean verify_open_session (void)
 
 windata_t *console_window (int hsize, int vsize)
 {
+    gchar *title = NULL;
     windata_t *vwin;
 
-    if (swallow) {
-	vwin = gretl_viewer_new(CONSOLE, NULL, NULL);
-    } else {
-	gchar *title = NULL;
 #ifdef GRETL_PID_FILE
-	int seqno = gretl_sequence_number();
+    int seqno = gretl_sequence_number();
 
-	if (seqno > 1) {
-	    title = g_strdup_printf("%s (%d)", _("gretl console"), seqno);
-	}
-#endif
-	if (title != NULL) {
-	    vwin = gretl_viewer_new(CONSOLE, title, NULL);
-	    g_free(title);
-	} else {
-	    vwin = gretl_viewer_new(CONSOLE, _("gretl console"), NULL);
-	}
+    if (seqno > 1) {
+	title = g_strdup_printf("%s (%d)", _("gretl console"), seqno);
     }
+#endif
+    if (!swallow && title == NULL) {
+	title = g_strdup(_("gretl console"));
+    }
+
+    vwin = gretl_viewer_new(CONSOLE, title, NULL);
+    g_free(title);
 
     if (vwin == NULL) {
 	return NULL;
@@ -2383,11 +2379,7 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
 
     gtk_widget_set_size_request(view, 140 * gui_scale, -1);
 
-    scroller = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroller),
-				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW (scroller),
-					GTK_SHADOW_IN);
+    scroller = gretl_scrolled_window(TRUE);
     gtk_container_add(GTK_CONTAINER(scroller), view);
 
 #if GTK_MAJOR_VERSION >= 3
@@ -3813,3 +3805,4 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 		     G_CALLBACK(callback), data);
     gtk_widget_show(item);
 }
+

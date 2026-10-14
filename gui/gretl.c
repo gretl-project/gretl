@@ -587,8 +587,8 @@ static void protect_against_ubuntu (void)
 }
 
 /* Check for the combination of (KDE || Plasma) plus Wayland, which is
-   not going to work properly with GTK3 and requires a
-   workaround. Note that KDE/Plasma with x11 is not problematic.
+   not going to work properly with GTK3 and requires a workaround. Note
+   that KDE/Plasma with x11 is not problematic.
 */
 
 static void check_for_plasma_wayland (void)
@@ -624,9 +624,8 @@ static void check_for_plasma_wayland (void)
 
 #endif /* end Linux-specific checks */
 
-/* callback from within potentially lengthy libgretl
-   operations: try to avoid having the GUI become
-   totally unresponsive
+/* Callback from within potentially lengthy libgretl operations: try to
+   avoid having the GUI become totally unresponsive.
 */
 
 static void gui_show_activity (void)
@@ -710,13 +709,12 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 
 #ifdef G_OS_WIN32
 
-/* The point of the following special code: when gretl is
-   invoked by the OS (via double-click on a file associated
-   with gretl in the registry) the command-line may contain
-   a "mixed language" filename that is not representable in
-   the locale Code Page. Such a filename will appear in
-   mangled form in the argv array, and we need to call on
-   Windows APIs to get a UTF-16 version of this array.
+/* The point of the following special code: when gretl is invoked by the
+   OS (via double-click on a file associated with gretl in the registry)
+   the command-line may contain a "mixed language" filename that is not
+   representable in the locale Code Page. Such a filename will appear in
+   mangled form in the argv array, and we need to call on Windows APIs
+   to get a UTF-16 version of this array.
 */
 
 static void alt_gtk_init (int *pargc,
@@ -1313,7 +1311,7 @@ int n_ok_series (void)
     return nv;
 }
 
-/* populate the list of series in the main gretl window */
+/* Populate the list of series in the main gretl window. */
 
 void populate_varlist (void)
 {
@@ -1617,65 +1615,24 @@ static void set_main_window_scale (void)
     }
 }
 
-int mainwin_get_vwin_insertion (void)
+static void mainwin_insert_console (void)
 {
-    int ins = -1;
+    windata_t *vwin = NULL;
 
-    if (mdata->hpanes1 != NULL) {
-	if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes1)) == NULL) {
-	    ins = 1;
-	} else if (mdata->hpanes2 != NULL) {
-	    if (gtk_paned_get_child1(GTK_PANED(mdata->hpanes2)) == NULL) {
-		ins = 2;
-	    } else if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes2)) == NULL) {
-		ins = 3;
-	    }
-	}
+    g_return_if_fail(mdata->hpanes != NULL);
+
+    vwin = gretl_console();
+    g_return_if_fail(vwin != NULL);
+
+    if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes)) == NULL) {
+	gtk_paned_add2(GTK_PANED(mdata->hpanes), vwin->vbox);
+	gtk_paned_set_position(GTK_PANED(mdata->hpanes), mainwin_width/2);
     }
-
-    return ins;
-}
-
-int mainwin_insert_vwin (windata_t *vwin)
-{
-    int ret = 0;
-
-    if (vwin == NULL) {
-	return ret;
-    }
-    if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes1)) == NULL) {
-	gtk_paned_add2(GTK_PANED(mdata->hpanes1), vwin->vbox);
-	gtk_paned_set_position(GTK_PANED(mdata->hpanes1), mainwin_width/2);
-	ret = 1;
-    } else if (mdata->hpanes2 != NULL) {
-	GtkWidget *vp = gtk_widget_get_parent(mdata->hpanes2);
-
-	fprintf(stderr, "HERE hpanes2\n");
-	if (gtk_paned_get_child1(GTK_PANED(mdata->hpanes2)) == NULL) {
-	    gtk_paned_add1(GTK_PANED(mdata->hpanes2), vwin->vbox);
-	    fprintf(stderr, " add child 1\n");
-	    ret = 2;
-	} else if (gtk_paned_get_child2(GTK_PANED(mdata->hpanes2)) == NULL) {
-	    gtk_paned_add2(GTK_PANED(mdata->hpanes2), vwin->vbox);
-	    fprintf(stderr, " add child 2\n");
-	    gtk_paned_set_position(GTK_PANED(mdata->hpanes2), mainwin_width/2);
-	    ret = 3;
-	}
-	if (ret) {
-	    gtk_paned_set_position(GTK_PANED(vp), mainwin_height/2);
-	}
-    }
-
-    return ret;
 }
 
 static void gretl_show_console (void)
 {
-    if (swallow) {
-	mainwin_insert_vwin(gretl_console());
-    } else {
-	gretl_console();
-    }
+    gretl_console();
 }
 
 static void make_main_window (void)
@@ -1805,7 +1762,7 @@ static void make_main_window (void)
     add_mainwin_toolbar(mdata->vbox);
 
     if (swallow) {
-	gretl_show_console();
+	mainwin_insert_console();
     }
 
     gtk_widget_show_all(mdata->main);
@@ -2510,9 +2467,8 @@ static void real_make_mainwin_list (const int *list,
     }
 }
 
-/* respond to "Define list", selected from main window
-   right-click popup menu when two or more series are
-   selected
+/* Respond to "Define list", selected from main window right-click popup
+   menu when two or more series are selected.
 */
 
 void make_list_from_main (void)

@@ -125,7 +125,6 @@ extern char Browser[MAXSTR];
 
 extern char calculator[MAXSTR];
 extern char latex[MAXSTR];
-extern char viewdvi[MAXSTR];
 extern char Rcommand[MAXSTR];
 
 /* global GUI equipment */
@@ -164,8 +163,6 @@ int clear_stop_script (PRN *prn);
 gchar *user_friendly_menu_path (const char *mpath,
 				gboolean modelwin);
 int is_control_key (guint k);
-int mainwin_get_vwin_insertion (void);
-int mainwin_insert_vwin (windata_t *vwin);
 int n_ok_series (void);
 #endif
 

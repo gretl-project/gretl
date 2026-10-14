@@ -4182,9 +4182,21 @@
     <description>
 
       <para context="gui">
-	Must follow an estimation command.  Forecasts are generated for
-	the specified range of observations. Depending on the nature of
-	the model, standard errors may also be generated (see below).
+	Forecasts are generated for the specified range of
+	observations. Depending on the nature of the model, standard
+	errors may also be generated (see below).
+      </para>
+
+      <subhead context="gui">Transformed forecasts</subhead>
+      <para context="gui">
+	If the dependent variable is recognized as the log of a series
+	in the dataset, you get the choice of producing a forecast for
+	either the log or the level variable. In the latter case the log
+	forecast is exponentiated, with a bias correction that depends
+	on whether normality of the error term is or is not
+	rejected. Similarly, if the dependent variable is recognized as
+	a first difference you are given the choice of producing an
+	integrated (level) forecast.
       </para>
 
       <para context="cli">

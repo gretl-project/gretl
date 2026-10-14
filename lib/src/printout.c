@@ -3390,7 +3390,6 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 	double a2 = fr->alpha / 2;
 
 	tval = fr->asymp ? normal_critval(a2) : student_critval(fr->df, a2);
-
 	if (!quiet) {
 	    if (fr->asymp) {
 		pprintf(prn, _(" For %g%% confidence intervals, z(%g) = %.2f\n"),
@@ -3402,10 +3401,13 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 	}
     }
 
-    if (fr->a0meth == 1) {
-	pprintf(prn, " (%s)\n", _("Normal correction applied to point forecast"));
-    } else if (fr->a0meth == 2) {
-	pprintf(prn, " (%s)\n", _("Smearing correction applied to point forecast"));
+    if (fr->a0meth) {
+	pprintf(prn, " %s\n", _("Forecast is exponentiated"));
+	if (fr->a0meth == 1) {
+	    pprintf(prn, " %s\n", _("Normality not rejected: standard correction applied"));
+	} else if (fr->a0meth == 2) {
+	    pprintf(prn, " %s\n", _("Normality rejected: smearing correction applied"));
+	}
     }
 
     obslen = max_obs_marker_length(dset);

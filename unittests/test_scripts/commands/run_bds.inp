@@ -1,0 +1,88 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test for bds_test_driver() in lib/src/gretl_drivers.c.
+# The --matrix variant of the "bds" command ("bds order --matrix=m")
+# used to bound the standalone matrix argument @m by the *dataset's*
+# current sample range (t1, t2) instead of the matrix's own [0, n-1]
+# range, and then let that dataset-derived range overwrite the
+# correct length of @m. Whenever the dataset's current sample range
+# did not coincide with the matrix's own length (the normal case,
+# since --matrix exists so a vector unrelated to the dataset can be
+# tested), this read past the end of the matrix (heap buffer
+# over-read) and silently returned garbage statistics that depended
+# on the dataset's current sample instead of on @m alone.
+# Date: October 2026
+
+set seed 12345
+nulldata 400
+series y = normal()
+matrix m = mnormal(40, 1)
+
+function void test_bds_matrix_sample_indep (const matrix m)
+    print "Start testing that 'bds --matrix' does not depend on the \
+    dataset's current sample range."
+
+    # Given
+    smpl 1 50
+
+    # When
+    catch bds 2 --matrix=m --boot=0 --quiet
+    scalar err1 = $error
+    matrix res1 = $result
+
+    smpl full
+    smpl 300 400
+    catch bds 2 --matrix=m --boot=0 --quiet
+    scalar err2 = $error
+    matrix res2 = $result
+
+    smpl full
+
+    # Then
+    assert(err1 == 0)
+    assert(err2 == 0)
+    assert(maxc(maxc(abs(res1 - res2))) < 1.0e-8)
+end function
+test_bds_matrix_sample_indep(m)
+
+
+function void test_bds_matrix_matches_series (const series y)
+    print "Start testing that 'bds --matrix' on a vector copy of a \
+    series agrees with 'bds' on the series itself."
+
+    # Given
+    matrix my = {y}
+
+    # When
+    catch bds 2 y --boot=0 --quiet
+    scalar err1 = $error
+    matrix res1 = $result
+
+    catch bds 2 --matrix=my --boot=0 --quiet
+    scalar err2 = $error
+    matrix res2 = $result
+
+    # Then
+    assert(err1 == 0)
+    assert(err2 == 0)
+    assert(maxc(maxc(abs(res1 - res2))) < 1.0e-8)
+end function
+test_bds_matrix_matches_series(y)
+
+
+function void test_bds_order_too_small (const series y)
+    print "Start testing that 'bds' rejects an order below 2."
+
+    # Given/When
+    catch bds 1 y --quiet
+
+    # Then
+    assert($error != 0)
+end function
+test_bds_order_too_small(y)
+
+
+print "Successfully finished tests."
+quit

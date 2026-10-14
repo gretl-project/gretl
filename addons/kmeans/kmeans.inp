@@ -183,14 +183,15 @@ end function
 
 function void print_draw_info (int d, int dmax,
                                const bundle b,
-                               int iters)
+                               int iters,
+                               int nuniq)
     if dmax > 9
         printf "draw %02d: ", d
     else
         printf "draw %d: ", d
     endif
     if b.error
-        printf "failed\n"
+        printf "failed (got only %d unique centroid(s))\n", nuniq
     else
         printf "within variation = %g (%d iterations)\n",
           b.within_variation, iters
@@ -207,7 +208,7 @@ function bundle kmeans_fit (const list xlist,
         errorif(cols(clusters) != nelem(xlist),
           sprintf("Columns of clusters (%d) doesn't match number of features (%d)",
           cols(clusters), nelem(xlist)))
-        matrix clusters0 = clusters
+        matrix centroids0 = clusters
         n_clusters = rows(clusters)
     elif typeof(clusters) == 1
         # got a scalar
@@ -232,8 +233,8 @@ function bundle kmeans_fit (const list xlist,
     self.init = tolower(self.init)
 
     scalar self.n_clusters = n_clusters
-    if exists(clusters0)
-        matrix self.clusters0 = clusters0
+    if exists(centroids0)
+        matrix self.centroids0 = centroids0
         self.init = "user"
     endif
     matrix features = {xlist}
@@ -243,6 +244,11 @@ function bundle kmeans_fit (const list xlist,
     matrix self.distances = mshape(NA, $nobs, 1)
     scalar n_errors = 0
 
+    # check for invalidity of cosine metric
+    errorif(self.metric == "cosine" && \
+      maxc(sumr(contains(features, 0))) == cols(features),
+      "Got an all-zeros observation: cosine metric not applicable")
+
     if n_clusters == 1
         # special handling for the trivial case
         self.n_draws = 0
@@ -251,19 +257,21 @@ function bundle kmeans_fit (const list xlist,
         matrix D = distance(features, self.metric, self.centroids)
         matrix self.distances = sumr(D)
         scalar self.total_variation = sumc(self.distances)
-        scalar self.within_variation = self.total_distance
+        scalar self.within_variation = self.total_variation
     endif
 
     if self.verbosity && !metric_is_euclidean(self.metric)
-        printf "kmeans_fit: %d observations, %d features, %d clusters\n",
-          $nobs, nelem(xlist), n_clusters
+        printf "kmeans_fit: %d observations, %d features, %d %s\n",
+          $nobs, nelem(xlist), n_clusters, n_clusters > 1 ? \
+          "clusters" : "cluster"
         printf "metric %s, initializer %s, %d random draws\n\n",
           full_metric_name(self.metric), self.init, self.n_draws
     endif
 
     if n_clusters == 1
         if self.verbosity
-            printf "Sum of within-cluster variation = %g\n", self.within_variation
+            printf "Sum of within-cluster variation = %g\n\n", self.within_variation
+            print self.centroids
         endif
         return self
     endif
@@ -275,25 +283,31 @@ function bundle kmeans_fit (const list xlist,
 
     string save_init = self.init
     scalar iters = 0
+    scalar nuniq = 0
 
     if save_init == "pc" || save_init == "user"
-        bundle b = compute_kmeans(self, features, &iters)
-        scalar self.within_variation = b.within_variation
-        matrix self.centroids = b.centroids
-        matrix cluster_id = b.cluster_id
-        matrix distances = b.distances
-        if self.verbosity == 2
-            printf "%s init: within variation = %g (%d iterations)\n",
-              save_init == "pc" ? "pc" : "user", b.within_variation, iters
+        bundle b = compute_kmeans(self, features, &iters, &nuniq)
+        if b.error
+            printf "%s initializer failed\n", save_init
+        else
+            scalar self.within_variation = b.within_variation
+            matrix self.centroids = b.centroids
+            matrix cluster_id = b.cluster_id
+            matrix distances = b.distances
+            if self.verbosity > 1
+                printf "%s init: within variation = %g (%d iterations)\n",
+                  save_init, b.within_variation, iters
+            endif
         endif
-        # hand off to random for n_draws > 0
+        # hand off to random in case n_draws > 0
         self.init = "random"
     endif
 
     loop d=1..self.n_draws
-        bundle b = compute_kmeans(self, features, &iters)
+        nuniq = 0
+        bundle b = compute_kmeans(self, features, &iters, &nuniq)
         if self.verbosity == 2
-            print_draw_info(d, self.n_draws, b, iters)
+            print_draw_info(d, self.n_draws, b, iters, nuniq)
         endif
         if b.error
             n_errors++
@@ -371,9 +385,10 @@ end function
 
 function bundle compute_kmeans (const bundle self,
                                 const matrix features,
-                                scalar *iters)
-    /* Actual computation of k-means. Identify optimal clusters and
-       return a bundle.
+                                scalar *iters,
+                                scalar *nuniq)
+    /* Actual computation of k-means. Identify optimal clusters
+       and return a bundle.
     */
     bundle Model
     matrix centroids = initialize_centroids(features, self)
@@ -385,11 +400,14 @@ function bundle compute_kmeans (const bundle self,
     loop i = 1..self.max_iter
         matrix all_dists = distance(features, self.metric, centroids)
         matrix cluster_id = iminr(all_dists)
+        scalar nuniq = rows(values(cluster_id))
 
-        if rows(values(cluster_id)) == k  # check + update
+        if nuniq == k
+            # OK, perform update
             matrix centroids = compute_centroids(features, cluster_id)
-            matrix min_dists = minr(all_dists) # select minimum from all
+            matrix min_dists = minr(all_dists)
         else
+            # we must have too few unique controids
             Model.error = TRUE
             break
         endif
@@ -410,10 +428,12 @@ function bundle compute_kmeans (const bundle self,
         prev_distance = this_distance
     endloop
 
-    matrix Model.distances = min_dists
+    if !Model.error
+        matrix Model.centroids = centroids
+        matrix Model.distances = min_dists
+    endif
     scalar Model.within_variation = this_distance
     matrix Model.cluster_id = cluster_id
-    matrix Model.centroids = centroids
 
     return Model
 end function
@@ -445,6 +465,7 @@ function matrix compute_centroids (const matrix features,
     */
 
     matrix tmp = aggregate(features, cluster_id, mean)
+    errorif(sum(ok(tmp)) != nelem(tmp), "aggregate(): got a non-finite result")
     strings row_labels = "Centroid=" ~ tmp[,1]
     centroids = tmp[,3:]
     rnameset(centroids, row_labels)

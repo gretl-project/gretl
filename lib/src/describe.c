@@ -2328,7 +2328,7 @@ int freqdist (int varno, const DATASET *dset,
 	    do_graph = 0;
 	}
 	if (do_graph) {
-	    int gerr = plot_freq(freq, dist, opt);
+	    int gerr = plot_freq(freq, dist);
 
 	    if (gerr) {
 		const char *msg = gretl_errmsg_get();
