@@ -1487,7 +1487,6 @@ view_file_with_title (const char *filename, int editable, fmode mode,
 	    g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 			     G_CALLBACK(query_save_text), vwin);
 	}
-	/* since 2021-05-18 */
 	vwin->flags |= VWIN_USE_FOOTER;
     }
 
