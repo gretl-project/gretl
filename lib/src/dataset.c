@@ -463,6 +463,7 @@ int dataset_allocate_varnames (DATASET *dset)
     dset->varinfo = calloc(v, sizeof *dset->varinfo);
     if (dset->varinfo == NULL) {
 	free(dset->varname);
+	dset->varname = NULL;
 	return E_ALLOC;
     }
 
@@ -1634,8 +1635,8 @@ static int dataset_expand_varinfo (int v0, int newvars,
     return err;
 }
 
-/* note: values of series newly added here are left uninitialized:
-   that is the responsibility of the caller
+/* Note: values of series newly added here are left uninitialized:
+   that is the responsibility of the caller.
 */
 
 static int real_add_series (int newvars, double *x,
@@ -1678,10 +1679,10 @@ static int real_add_series (int newvars, double *x,
     }
 
     if (!err && dset != fetch_full_dataset()) {
-	/* don't expand varinfo if we're adding a series
+	/* Don't expand varinfo if we're adding a series
 	   to the full dataset when currently sub-sampled,
 	   since in that case varinfo is shared between
-	   the two datasets
+	   the two datasets.
 	*/
 	err = dataset_expand_varinfo(v0, newvars, dset);
     }
