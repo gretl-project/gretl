@@ -1091,11 +1091,12 @@ static void *gen_get_lhs_var (parser *p, GretlType type)
         data = p->lh.uv->ptr;
     } else {
         if (p->lh.uv == NULL) {
-            fprintf(stderr, "*** get: LHS %s '%s' is NULL!\n",
+            fprintf(stderr, "*** get LHS %s: uvar '%s' is NULL!\n",
                     gretl_type_get_name(type), p->lh.name);
         } else {
-            fprintf(stderr, "*** get: LHS uv '%s' of wrong type!\n",
-                    p->lh.name);
+            fprintf(stderr, "*** get LHS %s: uvar '%s' is %s!\n",
+		    gretl_type_get_name(type), p->lh.name,
+		    gretl_type_get_name(p->lh.uv->type));
         }
         if (type == GRETL_TYPE_BUNDLE) {
             data = get_bundle_by_name(p->lh.name);
@@ -13459,6 +13460,24 @@ static void node_get_int_or_series (int *ip, double **vecp,
     }
 }
 
+static void *empty_object_of_type (GretlType type,
+				  int *err)
+{
+    if (type == GRETL_TYPE_STRING) {
+	return gretl_strdup("");
+    } else if (type == GRETL_TYPE_MATRIX) {
+	return gretl_null_matrix_new();
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	return gretl_bundle_new();
+    } else if (type == GRETL_TYPE_ARRAY) {
+	return gretl_array_new(GRETL_TYPE_ANY, 0, err);
+    } else if (type == GRETL_TYPE_LIST) {
+	return gretl_list_new(0);
+    } else {
+	return NULL;
+    }
+}
+
 /* eval_3args_func: evaluate a built-in function that has three
    arguments. The @post_process flag is a convenience for the
    case where the function in question returns a matrix: it
@@ -14332,7 +14351,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         GretlType type;
         void *val = NULL;
         int target = 0;
-        int idx = 0;
+        int idx = -1;
 
         post_process = 0;
 
@@ -14349,12 +14368,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             }
             target = BUNDLE;
         } else if (m->t == ARRAY && (r->t == NUM || r->t == EMPTY)) {
-            /* if EMPTY, push-like version, i.e. we extend existing array by one element */
+            /* if @r is EMPTY, we extend existing array by one element */
             if (!gen_type_is_arrayable(src->t)) {
                 p->err = E_INVARG;
                 return NULL;
             }
-
             if (r->t == NUM) {
                 idx = node_get_int(r, p) - 1;
                 if (!is_null_array_element(m->v.a, idx)) {
@@ -14378,21 +14396,13 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         if (target == BUNDLE) {
             p->err = gretl_bundle_donate_data(m->v.b, r->v.str, val, type);
         } else if (target == ARRAY) {
-            if (r->t == NUM) {
+            if (idx >= 0) {
                 p->err = gretl_array_set_element(m->v.a, idx, val, type, 0);
-            } else {
-                if (type == GRETL_TYPE_STRING) {
-                    p->err = gretl_array_append_string(m->v.a, val, 0);
-                } else if (type == GRETL_TYPE_MATRIX) {
-                    p->err = gretl_array_append_matrix(m->v.a, val, 0);
-                } else if (type == GRETL_TYPE_BUNDLE) {
-                    p->err = gretl_array_append_bundle(m->v.a, val, 0);
-                } else if (type == GRETL_TYPE_ARRAY) {
-                    p->err = gretl_array_append_array(m->v.a, val, 0);
-                } else {
-                    p->err = E_INVARG;
-                    return NULL;
-                }
+            } else if (type == gretl_array_get_content_type(m->v.a)) {
+		p->err = gretl_array_append_object(m->v.a, val, 0);
+	    } else {
+		p->err = E_INVARG;
+		return NULL;
             }
         }
 
@@ -14400,7 +14410,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             /* restore the uservar's data */
             user_var_set_pointer(src->uv, val);
         } else {
-            user_var_delete(src->uv);
+	    void *repl = empty_object_of_type(type, &p->err);
+
+	    if (!p->err) {
+		user_var_replace_value(src->uv, repl, type);
+	    }
         }
     }
 
