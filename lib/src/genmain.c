@@ -1112,8 +1112,15 @@ void *generate_gretl_object (const char *s, DATASET *dset,
         NODE *n = p.ret;
 
         if (n->t == NUM) {
-            *type = GRETL_TYPE_DOUBLE;
-            ret = &n->v.xval;
+            double *x = malloc(sizeof *x);
+
+            if (x == NULL) {
+                *err = E_ALLOC;
+            } else {
+                *x = n->v.xval;
+                *type = GRETL_TYPE_DOUBLE;
+                ret = x;
+            }
         } else if (n->t == MAT) {
             *type = GRETL_TYPE_MATRIX;
             ret = n->v.m;

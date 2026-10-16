@@ -285,6 +285,16 @@ static void free_fn_definitions (GArray *defs)
     g_array_free(defs, TRUE);
 }
 
+static gboolean scroll_def_onscreen_idle (gpointer data)
+{
+    GtkTextView *view = GTK_TEXT_VIEW(data);
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
+
+    gtk_text_view_scroll_mark_onscreen(view, gtk_text_buffer_get_insert(buf));
+
+    return G_SOURCE_REMOVE;
+}
+
 static void jump_to_def (GtkMenuItem *item, GtkTextView *view)
 {
     GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
@@ -293,9 +303,8 @@ static void jump_to_def (GtkMenuItem *item, GtkTextView *view)
 
     gtk_text_buffer_get_iter_at_offset(buf, &it, offset);
     gtk_text_buffer_place_cursor(buf, &it);
-    gtk_text_view_scroll_to_mark(view, gtk_text_buffer_get_insert(buf),
-                                 0.0, TRUE, 0.0, 0.3);
     gtk_widget_grab_focus(GTK_WIDGET(view));
+    g_idle_add(scroll_def_onscreen_idle, view);
 }
 
 void show_fn_menu (GtkWidget *button, GtkTextView *view)
