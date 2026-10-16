@@ -13460,7 +13460,7 @@ static void node_get_int_or_series (int *ip, double **vecp,
     }
 }
 
-static void *empty_object_of_type (GretlType type,
+static void *empty_object_of_type_old (GretlType type,
 				  int *err)
 {
     if (type == GRETL_TYPE_STRING) {
@@ -13475,6 +13475,65 @@ static void *empty_object_of_type (GretlType type,
 	return gretl_list_new(0);
     } else {
 	return NULL;
+    }
+}
+
+static void *empty_object_of_type (GretlType type, int *err)
+{
+    void *ret = NULL;
+
+    switch (type) {
+        case GRETL_TYPE_STRING:
+            ret = gretl_strdup("");
+            break;
+        case GRETL_TYPE_MATRIX:
+            ret = gretl_null_matrix_new();
+            break;
+        case GRETL_TYPE_BUNDLE:
+            ret = gretl_bundle_new();
+            break;
+        case GRETL_TYPE_ARRAY:
+            ret = gretl_array_new(GRETL_TYPE_ANY, 0, err);
+            break;
+        case GRETL_TYPE_LIST:
+            ret = gretl_list_new(0);
+            break;
+        default:
+            *err = E_TYPES;
+            return NULL;
+    }
+
+    if (ret == NULL && !*err) {
+        *err = E_ALLOC;
+    }
+
+    return ret;
+}
+
+/* Marcin, 2026.10.16: local uv general destructor*/
+static void destroy_object_of_type (void *ptr, GretlType type)
+{
+    if (ptr == NULL) {
+        return;
+    }
+
+    switch (type) {
+        case GRETL_TYPE_MATRIX:
+            gretl_matrix_free(ptr);
+            break;
+        case GRETL_TYPE_BUNDLE:
+            gretl_bundle_destroy(ptr);
+            break;
+        case GRETL_TYPE_ARRAY:
+            gretl_array_destroy(ptr);
+            break;
+        case GRETL_TYPE_STRING:
+            bufgets_finalize(ptr);
+            free(ptr);
+            break;
+        default:
+            /* list */
+            free(ptr);
     }
 }
 
@@ -14350,6 +14409,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
         NODE *src = NULL;
         GretlType type;
         void *val = NULL;
+        void *repl = NULL;
         int target = 0;
         int idx = -1;
 
@@ -14359,7 +14419,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             p->err = E_INVARG;
             return NULL;
         }
+
         src = ptr_node_get_referent_node(l, p);
+        if (p->err) {
+            return NULL;
+        }
 
         if (m->t == BUNDLE && r->t == STR) {
             if (!ok_bundled_type(src->t) || gretl_bundle_has_key(m->v.b, r->v.str)) {
@@ -14368,54 +14432,69 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
             }
             target = BUNDLE;
         } else if (m->t == ARRAY && (r->t == NUM || r->t == EMPTY)) {
-            /* if @r is EMPTY, we extend existing array by one element */
             if (!gen_type_is_arrayable(src->t)) {
                 p->err = E_INVARG;
                 return NULL;
             }
             if (r->t == NUM) {
                 idx = node_get_int(r, p) - 1;
+                if (p->err) {
+                    return NULL;
+                }
                 if (!is_null_array_element(m->v.a, idx)) {
                     p->err = E_INVARG;
                     return NULL;
                 }
             }
             target = ARRAY;
-        } else {
-            p->err = E_INVARG;
-            return NULL;
-        }
-
-        val = user_var_steal_value(src->uv);
-        if (val == NULL) {
-            p->err = E_DATA;
-            return NULL;
-        }
-
-        type = gretl_type_from_gen_type(src->t);
-        if (target == BUNDLE) {
-            p->err = gretl_bundle_donate_data(m->v.b, r->v.str, val, type);
-        } else if (target == ARRAY) {
-            if (idx >= 0) {
-                p->err = gretl_array_set_element(m->v.a, idx, val, type, 0);
-            } else if (type == gretl_array_get_content_type(m->v.a)) {
-		p->err = gretl_array_append_object(m->v.a, val, 0);
-	    } else {
-		p->err = E_INVARG;
-		return NULL;
+            } else {
+                p->err = E_INVARG;
+                return NULL;
             }
-        }
 
-        if (p->err) {
-            /* restore the uservar's data */
-            user_var_set_pointer(src->uv, val);
-        } else {
-	    void *repl = empty_object_of_type(type, &p->err);
+            type = gretl_type_from_gen_type(src->t);
 
-	    if (!p->err) {
-		user_var_replace_value(src->uv, repl, type);
-	    }
-        }
+            /* Check array compatibility before stealing the value */
+            if (target == ARRAY && type != gretl_array_get_content_type(m->v.a)) {
+                p->err = E_INVARG;
+                return NULL;
+            }
+
+            /* Replacement must be permitted */
+            if (user_var_get_flags(src->uv) & UV_NOREPL) {
+                p->err = E_DATA;
+                return NULL;
+            }
+
+            /* Allocate replacement before donating the original */
+            repl = empty_object_of_type(type, &p->err);
+            if (p->err) {
+                return NULL;
+            }
+
+            val = user_var_steal_value(src->uv);
+            if (val == NULL) {
+                p->err = E_DATA;
+                destroy_object_of_type(repl, type);
+                return NULL;
+            }
+
+            if (target == BUNDLE) {
+                p->err = gretl_bundle_donate_data(m->v.b, r->v.str, val, type);
+            } else if (idx >= 0) {
+                p->err = gretl_array_set_element(m->v.a, idx, val, type, 0);
+            } else {
+                p->err = gretl_array_append_object(m->v.a, val, 0);
+            }
+
+            if (p->err) {
+                /* Donation failed: restore original ownership */
+                user_var_set_pointer(src->uv, val);
+                destroy_object_of_type(repl, type);
+            } else {
+                /* Donation succeeded: install the empty replacement */
+                user_var_set_pointer(src->uv, repl);
+            }
     }
 
     if (post_process) {
@@ -18496,6 +18575,9 @@ static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
     }
 
     ret = aux_node_for_type(type, p);
+    if (ret == NULL || p->err) {
+        return NULL;
+    }
 
     /* we check if we're dealing with the same types */
     if ((p->targ != UNK) && (p->targ != ret->t)) {
@@ -18519,6 +18601,10 @@ static NODE *gretl_array_steal_element (NODE *l, NODE *r, parser *p)
     if (!p->err) {
         /* finally we nullify the position in array */
         p->err = gretl_array_nullify_element(l->v.a, idx);
+    }
+
+    if (!p->err) {
+        ret->flags |= TMP_NODE;
     }
 
     return ret;

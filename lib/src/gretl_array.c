@@ -1648,7 +1648,7 @@ int gretl_array_drop_null (gretl_array *A)
 
 /* @ptr must be pre-checked as matching the array type */
 
-int gretl_array_append_object (gretl_array *A,
+int gretl_array_append_object_old (gretl_array *A,
 			       void *ptr,
 			       int copy)
 {
@@ -1666,6 +1666,30 @@ int gretl_array_append_object (gretl_array *A,
 	gretl_array_append_list(A, ptr, copy);
     } else if (A->type == GRETL_TYPE_ARRAYS) {
 	gretl_array_append_array(A, ptr, copy);
+    }
+
+    return err;
+}
+
+/* Marcin, 2026.10.16: we propagate errors correctly */
+int gretl_array_append_object (gretl_array *A, void *ptr, int copy)
+{
+    int err = 0;
+
+    if (A == NULL) {
+        err = E_DATA;
+    } else if (A->type == GRETL_TYPE_MATRICES) {
+        err = gretl_array_append_matrix(A, ptr, copy);
+    } else if (A->type == GRETL_TYPE_STRINGS) {
+        err = gretl_array_append_string(A, ptr, copy);
+    } else if (A->type == GRETL_TYPE_BUNDLES) {
+        err = gretl_array_append_bundle(A, ptr, copy);
+    } else if (A->type == GRETL_TYPE_LISTS) {
+        err = gretl_array_append_list(A, ptr, copy);
+    } else if (A->type == GRETL_TYPE_ARRAYS) {
+        err = gretl_array_append_array(A, ptr, copy);
+    } else {
+        err = E_TYPES;
     }
 
     return err;
