@@ -1,5 +1,7 @@
 version 2026d, in progress
 - Delete some unused variables flagged by clang
+- Fix bug: potential crash when forecasting based on a
+  VAR estimated in the GUI
 
 2026-10-12 version 2026c
 - new addons kmeans and PairPlot, from A. Tarassow's
