@@ -1348,10 +1348,8 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     return err;
 }
 
-/* Note: we need this because the original L-BFGS-B code is
-   set up as a minimizer.  We could get rid of it if anyone
-   has the strength to go into lbfgsb.c (ex Fortran) and make
-   the necessary adjustments.
+/* Note: we need this because the L-BFGS-B code is set up
+   as a minimizer.
 */
 
 static void reverse_gradient (double *g, int n)
@@ -1410,6 +1408,137 @@ static int transcribe_lbfgs_bounds (const gretl_matrix *m,
     return err;
 }
 
+/* State shared by LBFGS_max() and its L-BFGS-B callbacks */
+
+struct lbfgs_info {
+    int n;
+    BFGS_CRIT_FUNC cfunc;
+    BFGS_GRAD_FUNC gradfunc;
+    BFGS_COMBO_FUNC combfunc;
+    void *data;
+    int crittype;
+    int maximize;      /* L-BFGS-B minimizes, so negate f and g? */
+    int maxit;
+    int *fncount;
+    int *grcount;
+    int verbose;
+    int verbskip;
+    int show_activity;
+    int iter;          /* iteration number, for display */
+    double steplen;    /* step length in the last iteration */
+    double *gtmp;      /* workspace for printing the gradient */
+    gretlopt opt;
+    PRN *prn;
+    int err;
+};
+
+static void lbfgs_print_iter (struct lbfgs_info *li, int iter,
+                              double f, const double *b,
+                              const double *g, double steplen)
+{
+    double fshow;
+
+    fshow = (li->crittype == C_OTHER && (li->opt & OPT_I)) ? f : -f;
+
+    if (li->maximize) {
+        /* show the gradient of the maximand */
+        int i;
+
+        for (i=0; i<li->n; i++) {
+            li->gtmp[i] = na(g[i]) ? g[i] : -g[i];
+        }
+        g = li->gtmp;
+    }
+
+    print_iter_info(iter, fshow, li->crittype, li->n, b, g,
+                    steplen, li->prn);
+}
+
+/* L-BFGS-B callback: compute the function value and gradient */
+
+static int lbfgs_fg (double *b, double *f, double *g, void *p)
+{
+    struct lbfgs_info *li = p;
+    int n = li->n;
+
+    if (get_user_stop()) {
+        li->err = E_STOP;
+        return 1;
+    }
+
+    if (li->combfunc != NULL) {
+        *f = li->combfunc(b, g, n, li->data);
+    } else {
+        *f = li->cfunc(b, li->data);
+    }
+    if (!na(*f)) {
+        if (li->maximize) *f = -*f;
+    } else if (*li->fncount == 0) {
+        fprintf(stderr, "initial value of f is not finite\n");
+        li->err = E_DATA;
+        return 1;
+    }
+    *li->fncount += 1;
+
+    if (li->combfunc == NULL &&
+        li->gradfunc(b, g, n, li->cfunc, li->data) != 0) {
+        /* The gradient could not be computed (e.g. the numerical
+           gradient requires evaluating the function outside of its
+           domain): flag this to L-BFGS-B, which will then backtrack,
+           rather than leaving a stale gradient in place.
+        */
+        int i;
+
+        for (i=0; i<n; i++) {
+            g[i] = NADBL;
+        }
+    }
+    if (li->maximize) {
+        reverse_gradient(g, n);
+    }
+    *li->grcount += 1;
+
+    if (li->show_activity && (li->iter % 10 == 0)) {
+        show_activity_callback();
+    }
+
+    return 0;
+}
+
+/* L-BFGS-B callback: called at the starting point and after
+   each iteration */
+
+static int lbfgs_iter (int iter, int nfg, double f, const double *b,
+                       const double *g, double stp, void *p)
+{
+    struct lbfgs_info *li = p;
+
+    li->iter = iter + 1;
+    li->steplen = stp;
+
+    if (iter > 0 && nfg >= li->maxit) {
+        /* too many function evaluations */
+        li->err = E_NOCONV;
+        return 1;
+    }
+
+    if (bfgs_print_iter(li->verbose, li->verbskip, li->iter)) {
+        lbfgs_print_iter(li, li->iter, f, b, g,
+                         (li->iter == 1)? NADBL : stp);
+    }
+
+    if (li->show_activity && (li->iter % 10 == 0)) {
+        show_activity_callback();
+    }
+
+    if (get_user_stop()) {
+        li->err = E_STOP;
+        return 1;
+    }
+
+    return 0;
+}
+
 int LBFGS_max (double *b, int n,
                int maxit, double reltol,
                int *fncount, int *grcount,
@@ -1421,26 +1550,18 @@ int LBFGS_max (double *b, int n,
                gretlopt opt,
                PRN *prn)
 {
+    struct lbfgs_info li = {0};
     double *wspace = NULL;
-    int *ispace = NULL;
-    double *g, *l, *u, *wa;
-    int *iwa, *nbd;
-    int i, m, dim;
-    char task[60];
-    char csave[60];
-    double f, fshow, pgtol;
+    int *nbd = NULL;
+    double *g, *l, *u;
+    char msg[60];
+    double f, pgtol;
     double factr;
     double gradmax;
-    double dsave[29];
-    int isave[44];
-    int lsave[4];
-    int iter, ibak = 0;
-    int show_activity = 0;
-    int maximize;
-    int verbskip, verbose = (opt & OPT_V);
+    int i, m, ret;
     int err = 0;
 
-    maximize = (crittype != C_SSR) && !(opt & OPT_I);
+    li.maximize = (crittype != C_SSR) && !(opt & OPT_I);
 
     *fncount = *grcount = 0;
 
@@ -1456,13 +1577,11 @@ int LBFGS_max (double *b, int n,
     */
     m = libset_get_int(LBFGS_MEM);
 
-    dim = (2*m+5)*n + 11*m*m + 8*m; /* for wa */
-    dim += 3*n;                     /* for g, l and u */
+    /* for g, l and u, plus workspace for printing g */
+    wspace = malloc(4 * n * sizeof *wspace);
+    nbd = malloc(n * sizeof *nbd);
 
-    wspace = malloc(dim * sizeof *wspace);
-    ispace = malloc(4*n * sizeof *ispace);
-
-    if (wspace == NULL || ispace == NULL) {
+    if (wspace == NULL || nbd == NULL) {
         err = E_ALLOC;
         goto bailout;
     }
@@ -1470,13 +1589,6 @@ int LBFGS_max (double *b, int n,
     g = wspace;
     l = g + n;
     u = l + n;
-    wa = u + n;
-
-    nbd = ispace;
-    iwa = nbd + n;
-
-    verbskip = libset_get_int(BFGS_VERBSKIP);
-    show_activity = show_activity_func_installed();
 
     if (gradfunc == NULL && combfunc == NULL) {
         gradfunc = numeric_gradient;
@@ -1504,77 +1616,41 @@ int LBFGS_max (double *b, int n,
         }
     }
 
-    /* Start the iteration by initializing @task */
-    strcpy(task, "START");
+    li.n = n;
+    li.cfunc = cfunc;
+    li.gradfunc = gradfunc;
+    li.combfunc = combfunc;
+    li.data = data;
+    li.crittype = crittype;
+    li.maxit = maxit;
+    li.fncount = fncount;
+    li.grcount = grcount;
+    li.verbose = (opt & OPT_V);
+    li.verbskip = libset_get_int(BFGS_VERBSKIP);
+    li.show_activity = show_activity_func_installed();
+    li.iter = 1;
+    li.steplen = NADBL;
+    li.gtmp = u + n;
+    li.opt = opt;
+    li.prn = prn;
 
-    while (1) {
-        if (get_user_stop()) {
-            err = E_STOP;
-            break;
-        }
+    ret = lbfgsb(n, m, b, l, u, nbd, factr, pgtol, &f, g,
+                 lbfgs_fg, lbfgs_iter, &li, NULL, NULL, msg);
+    err = li.err;
 
-        /* Call the L-BFGS-B code */
-        setulb_(&n, &m, b, l, u, nbd, &f, g, &factr, &pgtol, wa, iwa,
-                task, csave, lsave, isave, dsave);
-
-        iter = isave[29] + 1;
-
-        if (!strncmp(task, "FG", 2)) {
-            /* Compute function value, f */
-            if (combfunc != NULL) {
-                f = combfunc(b, g, n, data);
-            } else {
-                f = cfunc(b, data);
-            }
-            if (!na(f)) {
-                if (maximize) f = -f;
-            } else if (*fncount == 0) {
-                fprintf(stderr, "initial value of f is not finite\n");
-                err = E_DATA;
-                break;
-            }
-            *fncount += 1;
-            if (combfunc == NULL) {
-                /* Compute gradient, g */
-                gradfunc(b, g, n, cfunc, data);
-            }
-            if (maximize) {
-                reverse_gradient(g, n);
-            }
-            *grcount += 1;
-        } else if (!strncmp(task, "NEW_X", 5)) {
-            /* The optimizer has produced a new set of parameter values */
-            if (isave[33] >= maxit) {
-                strcpy(task, "STOP: TOTAL NO. of f AND g "
-                       "EVALUATIONS EXCEEDS LIMIT");
-                err = E_NOCONV;
-                break;
-            }
-        } else {
-            if (strncmp(task, "CONVER", 6)) {
-                fprintf(stderr, "%s\n", task);
-            }
-            break;
-        }
-
-        if (bfgs_print_iter(verbose, verbskip, iter)) {
-            if (iter != ibak) {
-                double steplen = (iter == 1)? NADBL : dsave[13];
-
-		fshow = (crittype == C_OTHER && (opt & OPT_I)) ? f : -f;
-                if (maximize) reverse_gradient(g, n);
-                print_iter_info(iter, fshow, crittype, n, b, g, steplen, prn);
-                if (maximize) reverse_gradient(g, n);
-            }
-            ibak = iter;
-        }
-
-        if (show_activity && (iter % 10 == 0)) {
-            show_activity_callback();
-        }
+    if (ret == LBFGSB_NOMEM) {
+        err = E_ALLOC;
+    } else if (ret == LBFGSB_BADINPUT) {
+        fprintf(stderr, "%s\n", msg);
+        err = E_INVARG;
+    } else if (ret == LBFGSB_NONFINITE) {
+        fprintf(stderr, "%s\n", msg);
+        err = E_NAN;
+    } else if (ret == LBFGSB_ABNORMAL) {
+        fprintf(stderr, "%s\n", msg);
     }
 
-    if (err == E_STOP) {
+    if (err == E_STOP || err == E_ALLOC || err == E_INVARG || err == E_NAN) {
         goto bailout;
     }
 
@@ -1584,16 +1660,14 @@ int LBFGS_max (double *b, int n,
     }
 
     if (opt & OPT_V) {
-        if (maximize) reverse_gradient(g, n);
-	fshow = (crittype == C_OTHER && (opt & OPT_I)) ? f : -f;
-        print_iter_info(-1, fshow, crittype, n, b, g, dsave[13], prn);
+        lbfgs_print_iter(&li, -1, f, b, g, li.steplen);
         pputc(prn, '\n');
     }
 
  bailout:
 
     free(wspace);
-    free(ispace);
+    free(nbd);
 
     return err;
 }
@@ -1712,7 +1786,6 @@ struct umax_ {
     GENERATOR *gf;        /* for generating scalar or matrix result */
     GENERATOR *gg;        /* for generating gradient */
     GENERATOR *gh;        /* for generating Hessian */
-    double fx_out;        /* function double value */
     gretl_matrix *fm_out; /* function matrix value */
     char gmname[VNAMELEN]; /* name of user-defined gradient vector */
     char hmname[VNAMELEN]; /* name of user-defined Hessian matrix */
@@ -1734,7 +1807,6 @@ static umax *umax_new (GretlType t)
         u->gf = NULL;
         u->gg = NULL;
         u->gh = NULL;
-        u->fx_out = NADBL;
         u->fm_out = NULL;
         u->gmname[0] = '\0';
         u->hmname[0] = '\0';
@@ -1806,8 +1878,6 @@ static double user_get_criterion (const double *b, void *p)
         err = E_TYPES;
     }
 
-    u->fx_out = x;
-
     return x;
 }
 
@@ -1839,8 +1909,6 @@ static double user_get_criterion2 (double b, void *p)
     } else {
         err = E_TYPES;
     }
-
-    u->fx_out = x;
 
     return x;
 }
@@ -2129,7 +2197,11 @@ double user_BFGS (gretl_matrix *b,
     }
 
     if (!*err) {
-        ret = u->fx_out;
+        /* Report the criterion at the final b, not the last value
+           computed, which may have come from a numerical-gradient
+           step or a rejected trial point.
+        */
+        ret = user_get_criterion(b->val, u);
     }
 
  bailout:
@@ -2194,7 +2266,11 @@ double user_NR (gretl_matrix *b,
                               u, opt, prn);
 
     if (!*err) {
-        ret = u->fx_out;
+        /* Report the criterion at the final b, not the last value
+           computed, which may have come from a numerical-gradient
+           step or a rejected trial point.
+        */
+        ret = user_get_criterion(b->val, u);
     }
 
  bailout:
