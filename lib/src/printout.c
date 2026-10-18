@@ -3534,6 +3534,24 @@ int print_fit_resid (const MODEL *pmod, const DATASET *dset,
     return err;
 }
 
+#define IDEBUG 0
+
+#if IDEBUG
+
+static void print_iter_val (double x, int i, int k, PRN *prn)
+{
+    if (na(x)) {
+	pprintf(prn, "%-12s", "NA");
+    } else {
+	pprintf(prn, "%#.16g", x);
+    }
+    if (i && i % 6 == 5 && i < k-1) {
+	pprintf(prn, "\n%12s", " ");
+    }
+}
+
+#else
+
 static void print_iter_val (double x, int i, int k, PRN *prn)
 {
     if (na(x)) {
@@ -3545,6 +3563,8 @@ static void print_iter_val (double x, int i, int k, PRN *prn)
 	pprintf(prn, "\n%12s", " ");
     }
 }
+
+#endif
 
 /**
  * print_iter_info:
@@ -3618,7 +3638,7 @@ print_iter_info (int iter, double crit, int type, int k,
     if (details) {
 	pputc(prn, '\n');
 	if (b != NULL) {
-	    pputs(prn, _("Parameters: "));
+	    pputs(prn, k == 1 ? _("Parameter: ") : _("Parameters: "));
 	    for (i=0; i<k; i++) {
 		print_iter_val(b[i], i, k, prn);
 	    }
@@ -3628,7 +3648,7 @@ print_iter_info (int iter, double crit, int type, int k,
 
     if (g != NULL) {
 	if (details) {
-	    pputs(prn, _("Gradients:  "));
+	    pputs(prn, k == 1 ? _("Gradient:  ") : _("Gradients:  "));
 	}
 	x = 0.0;
 	for (i=0; i<k; i++) {
