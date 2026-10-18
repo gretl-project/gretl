@@ -2,6 +2,17 @@ version 2026d, in progress
 - Delete some unused variables flagged by clang
 - Fix bug: potential crash when forecasting based on a
   VAR estimated in the GUI
+- L-BFGS-B: the code (originally translated from Fortran via
+  f2c) has been rewritten in idiomatic C
+- L-BFGS-B: more robust handling of a criterion that is
+  undefined at some points: back off on encountering a
+  non-finite criterion or gradient, rather than terminating
+- L-BFGS-B: never evaluate the criterion outside of the
+  specified bounds (one-sided numerical derivatives at a
+  bound; guard against rounding error in the line search)
+- fix bug: BFGSmin, BFGSmax, BFGScmin, BFGScmax, NRmin and
+  NRmax could return a criterion value that did not
+  correspond exactly to the final parameter vector
 
 2026-10-12 version 2026c
 - new addons kmeans and PairPlot, from A. Tarassow's
