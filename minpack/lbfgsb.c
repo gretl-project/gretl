@@ -46,1169 +46,1067 @@
 
 static double c_b9 = 0.;
 static int c__1 = 1;
-static int c__11 = 11;
 static double c_b280 = .001;
 static double c_b281 = .9;
 static double c_b282 = .1;
 
-static int dpofa_(double *a, int *lda, int *n, int *info)
-{
-    int a_dim1, a_offset, i__1, i__2, i__3;
+/* Wrappers for the BLAS routines, taking scalars by value. Note that
+   we can't replace these by plain C loops without changing the
+   numerical results, since BLAS implementations may use FMA and/or
+   accumulate in a different order.
+*/
 
+static inline double dot (int n, const double *x, const double *y)
+{
+    return ddot_(&n, (double *) x, &c__1, (double *) y, &c__1);
+}
+
+static inline void axpy (int n, double a, const double *x, double *y)
+{
+    daxpy_(&n, &a, (double *) x, &c__1, y, &c__1);
+}
+
+static inline void scal (int n, double a, double *x)
+{
+    dscal_(&n, &a, x, &c__1);
+}
+
+static inline void copy (int n, const double *x, double *y)
+{
+    if (n > 0) {
+        memcpy(y, x, n * sizeof *y);
+    }
+}
+
+/* These mirror the f2c max and min macros, as opposed to fmax() and
+   fmin(), which differ in their treatment of NaN.
+*/
+
+static inline double dmax (double a, double b)
+{
+    return a >= b ? a : b;
+}
+
+static inline double dmin (double a, double b)
+{
+    return a <= b ? a : b;
+}
+
+/* Cholesky factorization of the symmetric positive definite n x n
+   matrix @a (column-major, leading dimension @lda), as per LINPACK's
+   dpofa: on exit the upper triangle of @a holds R such that A = R'R.
+   Only the upper triangle is referenced. Returns 0 on success, or
+   (j + 1) if the leading minor of order j + 1 is not positive
+   definite.
+*/
+
+static int dpofa (double *a, int lda, int n)
+{
     int j, k;
-    double s, t;
-    int jm1;
 
-    a_dim1 = *lda;
-    a_offset = 1 + a_dim1;
-    a -= a_offset;
+    for (j=0; j<n; j++) {
+        double *aj = a + j*lda;
+        double s = 0.0;
 
-   i__1 = *n;
-    for (j = 1; j <= i__1; ++j) {
-	*info = j;
-	s = 0.;
-	jm1 = j - 1;
-	if (jm1 < 1) {
-	    goto L20;
-	}
-	i__2 = jm1;
-	for (k = 1; k <= i__2; ++k) {
-	    i__3 = k - 1;
-	    t = a[k + j * a_dim1] - ddot_(&i__3, &a[k * a_dim1 + 1], &c__1, &
-					  a[j * a_dim1 + 1], &c__1);
-	    t /= a[k + k * a_dim1];
-	    a[k + j * a_dim1] = t;
-	    s += t * t;
-	}
-    L20:
-	s = a[j + j * a_dim1] - s;
-	if (s <= 0.) {
-	    goto L40;
-	}
-	a[j + j * a_dim1] = sqrt(s);
+        for (k=0; k<j; k++) {
+            double t = aj[k] - dot(k, a + k*lda, aj);
+
+            t /= a[k + k*lda];
+            aj[k] = t;
+            s += t * t;
+        }
+        s = aj[j] - s;
+        if (s <= 0.0) {
+            return j + 1;
+        }
+        aj[j] = sqrt(s);
     }
-    *info = 0;
- L40:
+
     return 0;
-} /* dpofa_ */
+}
 
-static int dtrsl_(double *t, int *ldt, int *n, 
-		  double *b, int *job, int *info)
+/* The two cases of LINPACK's dtrsl that L-BFGS-B uses: solve
+   R x = b (rsolve) or R' x = b (rtsolve) in place, where R is the
+   n x n upper triangular matrix @r with leading dimension @ldr.
+   Both return 0 on success, or (j + 1) if R(j,j) is zero.
+*/
+
+static int check_rdiag (const double *r, int ldr, int n)
 {
-    int t_dim1, t_offset, i__1, i__2;
+    int j;
 
-    int j, jj, case__;
-    double temp;
-
-    t_dim1 = *ldt;
-    t_offset = 1 + t_dim1;
-    t -= t_offset;
-    --b;
-
-    i__1 = *n;
-    for (*info = 1; *info <= i__1; ++(*info)) {
-	if (t[*info + *info * t_dim1] == 0.) {
-	    goto L150;
-	}
-    }
-    *info = 0;
-
-    case__ = 1;
-    if (*job % 10 != 0) {
-	case__ = 2;
-    }
-    if (*job % 100 / 10 != 0) {
-	case__ += 2;
-    }
-    switch (case__) {
-	case 1:  goto L20;
-	case 2:  goto L50;
-	case 3:  goto L80;
-	case 4:  goto L110;
+    for (j=0; j<n; j++) {
+        if (r[j + j*ldr] == 0.0) {
+            return j + 1;
+        }
     }
 
-    /* solve t*x=b for t lower triangular */
-
-L20:
-    b[1] /= t[t_dim1 + 1];
-    if (*n < 2) {
-	goto L40;
-    }
-    i__1 = *n;
-    for (j = 2; j <= i__1; ++j) {
-	temp = -b[j - 1];
-	i__2 = *n - j + 1;
-	daxpy_(&i__2, &temp, &t[j + (j - 1) * t_dim1], &c__1, &b[j], &c__1);
-	b[j] /= t[j + j * t_dim1];
-    }
-L40:
-    goto L140;
-
-    /* solve t*x=b for t upper triangular. */
-
-L50:
-    b[*n] /= t[*n + *n * t_dim1];
-    if (*n < 2) {
-	goto L70;
-    }
-    i__1 = *n;
-    for (jj = 2; jj <= i__1; ++jj) {
-	j = *n - jj + 1;
-	temp = -b[j + 1];
-	daxpy_(&j, &temp, &t[(j + 1) * t_dim1 + 1], &c__1, &b[1], &c__1);
-	b[j] /= t[j + j * t_dim1];
-    }
-L70:
-    goto L140;
-
-    /* solve trans(t)*x=b for t lower triangular. */
-
-L80:
-    b[*n] /= t[*n + *n * t_dim1];
-    if (*n < 2) {
-	goto L100;
-    }
-    i__1 = *n;
-    for (jj = 2; jj <= i__1; ++jj) {
-	j = *n - jj + 1;
-	i__2 = jj - 1;
-	b[j] -= ddot_(&i__2, &t[j + 1 + j * t_dim1], &c__1, &b[j + 1], &c__1);
-	b[j] /= t[j + j * t_dim1];
-    }
-L100:
-    goto L140;
-
-    /* solve trans(t)*x=b for t upper triangular. */
-
-L110:
-    b[1] /= t[t_dim1 + 1];
-    if (*n < 2) {
-	goto L130;
-    }
-    i__1 = *n;
-    for (j = 2; j <= i__1; ++j) {
-	i__2 = j - 1;
-	b[j] -= ddot_(&i__2, &t[j * t_dim1 + 1], &c__1, &b[1], &c__1);
-	b[j] /= t[j + j * t_dim1];
-    }
-L130:
-L140:
-L150:
     return 0;
-} /* dtrsl_ */
+}
 
-static int active_(int *n, double *l, double *u, int *nbd,
-		   double *x, int *iwhere, logical *prjctd,
-		   logical *cnstnd, logical *boxed)
+static int rsolve (const double *r, int ldr, int n, double *b)
 {
-    int i__1;
-    int i__;
+    int j, info;
 
-    --iwhere;
-    --x;
-    --nbd;
-    --u;
-    --l;
+    if (n == 0 || (info = check_rdiag(r, ldr, n)) != 0) {
+        return n == 0 ? 0 : info;
+    }
+    b[n-1] /= r[(n-1) + (n-1)*ldr];
+    for (j=n-2; j>=0; j--) {
+        axpy(j + 1, -b[j+1], r + (j+1)*ldr, b);
+        b[j] /= r[j + j*ldr];
+    }
+
+    return 0;
+}
+
+static int rtsolve (const double *r, int ldr, int n, double *b)
+{
+    int j, info;
+
+    if (n == 0 || (info = check_rdiag(r, ldr, n)) != 0) {
+        return n == 0 ? 0 : info;
+    }
+    b[0] /= r[0];
+    for (j=1; j<n; j++) {
+        b[j] -= dot(j, r + j*ldr, b);
+        b[j] /= r[j + j*ldr];
+    }
+
+    return 0;
+}
+
+/* Initialize iwhere and project the initial x onto the feasible set.
+   On return, *prjctd indicates whether x was changed by projection,
+   *cnstnd whether any variable is bounded, and *boxed whether all
+   variables are bounded on both sides.
+*/
+
+static void active (int n, const double *l, const double *u,
+                    const int *nbd, double *x, int *iwhere,
+                    int *prjctd, int *cnstnd, int *boxed)
+{
+    int i;
 
     *prjctd = 0;
     *cnstnd = 0;
     *boxed = 1;
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	if (nbd[i__] > 0) {
-	    if (nbd[i__] <= 2 && x[i__] <= l[i__]) {
-		if (x[i__] < l[i__]) {
-		    *prjctd = 1;
-		    x[i__] = l[i__];
-		}
-	    } else if (nbd[i__] >= 2 && x[i__] >= u[i__]) {
-		if (x[i__] > u[i__]) {
-		    *prjctd = 1;
-		    x[i__] = u[i__];
-		}
-	    }
-	}
-    }
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	if (nbd[i__] != 2) {
-	    *boxed = 0;
-	}
-	if (nbd[i__] == 0) {
-	    iwhere[i__] = -1;
-	} else {
-	    *cnstnd = 1;
-	    if (nbd[i__] == 2 && u[i__] - l[i__] <= 0.) {
-		iwhere[i__] = 3;
-	    } else {
-		iwhere[i__] = 0;
-	    }
-	}
+
+    for (i=0; i<n; i++) {
+        if (nbd[i] > 0) {
+            if (nbd[i] <= 2 && x[i] <= l[i]) {
+                if (x[i] < l[i]) {
+                    *prjctd = 1;
+                    x[i] = l[i];
+                }
+            } else if (nbd[i] >= 2 && x[i] >= u[i]) {
+                if (x[i] > u[i]) {
+                    *prjctd = 1;
+                    x[i] = u[i];
+                }
+            }
+        }
     }
 
-    return 0;
-} /* active_ */
+    for (i=0; i<n; i++) {
+        if (nbd[i] != 2) {
+            *boxed = 0;
+        }
+        if (nbd[i] == 0) {
+            /* this variable is always free */
+            iwhere[i] = -1;
+        } else {
+            *cnstnd = 1;
+            if (nbd[i] == 2 && u[i] - l[i] <= 0.0) {
+                /* this variable is always fixed */
+                iwhere[i] = 3;
+            } else {
+                iwhere[i] = 0;
+            }
+        }
+    }
+}
 
-static int bmv_(int *m, double *sy, double *wt, int *col,
-		double *v, double *p, int *info)
+/* Compute the product of the 2m x 2m middle matrix of the compact
+   L-BFGS formula with the 2col vector @v, writing the result into @p.
+   @sy holds S'Y and @wt the Cholesky factor of (theta*S'S + LD^(-1)L'),
+   both m x m. Returns 0 on success, non-zero if a triangular solve
+   fails.
+*/
+
+static int bmv (int m, const double *sy, const double *wt, int col,
+                const double *v, double *p)
 {
-    int sy_dim1, sy_offset, wt_dim1, wt_offset, i__1, i__2;
-
-    int i__, k, i2;
     double sum;
+    int i, k, info;
 
-    wt_dim1 = *m;
-    wt_offset = 1 + wt_dim1;
-    wt -= wt_offset;
-    sy_dim1 = *m;
-    sy_offset = 1 + sy_dim1;
-    sy -= sy_offset;
-    --p;
-    --v;
+    if (col == 0) {
+        return 0;
+    }
 
-    if (*col == 0) {
-	return 0;
+    /* solve [  D^(1/2)      O ] [ p1 ] = [ v1 ]
+             [ -L*D^(-1/2)   J ] [ p2 ]   [ v2 ]
+       by solving J p2 = v2 + L D^(-1) v1 */
+    p[col] = v[col];
+    for (i=1; i<col; i++) {
+        sum = 0.0;
+        for (k=0; k<i; k++) {
+            sum += sy[i + k*m] * v[k] / sy[k + k*m];
+        }
+        p[col + i] = v[col + i] + sum;
     }
-    p[*col + 1] = v[*col + 1];
-    i__1 = *col;
-    for (i__ = 2; i__ <= i__1; ++i__) {
-	i2 = *col + i__;
-	sum = 0.;
-	i__2 = i__ - 1;
-	for (k = 1; k <= i__2; ++k) {
-	    sum += sy[i__ + k * sy_dim1] * v[k] / sy[k + k * sy_dim1];
-	}
-	p[i2] = v[i2] + sum;
-   }
-    dtrsl_(&wt[wt_offset], m, col, &p[*col + 1], &c__11, info);
-    if (*info != 0) {
-	return 0;
+    info = rtsolve(wt, m, col, p + col);
+    if (info != 0) {
+        return info;
     }
-    i__1 = *col;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	p[i__] = v[i__] / sqrt(sy[i__ + i__ * sy_dim1]);
-   }
-    dtrsl_(&wt[wt_offset], m, col, &p[*col + 1], &c__1, info);
-    if (*info != 0) {
-	return 0;
+
+    /* solve D^(1/2) p1 = v1 */
+    for (i=0; i<col; i++) {
+        p[i] = v[i] / sqrt(sy[i + i*m]);
     }
-    i__1 = *col;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	p[i__] = -p[i__] / sqrt(sy[i__ + i__ * sy_dim1]);
+
+    /* solve [ -D^(1/2)   D^(-1/2)*L' ] [ p1 ] = [ p1 ]
+             [  0         J'          ] [ p2 ]   [ p2 ]
+       by solving J' p2 = p2 and then D^(1/2) p1 = -p1 + D^(-1/2) L' p2 */
+    info = rsolve(wt, m, col, p + col);
+    if (info != 0) {
+        return info;
     }
-    i__1 = *col;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	sum = 0.;
-	i__2 = *col;
-	for (k = i__ + 1; k <= i__2; ++k) {
-	    sum += sy[k + i__ * sy_dim1] * p[*col + k] / sy[i__ + i__ * 
-		    sy_dim1];
-	}
-	p[i__] += sum;
+    for (i=0; i<col; i++) {
+        p[i] = -p[i] / sqrt(sy[i + i*m]);
     }
+    for (i=0; i<col; i++) {
+        sum = 0.0;
+        for (k=i+1; k<col; k++) {
+            sum += sy[k + i*m] * p[col + k] / sy[i + i*m];
+        }
+        p[i] += sum;
+    }
+
     return 0;
-} /* bmv_ */
+}
 
-static int cmprlb_(int *n, int *m, double *x, 
-		   double *g, double *ws, double *wy, double *sy, 
-		   double *wt, double *z__, double *r__, double *wa, 
-		   int *index, double *theta, int *col, int *head, 
-		   int *nfree, logical *cnstnd, int *info)
+/* Compute r = -Z'B(xcp - xk) - Z'g, using wa[2m..4m-1] from cauchy().
+   The ring buffers @ws and @wy (n x m) hold S and Y, with the oldest
+   correction in column @head. Returns 0 on success or -8 on failure.
+*/
+
+static int cmprlb (int n, int m, const double *x, const double *g,
+                   const double *ws, const double *wy, const double *sy,
+                   const double *wt, const double *z, double *r,
+                   double *wa, const int *index, double theta, int col,
+                   int head, int nfree, int cnstnd)
 {
-    int ws_dim1, ws_offset, wy_dim1, wy_offset, sy_dim1, sy_offset, 
-	wt_dim1, wt_offset, i__1, i__2;
+    int i, j, k, pointr;
 
-    int i__, j, k;
-    double a1, a2;
-    int pointr;
-
-    --index;
-    --r__;
-    --z__;
-    --g;
-    --x;
-    --wa;
-    wt_dim1 = *m;
-    wt_offset = 1 + wt_dim1;
-    wt -= wt_offset;
-    sy_dim1 = *m;
-    sy_offset = 1 + sy_dim1;
-    sy -= sy_offset;
-    wy_dim1 = *n;
-    wy_offset = 1 + wy_dim1;
-    wy -= wy_offset;
-    ws_dim1 = *n;
-    ws_offset = 1 + ws_dim1;
-    ws -= ws_offset;
-
-    if (! (*cnstnd) && *col > 0) {
-	i__1 = *n;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    r__[i__] = -g[i__];
-	}
+    if (!cnstnd && col > 0) {
+        for (i=0; i<n; i++) {
+            r[i] = -g[i];
+        }
     } else {
-	i__1 = *nfree;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    k = index[i__];
-	    r__[i__] = -(*theta) * (z__[k] - x[k]) - g[k];
-	}
-	bmv_(m, &sy[sy_offset], &wt[wt_offset], col, &wa[(*m << 1) + 1], &wa[
-		1], info);
-	if (*info != 0) {
-	    *info = -8;
-	    return 0;
-	}
-	pointr = *head;
-	i__1 = *col;
-	for (j = 1; j <= i__1; ++j) {
-	    a1 = wa[j];
-	    a2 = *theta * wa[*col + j];
-	    i__2 = *nfree;
-	    for (i__ = 1; i__ <= i__2; ++i__) {
-		k = index[i__];
-		r__[i__] = r__[i__] + wy[k + pointr * wy_dim1] * a1 + ws[k + 
-			pointr * ws_dim1] * a2;
-	    }
-	    pointr = pointr % *m + 1;
-	}
+        for (i=0; i<nfree; i++) {
+            k = index[i];
+            r[i] = -theta * (z[k] - x[k]) - g[k];
+        }
+        if (bmv(m, sy, wt, col, wa + 2*m, wa) != 0) {
+            return -8;
+        }
+        pointr = head;
+        for (j=0; j<col; j++) {
+            const double *wyj = wy + pointr*n;
+            const double *wsj = ws + pointr*n;
+            double a1 = wa[j];
+            double a2 = theta * wa[col + j];
+
+            for (i=0; i<nfree; i++) {
+                k = index[i];
+                r[i] = r[i] + wyj[k] * a1 + wsj[k] * a2;
+            }
+            pointr = (pointr + 1) % m;
+        }
     }
+
     return 0;
-} /* cmprlb_ */
+}
 
-static int errclb_(int *n, int *m, double *factr, 
-		   double *l, double *u, int *nbd, char *task,
-		   int *info, int *k)
+/* Check the input arguments for errors; if any are found, write a
+   message into @task (if there are several errors, the last one
+   found is reported).
+*/
+
+static void errclb (int n, int m, double factr, const double *l,
+                    const double *u, const int *nbd, char *task)
 {
-    int i__1;
+    int i;
 
-    int i__;
+    if (n <= 0) {
+        strcpy(task, "ERROR: N .LE. 0");
+    }
+    if (m <= 0) {
+        strcpy(task, "ERROR: M .LE. 0");
+    }
+    if (factr < 0.0) {
+        strcpy(task, "ERROR: FACTR .LT. 0");
+    }
+    for (i=0; i<n; i++) {
+        if (nbd[i] < 0 || nbd[i] > 3) {
+            strcpy(task, "ERROR: INVALID NBD");
+        }
+        if (nbd[i] == 2 && l[i] > u[i]) {
+            strcpy(task, "ERROR: NO FEASIBLE SOLUTION");
+        }
+    }
+}
 
-    --nbd;
-    --u;
-    --l;
+/* Form the LEL' factorization of the indefinite matrix
 
-    if (*n <= 0) {
-	strcpy(task, "ERROR: N .LE. 0");
-    }
-    if (*m <= 0) {
-	strcpy(task, "ERROR: M .LE. 0");
-    }
-    if (*factr < 0.) {
-	strcpy(task, "ERROR: FACTR .LT. 0");
-    }
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	if (nbd[i__] < 0 || nbd[i__] > 3) {
-	    strcpy(task, "ERROR: INVALID NBD");
-	    *info = -6;
-	    *k = i__;
-	}
-	if (nbd[i__] == 2) {
-	    if (l[i__] > u[i__]) {
-		strcpy(task, "ERROR: NO FEASIBLE SOLUTION");
-		*info = -7;
-		*k = i__;
-	    }
-	}
-    }
-    return 0;
-} /* errclb_ */
+     K = [-D - Y'ZZ'Y/theta     L_a' - R_z'  ]
+         [L_a - R_z             theta*S'AA'S ]
 
-static int formk_(int *n, int *nsub, int *ind, int *nenter,
-		  int *ileave, int *indx2, int *iupdat, logical *
-		  updatd, double *wn, double *wn1, int *m, double *ws, 
-		  double *wy, double *sy, double *theta, int *col, 
-		  int *head, int *info)
+   where E = [-I 0; 0 I], storing the factors in the upper triangle
+   of @wn (2m x 2m). The matrix @wn1 (2m x 2m) holds the inner
+   products of S and Y restricted to the free and active variables,
+   and is updated incrementally from one iteration to the next using
+   the entering (indx2[0..nenter-1]) and leaving (indx2[ileave..n-1])
+   variables. @ind holds the free variables in its first @nsub
+   elements, the active ones in the rest. Returns 0 on success, or -1
+   or -2 if the first or second Cholesky factorization fails.
+*/
+
+#define WN(i,j) wn[(i) + (j)*m2]
+#define WN1(i,j) wn1[(i) + (j)*m2]
+
+static int formk (int n, int nsub, const int *ind, int nenter,
+                  int ileave, const int *indx2, int iupdat, int updatd,
+                  double *wn, double *wn1, int m, const double *ws,
+                  const double *wy, const double *sy, double theta,
+                  int col, int head)
 {
-    int wn_dim1, wn_offset, wn1_dim1, wn1_offset, ws_dim1, ws_offset, 
-	    wy_dim1, wy_offset, sy_dim1, sy_offset, i__1, i__2, i__3;
-
-    int i__, k, k1, m2, is, js, iy, jy, is1, js1, col2, dend, pend;
-    int upcl;
+    const double *wyi, *wyj, *wsi, *wsj;
     double temp1, temp2, temp3, temp4;
-    int ipntr, jpntr, dbegin, pbegin;
+    int i, k, k1, is, js, iy, jy, is1, js1;
+    int ipntr, jpntr, upcl;
+    int m2 = 2*m, col2 = 2*col;
 
-    --indx2;
-    --ind;
-    sy_dim1 = *m;
-    sy_offset = 1 + sy_dim1;
-    sy -= sy_offset;
-    wy_dim1 = *n;
-    wy_offset = 1 + wy_dim1;
-    wy -= wy_offset;
-    ws_dim1 = *n;
-    ws_offset = 1 + ws_dim1;
-    ws -= ws_offset;
-    wn1_dim1 = 2 * *m;
-    wn1_offset = 1 + wn1_dim1;
-    wn1 -= wn1_offset;
-    wn_dim1 = 2 * *m;
-    wn_offset = 1 + wn_dim1;
-    wn -= wn_offset;
+    /* Form the lower triangular part of
+         WN1 = [Y' ZZ'Y   L_a'+R_z']
+               [L_a+R_z   S'AA'S   ]
+       where L_a is the strictly lower triangular part of S'AA'Y
+       and R_z is the upper triangular part of S'ZZ'Y.
+    */
 
-    if (*updatd) {
-	if (*iupdat > *m) {
-	    i__1 = *m - 1;
-	    for (jy = 1; jy <= i__1; ++jy) {
-		js = *m + jy;
-		i__2 = *m - jy;
-		dcopy_(&i__2, &wn1[jy + 1 + (jy + 1) * wn1_dim1], &c__1,
-		       &wn1[jy + jy * wn1_dim1], &c__1);
-		i__2 = *m - jy;
-		dcopy_(&i__2, &wn1[js + 1 + (js + 1) * wn1_dim1], &c__1,
-		       &wn1[js + js * wn1_dim1], &c__1);
-		i__2 = *m - 1;
-		dcopy_(&i__2, &wn1[*m + 2 + (jy + 1) * wn1_dim1], &c__1,
-		       &wn1[*m + 1 + jy * wn1_dim1], &c__1);
-	    }
-	}
-	pbegin = 1;
-	pend = *nsub;
-	dbegin = *nsub + 1;
-	dend = *n;
-	iy = *col;
-	is = *m + *col;
-	ipntr = *head + *col - 1;
-	if (ipntr > *m) {
-	    ipntr -= *m;
-	}
-	jpntr = *head;
-	i__1 = *col;
-	for (jy = 1; jy <= i__1; ++jy) {
-	    js = *m + jy;
-	    temp1 = 0.;
-	    temp2 = 0.;
-	    temp3 = 0.;
-	    i__2 = pend;
-	    for (k = pbegin; k <= i__2; ++k) {
-		k1 = ind[k];
-		temp1 += wy[k1 + ipntr * wy_dim1] * wy[k1 + jpntr * wy_dim1];
-	    }
-	    i__2 = dend;
-	    for (k = dbegin; k <= i__2; ++k) {
-		k1 = ind[k];
-		temp2 += ws[k1 + ipntr * ws_dim1] * ws[k1 + jpntr * ws_dim1];
-		temp3 += ws[k1 + ipntr * ws_dim1] * wy[k1 + jpntr * wy_dim1];
-	    }
-	    wn1[iy + jy * wn1_dim1] = temp1;
-	    wn1[is + js * wn1_dim1] = temp2;
-	    wn1[is + jy * wn1_dim1] = temp3;
-	    jpntr = jpntr % *m + 1;
-	}
-	jy = *col;
-	jpntr = *head + *col - 1;
-	if (jpntr > *m) {
-	    jpntr -= *m;
-	}
-	ipntr = *head;
-	i__1 = *col;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    is = *m + i__;
-	    temp3 = 0.;
-	    i__2 = pend;
-	    for (k = pbegin; k <= i__2; ++k) {
-		k1 = ind[k];
-		temp3 += ws[k1 + ipntr * ws_dim1] * wy[k1 + jpntr * wy_dim1];
-	    }
-	    ipntr = ipntr % *m + 1;
-	    wn1[is + jy * wn1_dim1] = temp3;
-	}
-	upcl = *col - 1;
+    if (updatd) {
+        if (iupdat > m) {
+            /* shift old part of WN1 */
+            for (jy=0; jy<m-1; jy++) {
+                js = m + jy;
+                copy(m - jy - 1, &WN1(jy+1, jy+1), &WN1(jy, jy));
+                copy(m - jy - 1, &WN1(js+1, js+1), &WN1(js, js));
+                copy(m - 1, &WN1(m+1, jy+1), &WN1(m, jy));
+            }
+        }
+
+        /* put new rows in blocks (1,1), (2,1) and (2,2): free
+           variables are ind[0..nsub-1], active ones ind[nsub..n-1] */
+        iy = col - 1;
+        is = m + col - 1;
+        ipntr = head + col - 1;
+        if (ipntr >= m) {
+            ipntr -= m;
+        }
+        wyi = wy + ipntr*n;
+        wsi = ws + ipntr*n;
+        jpntr = head;
+        for (jy=0; jy<col; jy++) {
+            js = m + jy;
+            wyj = wy + jpntr*n;
+            wsj = ws + jpntr*n;
+            temp1 = temp2 = temp3 = 0.0;
+            for (k=0; k<nsub; k++) {
+                k1 = ind[k];
+                temp1 += wyi[k1] * wyj[k1];
+            }
+            for (k=nsub; k<n; k++) {
+                k1 = ind[k];
+                temp2 += wsi[k1] * wsj[k1];
+                temp3 += wsi[k1] * wyj[k1];
+            }
+            WN1(iy, jy) = temp1;
+            WN1(is, js) = temp2;
+            WN1(is, jy) = temp3;
+            jpntr = (jpntr + 1) % m;
+        }
+
+        /* put new column in block (2,1) */
+        jy = col - 1;
+        jpntr = head + col - 1;
+        if (jpntr >= m) {
+            jpntr -= m;
+        }
+        wyj = wy + jpntr*n;
+        ipntr = head;
+        for (i=0; i<col; i++) {
+            is = m + i;
+            wsi = ws + ipntr*n;
+            temp3 = 0.0;
+            for (k=0; k<nsub; k++) {
+                k1 = ind[k];
+                temp3 += wsi[k1] * wyj[k1];
+            }
+            ipntr = (ipntr + 1) % m;
+            WN1(is, jy) = temp3;
+        }
+        upcl = col - 1;
     } else {
-	upcl = *col;
+        upcl = col;
     }
-    ipntr = *head;
-    i__1 = upcl;
-    for (iy = 1; iy <= i__1; ++iy) {
-	is = *m + iy;
-	jpntr = *head;
-	i__2 = iy;
-	for (jy = 1; jy <= i__2; ++jy) {
-	    js = *m + jy;
-	    temp1 = 0.;
-	    temp2 = 0.;
-	    temp3 = 0.;
-	    temp4 = 0.;
-	    i__3 = *nenter;
-	    for (k = 1; k <= i__3; ++k) {
-		k1 = indx2[k];
-		temp1 += wy[k1 + ipntr * wy_dim1] * wy[k1 + jpntr * wy_dim1];
-		temp2 += ws[k1 + ipntr * ws_dim1] * ws[k1 + jpntr * ws_dim1];
-	    }
-	    i__3 = *n;
-	    for (k = *ileave; k <= i__3; ++k) {
-		k1 = indx2[k];
-		temp3 += wy[k1 + ipntr * wy_dim1] * wy[k1 + jpntr * wy_dim1];
-		temp4 += ws[k1 + ipntr * ws_dim1] * ws[k1 + jpntr * ws_dim1];
-	    }
-	    wn1[iy + jy * wn1_dim1] = wn1[iy + jy * wn1_dim1] + temp1 - temp3;
-	    wn1[is + js * wn1_dim1] = wn1[is + js * wn1_dim1] - temp2 + temp4;
-	    jpntr = jpntr % *m + 1;
-	}
-	ipntr = ipntr % *m + 1;
+
+    /* modify the old parts in blocks (1,1) and (2,2) due to
+       changes in the set of free variables */
+    ipntr = head;
+    for (iy=0; iy<upcl; iy++) {
+        is = m + iy;
+        wyi = wy + ipntr*n;
+        wsi = ws + ipntr*n;
+        jpntr = head;
+        for (jy=0; jy<=iy; jy++) {
+            js = m + jy;
+            wyj = wy + jpntr*n;
+            wsj = ws + jpntr*n;
+            temp1 = temp2 = temp3 = temp4 = 0.0;
+            for (k=0; k<nenter; k++) {
+                k1 = indx2[k];
+                temp1 += wyi[k1] * wyj[k1];
+                temp2 += wsi[k1] * wsj[k1];
+            }
+            for (k=ileave; k<n; k++) {
+                k1 = indx2[k];
+                temp3 += wyi[k1] * wyj[k1];
+                temp4 += wsi[k1] * wsj[k1];
+            }
+            WN1(iy, jy) = WN1(iy, jy) + temp1 - temp3;
+            WN1(is, js) = WN1(is, js) - temp2 + temp4;
+            jpntr = (jpntr + 1) % m;
+        }
+        ipntr = (ipntr + 1) % m;
     }
-    ipntr = *head;
-    i__1 = *m + upcl;
-    for (is = *m + 1; is <= i__1; ++is) {
-	jpntr = *head;
-	i__2 = upcl;
-	for (jy = 1; jy <= i__2; ++jy) {
-	    temp1 = 0.;
-	    temp3 = 0.;
-	    i__3 = *nenter;
-	    for (k = 1; k <= i__3; ++k) {
-		k1 = indx2[k];
-		temp1 += ws[k1 + ipntr * ws_dim1] * wy[k1 + jpntr * wy_dim1];
-	    }
-	    i__3 = *n;
-	    for (k = *ileave; k <= i__3; ++k) {
-		k1 = indx2[k];
-		temp3 += ws[k1 + ipntr * ws_dim1] * wy[k1 + jpntr * wy_dim1];
-	    }
-	    if (is <= jy + *m) {
-		wn1[is + jy * wn1_dim1] = wn1[is + jy * wn1_dim1] + temp1 - 
-			temp3;
-	    } else {
-		wn1[is + jy * wn1_dim1] = wn1[is + jy * wn1_dim1] - temp1 + 
-			temp3;
-	    }
-	    jpntr = jpntr % *m + 1;
-	}
-	ipntr = ipntr % *m + 1;
+
+    /* modify the old parts in block (2,1) */
+    ipntr = head;
+    for (is=m; is<m+upcl; is++) {
+        wsi = ws + ipntr*n;
+        jpntr = head;
+        for (jy=0; jy<upcl; jy++) {
+            wyj = wy + jpntr*n;
+            temp1 = temp3 = 0.0;
+            for (k=0; k<nenter; k++) {
+                k1 = indx2[k];
+                temp1 += wsi[k1] * wyj[k1];
+            }
+            for (k=ileave; k<n; k++) {
+                k1 = indx2[k];
+                temp3 += wsi[k1] * wyj[k1];
+            }
+            if (is <= jy + m) {
+                WN1(is, jy) = WN1(is, jy) + temp1 - temp3;
+            } else {
+                WN1(is, jy) = WN1(is, jy) - temp1 + temp3;
+            }
+            jpntr = (jpntr + 1) % m;
+        }
+        ipntr = (ipntr + 1) % m;
     }
-    m2 = *m << 1;
-    i__1 = *col;
-    for (iy = 1; iy <= i__1; ++iy) {
-	is = *col + iy;
-	is1 = *m + iy;
-	i__2 = iy;
-	for (jy = 1; jy <= i__2; ++jy) {
-	    js = *col + jy;
-	    js1 = *m + jy;
-	    wn[jy + iy * wn_dim1] = wn1[iy + jy * wn1_dim1] / *theta;
-	    wn[js + is * wn_dim1] = wn1[is1 + js1 * wn1_dim1] * *theta;
-	}
-	i__2 = iy - 1;
-	for (jy = 1; jy <= i__2; ++jy) {
-	    wn[jy + is * wn_dim1] = -wn1[is1 + jy * wn1_dim1];
-	}
-	i__2 = *col;
-	for (jy = iy; jy <= i__2; ++jy) {
-	    wn[jy + is * wn_dim1] = wn1[is1 + jy * wn1_dim1];
-	}
-	wn[iy + iy * wn_dim1] += sy[iy + iy * sy_dim1];
+
+    /* Form the upper triangle of WN = [D+Y'ZZ'Y/theta   -L_a'+R_z' ]
+                                       [-L_a +R_z        S'AA'S*theta]
+    */
+    for (iy=0; iy<col; iy++) {
+        is = col + iy;
+        is1 = m + iy;
+        for (jy=0; jy<=iy; jy++) {
+            js = col + jy;
+            js1 = m + jy;
+            WN(jy, iy) = WN1(iy, jy) / theta;
+            WN(js, is) = WN1(is1, js1) * theta;
+        }
+        for (jy=0; jy<iy; jy++) {
+            WN(jy, is) = -WN1(is1, jy);
+        }
+        for (jy=iy; jy<col; jy++) {
+            WN(jy, is) = WN1(is1, jy);
+        }
+        WN(iy, iy) += sy[iy + iy*m];
     }
-    dpofa_(&wn[wn_offset], &m2, col, info);
-    if (*info != 0) {
-	*info = -1;
-	return 0;
+
+    /* Form the upper triangle of WN = [  LL'            L^-1(-L_a'+R_z')]
+                                       [(-L_a +R_z)L'^-1   S'AA'S*theta  ]
+       first Cholesky factor (1,1) block of wn to get LL'
+       with L' stored in the upper triangle of wn */
+    if (dpofa(wn, m2, col) != 0) {
+        return -1;
     }
-    col2 = *col << 1;
-    i__1 = col2;
-    for (js = *col + 1; js <= i__1; ++js) {
-	dtrsl_(&wn[wn_offset], &m2, col, &wn[js * wn_dim1 + 1], &c__11, info);
+    /* then form L^-1(-L_a'+R_z') in the (1,2) block */
+    for (js=col; js<col2; js++) {
+        rtsolve(wn, m2, col, &WN(0, js));
     }
-    i__1 = col2;
-    for (is = *col + 1; is <= i__1; ++is) {
-	i__2 = col2;
-	for (js = is; js <= i__2; ++js) {
-	    wn[is + js * wn_dim1] += ddot_(col, &wn[is * wn_dim1 + 1], &c__1, 
-		    &wn[js * wn_dim1 + 1], &c__1);
-	}
+
+    /* Form S'AA'S*theta + (L^-1(-L_a'+R_z'))'L^-1(-L_a'+R_z') in the
+       upper triangle of (2,2) block of wn */
+    for (is=col; is<col2; is++) {
+        for (js=is; js<col2; js++) {
+            WN(is, js) += dot(col, &WN(0, is), &WN(0, js));
+        }
     }
-    dpofa_(&wn[*col + 1 + (*col + 1) * wn_dim1], &m2, col, info);
-    if (*info != 0) {
-	*info = -2;
-	return 0;
+
+    /* Cholesky factorization of (2,2) block of wn */
+    if (dpofa(&WN(col, col), m2, col) != 0) {
+        return -2;
     }
+
     return 0;
-} /* formk_ */
+}
 
-static int formt_(int *m, double *wt, double *sy, 
-		  double *ss, int *col, double *theta,
-		  int *info)
+#undef WN
+#undef WN1
+
+/* Form the upper half of the positive definite symmetric matrix
+   T = theta*S'S + L D^(-1) L', store it in the upper triangle of
+   @wt, then Cholesky-factorize it in place. Returns 0 on success
+   or -3 if T is not positive definite.
+*/
+
+static int formt (int m, double *wt, const double *sy,
+                  const double *ss, int col, double theta)
 {
-    int wt_dim1, wt_offset, sy_dim1, sy_offset, ss_dim1, ss_offset, i__1, 
-	i__2, i__3;
-
-    int i__, j, k, k1;
     double ddum;
+    int i, j, k;
 
-    ss_dim1 = *m;
-    ss_offset = 1 + ss_dim1;
-    ss -= ss_offset;
-    sy_dim1 = *m;
-    sy_offset = 1 + sy_dim1;
-    sy -= sy_offset;
-    wt_dim1 = *m;
-    wt_offset = 1 + wt_dim1;
-    wt -= wt_offset;
+    for (j=0; j<col; j++) {
+        wt[j*m] = theta * ss[j*m];
+    }
+    for (i=1; i<col; i++) {
+        for (j=i; j<col; j++) {
+            ddum = 0.0;
+            for (k=0; k<i; k++) {
+                ddum += sy[i + k*m] * sy[j + k*m] / sy[k + k*m];
+            }
+            wt[i + j*m] = ddum + theta * ss[i + j*m];
+        }
+    }
 
-    i__1 = *col;
-    for (j = 1; j <= i__1; ++j) {
-	wt[j * wt_dim1 + 1] = *theta * ss[j * ss_dim1 + 1];
-    }
-    i__1 = *col;
-    for (i__ = 2; i__ <= i__1; ++i__) {
-	i__2 = *col;
-	for (j = i__; j <= i__2; ++j) {
-	    k1 = min(i__,j) - 1;
-	    ddum = 0.;
-	    i__3 = k1;
-	    for (k = 1; k <= i__3; ++k) {
-		ddum += sy[i__ + k * sy_dim1] * sy[j + k * sy_dim1] / sy[k + 
-			k * sy_dim1];
-	    }
-	    wt[i__ + j * wt_dim1] = ddum + *theta * ss[i__ + j * ss_dim1];
-	}
-    }
-    dpofa_(&wt[wt_offset], m, col, info);
-    if (*info != 0) {
-	*info = -3;
-    }
-    return 0;
-} /* formt_ */
+    return dpofa(wt, m, col) != 0 ? -3 : 0;
+}
 
-static int freev_(int *n, int *nfree, int *index, 
-		  int *nenter, int *ileave, int *indx2, int *iwhere, 
-		  logical *wrk, logical *updatd, logical *cnstnd,
-		  int *iter)
+/* Count the entering and leaving variables for the subspace
+   minimization at iteration @iter, and set up the index sets of
+   free and active variables at the generalized Cauchy point.
+
+   On return, index[0..nfree-1] holds the free variables and
+   index[nfree..n-1] the active ones; indx2[0..nenter-1] holds the
+   variables that have entered the free set since the last
+   iteration, and indx2[ileave..n-1] those that have left it.
+   Returns non-zero if the matrix K must be recomputed by formk().
+*/
+
+static int freev (int n, int *nfree, int *index, int *nenter,
+                  int *ileave, int *indx2, const int *iwhere,
+                  int updatd, int cnstnd, int iter)
 {
-    int i__1;
-
-    int i__, k, iact;
-
-    --iwhere;
-    --indx2;
-    --index;
+    int i, k, iact;
 
     *nenter = 0;
-    *ileave = *n + 1;
-    if (*iter > 0 && *cnstnd) {
-	i__1 = *nfree;
-	for (i__ = 1; i__ <= i__1; ++i__) {
-	    k = index[i__];
-	    if (iwhere[k] > 0) {
-		--(*ileave);
-		indx2[*ileave] = k;
-	    }
-	}
-	i__1 = *n;
-	for (i__ = *nfree + 1; i__ <= i__1; ++i__) {
-	    k = index[i__];
-	    if (iwhere[k] <= 0) {
-		++(*nenter);
-		indx2[*nenter] = k;
-	    }
-	}
+    *ileave = n;
+
+    if (iter > 0 && cnstnd) {
+        for (i=0; i<*nfree; i++) {
+            k = index[i];
+            if (iwhere[k] > 0) {
+                indx2[--(*ileave)] = k;
+            }
+        }
+        for (i=*nfree; i<n; i++) {
+            k = index[i];
+            if (iwhere[k] <= 0) {
+                indx2[(*nenter)++] = k;
+            }
+        }
     }
-    *wrk = *ileave < *n + 1 || *nenter > 0 || *updatd;
+
     *nfree = 0;
-    iact = *n + 1;
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	if (iwhere[i__] <= 0) {
-	    ++(*nfree);
-	    index[*nfree] = i__;
-	} else {
-	    --iact;
-	    index[iact] = i__;
-	}
+    iact = n;
+    for (i=0; i<n; i++) {
+        if (iwhere[i] <= 0) {
+            index[(*nfree)++] = i;
+        } else {
+            index[--iact] = i;
+        }
     }
 
-    return 0;
-} /* freev_ */
+    return *ileave < n || *nenter > 0 || updatd;
+}
 
-static int hpsolb_(int *n, double *t, int *iorder, 
-		   int *iheap)
+/* Heap operations on the breakpoints @t (with companion indices
+   @iorder) of length n. If @iheap is zero, first arrange t into a
+   heap (t[0] the least element). Then move the least element to
+   t[n-1] and restore the heap property on t[0..n-2].
+*/
+
+static void hpsolb (int n, double *t, int *iorder, int iheap)
 {
-    int i__1;
-
-    int i__, j, k;
     double out, ddum;
+    int i, j, k;
     int indxin, indxou;
 
-    --iorder;
-    --t;
-
-    if (*iheap == 0) {
-	i__1 = *n;
-	for (k = 2; k <= i__1; ++k) {
-	    ddum = t[k];
-	    indxin = iorder[k];
-	    i__ = k;
-L10:
-	    if (i__ > 1) {
-		j = i__ / 2;
-		if (ddum < t[j]) {
-		    t[i__] = t[j];
-		    iorder[i__] = iorder[j];
-		    i__ = j;
-		    goto L10;
-		}
-	    }
-	    t[i__] = ddum;
-	    iorder[i__] = indxin;
-	}
+    if (iheap == 0) {
+        for (k=1; k<n; k++) {
+            ddum = t[k];
+            indxin = iorder[k];
+            /* sift t[k] up toward the root */
+            i = k;
+            while (i > 0) {
+                j = (i - 1) / 2;
+                if (ddum < t[j]) {
+                    t[i] = t[j];
+                    iorder[i] = iorder[j];
+                    i = j;
+                } else {
+                    break;
+                }
+            }
+            t[i] = ddum;
+            iorder[i] = indxin;
+        }
     }
-    if (*n > 1) {
-	i__ = 1;
-	out = t[1];
-	indxou = iorder[1];
-	ddum = t[*n];
-	indxin = iorder[*n];
-L30:
-	j = i__ + i__;
-	if (j <= *n - 1) {
-	    if (t[j + 1] < t[j]) {
-		++j;
-	    }
-	    if (t[j] < ddum) {
-		t[i__] = t[j];
-		iorder[i__] = iorder[j];
-		i__ = j;
-		goto L30;
-	    }
-	}
-	t[i__] = ddum;
-	iorder[i__] = indxin;
-	t[*n] = out;
-	iorder[*n] = indxou;
-    }
-    return 0;
-} /* hpsolb_ */
 
-static int matupd_(int *n, int *m, double *ws, 
-		   double *wy, double *sy, double *ss, double *d__, 
-		   double *r__, int *itail, int *iupdat, int *col, 
-		   int *head, double *theta, double *rr, double *dr, 
-		   double *stp, double *dtd)
+    if (n > 1) {
+        /* remove the least element t[0] and sift t[n-1] down
+           from the root into the heap t[0..n-2] */
+        i = 0;
+        out = t[0];
+        indxou = iorder[0];
+        ddum = t[n-1];
+        indxin = iorder[n-1];
+        while (1) {
+            j = 2*i + 1;
+            if (j >= n - 1) {
+                break;
+            }
+            if (t[j+1] < t[j]) {
+                j++;
+            }
+            if (t[j] < ddum) {
+                t[i] = t[j];
+                iorder[i] = iorder[j];
+                i = j;
+            } else {
+                break;
+            }
+        }
+        t[i] = ddum;
+        iorder[i] = indxin;
+        /* put the least member in t[n-1] */
+        t[n-1] = out;
+        iorder[n-1] = indxou;
+    }
+}
+
+/* Update the limited-memory matrices WS and WY (ring buffers of the
+   last m correction pairs, oldest in column @head) and form the
+   middle matrices SY = S'Y and SS = S'S, given the new correction
+   pair (d, r) and the step @stp.
+*/
+
+static void matupd (int n, int m, double *ws, double *wy, double *sy,
+                    double *ss, const double *d, const double *r,
+                    int *itail, int iupdat, int *col, int *head,
+                    double *theta, double rr, double dr, double stp,
+                    double dtd)
 {
-    int ws_dim1, ws_offset, wy_dim1, wy_offset, sy_dim1, sy_offset, 
-	    ss_dim1, ss_offset, i__1, i__2;
+    int j, last, pointr;
 
-    int j;
-    int pointr;
-
-    --r__;
-    --d__;
-    ss_dim1 = *m;
-    ss_offset = 1 + ss_dim1;
-    ss -= ss_offset;
-    sy_dim1 = *m;
-    sy_offset = 1 + sy_dim1;
-    sy -= sy_offset;
-    wy_dim1 = *n;
-    wy_offset = 1 + wy_dim1;
-    wy -= wy_offset;
-    ws_dim1 = *n;
-    ws_offset = 1 + ws_dim1;
-    ws -= ws_offset;
-
-    if (*iupdat <= *m) {
-	*col = *iupdat;
-	*itail = (*head + *iupdat - 2) % *m + 1;
+    /* set pointers for matrices WS and WY */
+    if (iupdat <= m) {
+        *col = iupdat;
+        *itail = (*head + iupdat - 1) % m;
     } else {
-	*itail = *itail % *m + 1;
-	*head = *head % *m + 1;
+        *itail = (*itail + 1) % m;
+        *head = (*head + 1) % m;
     }
-    dcopy_(n, &d__[1], &c__1, &ws[*itail * ws_dim1 + 1], &c__1);
-    dcopy_(n, &r__[1], &c__1, &wy[*itail * wy_dim1 + 1], &c__1);
-    *theta = *rr / *dr;
-    if (*iupdat > *m) {
-	i__1 = *col - 1;
-	for (j = 1; j <= i__1; ++j) {
-	    dcopy_(&j, &ss[(j + 1) * ss_dim1 + 2], &c__1, &ss[j * ss_dim1 + 1]
-		    , &c__1);
-	    i__2 = *col - j;
-	    dcopy_(&i__2, &sy[j + 1 + (j + 1) * sy_dim1], &c__1, &sy[j + j * 
-		    sy_dim1], &c__1);
-	}
+
+    /* update matrices WS and WY */
+    copy(n, d, ws + *itail*n);
+    copy(n, r, wy + *itail*n);
+
+    /* set theta = yy/ys */
+    *theta = rr / dr;
+
+    /* Form the middle matrix in B: update the upper triangle of SS
+       and the lower triangle of SY */
+    if (iupdat > m) {
+        /* move old information */
+        for (j=0; j<*col-1; j++) {
+            copy(j + 1, &ss[1 + (j+1)*m], &ss[j*m]);
+            copy(*col - j - 1, &sy[(j+1) + (j+1)*m], &sy[j + j*m]);
+        }
     }
+
+    /* add new information: the last row of SY and the last column
+       of SS */
+    last = *col - 1;
     pointr = *head;
-    i__1 = *col - 1;
-    for (j = 1; j <= i__1; ++j) {
-	sy[*col + j * sy_dim1] = ddot_(n, &d__[1], &c__1, &wy[pointr * 
-		wy_dim1 + 1], &c__1);
-	ss[j + *col * ss_dim1] = ddot_(n, &ws[pointr * ws_dim1 + 1], &c__1, &
-		d__[1], &c__1);
-	pointr = pointr % *m + 1;
+    for (j=0; j<last; j++) {
+        sy[last + j*m] = dot(n, d, wy + pointr*n);
+        ss[j + last*m] = dot(n, ws + pointr*n, d);
+        pointr = (pointr + 1) % m;
     }
-    if (*stp == 1.) {
-	ss[*col + *col * ss_dim1] = *dtd;
+    if (stp == 1.0) {
+        ss[last + last*m] = dtd;
     } else {
-	ss[*col + *col * ss_dim1] = *stp * *stp * *dtd;
+        ss[last + last*m] = stp * stp * dtd;
     }
-    sy[*col + *col * sy_dim1] = *dr;
-    return 0;
-} /* matupd_ */
+    sy[last + last*m] = dr;
+}
 
-static int projgr_(int *n, double *l, double *u, int *nbd,
-		   double *x, double *g, double *sbgnrm)
+/* Return the infinity norm of the projected gradient */
+
+static double projgr (int n, const double *l, const double *u,
+                      const int *nbd, const double *x, const double *g)
 {
-    int i__1;
-    double d__1, d__2;
+    double gi, sbgnrm = 0.0;
+    int i;
 
-    int i__;
-    double gi;
-
-    --g;
-    --x;
-    --nbd;
-    --u;
-    --l;
-
-    *sbgnrm = 0.;
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	gi = g[i__];
-	if (nbd[i__] != 0) {
-	    if (gi < 0.) {
-		if (nbd[i__] >= 2) {
-		    d__1 = x[i__] - u[i__];
-		    gi = max(d__1,gi);
-		}
-	    } else {
-		if (nbd[i__] <= 2) {
-		    d__1 = x[i__] - l[i__];
-		    gi = min(d__1,gi);
-		}
-	    }
-	}
-	d__1 = *sbgnrm, d__2 = fabs(gi);
-	*sbgnrm = max(d__1,d__2);
+    for (i=0; i<n; i++) {
+        gi = g[i];
+        if (nbd[i] != 0) {
+            if (gi < 0.0) {
+                if (nbd[i] >= 2) {
+                    gi = dmax(x[i] - u[i], gi);
+                }
+            } else if (nbd[i] <= 2) {
+                gi = dmin(x[i] - l[i], gi);
+            }
+        }
+        sbgnrm = dmax(sbgnrm, fabs(gi));
     }
-    return 0;
-} /* projgr_ */
 
-static int subsm_(int *n, int *m, int *nsub, int *ind,
-		  double *l, double *u, int *nbd, double *x, 
-		  double *d__, double *xp, double *ws, double *wy, 
-		  double *theta, double *xx, double *gg, int *col, 
-		  int *head, int *iword, double *wv, double *wn, 
-		  int *info)
+    return sbgnrm;
+}
+
+/* Subspace minimization: given xcp (passed in as @x) and the reduced
+   gradient @d (length nsub), compute the minimizer of the quadratic
+   model on the subspace of free variables ind[0..nsub-1], writing it
+   into @x, then project it onto the feasible set (falling back on
+   a backtrack toward xcp if the projected point is not a descent
+   direction relative to @xx with gradient @gg). On exit *iword is 1
+   if the unprojected minimizer was infeasible, else 0. Returns 0 on
+   success or non-zero if a triangular solve failed.
+*/
+
+static int subsm (int n, int m, int nsub, const int *ind,
+                  const double *l, const double *u, const int *nbd,
+                  double *x, double *d, double *xp, const double *ws,
+                  const double *wy, double theta, const double *xx,
+                  const double *gg, int col, int head, int *iword,
+                  double *wv, const double *wn)
 {
-    int ws_dim1, ws_offset, wy_dim1, wy_offset, wn_dim1, wn_offset,
-	i__1, i__2;
-    double d__1, d__2;
+    double alpha, dk, xk, dd_p, temp1, temp2;
+    int i, j, k, js, jy, ibd, pointr, info;
+    int m2 = 2*m, col2 = 2*col;
 
-    int i__, j, k, m2;
-    double dk;
-    int js, jy;
-    double xk;
-    int ibd, col2;
-    double dd_p__, temp1, temp2, alpha;
-    int pointr;
+    if (nsub <= 0) {
+        return 0;
+    }
 
-    --gg;
-    --xx;
-    --xp;
-    --d__;
-    --x;
-    --nbd;
-    --u;
-    --l;
-    wn_dim1 = 2 * *m;
-    wn_offset = 1 + wn_dim1;
-    wn -= wn_offset;
-    --wv;
-    wy_dim1 = *n;
-    wy_offset = 1 + wy_dim1;
-    wy -= wy_offset;
-    ws_dim1 = *n;
-    ws_offset = 1 + ws_dim1;
-    ws -= ws_offset;
-    --ind;
+    /* compute wv = W'Zd */
+    pointr = head;
+    for (i=0; i<col; i++) {
+        const double *wyi = wy + pointr*n;
+        const double *wsi = ws + pointr*n;
 
-    if (*nsub <= 0) {
-	return 0;
+        temp1 = temp2 = 0.0;
+        for (j=0; j<nsub; j++) {
+            k = ind[j];
+            temp1 += wyi[k] * d[j];
+            temp2 += wsi[k] * d[j];
+        }
+        wv[i] = temp1;
+        wv[col + i] = theta * temp2;
+        pointr = (pointr + 1) % m;
     }
-    pointr = *head;
-    i__1 = *col;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	temp1 = 0.;
-	temp2 = 0.;
-	i__2 = *nsub;
-	for (j = 1; j <= i__2; ++j) {
-	    k = ind[j];
-	    temp1 += wy[k + pointr * wy_dim1] * d__[j];
-	    temp2 += ws[k + pointr * ws_dim1] * d__[j];
-	}
-	wv[i__] = temp1;
-	wv[*col + i__] = *theta * temp2;
-	pointr = pointr % *m + 1;
+
+    /* compute wv := K^(-1) wv */
+    info = rtsolve(wn, m2, col2, wv);
+    if (info != 0) {
+        return info;
     }
-    m2 = *m << 1;
-    col2 = *col << 1;
-    dtrsl_(&wn[wn_offset], &m2, &col2, &wv[1], &c__11, info);
-    if (*info != 0) {
-	return 0;
+    for (i=0; i<col; i++) {
+        wv[i] = -wv[i];
     }
-    i__1 = *col;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	wv[i__] = -wv[i__];
+    info = rsolve(wn, m2, col2, wv);
+    if (info != 0) {
+        return info;
     }
-    dtrsl_(&wn[wn_offset], &m2, &col2, &wv[1], &c__1, info);
-    if (*info != 0) {
-	return 0;
+
+    /* compute d = (1/theta)d + (1/theta**2)Z'W wv */
+    pointr = head;
+    for (jy=0; jy<col; jy++) {
+        const double *wyj = wy + pointr*n;
+        const double *wsj = ws + pointr*n;
+
+        js = col + jy;
+        for (i=0; i<nsub; i++) {
+            k = ind[i];
+            d[i] = d[i] + wyj[k] * wv[jy] / theta + wsj[k] * wv[js];
+        }
+        pointr = (pointr + 1) % m;
     }
-    pointr = *head;
-    i__1 = *col;
-    for (jy = 1; jy <= i__1; ++jy) {
-	js = *col + jy;
-	i__2 = *nsub;
-	for (i__ = 1; i__ <= i__2; ++i__) {
-	    k = ind[i__];
-	    d__[i__] = d__[i__] + wy[k + pointr * wy_dim1] * wv[jy] / *theta 
-		    + ws[k + pointr * ws_dim1] * wv[js];
-	}
-	pointr = pointr % *m + 1;
-    }
-    d__1 = 1. / *theta;
-    dscal_(nsub, &d__1, &d__[1], &c__1);
+    scal(nsub, 1.0 / theta, d);
+
+    /* try the projection of d */
     *iword = 0;
-    dcopy_(n, &x[1], &c__1, &xp[1], &c__1);
-    i__1 = *nsub;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	k = ind[i__];
-	dk = d__[i__];
-	xk = x[k];
-	if (nbd[k] != 0) {
-	    if (nbd[k] == 1) {
-		/* lower bounds only */
-		d__1 = l[k], d__2 = xk + dk;
-		x[k] = max(d__1,d__2);
-		if (x[k] == l[k]) {
-		    *iword = 1;
-		}
-	    } else {
-		if (nbd[k] == 2) {
-		    /* upper and lower bounds */
-		    d__1 = l[k], d__2 = xk + dk;
-		    xk = max(d__1,d__2);
-		    d__1 = u[k];
-		    x[k] = min(d__1,xk);
-		    if (x[k] == l[k] || x[k] == u[k]) {
-			*iword = 1;
-		    }
-		} else {
-		    if (nbd[k] == 3) {
-			/* upper bounds only */
-			d__1 = u[k], d__2 = xk + dk;
-			x[k] = min(d__1,d__2);
-			if (x[k] == u[k]) {
-			    *iword = 1;
-			}
-		    }
-		}
-	    }
-	} else {
-	    /* free variables */
-	    x[k] = xk + dk;
-	}
+    copy(n, x, xp);
+    for (i=0; i<nsub; i++) {
+        k = ind[i];
+        dk = d[i];
+        xk = x[k];
+        if (nbd[k] == 0) {
+            /* free variable */
+            x[k] = xk + dk;
+        } else if (nbd[k] == 1) {
+            /* lower bound only */
+            x[k] = dmax(l[k], xk + dk);
+            if (x[k] == l[k]) {
+                *iword = 1;
+            }
+        } else if (nbd[k] == 2) {
+            /* upper and lower bounds */
+            xk = dmax(l[k], xk + dk);
+            x[k] = dmin(u[k], xk);
+            if (x[k] == l[k] || x[k] == u[k]) {
+                *iword = 1;
+            }
+        } else if (nbd[k] == 3) {
+            /* upper bound only */
+            x[k] = dmin(u[k], xk + dk);
+            if (x[k] == u[k]) {
+                *iword = 1;
+            }
+        }
     }
+
     if (*iword == 0) {
-	goto L911;
+        return 0;
     }
-    dd_p__ = 0.;
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	dd_p__ += (x[i__] - xx[i__]) * gg[i__];
+
+    /* check sign of the directional derivative */
+    dd_p = 0.0;
+    for (i=0; i<n; i++) {
+        dd_p += (x[i] - xx[i]) * gg[i];
     }
-    if (dd_p__ > 0.) {
-	dcopy_(n, &xp[1], &c__1, &x[1], &c__1);
-    } else {
-	goto L911;
+    if (dd_p <= 0.0) {
+        return 0;
     }
-    alpha = 1.;
+
+    /* not a descent direction: restore x and backtrack along d
+       to the feasible region */
+    copy(n, xp, x);
+    alpha = 1.0;
     temp1 = alpha;
     ibd = 0;
-    i__1 = *nsub;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	k = ind[i__];
-	dk = d__[i__];
-	if (nbd[k] != 0) {
-	    if (dk < 0. && nbd[k] <= 2) {
-		temp2 = l[k] - x[k];
-		if (temp2 >= 0.) {
-		    temp1 = 0.;
-		} else if (dk * alpha < temp2) {
-		    temp1 = temp2 / dk;
-		}
-	    } else if (dk > 0. && nbd[k] >= 2) {
-		temp2 = u[k] - x[k];
-		if (temp2 <= 0.) {
-		    temp1 = 0.;
-		} else if (dk * alpha > temp2) {
-		    temp1 = temp2 / dk;
-		}
-	    }
-	    if (temp1 < alpha) {
-		alpha = temp1;
-		ibd = i__;
-	    }
-	}
+    for (i=0; i<nsub; i++) {
+        k = ind[i];
+        dk = d[i];
+        if (nbd[k] != 0) {
+            if (dk < 0.0 && nbd[k] <= 2) {
+                temp2 = l[k] - x[k];
+                if (temp2 >= 0.0) {
+                    temp1 = 0.0;
+                } else if (dk * alpha < temp2) {
+                    temp1 = temp2 / dk;
+                }
+            } else if (dk > 0.0 && nbd[k] >= 2) {
+                temp2 = u[k] - x[k];
+                if (temp2 <= 0.0) {
+                    temp1 = 0.0;
+                } else if (dk * alpha > temp2) {
+                    temp1 = temp2 / dk;
+                }
+            }
+            if (temp1 < alpha) {
+                alpha = temp1;
+                ibd = i;
+            }
+        }
     }
-    if (alpha < 1.) {
-	dk = d__[ibd];
-	k = ind[ibd];
-	if (dk > 0.) {
-	    x[k] = u[k];
-	    d__[ibd] = 0.;
-	} else if (dk < 0.) {
-	    x[k] = l[k];
-	    d__[ibd] = 0.;
-	}
+
+    if (alpha < 1.0) {
+        dk = d[ibd];
+        k = ind[ibd];
+        if (dk > 0.0) {
+            x[k] = u[k];
+            d[ibd] = 0.0;
+        } else if (dk < 0.0) {
+            x[k] = l[k];
+            d[ibd] = 0.0;
+        }
     }
-    i__1 = *nsub;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	k = ind[i__];
-	x[k] += alpha * d__[i__];
+    for (i=0; i<nsub; i++) {
+        k = ind[i];
+        x[k] += alpha * d[i];
     }
-L911:
 
     return 0;
-} /* subsm_ */
+}
 
-static int dcstep_(double *stx, double *fx, double *dx, 
-		   double *sty, double *fy, double *dy, double *stp, 
-		   double *fp, double *dp, logical *brackt,
-		   double *stpmin, double *stpmax)
+/* Compute a safeguarded step for a line search and update the
+   interval that contains a step satisfying a sufficient decrease and
+   a curvature condition (More' and Thuente). On input, (stx, fx, dx)
+   is the step with the least function value so far, (sty, fy, dy)
+   the other endpoint of the interval of uncertainty, and stp the
+   current step, with function value fp and derivative dp; all are
+   updated on output, as is the flag *brackt which records whether
+   a minimizer has been bracketed. The new step is confined to
+   [stpmin, stpmax].
+*/
+
+static void dcstep (double *pstx, double *pfx, double *pdx,
+                    double *psty, double *pfy, double *pdy,
+                    double *pstp, double fp, double dp, int *brackt,
+                    double stpmin, double stpmax)
 {
-    double d__1, d__2, d__3;
+    double stx = *pstx, fx = *pfx, dx = *pdx;
+    double sty = *psty, fy = *pfy, dy = *pdy;
+    double stp = *pstp;
+    double p, q, r, s, ts, sgnd, stpc, stpf, stpq, gamma, theta;
 
-    double p, q, r__, s, sgnd, stpc, stpf, stpq, gamma, theta;
+    sgnd = dp * (dx / fabs(dx));
 
-    sgnd = *dp * (*dx / fabs(*dx));
-    if (*fp > *fx) {
-	theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
-	d__1 = fabs(theta), d__2 = fabs(*dx),
-	    d__1 = max(d__1,d__2), d__2 = fabs(*dp);
-	s = max(d__1,d__2);
-	d__1 = theta / s;
-	gamma = s * sqrt(d__1 * d__1 - *dx / s * (*dp / s));
-	if (*stp < *stx) {
-	    gamma = -gamma;
-	}
-	p = gamma - *dx + theta;
-	q = gamma - *dx + gamma + *dp;
-	r__ = p / q;
-	stpc = *stx + r__ * (*stp - *stx);
-	stpq = *stx + *dx / ((*fx - *fp) / (*stp - *stx) + *dx) / 2. * (*stp 
-		- *stx);
-	if ((d__1 = stpc - *stx, fabs(d__1)) < (d__2 = stpq - *stx, fabs(d__2)))
-		 {
-	    stpf = stpc;
-	} else {
-	    stpf = stpc + (stpq - stpc) / 2.;
-	}
-	*brackt = 1;
-    } else if (sgnd < 0.) {
-	theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
-	d__1 = fabs(theta), d__2 = fabs(*dx), d__1 = max(d__1,d__2),
-	    d__2 = fabs(*dp);
-	s = max(d__1,d__2);
-	d__1 = theta / s;
-	gamma = s * sqrt(d__1 * d__1 - *dx / s * (*dp / s));
-	if (*stp > *stx) {
-	    gamma = -gamma;
-	}
-	p = gamma - *dp + theta;
-	q = gamma - *dp + gamma + *dx;
-	r__ = p / q;
-	stpc = *stp + r__ * (*stx - *stp);
-	stpq = *stp + *dp / (*dp - *dx) * (*stx - *stp);
-	if ((d__1 = stpc - *stp, fabs(d__1)) > (d__2 = stpq - *stp, fabs(d__2))) {
-	    stpf = stpc;
-	} else {
-	    stpf = stpq;
-	}
-	*brackt = 1;
-    } else if (fabs(*dp) < fabs(*dx)) {
-	theta = (*fx - *fp) * 3. / (*stp - *stx) + *dx + *dp;
-	d__1 = fabs(theta), d__2 = fabs(*dx), d__1 = max(d__1,d__2),
-	    d__2 = fabs(*dp);
-	s = max(d__1,d__2);
-	d__3 = theta / s;
-	d__1 = 0., d__2 = d__3 * d__3 - *dx / s * (*dp / s);
-	gamma = s * sqrt((max(d__1,d__2)));
-	if (*stp > *stx) {
-	    gamma = -gamma;
-	}
-	p = gamma - *dp + theta;
-	q = gamma + (*dx - *dp) + gamma;
-	r__ = p / q;
-	if (r__ < 0. && gamma != 0.) {
-	    stpc = *stp + r__ * (*stx - *stp);
-	} else if (*stp > *stx) {
-	    stpc = *stpmax;
-	} else {
-	    stpc = *stpmin;
-	}
-	stpq = *stp + *dp / (*dp - *dx) * (*stx - *stp);
-	if (*brackt) {
-	    if ((d__1 = stpc - *stp, fabs(d__1)) < (d__2 = stpq - *stp, fabs(
-		    d__2))) {
-		stpf = stpc;
-	    } else {
-		stpf = stpq;
-	    }
-	    if (*stp > *stx) {
-		d__1 = *stp + (*sty - *stp) * .66;
-		stpf = min(d__1,stpf);
-	    } else {
-		d__1 = *stp + (*sty - *stp) * .66;
-		stpf = max(d__1,stpf);
-	    }
-	} else {
-	    if ((d__1 = stpc - *stp, fabs(d__1)) >
-		(d__2 = stpq - *stp, fabs(d__2))) {
-		stpf = stpc;
-	    } else {
-		stpf = stpq;
-	    }
-	    stpf = min(*stpmax,stpf);
-	    stpf = max(*stpmin,stpf);
-	}
+    if (fp > fx) {
+        /* case 1: a higher function value; the minimum is bracketed */
+        theta = (fx - fp) * 3. / (stp - stx) + dx + dp;
+        s = dmax(dmax(fabs(theta), fabs(dx)), fabs(dp));
+        ts = theta / s;
+        gamma = s * sqrt(ts * ts - dx / s * (dp / s));
+        if (stp < stx) {
+            gamma = -gamma;
+        }
+        p = gamma - dx + theta;
+        q = gamma - dx + gamma + dp;
+        r = p / q;
+        stpc = stx + r * (stp - stx);
+        stpq = stx + dx / ((fx - fp) / (stp - stx) + dx) / 2. * (stp - stx);
+        if (fabs(stpc - stx) < fabs(stpq - stx)) {
+            stpf = stpc;
+        } else {
+            stpf = stpc + (stpq - stpc) / 2.;
+        }
+        *brackt = 1;
+    } else if (sgnd < 0.0) {
+        /* case 2: lower function value and derivatives of opposite
+           sign; the minimum is bracketed */
+        theta = (fx - fp) * 3. / (stp - stx) + dx + dp;
+        s = dmax(dmax(fabs(theta), fabs(dx)), fabs(dp));
+        ts = theta / s;
+        gamma = s * sqrt(ts * ts - dx / s * (dp / s));
+        if (stp > stx) {
+            gamma = -gamma;
+        }
+        p = gamma - dp + theta;
+        q = gamma - dp + gamma + dx;
+        r = p / q;
+        stpc = stp + r * (stx - stp);
+        stpq = stp + dp / (dp - dx) * (stx - stp);
+        if (fabs(stpc - stp) > fabs(stpq - stp)) {
+            stpf = stpc;
+        } else {
+            stpf = stpq;
+        }
+        *brackt = 1;
+    } else if (fabs(dp) < fabs(dx)) {
+        /* case 3: lower function value, derivatives of the same sign,
+           and the magnitude of the derivative decreases */
+        theta = (fx - fp) * 3. / (stp - stx) + dx + dp;
+        s = dmax(dmax(fabs(theta), fabs(dx)), fabs(dp));
+        ts = theta / s;
+        gamma = s * sqrt(dmax(0., ts * ts - dx / s * (dp / s)));
+        if (stp > stx) {
+            gamma = -gamma;
+        }
+        p = gamma - dp + theta;
+        q = gamma + (dx - dp) + gamma;
+        r = p / q;
+        if (r < 0.0 && gamma != 0.0) {
+            stpc = stp + r * (stx - stp);
+        } else if (stp > stx) {
+            stpc = stpmax;
+        } else {
+            stpc = stpmin;
+        }
+        stpq = stp + dp / (dp - dx) * (stx - stp);
+        if (*brackt) {
+            /* a minimizer has been bracketed */
+            if (fabs(stpc - stp) < fabs(stpq - stp)) {
+                stpf = stpc;
+            } else {
+                stpf = stpq;
+            }
+            if (stp > stx) {
+                stpf = dmin(stp + (sty - stp) * .66, stpf);
+            } else {
+                stpf = dmax(stp + (sty - stp) * .66, stpf);
+            }
+        } else {
+            if (fabs(stpc - stp) > fabs(stpq - stp)) {
+                stpf = stpc;
+            } else {
+                stpf = stpq;
+            }
+            stpf = dmin(stpmax, stpf);
+            stpf = dmax(stpmin, stpf);
+        }
     } else {
-	if (*brackt) {
-	    theta = (*fp - *fy) * 3. / (*sty - *stp) + *dy + *dp;
-	    d__1 = fabs(theta), d__2 = fabs(*dy),
-		d__1 = max(d__1,d__2), d__2 = fabs(*dp);
-	    s = max(d__1,d__2);
-	    d__1 = theta / s;
-	    gamma = s * sqrt(d__1 * d__1 - *dy / s * (*dp / s));
-	    if (*stp > *sty) {
-		gamma = -gamma;
-	    }
-	    p = gamma - *dp + theta;
-	    q = gamma - *dp + gamma + *dy;
-	    r__ = p / q;
-	    stpc = *stp + r__ * (*sty - *stp);
-	    stpf = stpc;
-	} else if (*stp > *stx) {
-	    stpf = *stpmax;
-	} else {
-	    stpf = *stpmin;
-	}
+        /* case 4: lower function value, derivatives of the same sign,
+           and the magnitude of the derivative does not decrease */
+        if (*brackt) {
+            theta = (fp - fy) * 3. / (sty - stp) + dy + dp;
+            s = dmax(dmax(fabs(theta), fabs(dy)), fabs(dp));
+            ts = theta / s;
+            gamma = s * sqrt(ts * ts - dy / s * (dp / s));
+            if (stp > sty) {
+                gamma = -gamma;
+            }
+            p = gamma - dp + theta;
+            q = gamma - dp + gamma + dy;
+            r = p / q;
+            stpc = stp + r * (sty - stp);
+            stpf = stpc;
+        } else if (stp > stx) {
+            stpf = stpmax;
+        } else {
+            stpf = stpmin;
+        }
     }
-    if (*fp > *fx) {
-	*sty = *stp;
-	*fy = *fp;
-	*dy = *dp;
+
+    /* update the interval which contains a minimizer */
+    if (fp > fx) {
+        sty = stp;
+        fy = fp;
+        dy = dp;
     } else {
-	if (sgnd < 0.) {
-	    *sty = *stx;
-	    *fy = *fx;
-	    *dy = *dx;
-	}
-	*stx = *stp;
-	*fx = *fp;
-	*dx = *dp;
+        if (sgnd < 0.0) {
+            sty = stx;
+            fy = fx;
+            dy = dx;
+        }
+        stx = stp;
+        fx = fp;
+        dx = dp;
     }
-    *stp = stpf;
-    return 0;
-} /* dcstep_ */
+
+    *pstx = stx; *pfx = fx; *pdx = dx;
+    *psty = sty; *pfy = fy; *pdy = dy;
+    *pstp = stpf;
+}
 
 static int dcsrch_(double *f, double *g, double *stp, 
 		   double *ftol, double *gtol, double *xtol,
@@ -1320,15 +1218,15 @@ static int dcsrch_(double *f, double *g, double *stp,
 	gm = *g - gtest;
 	gxm = gx - gtest;
 	gym = gy - gtest;
-	dcstep_(&stx, &fxm, &gxm, &sty, &fym, &gym, stp, &fm, &gm, &brackt, &
-		stmin, &stmax);
+	dcstep(&stx, &fxm, &gxm, &sty, &fym, &gym, stp, fm, gm, &brackt,
+	       stmin, stmax);
 	fx = fxm + stx * gtest;
 	fy = fym + sty * gtest;
 	gx = gxm + gtest;
 	gy = gym + gtest;
     } else {
-	dcstep_(&stx, &fx, &gx, &sty, &fy, &gy, stp, f, g, &brackt, &stmin, &
-		stmax);
+	dcstep(&stx, &fx, &gx, &sty, &fy, &gy, stp, *f, *g, &brackt,
+	       stmin, stmax);
     }
     if (brackt) {
 	if ((d__1 = sty - stx, fabs(d__1)) >= width1 * .66) {
@@ -1485,263 +1383,297 @@ static void timer_(double *ttime)
     *ttime = (double) tim / CLOCKS_PER_SEC;
 }
 
-static int cauchy_(int *n, double *x, double *l, 
-		   double *u, int *nbd, double *g, int *iorder,
-		   int *iwhere, double *t, double *d__, double *xcp, int *m, 
-		   double *wy, double *ws, double *sy, double *wt, 
-		   double *theta, int *col, int *head, double *p, 
-		   double *c__, double *wbp, double *v, int *nseg, 
-		   double *sbgnrm, int *info, double *epsmch)
+/* Compute the generalized Cauchy point (GCP) xcp: the first local
+   minimizer of the quadratic model along the projected gradient
+   path x(t) = P(x - t g). On exit @iwhere records the status of
+   each variable at the GCP, @c holds W'(xcp - x), and *nseg is the
+   number of segments of the path explored. The arrays @iorder and
+   @t (length n) are workspace for the breakpoints; @p, @c, @wbp and
+   @v are vectors of length 2m. Returns 0 on success or non-zero if
+   bmv() fails.
+*/
+
+static int cauchy (int n, const double *x, const double *l,
+                   const double *u, const int *nbd, const double *g,
+                   int *iorder, int *iwhere, double *t, double *d,
+                   double *xcp, int m, const double *wy,
+                   const double *ws, const double *sy, const double *wt,
+                   double theta, int col, int head, double *p, double *c,
+                   double *wbp, double *v, int *nseg, double sbgnrm,
+                   double epsmch)
 {
-    int wy_dim1, wy_offset, ws_dim1, ws_offset, sy_dim1, sy_offset, 
-	wt_dim1, wt_offset, i__1, i__2;
-    double d__1;
-
-    int i__, j;
-    double f1, f2, dt, tj, tj0;
+    double f1, f2, f2_org, dt, dtm, tj, tj0, tsum, bkmin;
+    double dibp, dibp2, zibp, neggi, wmc, wmp, wmw;
     double tu = 0.0, tl = 0.0;
-    int ibp;
-    double dtm;
-    double wmc, wmp, wmw;
-    int col2;
-    double dibp;
-    int iter;
-    double zibp, tsum, dibp2;
-    logical bnded;
-    double neggi;
-    int nfree;
-    double bkmin;
-    int nleft;
-    double f2_org__;
-    int nbreak, ibkmin;
-    int pointr;
-    logical xlower, xupper;
+    int i, j, ibp = 0, iter, nfree, nbreak, ibkmin, nleft, pointr;
+    int col2 = 2*col;
+    int bnded, xlower, xupper, allfixed = 0;
+    int info;
 
-    --xcp;
-    --d__;
-    --t;
-    --iwhere;
-    --iorder;
-    --g;
-    --nbd;
-    --u;
-    --l;
-    --x;
-    --v;
-    --wbp;
-    --c__;
-    --p;
-    wt_dim1 = *m;
-    wt_offset = 1 + wt_dim1;
-    wt -= wt_offset;
-    sy_dim1 = *m;
-    sy_offset = 1 + sy_dim1;
-    sy -= sy_offset;
-    ws_dim1 = *n;
-    ws_offset = 1 + ws_dim1;
-    ws -= ws_offset;
-    wy_dim1 = *n;
-    wy_offset = 1 + wy_dim1;
-    wy -= wy_offset;
+    /* check the status of the variables, reset iwhere(i) if
+       necessary; compute the Cauchy direction d and the breakpoints
+       t; initialize the derivative f1 and the vector p = W'd */
 
-    if (*sbgnrm <= 0.) {
-	dcopy_(n, &x[1], &c__1, &xcp[1], &c__1);
-	return 0;
+    if (sbgnrm <= 0.0) {
+        /* x is the GCP */
+        copy(n, x, xcp);
+        return 0;
     }
+
     bnded = 1;
-    nfree = *n + 1;
+    nfree = n;
     nbreak = 0;
     ibkmin = 0;
-    bkmin = 0.;
-    col2 = *col << 1;
-    f1 = 0.;
-    i__1 = col2;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	p[i__] = 0.;
+    bkmin = 0.0;
+    f1 = 0.0;
+
+    for (i=0; i<col2; i++) {
+        p[i] = 0.0;
     }
-    i__1 = *n;
-    for (i__ = 1; i__ <= i__1; ++i__) {
-	neggi = -g[i__];
-	if (iwhere[i__] != 3 && iwhere[i__] != -1) {
-	    if (nbd[i__] <= 2) {
-		tl = x[i__] - l[i__];
-	    }
-	    if (nbd[i__] >= 2) {
-		tu = u[i__] - x[i__];
-	    }
-	    xlower = nbd[i__] <= 2 && tl <= 0.;
-	    xupper = nbd[i__] >= 2 && tu <= 0.;
-	    iwhere[i__] = 0;
-	    if (xlower) {
-		if (neggi <= 0.) {
-		    iwhere[i__] = 1;
-		}
-	    } else if (xupper) {
-		if (neggi >= 0.) {
-		    iwhere[i__] = 2;
-		}
-	    } else {
-		if (fabs(neggi) <= 0.) {
-		    iwhere[i__] = -3;
-		}
-	    }
-	}
-	pointr = *head;
-	if (iwhere[i__] != 0 && iwhere[i__] != -1) {
-	    d__[i__] = 0.;
-	} else {
-	    d__[i__] = neggi;
-	    f1 -= neggi * neggi;
-	    i__2 = *col;
-	    for (j = 1; j <= i__2; ++j) {
-		p[j] += wy[i__ + pointr * wy_dim1] * neggi;
-		p[*col + j] += ws[i__ + pointr * ws_dim1] * neggi;
-		pointr = pointr % *m + 1;
-	    }
-	    if (nbd[i__] <= 2 && nbd[i__] != 0 && neggi < 0.) {
-		++nbreak;
-		iorder[nbreak] = i__;
-		t[nbreak] = tl / (-neggi);
-		if (nbreak == 1 || t[nbreak] < bkmin) {
-		    bkmin = t[nbreak];
-		    ibkmin = nbreak;
-		}
-	    } else if (nbd[i__] >= 2 && neggi > 0.) {
-		++nbreak;
-		iorder[nbreak] = i__;
-		t[nbreak] = tu / neggi;
-		if (nbreak == 1 || t[nbreak] < bkmin) {
-		    bkmin = t[nbreak];
-		    ibkmin = nbreak;
-		}
-	    } else {
-		--nfree;
-		iorder[nfree] = i__;
-		if (fabs(neggi) > 0.) {
-		    bnded = 0;
-		}
-	    }
-	}
+
+    /* iwhere[i] = 0 if x[i] is free and has bounds
+                 = 1 if x[i] is at its lower bound
+                 = 2 if x[i] is at its upper bound
+                 = 3 if x[i] is always fixed (l[i] == u[i])
+                 = -1 if x[i] is always free (no bounds)
+                 = -3 if x[i] is free but its gradient is zero
+    */
+
+    for (i=0; i<n; i++) {
+        neggi = -g[i];
+        if (iwhere[i] != 3 && iwhere[i] != -1) {
+            /* if x[i] is not a constant and has bounds,
+               compute the difference between x[i] and its bounds */
+            if (nbd[i] <= 2) {
+                tl = x[i] - l[i];
+            }
+            if (nbd[i] >= 2) {
+                tu = u[i] - x[i];
+            }
+            /* if a variable is close enough to a bound
+               we treat it as at bound */
+            xlower = nbd[i] <= 2 && tl <= 0.0;
+            xupper = nbd[i] >= 2 && tu <= 0.0;
+            /* reset iwhere[i] */
+            iwhere[i] = 0;
+            if (xlower) {
+                if (neggi <= 0.0) {
+                    iwhere[i] = 1;
+                }
+            } else if (xupper) {
+                if (neggi >= 0.0) {
+                    iwhere[i] = 2;
+                }
+            } else if (fabs(neggi) <= 0.0) {
+                iwhere[i] = -3;
+            }
+        }
+        pointr = head;
+        if (iwhere[i] != 0 && iwhere[i] != -1) {
+            d[i] = 0.0;
+        } else {
+            d[i] = neggi;
+            f1 -= neggi * neggi;
+            /* calculate p := p - W'e_i * (g_i) */
+            for (j=0; j<col; j++) {
+                p[j] += wy[i + pointr*n] * neggi;
+                p[col + j] += ws[i + pointr*n] * neggi;
+                pointr = (pointr + 1) % m;
+            }
+            if (nbd[i] <= 2 && nbd[i] != 0 && neggi < 0.0) {
+                /* x[i] + d[i] is bounded; compute t[i] */
+                iorder[nbreak] = i;
+                t[nbreak] = tl / (-neggi);
+                if (nbreak == 0 || t[nbreak] < bkmin) {
+                    bkmin = t[nbreak];
+                    ibkmin = nbreak;
+                }
+                nbreak++;
+            } else if (nbd[i] >= 2 && neggi > 0.0) {
+                /* x[i] + d[i] is bounded; compute t[i] */
+                iorder[nbreak] = i;
+                t[nbreak] = tu / neggi;
+                if (nbreak == 0 || t[nbreak] < bkmin) {
+                    bkmin = t[nbreak];
+                    ibkmin = nbreak;
+                }
+                nbreak++;
+            } else {
+                /* x[i] + d[i] is not bounded */
+                iorder[--nfree] = i;
+                if (fabs(neggi) > 0.0) {
+                    bnded = 0;
+                }
+            }
+        }
     }
-    if (*theta != 1.) {
-	dscal_(col, theta, &p[*col + 1], &c__1);
+
+    /* the indices of the nonzero components of d are now stored
+       in iorder[0..nbreak-1] and iorder[nfree..n-1];
+       the smallest of the nbreak breakpoints is in t[ibkmin] = bkmin */
+
+    if (theta != 1.0) {
+        /* complete the initialization of p for theta not= one */
+        scal(col, theta, p + col);
     }
-    dcopy_(n, &x[1], &c__1, &xcp[1], &c__1);
-    if (nbreak == 0 && nfree == *n + 1) {
-	return 0;
+
+    /* initialize GCP xcp = x */
+    copy(n, x, xcp);
+
+    if (nbreak == 0 && nfree == n) {
+        /* d is a zero vector, return with the initial xcp as GCP */
+        return 0;
     }
-    i__1 = col2;
-    for (j = 1; j <= i__1; ++j) {
-	c__[j] = 0.;
+
+    /* initialize c = W'(xcp - x) = 0 */
+    for (j=0; j<col2; j++) {
+        c[j] = 0.0;
     }
-    f2 = -(*theta) * f1;
-    f2_org__ = f2;
-    if (*col > 0) {
-	bmv_(m, &sy[sy_offset], &wt[wt_offset], col, &p[1], &v[1], info);
-	if (*info != 0) {
-	    return 0;
-	}
-	f2 -= ddot_(&col2, &v[1], &c__1, &p[1], &c__1);
+
+    /* initialize derivative f2 */
+    f2 = -theta * f1;
+    f2_org = f2;
+    if (col > 0) {
+        info = bmv(m, sy, wt, col, p, v);
+        if (info != 0) {
+            return info;
+        }
+        f2 -= dot(col2, v, p);
     }
     dtm = -f1 / f2;
-    tsum = 0.;
+    tsum = 0.0;
     *nseg = 1;
-    if (nbreak == 0) {
-	goto L888;
+
+    if (nbreak > 0) {
+        nleft = nbreak;
+        iter = 1;
+        tj = 0.0;
+
+        /* loop over the breakpoints, looking for the GCP */
+        while (1) {
+            /* find the next smallest breakpoint, tj */
+            tj0 = tj;
+            if (iter == 1) {
+                /* since we already have the smallest breakpoint we need
+                   not do heapsort yet; often only one breakpoint is used
+                   and the cost of heapsort is avoided */
+                tj = bkmin;
+                ibp = iorder[ibkmin];
+            } else {
+                if (iter == 2) {
+                    /* replace the already used smallest breakpoint with
+                       the last one, before the heapsort call */
+                    if (ibkmin != nbreak - 1) {
+                        t[ibkmin] = t[nbreak - 1];
+                        iorder[ibkmin] = iorder[nbreak - 1];
+                    }
+                }
+                /* update the heap structure of breakpoints (if iter = 2,
+                   initialize heap) */
+                hpsolb(nleft, t, iorder, iter - 2);
+                tj = t[nleft - 1];
+                ibp = iorder[nleft - 1];
+            }
+            dt = tj - tj0;
+
+            /* if a minimizer is within this interval, locate the GCP
+               and return */
+            if (dtm < dt) {
+                break;
+            }
+
+            /* otherwise fix one variable and reset the corresponding
+               component of d to zero */
+            tsum += dt;
+            nleft--;
+            iter++;
+            dibp = d[ibp];
+            d[ibp] = 0.0;
+            if (dibp > 0.0) {
+                zibp = u[ibp] - x[ibp];
+                xcp[ibp] = u[ibp];
+                iwhere[ibp] = 2;
+            } else {
+                zibp = l[ibp] - x[ibp];
+                xcp[ibp] = l[ibp];
+                iwhere[ibp] = 1;
+            }
+            if (nleft == 0 && nbreak == n) {
+                /* all n variables are fixed, return with xcp as GCP */
+                dtm = dt;
+                allfixed = 1;
+                break;
+            }
+
+            /* update the derivative information */
+            (*nseg)++;
+            dibp2 = dibp * dibp;
+
+            /* update f1 and f2; temporarily set f1 and f2 for col = 0 */
+            f1 = f1 + dt * f2 + dibp2 - theta * dibp * zibp;
+            f2 -= theta * dibp2;
+
+            if (col > 0) {
+                /* update c = c + dt*p */
+                axpy(col2, dt, p, c);
+                /* choose wbp, the row of W corresponding to the
+                   breakpoint encountered */
+                pointr = head;
+                for (j=0; j<col; j++) {
+                    wbp[j] = wy[ibp + pointr*n];
+                    wbp[col + j] = theta * ws[ibp + pointr*n];
+                    pointr = (pointr + 1) % m;
+                }
+                /* compute (wbp)Mc, (wbp)Mp, and (wbp)M(wbp)' */
+                info = bmv(m, sy, wt, col, wbp, v);
+                if (info != 0) {
+                    return info;
+                }
+                wmc = dot(col2, c, v);
+                wmp = dot(col2, p, v);
+                wmw = dot(col2, wbp, v);
+                /* update p = p - dibp*wbp */
+                axpy(col2, -dibp, wbp, p);
+                /* complete updating f1 and f2 while col > 0 */
+                f1 += dibp * wmc;
+                f2 = f2 + dibp * 2. * wmp - dibp2 * wmw;
+            }
+
+            f2 = dmax(epsmch * f2_org, f2);
+            if (nleft > 0) {
+                /* repeat the loop for unsearched intervals */
+                dtm = -f1 / f2;
+            } else {
+                if (bnded) {
+                    f1 = 0.0;
+                    f2 = 0.0;
+                    dtm = 0.0;
+                } else {
+                    dtm = -f1 / f2;
+                }
+                break;
+            }
+        }
     }
-    nleft = nbreak;
-    iter = 1;
-    tj = 0.;
-L777:
-    tj0 = tj;
-    if (iter == 1) {
-	tj = bkmin;
-	ibp = iorder[ibkmin];
-    } else {
-	if (iter == 2) {
-	    if (ibkmin != nbreak) {
-		t[ibkmin] = t[nbreak];
-		iorder[ibkmin] = iorder[nbreak];
-	    }
-	}
-	i__1 = iter - 2;
-	hpsolb_(&nleft, &t[1], &iorder[1], &i__1);
-	tj = t[nleft];
-	ibp = iorder[nleft];
+
+    if (!allfixed) {
+        if (dtm <= 0.0) {
+            dtm = 0.0;
+        }
+        tsum += dtm;
+        /* move free variables (i.e., the ones w/o breakpoints) and
+           the variables whose breakpoints haven't been reached */
+        axpy(n, tsum, d, xcp);
     }
-    dt = tj - tj0;
-    if (dtm < dt) {
-	goto L888;
-    }
-    tsum += dt;
-    --nleft;
-    ++iter;
-    dibp = d__[ibp];
-    d__[ibp] = 0.;
-    if (dibp > 0.) {
-	zibp = u[ibp] - x[ibp];
-	xcp[ibp] = u[ibp];
-	iwhere[ibp] = 2;
-    } else {
-	zibp = l[ibp] - x[ibp];
-	xcp[ibp] = l[ibp];
-	iwhere[ibp] = 1;
-    }
-    if (nleft == 0 && nbreak == *n) {
-	dtm = dt;
-	goto L999;
-    }
-    ++(*nseg);
-    d__1 = dibp;
-    dibp2 = d__1 * d__1;
-    f1 = f1 + dt * f2 + dibp2 - *theta * dibp * zibp;
-    f2 -= *theta * dibp2;
-    if (*col > 0) {
-	daxpy_(&col2, &dt, &p[1], &c__1, &c__[1], &c__1);
-	pointr = *head;
-	i__1 = *col;
-	for (j = 1; j <= i__1; ++j) {
-	    wbp[j] = wy[ibp + pointr * wy_dim1];
-	    wbp[*col + j] = *theta * ws[ibp + pointr * ws_dim1];
-	    pointr = pointr % *m + 1;
-	}
-	bmv_(m, &sy[sy_offset], &wt[wt_offset], col, &wbp[1], &v[1], info);
-	if (*info != 0) {
-	    return 0;
-	}
-	wmc = ddot_(&col2, &c__[1], &c__1, &v[1], &c__1);
-	wmp = ddot_(&col2, &p[1], &c__1, &v[1], &c__1);
-	wmw = ddot_(&col2, &wbp[1], &c__1, &v[1], &c__1);
-	d__1 = -dibp;
-	daxpy_(&col2, &d__1, &wbp[1], &c__1, &p[1], &c__1);
-	f1 += dibp * wmc;
-	f2 = f2 + dibp * 2. * wmp - dibp2 * wmw;
-    }
-    d__1 = *epsmch * f2_org__;
-    f2 = max(d__1,f2);
-    if (nleft > 0) {
-	dtm = -f1 / f2;
-	goto L777;
-    } else if (bnded) {
-	f1 = 0.;
-	f2 = 0.;
-	dtm = 0.;
-    } else {
-	dtm = -f1 / f2;
-    }
-L888:
-    if (dtm <= 0.) {
-	dtm = 0.;
-    }
-    tsum += dtm;
-    daxpy_(n, &tsum, &d__[1], &c__1, &xcp[1], &c__1);
-L999:
-    if (*col > 0) {
-	daxpy_(&col2, &dtm, &p[1], &c__1, &c__[1], &c__1);
+
+    /* update c = c + dtm*p = W'(x^c - x), which will be used in
+       computing r = Z'(B(x^c - x) + g) */
+    if (col > 0) {
+        axpy(col2, dtm, p, c);
     }
 
     return 0;
-} /* cauchy_ */
+}
 
 static int mainlb_(int *n, int *m, double *x, 
 		   double *l, double *u, int *nbd, double *f, double *g,
@@ -1757,7 +1689,7 @@ static int mainlb_(int *n, int *m, double *x,
 	snd_dim1, snd_offset, i__1;
     double d__1, d__2;
 
-    int i__, k;
+    int i__;
     double gd, dr, rr, dtd;
     int col;
     double tol;
@@ -1837,7 +1769,7 @@ static int mainlb_(int *n, int *m, double *x,
 	epsmch = 2.22e-16;
 	timer_(&time1);
 	col = 0;
-	head = 1;
+	head = 0;
 	theta = 1.;
 	iupdat = 0;
 	updatd = 0;
@@ -1870,11 +1802,11 @@ static int mainlb_(int *n, int *m, double *x,
 	strcpy(word, "---");
 	info = 0;
 	itfile = 8;
-	errclb_(n, m, factr, &l[1], &u[1], &nbd[1], task, &info, &k);
+	errclb(*n, *m, *factr, &l[1], &u[1], &nbd[1], task);
 	if (strncmp(task, "ERROR", 5) == 0) {
 	    return 0;
 	}
-	active_(n, &l[1], &u[1], &nbd[1], &x[1], &iwhere[1], &prjctd, 
+	active(*n, &l[1], &u[1], &nbd[1], &x[1], &iwhere[1], &prjctd, 
 		&cnstnd, &boxed);
     } else {
 	prjctd = lsave[1];
@@ -1937,7 +1869,7 @@ static int mainlb_(int *n, int *m, double *x,
     goto L1000;
 L111:
     nfgv = 1;
-    projgr_(n, &l[1], &u[1], &nbd[1], &x[1], &g[1], &sbgnrm);
+    sbgnrm = projgr(*n, &l[1], &u[1], &nbd[1], &x[1], &g[1]);
     if (sbgnrm <= *pgtol) {
 	strcpy(task, "CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_<=_PGTOL");
 	goto L999;
@@ -1951,15 +1883,15 @@ L222:
 	goto L333;
     }
     timer_(&cpu1);
-    cauchy_(n, &x[1], &l[1], &u[1], &nbd[1], &g[1], &indx2[1], &iwhere[1],
-	    &t[1], &d__[1], &z__[1], m, &wy[wy_offset], &ws[ws_offset],
-	    &sy[sy_offset], &wt[wt_offset], &theta, &col, &head, &wa[1],
-	    &wa[(*m << 1) + 1], &wa[(*m << 2) + 1], &wa[*m * 6 + 1], &nseg,
-	    &sbgnrm, &info, &epsmch);
+    info = cauchy(*n, &x[1], &l[1], &u[1], &nbd[1], &g[1], &indx2[1],
+		  &iwhere[1], &t[1], &d__[1], &z__[1], *m, &wy[wy_offset],
+		  &ws[ws_offset], &sy[sy_offset], &wt[wt_offset], theta, col,
+		  head, &wa[1], &wa[(*m << 1) + 1], &wa[(*m << 2) + 1],
+		  &wa[*m * 6 + 1], &nseg, sbgnrm, epsmch);
     if (info != 0) {
 	info = 0;
 	col = 0;
-	head = 1;
+	head = 0;
 	theta = 1.;
 	iupdat = 0;
 	updatd = 0;
@@ -1970,8 +1902,8 @@ L222:
     timer_(&cpu2);
     cachyt = cachyt + cpu2 - cpu1;
     nintol += nseg;
-    freev_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iwhere[1],
-	   &wrk, &updatd, &cnstnd, &iter);
+    wrk = freev(*n, &nfree, &index[1], &nenter, &ileave, &indx2[1],
+		&iwhere[1], updatd, cnstnd, iter);
     nact = *n - nfree;
 L333:
     if (nfree == 0 || col == 0) {
@@ -1979,14 +1911,15 @@ L333:
     }
     timer_(&cpu1);
     if (wrk) {
-	formk_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iupdat,
-	       &updatd, &wn[wn_offset], &snd[snd_offset], m, &ws[ws_offset],
-	       &wy[wy_offset], &sy[sy_offset], &theta, &col, &head, &info);
+	info = formk(*n, nfree, &index[1], nenter, ileave, &indx2[1], iupdat,
+		     updatd, &wn[wn_offset], &snd[snd_offset], *m,
+		     &ws[ws_offset], &wy[wy_offset], &sy[sy_offset], theta,
+		     col, head);
     }
     if (info != 0) {
 	info = 0;
 	col = 0;
-	head = 1;
+	head = 0;
 	theta = 1.;
 	iupdat = 0;
 	updatd = 0;
@@ -1994,20 +1927,20 @@ L333:
 	sbtime = sbtime + cpu2 - cpu1;
 	goto L222;
     }
-    cmprlb_(n, m, &x[1], &g[1], &ws[ws_offset], &wy[wy_offset], &sy[sy_offset],
-	    &wt[wt_offset], &z__[1], &r__[1], &wa[1], &index[1], &theta, &col,
-	    &head, &nfree, &cnstnd, &info);
+    info = cmprlb(*n, *m, &x[1], &g[1], &ws[ws_offset], &wy[wy_offset],
+		  &sy[sy_offset], &wt[wt_offset], &z__[1], &r__[1], &wa[1],
+		  &index[1], theta, col, head, nfree, cnstnd);
     if (info != 0) {
 	goto L444;
     }
-    subsm_(n, m, &nfree, &index[1], &l[1], &u[1], &nbd[1], &z__[1], &r__[1],
-	   &xp[1], &ws[ws_offset], &wy[wy_offset], &theta, &x[1], &g[1], &col,
-	   &head, &iword, &wa[1], &wn[wn_offset], &info);
+    info = subsm(*n, *m, nfree, &index[1], &l[1], &u[1], &nbd[1], &z__[1],
+		 &r__[1], &xp[1], &ws[ws_offset], &wy[wy_offset], theta, &x[1],
+		 &g[1], col, head, &iword, &wa[1], &wn[wn_offset]);
 L444:
     if (info != 0) {
 	info = 0;
 	col = 0;
-	head = 1;
+	head = 0;
 	theta = 1.;
 	iupdat = 0;
 	updatd = 0;
@@ -2048,7 +1981,7 @@ L666:
 	    }
 	    info = 0;
 	    col = 0;
-	    head = 1;
+	    head = 0;
 	    theta = 1.;
 	    iupdat = 0;
 	    updatd = 0;
@@ -2063,7 +1996,7 @@ L666:
 	timer_(&cpu2);
 	lnscht = lnscht + cpu2 - cpu1;
 	++iter;
-	projgr_(n, &l[1], &u[1], &nbd[1], &x[1], &g[1], &sbgnrm);
+	sbgnrm = projgr(*n, &l[1], &u[1], &nbd[1], &x[1], &g[1]);
 	goto L1000;
     }
 L777:
@@ -2100,15 +2033,15 @@ L777:
     }
     updatd = 1;
     ++iupdat;
-    matupd_(n, m, &ws[ws_offset], &wy[wy_offset], &sy[sy_offset],
-	    &ss[ss_offset], &d__[1], &r__[1], &itail, &iupdat, &col,
-	    &head, &theta, &rr, &dr, &stp, &dtd);
-    formt_(m, &wt[wt_offset], &sy[sy_offset], &ss[ss_offset], &col,
-	   &theta, &info);
+    matupd(*n, *m, &ws[ws_offset], &wy[wy_offset], &sy[sy_offset],
+	   &ss[ss_offset], &d__[1], &r__[1], &itail, iupdat, &col, &head,
+	   &theta, rr, dr, stp, dtd);
+    info = formt(*m, &wt[wt_offset], &sy[sy_offset], &ss[ss_offset], col,
+		 theta);
     if (info != 0) {
 	info = 0;
 	col = 0;
-	head = 1;
+	head = 0;
 	theta = 1.;
 	iupdat = 0;
 	updatd = 0;
