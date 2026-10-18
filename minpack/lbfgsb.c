@@ -2169,8 +2169,6 @@ int setulb_(int *n, int *m, double *x,
 	    char *task, char *csave, logical *lsave, 
 	    int *isave, double *dsave)
 {
-    int i__1;
-
     int ld, lr, lt, lz, lwa, lwn, lss, lxp, lws, lwt, lsy, lwy, lsnd;
 
     --iwa;
@@ -2185,10 +2183,10 @@ int setulb_(int *n, int *m, double *x,
     --dsave;
 
     if (strncmp(task, "START", 5) == 0) {
+	int i__1 = *m;
+
 	isave[1] = *m * *n;
-	i__1 = *m;
 	isave[2] = i__1 * i__1;
-	i__1 = *m;
 	isave[3] = i__1 * i__1 << 2;
 	isave[4] = 1;
 	isave[5] = isave[4] + isave[1];
