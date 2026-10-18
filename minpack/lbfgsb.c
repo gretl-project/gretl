@@ -2,9 +2,8 @@
    lbfgsb.c -- translated from lbfgsb.f (plus a couple of functions
    from linpack.f) via f2c, then subject to minimal clean-up by
    Allin Cottrell, 2015-07-26. Rewritten in idiomatic C (0-based
-   indexing, callbacks in place of reverse communication), 2026-10,
-   while preserving the floating-point results of the original
-   bit-for-bit. The original source is version 3.0 of L-BFGS-B,
+   indexing, callbacks in place of reverse communication, no BLAS),
+   2026-10. The original source is version 3.0 of L-BFGS-B,
    downloaded from
 
    http://users.iems.northwestern.edu/~nocedal/lbfgsb.html
@@ -42,31 +41,42 @@
 #include <string.h>
 #include <math.h>
 
-#include "gretl_f2c.h"
-#include "clapack_double.h"
 #include "minpack.h"
 
-static int c__1 = 1;
-
-/* Wrappers for the BLAS routines, taking scalars by value. Note that
-   we can't replace these by plain C loops without changing the
-   numerical results, since BLAS implementations may use FMA and/or
-   accumulate in a different order.
-*/
+/* Basic vector operations (formerly calls to the BLAS) */
 
 static inline double dot (int n, const double *x, const double *y)
 {
-    return ddot_(&n, (double *) x, &c__1, (double *) y, &c__1);
+    double s = 0.0;
+    int i;
+
+    for (i=0; i<n; i++) {
+        s += x[i] * y[i];
+    }
+
+    return s;
 }
+
+/* y += a * x */
 
 static inline void axpy (int n, double a, const double *x, double *y)
 {
-    daxpy_(&n, &a, (double *) x, &c__1, y, &c__1);
+    int i;
+
+    for (i=0; i<n; i++) {
+        y[i] += a * x[i];
+    }
 }
+
+/* x *= a */
 
 static inline void scal (int n, double a, double *x)
 {
-    dscal_(&n, &a, x, &c__1);
+    int i;
+
+    for (i=0; i<n; i++) {
+        x[i] *= a;
+    }
 }
 
 static inline void copy (int n, const double *x, double *y)
@@ -88,6 +98,22 @@ static inline double dmax (double a, double b)
 static inline double dmin (double a, double b)
 {
     return a <= b ? a : b;
+}
+
+/* project x onto the feasible set */
+
+static void project (int n, const double *l, const double *u,
+                     const int *nbd, double *x)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+        if ((nbd[i] == 1 || nbd[i] == 2) && x[i] < l[i]) {
+            x[i] = l[i];
+        } else if ((nbd[i] == 2 || nbd[i] == 3) && x[i] > u[i]) {
+            x[i] = u[i];
+        }
+    }
 }
 
 /* are f and all elements of g finite? */
@@ -1384,6 +1410,10 @@ static int lnsrlb (int n, const double *l, const double *u,
                     x[i] = ls->stp * d[i] + t[i];
                 }
             }
+            /* Not in the original: rounding error can put x a few ulps
+               outside of the bounds, which matters if the function is
+               undefined there */
+            project(n, l, u, nbd, x);
             if (fgfunc(x, f, g, data)) {
                 return LNSRCH_ABORT;
             }
