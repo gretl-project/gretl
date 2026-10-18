@@ -777,6 +777,7 @@ static int simple_gradient (double *b, double *g, int n,
         b[i] = bi0 - h;
         if (bi0 != 0.0 && fabs((bi0 - b[i]) / bi0) < B_RELMIN) {
             fprintf(stderr, "numerical gradient: switching to Richardson\n");
+            b[i] = bi0;
             *redo = 1;
             return 0;
         }
@@ -792,6 +793,156 @@ static int simple_gradient (double *b, double *g, int n,
         fprintf(stderr, "g[%d] = (%.16g - %.16g) / (2.0 * %g) = %g\n",
                 i, f2, f1, h, g[i]);
 #endif
+    }
+
+    return 0;
+}
+
+/* Room for a finite-difference step below and above b, given the
+   L-BFGS-B bound type @nbd (0 = none, 1 = lower only, 2 = both,
+   3 = upper only).
+*/
+
+static void bound_room (double b, double l, double u, int nbd,
+                        double *lo, double *hi)
+{
+    *lo = (nbd == 1 || nbd == 2) ? b - l : HUGE_VAL;
+    *hi = (nbd == 2 || nbd == 3) ? u - b : HUGE_VAL;
+}
+
+/* For a one-sided difference: the direction in which there's more
+   room, and a step of at most @h in that direction. Returns 0 if
+   there's no room at all (a fixed parameter).
+*/
+
+static int one_sided_step (double lo, double hi, double h, double *hs)
+{
+    double room = (hi >= lo) ? hi : lo;
+
+    if (room <= 0.0) {
+        return 0;
+    }
+    *hs = (room < h) ? room : h;
+    if (hi < lo) {
+        *hs = -*hs;
+    }
+
+    return 1;
+}
+
+/* Numerical gradient for L-BFGS-B which respects the bounds on the
+   parameters, so the function is never evaluated outside of the
+   feasible region. Where b[i] +/- h lies within the bounds we use
+   the same central difference as simple_gradient() or
+   richardson_gradient() (so in the interior the result is
+   unchanged); otherwise we use a one-sided difference toward the
+   interior, based on @f0, the function value at @b. Returns non-zero
+   if the function could not be evaluated.
+*/
+
+static int bounded_gradient (double *b, double *g, int n, double f0,
+                             const double *l, const double *u,
+                             const int *nbd, BFGS_CRIT_FUNC func,
+                             void *data)
+{
+    int richardson = libset_get_bool(BFGS_RSTEP);
+    double lo, hi, hs, bi0, f1, f2;
+    int i;
+
+    if (na(f0)) {
+        return 1;
+    }
+
+    if (!richardson) {
+        const double h = 1.0e-8;
+
+        for (i=0; i<n; i++) {
+            bi0 = b[i];
+            if (bi0 != 0.0 && fabs(((bi0 - (bi0 - h))) / bi0) < B_RELMIN) {
+                /* as in simple_gradient() */
+                fprintf(stderr, "numerical gradient: switching to Richardson\n");
+                richardson = 1;
+                break;
+            }
+            bound_room(bi0, l[i], u[i], nbd[i], &lo, &hi);
+            if (lo >= h && hi >= h) {
+                b[i] = bi0 - h;
+                f1 = func(b, data);
+                b[i] = bi0 + h;
+                f2 = func(b, data);
+                b[i] = bi0;
+                if (na(f1) || na(f2)) {
+                    return 1;
+                }
+                g[i] = (f2 - f1) / (2.0 * h);
+            } else if (one_sided_step(lo, hi, h, &hs)) {
+                b[i] = bi0 + hs;
+                f1 = func(b, data);
+                b[i] = bi0;
+                if (na(f1)) {
+                    return 1;
+                }
+                g[i] = (f1 - f0) / hs;
+            } else {
+                g[i] = 0.0;
+            }
+        }
+    }
+
+    if (richardson) {
+        double df[RSTEPS];
+        double eps = 1.0e-4;
+        double d = 0.0001;
+        double h, p, pm;
+        int r = RSTEPS;
+        int k, m;
+
+        for (i=0; i<n; i++) {
+            bi0 = b[i];
+            h = fabs(d * b[i]) + eps * (floateq(b[i], 0.0));
+            bound_room(bi0, l[i], u[i], nbd[i], &lo, &hi);
+            if (lo >= h && hi >= h) {
+                /* central differences, as in richardson_gradient() */
+                for (k=0; k<r; k++) {
+                    b[i] = bi0 - h;
+                    f1 = func(b, data);
+                    b[i] = bi0 + h;
+                    f2 = func(b, data);
+                    if (na(f1) || na(f2)) {
+                        b[i] = bi0;
+                        return 1;
+                    }
+                    df[k] = (f2 - f1) / (2 * h);
+                    h /= 2.0;
+                }
+                p = 4.0; /* the error is O(h^2) */
+            } else if (one_sided_step(lo, hi, h, &hs)) {
+                /* one-sided differences */
+                for (k=0; k<r; k++) {
+                    b[i] = bi0 + hs;
+                    f1 = func(b, data);
+                    if (na(f1)) {
+                        b[i] = bi0;
+                        return 1;
+                    }
+                    df[k] = (f1 - f0) / hs;
+                    hs /= 2.0;
+                }
+                p = 2.0; /* the error is O(h) */
+            } else {
+                g[i] = 0.0;
+                continue;
+            }
+            b[i] = bi0;
+            pm = p;
+            for (m=0; m<r-1; m++) {
+                for (k=0; k<r-m-1; k++) {
+                    df[k] = (df[k+1] * pm - df[k]) / (pm - 1.0);
+                }
+                pm *= p;
+            }
+            g[i] = df[0];
+        }
     }
 
     return 0;
@@ -1427,6 +1578,9 @@ struct lbfgs_info {
     int iter;          /* iteration number, for display */
     double steplen;    /* step length in the last iteration */
     double *gtmp;      /* workspace for printing the gradient */
+    const double *l;   /* bounds, for the numerical gradient */
+    const double *u;
+    const int *nbd;
     gretlopt opt;
     PRN *prn;
     int err;
@@ -1460,6 +1614,8 @@ static int lbfgs_fg (double *b, double *f, double *g, void *p)
 {
     struct lbfgs_info *li = p;
     int n = li->n;
+    int gerr = 0;
+    double f0;
 
     if (get_user_stop()) {
         li->err = E_STOP;
@@ -1471,6 +1627,7 @@ static int lbfgs_fg (double *b, double *f, double *g, void *p)
     } else {
         *f = li->cfunc(b, li->data);
     }
+    f0 = *f;
     if (!na(*f)) {
         if (li->maximize) *f = -*f;
     } else if (*li->fncount == 0) {
@@ -1480,8 +1637,16 @@ static int lbfgs_fg (double *b, double *f, double *g, void *p)
     }
     *li->fncount += 1;
 
-    if (li->combfunc == NULL &&
-        li->gradfunc(b, g, n, li->cfunc, li->data) != 0) {
+    if (li->combfunc == NULL) {
+        if (li->gradfunc == numeric_gradient) {
+            /* don't step outside of the bounds */
+            gerr = bounded_gradient(b, g, n, f0, li->l, li->u, li->nbd,
+                                    li->cfunc, li->data);
+        } else {
+            gerr = li->gradfunc(b, g, n, li->cfunc, li->data);
+        }
+    }
+    if (gerr) {
         /* The gradient could not be computed (e.g. the numerical
            gradient requires evaluating the function outside of its
            domain): flag this to L-BFGS-B, which will then backtrack,
@@ -1633,6 +1798,9 @@ int LBFGS_max (double *b, int n,
     li.gtmp = u + n;
     li.opt = opt;
     li.prn = prn;
+    li.l = l;
+    li.u = u;
+    li.nbd = nbd;
 
     ret = lbfgsb(n, m, b, l, u, nbd, factr, pgtol, &f, g,
                  lbfgs_fg, lbfgs_iter, &li, NULL, NULL, msg);
