@@ -6554,10 +6554,15 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
         /* plot confidence bands last */
         if (depvar_present) {
             const char *wstr =
-                dataset_is_time_series(dset) ? "lines" : "points";
+		dataset_is_time_series(dset) ? "lines" : "points";
 
-            fprintf(fp, "'-' using 1:2 title '%s' w %s, \\\n",
-                    fr->ylabel, wstr);
+	    if (fr->ylabel[0] != '\0') {
+		fprintf(fp, "'-' using 1:2 title '%s' w %s, \\\n",
+			fr->ylabel, wstr);
+	    } else {
+		fprintf(fp, "'-' using 1:2 title '%s' w %s, \\\n",
+			fr->depvar, wstr);
+	    }
         }
         fprintf(fp, "'-' using 1:2 title '%s' w lines", _("forecast"));
         if (do_errs) {
