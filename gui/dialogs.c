@@ -3472,7 +3472,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         static combo_opts ci_opts;
         GtkWidget *ci_combo;
 	gboolean ci_choose = TRUE;
-	gboolean simple_ols;
+	gboolean simple_ols = FALSE;
         int deflt;
 
         if (*t2 - *t1 < 1) {
@@ -3499,7 +3499,9 @@ int forecast_dialog (int t1min, int t1max, int *t1,
         gtk_box_pack_start(GTK_BOX(hbox), ci_combo, FALSE, FALSE, 5);
         gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
-	simple_ols = gretl_is_simple_OLS(pmod);
+	if (pmod != NULL) {
+	    simple_ols = gretl_is_simple_OLS(pmod);
+	}
 	if (depvar_combo != NULL && simple_ols && ci_choose) {
 	    /* In the "simple ols" case, with a single regressor besides
 	       the constant, we'll represent confidence intervals in a

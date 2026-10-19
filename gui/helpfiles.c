@@ -1177,7 +1177,7 @@ static void vwin_add_footer_finder (windata_t *vwin)
     /* pop-up search for function definitions, if any */
     GtkWidget *button = gtk_button_new_with_label(_("Go to function"));
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
-    g_signal_connect(G_OBJECT(button), "clicked",
+    g_signal_connect(G_OBJECT(button), "button-press-event",
 		     G_CALLBACK(show_fn_menu), vwin->text);
 #endif
 

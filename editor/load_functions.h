@@ -26,6 +26,8 @@ void maybe_load_functions (windata_t *vwin);
 
 gboolean textview_has_functions (GtkTextView *tview);
 
-void show_fn_menu (GtkWidget *button, GtkTextView *view);
+void show_fn_menu (GtkWidget *button,
+		   GdkEventButton *event,
+		   GtkTextView *view);
 
 #endif /* LOAD_FUNCS_H */

@@ -3311,7 +3311,6 @@ static void copy_item_set_sensitivity (gui_obj *obj)
     }
 }
 
-
 static void object_popup_show (gui_obj *obj, GdkEventButton *event)
 {
     GtkWidget *w = NULL;
