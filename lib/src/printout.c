@@ -3308,7 +3308,7 @@ int csv_print_forecast (const FITRESID *fr, const DATASET *dset,
     }
 
     pputs(prn, "\"obs\",");
-    pprintf(prn, "\"%s\"", forecast_get_yname(fr));
+    pprintf(prn, "\"%s\"", get_forecast_yname(fr));
     pprintf(prn, "%c\"%s\"", d, _("prediction"));
     if (do_errs) {
 	pprintf(prn, "%c\"%s\"", d, _("std. error"));
