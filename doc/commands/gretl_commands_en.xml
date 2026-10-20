@@ -12728,7 +12728,7 @@
 	    literal crra(x,s) = (x**(1-s) - 1)/(1-s)
 	    printf "plot crra(x, 0) t 'sigma=0', \\"
 	    printf " log(x) t 'sigma=1', \\"
-	    printf " crra(x,3) t 'sigma=3"
+	    printf " crra(x,3) t 'sigma=3'"
 	end plot --output=display
       </code>
     </description>

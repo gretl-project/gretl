@@ -4282,12 +4282,21 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>non mostra le previsioni</effect>
+	  <effect>non stampa niente</effect>
 	</option>
 	<option>
 	  <flag>--recursive</flag>
 	  <effect>vedi sotto</effect>
 	</option>
+        <option>
+	  <flag>--exponentiate</flag>
+	  <optparm optional="true">agg</optparm>
+	  <effect>vedi sotto</effect>
+        </option>
+        <option>
+	  <flag>--integrate</flag>
+	  <effect>vedi sotto</effect>
+        </option>
 	<option>
 	  <flag>--all-probs</flag>
 	  <effect>vedi sotto</effect>
@@ -4380,14 +4389,14 @@
 	ogni porzione dell'intervallo di previsione che fa parte
 	del campione su cui il modello è stato stimato, e una previsione
 	dinamica (se rilevante) fuori dal campione. L'opzione
-	<lit>dynamic</lit> richiede di produrre previsioni dinamiche a partire
-	dalla prima data possibile, mentre l'opzione <lit>static</lit>
+	<opt>dynamic</opt> richiede di produrre previsioni dinamiche a partire
+	dalla prima data possibile, mentre l'opzione <opt>static</opt>
 	richiede di produrre previsioni statiche anche fuori dal campione.
       </para>
 
       <subhead context="cli">Previsioni ricorsive</subhead>
       <para context="cli">
-	L'opzione <lit>recursive</lit> al momento è disponibile solo per i
+	L'opzione <opt>recursive</opt> al momento è disponibile solo per i
 	modelli composti da una singola equazione e stimati via OLS. Quando si
 	usa questa opzione, le previsioni calcolate sono ricorsive, ossia: ogni
 	previsione è generata da una stima del modello che usa i dati
@@ -4397,9 +4406,67 @@
 	<lit>passi-avanti</lit> specificato come argomento. Le previsioni sono
 	sempre dinamiche quando è possibile. Si noti che l'argomento
 	<lit>passi-avanti</lit> deve essere utilizzato solo insieme all'opzione
-	<lit>recursive</lit>.
+	<opt>recursive</opt>.
       </para>
 
+      <subhead context="cli">Trasformazioni</subhead>
+      <para context="cli">
+        Questa sezione si riferisce specificamente a modelli a
+        equazione singola stimati tramite OLS. Per default,
+        <lit>fcast</lit> genera previsioni della variabile dipendente,
+        <math>y</math>, ma sono supportati anche due tipi di
+        trasformazione.
+      </para>
+      <ilist context="cli">
+	<li>
+	  <para>
+	    Se <math>y</math> è riconosciuta come il logaritmo di
+	    un'altra variabile nel dataset, l'opzione
+	    <opt>exponentiate</opt> può essere utilizzata per generare
+	    una previsione del <emphasis>livello</emphasis> della
+	    variabile, anziché del suo logaritmo. In tal caso, la
+	    previsione in scala logaritmica viene elevata a esponente
+	    e, per default, i valori puntuali (ma non i limiti degli
+	    intervalli di confidenza, se presenti) vengono
+	    moltiplicati per un fattore di correzione della
+	    distorsione. Tale fattore è pari a
+	    exp(<math>s</math><sup>2</sup>) — dove <math>s</math>
+	    rappresenta l'errore standard della regressione, quando il
+	    test di Doornik&ndash;Hansen non riesca a rifiutare
+	    l'ipotesi di normalità del termine di errore al livello
+	    del 10%. In caso contrario, si utilizza lo stimatore non
+	    parametrico noto come "smearing estimator", proposto da
+	    <cite key="duan83">Duan (1983)</cite>, che consiste nella
+	    media campionaria dei residui elevati a esponente. Per
+	    ulteriori dettagli, si rimanda alla sezione 6-4c di <cite
+	    key="wooldridge-intro">Wooldridge (2016)</cite>. È
+	    possibile specificare il tipo di correzione della
+	    distorsione — scegliendo tra la variante basata
+	    sull'ipotesi di normalità, quella di tipo "smearing",
+	    oppure escludendo del tutto la correzione (impostandola,
+	    di fatto, a 1) — aggiungendo all'opzione
+	    <opt>exponentiate</opt> il parametro opzionale
+	    <lit>agg</lit> (un numero intero), con valore
+	    rispettivamente pari a 1, 2 o 3.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Se <math>y</math> viene riconosciuta come la differenza
+	    prima di un'altra variabile nel dataset, è possibile
+	    utilizzare l'opzione <opt>integrate</opt> per generare una
+	    previsione del livello della variabile anziché della sua
+	    differenza. Una previsione integrata può essere statica
+	    (la previsione per l'istante <math>t</math>+1 è data dal
+	    livello effettivo della variabile al tempo <math>t</math>
+	    sommato alla differenza prevista) oppure dinamica; in
+	    quest'ultimo caso, al posto del livello effettivo viene
+	    utilizzata la previsione precedentemente calcolata per il
+	    livello al tempo <math>t</math>.
+	  </para>
+	</li>
+      </ilist>
+      
       <subhead>Modelli ordinali e multinomiali</subhead>
       <para>
 	Dopo la stima di un modello logit o probit ordinale, o di un
@@ -7637,6 +7704,7 @@
       riporta la variante aggiustata, ma i valori asintotici possono
       essere ottenuti usando l'opzione <opt>asy</opt>.
     </para>
+    
     <para context="gui">
       Esegue il test di Johansen per la cointegrazione tra le variabili
       elencate per l'ordine specificato di ritardi. I valori critici
@@ -7646,6 +7714,7 @@
       vengono formiti due set di valori critici: asintotici e
       aggiustati per l'ampiezza campionaria.
     </para>
+    
     <para context="cli">
       L'inclusione di trend deterministici nel modello è controllata
       dalle opzioni del comando. Se non si indica alcuna opzione,
@@ -7659,60 +7728,67 @@
       producono rispettivamente i casi 1, 2, 4 e 5. Il significato di
       questi casi e i criteri per scegliere tra di essi sono spiegati
       nel<guideref targ="chap:vecm"/>.
-</para>
-<para context="gui">
-  L'inclusione di termini deterministici nel modello è controllata
-  dai pulsanti delle opzioni. L'opzione predefinita è di includere
-  una <quote>costante non vincolata</quote>, che permette la
-  presenza di un'intercetta diversa da zero nelle relazioni di
-  cointegrazione e di un trend nei livelli delle variabili
-  endogene. Nella letteratura originata dal lavoro di Johansen (si
-  veda ad esempio il suo libro del 1995), si fa riferimento a
-  questo come al <quote>caso 3</quote>.  Le prime quattro opzioni
-  mostrate sopra, che sono mutualmente esclusive, producono
-  rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
-  casi e i criteri per scegliere tra di essi sono spiegati
-  nel<guideref targ="chap:vecm"/>.
-</para>
-<para context="cli">
-  Le liste opzionali <repl>lista-x</repl> e
-  <repl>lista-rx</repl> permettono di controllare per specifiche
-  variabili esogene che entrano nel sistema in modo non
-  vincolato (<repl>lista-x</repl>) o vincolate allo spazio di
-  cointegrazione (<repl>lista-rx</repl>). Queste liste vanno
-  separate tra di loro e dalla <repl>lista-y</repl> usando il
-  carattere punto e virgola.
-</para>
-<para context="gui">
-  È possibile controllare per le variabili esogene aggiungendole
-  nel campo inferiore. Per impostazione predefinita, le
-  variabili vengono aggiunte al modello in forma non vincolata
-  (indicata da una lettera <lit>U</lit> vicino al nome della
-  variabile). Se si vuole che una certa variabile esogena sia
-  vincolata allo spazio di cointegrazione, basta fare clic col
-  tasto destro e selezionare <quote>Vincolata</quote> dal menu
-  pop-up. Il simbolo vicino alla variabile diventerà una V.
-</para>
-<para context="cli">
-  L'opzione <opt>seasonals</opt>, che può accompagnare una qualsiasi
-  delle altre opzioni, specifica l'inclusione di un gruppo di variabili
-  dummy stagionali centrate. Questa opzione è disponibile solo per dati
-  trimestrali o mensili.
-</para>
-<para context="gui">
-  Se i dati sono trimestrali o mensili, è presente anche una casella che
-  permette di includere un gruppo di variabili dummy stagionali centrate.
-  In tutti i casi, la casella <quote>Mostra dettagli</quote> permette di
-  vedere il risultato delle regressioni ausiliarie che sono il punto di
-  partenza per la procedura di stima di massima verosimiglianza di
-  Johansen.
-</para>
-<para context="notex">
-  La tabella seguente fornisce un esempio di interpretazione dei
-  risultati del test nel caso di 3 variabili. <lit>H0</lit> denota
-l'ipotesi nulla, <lit>H1</lit> l'ipotesi alternativa e <lit>c</lit>
-il numero delle relazioni di cointegrazione.
-</para>
+    </para>
+    
+    <para context="gui">
+      L'inclusione di termini deterministici nel modello è controllata
+      dai pulsanti delle opzioni. L'opzione predefinita è di includere
+      una <quote>costante non vincolata</quote>, che permette la
+      presenza di un'intercetta diversa da zero nelle relazioni di
+      cointegrazione e di un trend nei livelli delle variabili
+      endogene. Nella letteratura originata dal lavoro di Johansen (si
+      veda ad esempio il suo libro del 1995), si fa riferimento a
+      questo come al <quote>caso 3</quote>.  Le prime quattro opzioni
+      mostrate sopra, che sono mutualmente esclusive, producono
+      rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
+      casi e i criteri per scegliere tra di essi sono spiegati
+      nel<guideref targ="chap:vecm"/>.
+    </para>
+    
+    <para context="cli">
+      Le liste opzionali <repl>lista-x</repl> e <repl>lista-rx</repl>
+      permettono di controllare per specifiche variabili esogene che
+      entrano nel sistema in modo non vincolato (<repl>lista-x</repl>)
+      o vincolate allo spazio di cointegrazione
+      (<repl>lista-rx</repl>). Queste liste vanno separate tra di loro
+      e dalla <repl>lista-y</repl> usando il carattere punto e
+      virgola.
+    </para>
+    
+    <para context="gui">
+      È possibile controllare per le variabili esogene aggiungendole
+      nel campo inferiore. Per impostazione predefinita, le variabili
+      vengono aggiunte al modello in forma non vincolata (indicata da
+      una lettera <lit>U</lit> vicino al nome della variabile). Se si
+      vuole che una certa variabile esogena sia vincolata allo spazio
+      di cointegrazione, basta fare clic col tasto destro e
+      selezionare <quote>Vincolata</quote> dal menu pop-up. Il simbolo
+      vicino alla variabile diventerà una V.
+    </para>
+    
+    <para context="cli">
+      L'opzione <opt>seasonals</opt>, che può accompagnare una
+      qualsiasi delle altre opzioni, specifica l'inclusione di un
+      gruppo di variabili dummy stagionali centrate. Questa opzione è
+      disponibile solo per dati trimestrali o mensili.
+    </para>
+    
+    <para context="gui">
+      Se i dati sono trimestrali o mensili, è presente anche una
+      casella che permette di includere un gruppo di variabili dummy
+      stagionali centrate.  In tutti i casi, la casella <quote>Mostra
+      dettagli</quote> permette di vedere il risultato delle
+      regressioni ausiliarie che sono il punto di partenza per la
+      procedura di stima di massima verosimiglianza di Johansen.
+    </para>
+    
+    <para context="notex">
+      La tabella seguente fornisce un esempio di interpretazione dei
+      risultati del test nel caso di 3 variabili. <lit>H0</lit> denota
+      l'ipotesi nulla, <lit>H1</lit> l'ipotesi alternativa e
+      <lit>c</lit> il numero delle relazioni di cointegrazione.
+    </para>
+    
 <code context="notex">
   Rango    Test traccia       Test Lmax
   H0     H1          H0     H1
@@ -7745,7 +7821,9 @@ il numero delle relazioni di cointegrazione.
 </para>
 
 <para>
-  Si veda anche il comando <cmdref targ="vecm"/>.
+  Si vedano anche i comand <cmdref targ="vecm"/> e <cmdref
+  targ="coint"/>. Quest'ultimo fornisce il test di cointegrazione di
+  Engle e Granger.
 </para>
 
 </description>
@@ -12505,8 +12583,7 @@ del comando <cmdref targ="set"/>.
 
 </command>
 
-<command name="pergm" section="Statistics"
-	 label="Periodogramma">
+<command name="pergm" section="Statistics" label="Periodogramma">
 
   <usage>
     <arguments>
@@ -12554,19 +12631,19 @@ del comando <cmdref targ="set"/>.
     radice quadrata dell'ampiezza campionaria, ma questo valore può essere
     impostato manualmente usando il parametro <repl>banda</repl>, fino a un
     massimo pari a metà dell'ampiezza campionaria.
-</para>
-<para>
-  Usando l'opzione <opt>log</opt>, lo spettro viene
-  rappresentato su una scala logaritmica.
-</para>
-<para>
-  Le due opzioni (mutualmente escludibili) <opt>radians</opt> e
-  <opt>degrees</opt> condizionano la tipologia dell'asse di
-  frequenza quando il periodogramma viene rappresentato. Da
-  impostazione predefinita, la frequenza è scalata per il numero
-  di osservazioni nel campione; tuttavia, queste opzioni
-  comportano che l'asse di frequenza possa venire ridenominato
-  da 0 a &pi; radianti o da 0 a 180&deg;, rispettivamente.
+  </para>
+  <para>
+    Usando l'opzione <opt>log</opt>, lo spettro viene
+    rappresentato in scala logaritmica.
+  </para>
+  <para>
+    Le due opzioni (mutualmente esclusive) <opt>radians</opt> e
+    <opt>degrees</opt> condizionano la tipologia dell'asse di
+    frequenza quando il periodogramma viene rappresentato. Da
+    impostazione predefinita, la frequenza è scalata per il numero di
+    osservazioni nel campione; tuttavia, queste opzioni comportano che
+    l'asse di frequenza possa venire ridenominato da 0 a &pi; radianti
+    o da 0 a 180&deg;, a seconda dei casi.
   </para>
   <para>
     Di default, se il programma non è in modalità batch, viene
@@ -12578,16 +12655,6 @@ del comando <cmdref targ="set"/>.
     file. L'effetto di dare un nome di file è quello descritto per
     l'opzione <opt>output</opt> del comando <cmdref
     targ="gnuplot"/>.
-</para>
-<para>
-  Quando viene mostrato il periodogramma del campione, vengono mostrati
-  anche due test per l'integrazione frazionale (<quote>memoria
-  lunga</quote>) della serie, ossia il test di Geweke e Porter-Hudak
-  (GPH), e lo stimatore locale di Whittle. L'ipotesi nulla in entrambi
-  i casi è che l'ordine di integrazione sia zero. Per impostazione
-  predefinita, l'ordine per questi test è il valore minore tra
-  <math>T</math>/2 e <math>T</math><sup>0.6</sup>; anche
-  questo valore può essere modificato con il parametro di banda.
 </para>
 </description>
 
@@ -12839,10 +12906,8 @@ del comando <cmdref targ="set"/>.
       delle ascisse e le altre come ordinata,
       a meno che non venga usata l'opzione <opt>time-series</opt>,
       nel qual caso tutte le variabili vanno in ordinata.
-    </para>
-    <para>
       L'opzione di fornire il nome di una singola serie è ristretta solo
-      ai dati temporali, nel qual caso si assume che si voglia ricevere
+      ai dataset di serie stroiche, nel qual caso si assume che si voglia ricevere
       un grafico time-series; altrimenti verrà riportato un errore.
     </para>
     <para>
@@ -12875,7 +12940,7 @@ del comando <cmdref targ="set"/>.
       </li>
       <li>
 	<para>
-	  <lit>printf</lit>: una comando printf il cui risultato
+	  <lit>printf</lit>: un comando printf il cui risultato
 	  verrà passato a gnuplot senza modifiche.
 	</para>
       </li>
@@ -12907,33 +12972,11 @@ del comando <cmdref targ="set"/>.
     <para>
       Questo esempio ipotizza che <lit>plotmat</lit> sia un nome di
       una matrice avente almeno 2 colonne (o di una lista avente
-      almeno 2 membri). Si noti che è considerata buona pratica
-      quella di utilizzare l'opzione <opt>output</opt> (solamente)
-      nell'ultima linea del blocco.
+      almeno 2 membri). Si noti che è considerata buona pratica quella
+      di utilizzare l'opzione <opt>output</opt> (solamente)
+      nell'ultima linea del blocco; le altre opzioni vanno dentro il
+      blocco.
     </para>
-    <subhead>Disegnare una banda usando una matrice</subhead>
-    <para>
-      Le opzioni <opt>band</opt> e <opt>band-style</opt> funzionano
-      principalmente come descritto nell'help del comando
-      <lit>gnuplot</lit>, con le seguenti eccezioni: quando i dati
-      sono passati in forma di matrice, il primo parametro per
-      <opt>band</opt> deve essere dato come il nome di una matrice
-      con 2 colonne (contenenti, rispettivamente, il centro e
-      l'ampiezza della banda). Questo parametro prende il posto dei
-      due valori richiesti dalla versione <lit>gnuplot</lit> di
-      questa opzione (nome della serie o ID numerico o colonne della
-      matrice). Per esempio:
-    </para>
-    <code>
-      scalar n = 100
-      matrix x = seq(1,n)'
-      matrix y = x + filter(mnormal(n,1), 1, {1.8, -0.9})
-      matrix B = y ~ muniform(n,1)
-      plot y
-      options time-series with-lines
-      options band=B,10 band-style=fill
-      end plot --output=display
-    </code>
     <subhead>Disegnare senza dati</subhead>
     <para>
       Il seguente esempio mostra un semplice caso di come si
@@ -12949,7 +12992,7 @@ del comando <cmdref targ="set"/>.
       literal crra(x,s) = (x**(1-s) - 1)/(1-s)
       printf "plot crra(x, 0) t 'sigma=0', \\"
       printf " log(x) t 'sigma=1', \\"
-      printf " crra(x,3) t 'sigma=3"
+      printf " crra(x,3) t 'sigma=3'"
       end plot --output=display
     </code>
   </description>
