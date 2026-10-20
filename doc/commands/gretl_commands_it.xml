@@ -73,7 +73,7 @@
 	stimati via OLS), viene effettuato un test LM. Viene eseguita
 	una regressione ausiliaria in cui la variabile dipendente è il
 	residuo dell'ultimo modello e le variabili indipendenti sono
-	quello del modello originale più <repl>varlist</repl>. Sotto
+	quelle del modello originale più <repl>varlist</repl>. Sotto
 	l'ipotesi nulla che le variabili aggiuntive non abbiano potere
 	esplicativo, il prodotto fra l'R-quadro non aggiustato della
 	regressione ausiliaria e il numero di osservazioni si
@@ -116,6 +116,14 @@
       </para>
     </li>
   </ilist>
+  <para context="cli">
+    Al termine dell'esecuzione della variante <opt>auto</opt> di
+    <lit>add</lit>, il bundle fornito dall'accessore <fncref
+    targ="$model"/> (che punta al modello aumentato) contiene un
+    elenco denominato <lit>add_order</lit>. Tale elenco contiene i
+    numeri identificativi delle serie aggiunte, nell'ordine in cui
+    sono state inserite.
+  </para>
   <para context="gui">
     Sono disponibili tre opzioni:
   </para>
@@ -302,8 +310,8 @@
 	variabile specificata, <math>y</math>, e la variabile
 	indipendente più importante è il ritardo (di ordine uno) di
 	<math>y</math>. Il modello è costruito in modo che il
-	coefficiente della variabile ritardata <math>y</math> sia pari a
-	1 meno la radice. Ad esempio, il modello con una costante può
+	coefficiente della variabile ritardata <math>y</math> sia pari
+	alla radice meno 1. Ad esempio, il modello con una costante può
 	essere scritto come <equation status="display"
 	tex="\[(1-L)y_t=\beta_0+(\alpha-1)y_{t-1}+\epsilon_t\]"
 	ascii="(1 - L)y(t) = b0 + (a-1)y(t-1) + e(t)" graphic="adf1"/>
@@ -372,27 +380,25 @@
 
       <para context="cli">
 	Quando si testa "all'indietro" con l'AIC o il BIC, l'ordine
-	dei ritardi finale viene scelto in modo da ottimizzare
-	rispettivamente una versione modificata del Criterio di
-	Informazione di Akaike o del Criterio Bayesiano di
-	Schwartz. La procedura varia a seconda se sia stata scelta
-	l'opzione <opt>gls</opt>: con la detrendizzazione GLS, i
-	valori AIC e BIC sono quelli <quote>modificati</quote>
-	descritti in <cite key="ng-perron01">Ng e Perron
-	(2001)</cite>, altrimenti sono quelli standard. Nel caso GLS è
-	disponibile un'ulteriore opzione, e cioè <opt>perron-qu</opt>;
-	essa fa sì che i criteri di informazione modificati siano
-	calcolati secondo il metodo raccomandato in <cite
-	key="perron-qu07">Perron e Qu (2007)</cite>. In quest'ultimo
-	caso, i dati sono prima centrati in media o detrendizzati mediante
-	OLS; il GLS viene applicato dopo aver scelto l'ordine dei ritardi.
+	dei ritardi finale viene scelto in modo da ottimizzare il
+	Criterio di Informazione di Akaike o quello di Schwarz. La
+	procedura varia a seconda se sia stata scelta l'opzione
+	<opt>gls</opt>: con la detrendizzazione GLS, i valori AIC e
+	BIC sono quelli <quote>modificati</quote> descritti in <cite
+	key="ng-perron01">Ng e Perron (2001)</cite>, altrimenti sono
+	quelli standard. Nel caso GLS è disponibile un'ulteriore
+	opzione, e cioè <opt>perron-qu</opt>; essa fa sì che i criteri
+	di informazione modificati siano calcolati secondo il metodo
+	raccomandato in <cite key="perron-qu07">Perron e Qu
+	(2007)</cite>. In quest'ultimo caso, i dati sono prima
+	centrati in media o detrendizzati mediante OLS; il GLS viene
+	applicato dopo aver scelto l'ordine dei ritardi.
       </para>
 
       <para context="gui">
-	Quando si testa "all'indietro", l'ordine dei ritardi finale
-	viene scelto in modo da ottimizzare rispettivamente una
-	versione modificata del Criterio di Informazione di Akaike o
-	del Criterio Bayesiano di Schwartz.
+	Quando si testa "all'indietro" con l'AIC o il BIC, l'ordine
+	dei ritardi finale viene scelto in modo da ottimizzare il
+	Criterio di Informazione di Akaike o quello di Schwarz.
       </para>
 
       <para>
@@ -433,7 +439,7 @@
 	(Sostituendo <opt>ct</opt> a <opt>c</opt> se la serie
 	contiene un trend evidente.)  L'ordine dei ritardi del test
 	verrà determinato testando all'indietro con il criterio AIC
-	modificato partendo del massimo di Schwert maximum, col
+	modificato partendo del massimo di Schwert, col
 	raffinamento di Perron&ndash;Qu.
       </para>
 
@@ -465,11 +471,7 @@
 	esclusive: è necessario scegliere fra il caso senza costante,
 	quello con solo la costante, e quello che la costante e il
 	trend; il default è il secondo.  L'opzione
-	<opt>seasonals</opt>, inoltre, non è disponibile.  Infine,
-	l'opzione <opt>verbose</opt> ha un significato diverso:
-	produce un breve resoconto del test per ciascuna singola serie
-	storica (il default prevede di mostrare solo il risultato
-	complessivo).
+	<opt>seasonals</opt>, inoltre, non è disponibile.
       </para>
       <para context="cli">
 	Il test complessivo (ipotesi nulla: la variabile in questione
@@ -615,7 +617,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>non stampa nulla</effect>
+	  <effect>stampa meno informazioni (vedi sotto)</effect>
 	</option>
 	<optnote>Si veda oltre per opzioni speciali addizionali</optnote>
       </options>
@@ -647,37 +649,44 @@
 	le osservazioni, debbano essere aggiunte. E se capita che non
 	ci siano nomi di serie nel file i cui dati devono essere
 	aggiunti che non siano già presenti nel dataset corrente,
-	allora l'intera operazione è annullata viene visualizzato un
+	allora l'intera operazione è annullata e viene visualizzato un
 	avviso.
       </para>
       <para>
-	Attenzione: non è supportato il caso i nuovo dati inizino
+	Attenzione: non è supportato il caso in cui i nuovi dati inizino
 	prima e finiscano dopo quelli originali. Per aggiungere nuove
 	serie in tal caso bisogna usare l'opzione
-	<opt>fixed-sample</opt>; ciò ha l'effetto di di sopprimere
+	<opt>fixed-sample</opt>; ciò ha l'effetto di sopprimere
 	l'aggiunta di osservazioni, e quindi restringere l'operazione
 	all'aggiunta di nuove serie.
       </para>
       <para>
 	Quando viene scelto per l'aggiunta un file di dati, potrebbe
 	esserci una parziale sovrapposizione con il dataset esistente;
-	in altre parole, una o più serie potrebbero avere
-	osservazioni in comune dalle due fonti. Se viene passata l'opzione
+	in altre parole, una o più serie potrebbero avere osservazioni
+	in comune dalle due fonti. Se viene passata l'opzione
 	<opt>update-overlap</opt>, il comando <lit>append</lit>
 	sostituirà le osservazioni in comune con quelle provenienti
 	dal file dei dati; se no, i valori presenti nel dataset in
-	quel momento saranno lasciati inalterati.
-      </para>
-      <para>
-	Le opzioni specializzate aggiuntive <opt>sheet</opt>,
+	quel momento saranno lasciati inalterati.  </para> <para> Le
+	opzioni specializzate aggiuntive <opt>sheet</opt>,
 	<opt>coloffset</opt>, <opt>rowoffset</opt> e
-	<opt>fixed-cols</opt> funzionano come quelle corrispondenti per
-	il comando <cmdref targ="open"/>.
+	<opt>fixed-cols</opt> funzionano come quelle corrispondenti
+	per il comando <cmdref targ="open"/> (vedi tale comando per
+	maggiori dettagli).
       </para>
+
       <para>
-	Vedi anche <cmdref targ="join"/> per una gestione più
-	sofisticata di più di un file di dati esterno.
+	Per
+	default, vengono stampate alcune informazioni sul dataset
+	aggiunto. L'opzione <opt>quiet</opt> riduce tale output a un
+	semplice messaggio di conferma che indica il percorso del
+	file. Se si desidera che l'operazione sia completamente
+	silenziosa, è possibile utilizzare il comando <lit>set verbose
+	off</lit> prima di aggiungere i dati, in combinazione con
+	l'opzione <opt>quiet</opt>.
       </para>
+
       <subhead>Dati panel</subhead>
       <para>
 	Quando il comando è usato su un dataset di tipo panel, i
@@ -700,14 +709,11 @@
       </para>
       <para>
 	Se il dataset corrente e i dati in ingresso sono entrambi
-	riconosciuti come dei panel, vanno considerati due casi. (1)
-	La lunghezza temporale <math>T</math> e diversa fra i due
-	dataset. Quaesta situazione provoca un errore. (2) Se invece
-	<math>T</math> è uguale, si dà per scontato che le unità
-	combacino, a <emphasis>partire dalla prima unità</emphasis>
-	doi ognuno dei due dataset. Per situazioni più sofisticate o
-	complesse, consigliamo di usare <cmdref targ="join"/> anziché
-	<lit>append</lit>.
+	riconosciuti come dei panel, l'aggiunta (append) è consentita
+	solo se entrambe le dimensioni <math>T</math> e <math>N</math>
+	coincidono; in caso contrario, viene segnalato un errore. Per
+	situazioni più sofisticate o complesse, consigliamo di usare
+	<cmdref targ="join"/> anziché <lit>append</lit>.
       </para>
 
     </description>
@@ -1837,26 +1843,32 @@
 
     <description>
       <para context="gui">Questo comando richiede un numero di osservazione
-      (o una data, se il dataset lo consente).</para>
+      (o una data, se il dataset lo consente), o il nome di una
+      variabile dummy.</para>
 
       <para>
 	Va eseguito dopo una regressione OLS e fornisce un test per
-        l'ipotesi nulla che non esista un break strutturale del modello
-        in corrispondenza del punto di rottura specificato. La procedura
-        consiste nel creare una variabile dummy che vale 1 a partire dal punto
-        di rottura specificato da <repl>osservazione</repl> fino alla fine del
-        campione, 0 altrove; inoltre vengono creati dei termini di interazione
-        tra questa dummy e i regressori originali.  Viene quindi stimata una
-        regressione che include questi termini.
+	l'ipotesi nulla che non esista un break strutturale del
+	modello in corrispondenza del punto di rottura specificato. La
+	procedura consiste nel creare una variabile dummy che vale 1 a
+	partire dal punto di rottura specificato da
+	<repl>osservazione</repl> fino alla fine del campione, 0
+	altrove; inoltre vengono creati dei termini di interazione tra
+	questa dummy e i regressori originali.  Se viene fornita una
+	variabile dummy, si verifica l'ipotesi nulla di omogeneità
+	strutturale rispetto a tale variabile. Anche in questo caso,
+	vengono aggiunti termini di interazione. In entrambe le
+	situazioni, si esegue una regressione estesa che include i
+	termini aggiuntivi.
       </para>
       <para>
-        Per impostazione predefinita viene calcolata una statistica
-        <math>F</math>, prendendo la regressione aumentata come non
-        vincolata e la regressione originale come vincolata. Se il
-        modello originale usa uno stimatore robusto per la matrice di
-        covarianza, come statistica test viene usato un valore
-        chi-quadro di Wald, basato su uno stimatore robusto della
-        matrice di covarianza della regressione aumentata.
+        Per default, viene calcolata una statistica <math>F</math>,
+        prendendo la regressione aumentata come non vincolata e la
+        regressione originale come vincolata. Se il modello originale
+        usa uno stimatore robusto per la matrice di covarianza, come
+        statistica test viene usato un valore chi-quadro di Wald,
+        basato su uno stimatore robusto della matrice di covarianza
+        della regressione aumentata.
       </para>
       <para context="cli">
 	L'opzione <opt>limit-to</opt> si può usare per limitare
@@ -4463,7 +4475,7 @@
       <para>
 	Normalmente, quando uno script viene fatto girare nel client
 	grafico, non viene mostrato alcun output finché l'esecuzione
-	non è completa; se perà si usa  <lit>flush</lit> l'effetto
+	non è completa; se però si usa  <lit>flush</lit> l'effetto
 	prodotto è il seguente:
       </para>
       <ilist>
@@ -4484,7 +4496,7 @@
       </ilist>
       <para>
 	Tutto il resto dell'output viene automaticamente mostrato al
-	completamenteo dell'esecuzione dello script.
+	completamento dell'esecuzione dello script.
       </para>
       <para>
 	Attenzione: non ha senso usare <lit>flush</lit> in uno script
@@ -12631,7 +12643,7 @@ del comando <cmdref targ="set"/>.
     </para>
     <para>
       <lit>install</lit>: Nella sua forma più semplice, senza
-      opzioni e con l'argomento <repl>pkgname</repl> che corrisponde
+      opzioni e con l'argomento <repl>nomepacchetto</repl> che corrisponde
       al nome <quote>semplice</quote> di un pacchetto (come nel
       primo esempio), il pacchetto stesso verrà scaricato dal server
       di gretl (a meno che <repl>nomepacchetto</repl> non cominci
@@ -12646,20 +12658,21 @@ del comando <cmdref targ="set"/>.
       comando <cmdref targ="include"/> sia in grado poi di trovarlo.
     </para>
     <para>
-      <lit>query</lit>: L'effetto di default effect è di stampare
-      alcune informazioni di base sul pacchetto (autore, versione,
-      ecc.). Se il pacchetto include risorse addizionali (file di dati
-      e/o script aggiuntivi), queste verranno elencate.  Selezionando
+      <lit>query</lit>: L'effetto di default è di stampare alcune
+      informazioni di base sul pacchetto (autore, versione, ecc.). Se
+      il pacchetto include risorse addizionali (file di dati e/o
+      script aggiuntivi), queste verranno elencate.  Selezionando
       l'opzione <opt>quiet</opt> però non viene stampato nulla; le
       informazioni, invece, vengono salvate in un bundle, accessibile
-      via <fncref targ="$result"/>.
+      via <fncref targ="$result"/>. Il bundle sarà vuoto se le
+      informazioni non vengono trovate.
     </para>
       <para>
-	<lit>run-sample</lit>: esegue lo script di esempio includo nel
+	<lit>run-sample</lit>: esegue lo script di esempio incluso nel
 	pacchetto.
       </para>
     <para>
-      <lit>unload</lit>: l'argomento <repl>pkgname</repl> deve
+      <lit>unload</lit>: l'argomento <repl>nomepacchetto</repl> deve
       essere dato in forma semplice, senza percorso o suffisso (come
       nell'ultimo esempio). L'effetto è scaricare il pacchetto dalla
       memoria e rimuoverlo, anche dal menu GUI a cui sia eventualmente
