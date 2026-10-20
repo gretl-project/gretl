@@ -2950,6 +2950,19 @@ static void fr_set_ylabel (FITRESID *fr, const DATASET *dset)
     maybe_trim_varname(fr->ylabel, fr->depvar);
 }
 
+/* Retrieve the string that identifies the variable that
+   is being forecasted in @fr.
+*/
+
+const char *get_forecast_yname (const FITRESID *fr)
+{
+    if (*fr->ylabel != '\0') {
+	return fr->ylabel;
+    } else {
+	return fr->depvar;
+    }
+}
+
 /* Driver for various functions that compute forecasts for different
    sorts of models.
 */

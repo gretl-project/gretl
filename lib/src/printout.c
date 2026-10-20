@@ -1502,6 +1502,7 @@ static int fit_resid_head (const FITRESID *fr,
 {
     char colhead[32];
     char obs1[OBSLEN], obs2[OBSLEN];
+    const char *yname;
     int kstep = fr->method == FC_KSTEP;
     int ywidth;
 
@@ -1533,12 +1534,14 @@ static int fit_resid_head (const FITRESID *fr,
     pputc(prn, '\n');
     bufspace(obslen, prn);
 
+    yname = get_forecast_yname(fr);
+
     /* column 1 */
-    ywidth = strlen(fr->ylabel) + 1;
+    ywidth = strlen(yname) + 1;
     if (ywidth < 13) {
 	ywidth = 13;
     }
-    pprintf(prn, "%*s", ywidth, fr->ylabel);
+    pprintf(prn, "%*s", ywidth, yname);
 
     /* column 2 */
     strcpy(colhead, (kstep)? _("forecast") : _("fitted"));
@@ -3305,7 +3308,7 @@ int csv_print_forecast (const FITRESID *fr, const DATASET *dset,
     }
 
     pputs(prn, "\"obs\",");
-    pprintf(prn, "\"%s\"", fr->ylabel);
+    pprintf(prn, "\"%s\"", forecast_get_yname(fr));
     pprintf(prn, "%c\"%s\"", d, _("prediction"));
     if (do_errs) {
 	pprintf(prn, "%c\"%s\"", d, _("std. error"));
@@ -3359,6 +3362,7 @@ int csv_print_forecast (const FITRESID *fr, const DATASET *dset,
 int text_print_forecast (const FITRESID *fr, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
+    const char *yname = NULL;
     int do_errs = (fr->sderr != NULL);
     int obslen, pmax = fr->pmax;
     int errpmax = fr->pmax;
@@ -3418,11 +3422,12 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 
     bufspace(obslen + 1, prn);
 
-    ywidth = strlen(fr->ylabel) + 1;
+    yname = get_forecast_yname(fr);
+    ywidth = strlen(yname) + 1;
     if (ywidth < 12) {
 	ywidth = 12;
     }
-    pprintf(prn, "%*s", ywidth, fr->ylabel);
+    pprintf(prn, "%*s", ywidth, yname);
 
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
 

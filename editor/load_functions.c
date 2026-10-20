@@ -312,16 +312,17 @@ void show_fn_menu (GtkWidget *button,
 		   GtkTextView *view)
 {
     GArray *defs = get_fn_definitions(gtk_text_view_get_buffer(view));
-    GtkWidget *menu = gtk_menu_new();
+    GtkWidget *menu;
     GtkWidget *item;
     guint i;
 
     if (defs->len == 0) {
-        item = gtk_menu_item_new_with_label(_("No functions defined"));
-        gtk_widget_set_sensitive(item, FALSE);
-        gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	infobox(_("No function definitions were found in this window"));
+	free_fn_definitions(defs);
+	return;
     }
 
+    menu = gtk_menu_new();
     for (i=0; i<defs->len; i++) {
         fndef *d = &g_array_index(defs, fndef, i);
 
