@@ -43,10 +43,37 @@ int qrsolv_(int n, double *r, int ldr, int *ipvt,
 	    double *diag, double *qtb, double *x,
 	    double *sdiag, double *wa);
 
-int setulb_(int *n, int *m, double *x, double *l, double *u,
-	    int *nbd, double *f, double *g, double *factr,
-	    double *pgtol, double *wa, int *iwa,
-	    char *task, char *csave, int *lsave,
-	    int *isave, double *dsave);
+/* L-BFGS-B (lbfgsb.c) */
+
+/* Callback to compute the function value *f and gradient g at x.
+   The callback may alter x temporarily (e.g. for numerical
+   differentiation) but must restore it exactly. Return non-zero to
+   stop the minimization.
+*/
+typedef int (*LBFGSB_FG) (double *x, double *f, double *g, void *data);
+
+/* Callback invoked at the starting point (iter = 0) and after each
+   iteration, with the number of iterations completed, the number of
+   function evaluations so far, the current function value, iterate
+   and gradient, and the step length in the last line search. Return
+   non-zero to stop the minimization.
+*/
+typedef int (*LBFGSB_ITER) (int iter, int nfg, double f,
+			    const double *x, const double *g,
+			    double stp, void *data);
+
+enum {
+    LBFGSB_CONVERGED,
+    LBFGSB_ABNORMAL,
+    LBFGSB_STOPPED,
+    LBFGSB_BADINPUT,
+    LBFGSB_NOMEM,
+    LBFGSB_NONFINITE
+};
+
+int lbfgsb (int n, int m, double *x, const double *l, const double *u,
+	    const int *nbd, double factr, double pgtol, double *f,
+	    double *g, LBFGSB_FG fgfunc, LBFGSB_ITER iterfunc,
+	    void *data, int *iter, int *nfg, char *msg);
 
 #endif /* GRETL_MINPACK_H */

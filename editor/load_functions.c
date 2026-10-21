@@ -307,19 +307,22 @@ static void jump_to_def (GtkMenuItem *item, GtkTextView *view)
     g_idle_add(scroll_def_onscreen_idle, view);
 }
 
-void show_fn_menu (GtkWidget *button, GtkTextView *view)
+void show_fn_menu (GtkWidget *button,
+		   GdkEventButton *event,
+		   GtkTextView *view)
 {
     GArray *defs = get_fn_definitions(gtk_text_view_get_buffer(view));
-    GtkWidget *menu = gtk_menu_new();
+    GtkWidget *menu;
     GtkWidget *item;
     guint i;
 
     if (defs->len == 0) {
-        item = gtk_menu_item_new_with_label(_("No functions defined"));
-        gtk_widget_set_sensitive(item, FALSE);
-        gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	infobox(_("No function definitions were found in this window"));
+	free_fn_definitions(defs);
+	return;
     }
 
+    menu = gtk_menu_new();
     for (i=0; i<defs->len; i++) {
         fndef *d = &g_array_index(defs, fndef, i);
 
@@ -334,6 +337,7 @@ void show_fn_menu (GtkWidget *button, GtkTextView *view)
     g_object_set_data_full(G_OBJECT(button), "fn-menu", menu,
                            (GDestroyNotify) gtk_widget_destroy);
     gtk_widget_show_all(menu);
-    gtk_menu_popup_at_widget(GTK_MENU(menu), button, GDK_GRAVITY_SOUTH_WEST,
-                             GDK_GRAVITY_NORTH_WEST, NULL);
+
+    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL,
+		   event->button, event->time);
 }

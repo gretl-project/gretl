@@ -6547,17 +6547,17 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
         }
         if (depvar_present) {
             fprintf(fp, "'-' using 1:2 title '%s' w lines lt 1, \\\n",
-                    fr->ylabel);
+                    get_forecast_yname(fr));
         }
         fprintf(fp, "'-' using 1:2 title '%s' w lines lt 2\n", _("forecast"));
     } else {
         /* plot confidence bands last */
         if (depvar_present) {
             const char *wstr =
-                dataset_is_time_series(dset) ? "lines" : "points";
+		dataset_is_time_series(dset) ? "lines" : "points";
 
-            fprintf(fp, "'-' using 1:2 title '%s' w %s, \\\n",
-                    fr->ylabel, wstr);
+	    fprintf(fp, "'-' using 1:2 title '%s' w %s, \\\n",
+		    get_forecast_yname(fr), wstr);
         }
         fprintf(fp, "'-' using 1:2 title '%s' w lines", _("forecast"));
         if (do_errs) {
@@ -6822,7 +6822,7 @@ int plot_simple_fcast_bands (const MODEL *pmod,
     gnuplot_missval_string(fp);
 
     fprintf(fp, "set xlabel '%s'\n", dset->varname[xv]);
-    fprintf(fp, "set ylabel '%s'\n", fr->ylabel);
+    fprintf(fp, "set ylabel '%s'\n", get_forecast_yname(fr));
 
     fputs("set key left top\n", fp);
     fputs("plot \\\n", fp);

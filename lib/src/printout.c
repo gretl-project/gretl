@@ -1502,6 +1502,7 @@ static int fit_resid_head (const FITRESID *fr,
 {
     char colhead[32];
     char obs1[OBSLEN], obs2[OBSLEN];
+    const char *yname;
     int kstep = fr->method == FC_KSTEP;
     int ywidth;
 
@@ -1533,12 +1534,14 @@ static int fit_resid_head (const FITRESID *fr,
     pputc(prn, '\n');
     bufspace(obslen, prn);
 
+    yname = get_forecast_yname(fr);
+
     /* column 1 */
-    ywidth = strlen(fr->ylabel) + 1;
+    ywidth = strlen(yname) + 1;
     if (ywidth < 13) {
 	ywidth = 13;
     }
-    pprintf(prn, "%*s", ywidth, fr->ylabel);
+    pprintf(prn, "%*s", ywidth, yname);
 
     /* column 2 */
     strcpy(colhead, (kstep)? _("forecast") : _("fitted"));
@@ -3305,7 +3308,7 @@ int csv_print_forecast (const FITRESID *fr, const DATASET *dset,
     }
 
     pputs(prn, "\"obs\",");
-    pprintf(prn, "\"%s\"", fr->ylabel);
+    pprintf(prn, "\"%s\"", get_forecast_yname(fr));
     pprintf(prn, "%c\"%s\"", d, _("prediction"));
     if (do_errs) {
 	pprintf(prn, "%c\"%s\"", d, _("std. error"));
@@ -3359,6 +3362,7 @@ int csv_print_forecast (const FITRESID *fr, const DATASET *dset,
 int text_print_forecast (const FITRESID *fr, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
+    const char *yname = NULL;
     int do_errs = (fr->sderr != NULL);
     int obslen, pmax = fr->pmax;
     int errpmax = fr->pmax;
@@ -3418,11 +3422,12 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 
     bufspace(obslen + 1, prn);
 
-    ywidth = strlen(fr->ylabel) + 1;
+    yname = get_forecast_yname(fr);
+    ywidth = strlen(yname) + 1;
     if (ywidth < 12) {
 	ywidth = 12;
     }
-    pprintf(prn, "%*s", ywidth, fr->ylabel);
+    pprintf(prn, "%*s", ywidth, yname);
 
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
 
@@ -3534,6 +3539,24 @@ int print_fit_resid (const MODEL *pmod, const DATASET *dset,
     return err;
 }
 
+#define IDEBUG 0
+
+#if IDEBUG
+
+static void print_iter_val (double x, int i, int k, PRN *prn)
+{
+    if (na(x)) {
+	pprintf(prn, "%-12s", "NA");
+    } else {
+	pprintf(prn, "%#.16g", x);
+    }
+    if (i && i % 6 == 5 && i < k-1) {
+	pprintf(prn, "\n%12s", " ");
+    }
+}
+
+#else
+
 static void print_iter_val (double x, int i, int k, PRN *prn)
 {
     if (na(x)) {
@@ -3545,6 +3568,8 @@ static void print_iter_val (double x, int i, int k, PRN *prn)
 	pprintf(prn, "\n%12s", " ");
     }
 }
+
+#endif
 
 /**
  * print_iter_info:
@@ -3618,7 +3643,7 @@ print_iter_info (int iter, double crit, int type, int k,
     if (details) {
 	pputc(prn, '\n');
 	if (b != NULL) {
-	    pputs(prn, _("Parameters: "));
+	    pputs(prn, k == 1 ? _("Parameter: ") : _("Parameters: "));
 	    for (i=0; i<k; i++) {
 		print_iter_val(b[i], i, k, prn);
 	    }
@@ -3628,7 +3653,7 @@ print_iter_info (int iter, double crit, int type, int k,
 
     if (g != NULL) {
 	if (details) {
-	    pputs(prn, _("Gradients:  "));
+	    pputs(prn, k == 1 ? _("Gradient:  ") : _("Gradients:  "));
 	}
 	x = 0.0;
 	for (i=0; i<k; i++) {

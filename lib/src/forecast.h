@@ -86,6 +86,8 @@ void fcast_get_continuous_range (const FITRESID *fr, int *pt1, int *pt2);
 
 void forecast_matrix_cleanup (void);
 
+const char *get_forecast_yname (const FITRESID *fr);
+
 #ifdef  __cplusplus
 }
 #endif

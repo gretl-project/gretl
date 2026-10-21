@@ -11,3 +11,6 @@
 # Build folder
 build/
 Build/
+
+# Claude's working directory
+claude/

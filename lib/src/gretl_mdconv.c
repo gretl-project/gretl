@@ -289,6 +289,11 @@ int md_to_gretl (const char *buf, PRN *prn)
 		    /* note: no style replacement */
 		    result = line;
 		} else if (i == UL || i == OL) {
+		    if (para_lines != NULL) {
+			/* flush preceding text and add vspace */
+			finish_chunk(&para_lines, PARA, prn);
+			gretl_print_ensure_vspace(prn);
+		    }
 		    if (list_item) {
 			finish_chunk(&item_lines, UL, prn);
 		    }

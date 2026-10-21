@@ -638,7 +638,7 @@ int gretl_isdir (const char *path)
  *
  * Calls the underlying library function to create the
  * specified directory with mode 0755.  If the directory in
- * question already exists, this does not count as an error.
+ * question already exists this does not count as an error.
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -3022,7 +3022,7 @@ int gretl_set_paths (ConfigPaths *cpaths)
     set_builtin_path_strings(0);
     set_gretl_tex_preamble();
 
-    retval = (err0)? err0 : err1;
+    retval = err0 ? err0 : err1;
 
 #if CFG_DEBUG
     fprintf(stderr, "gretl_set_paths: returning %d\n", retval);
