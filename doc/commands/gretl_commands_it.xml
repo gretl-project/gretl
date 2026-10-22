@@ -5127,8 +5127,8 @@
 
     <para>
       In contesti appropriati, <lit>series</lit>, <lit>scalar</lit>,
-      <lit>matrix</lit>, <lit>string</lit> e <lit>bundle</lit> sono
-      sinonimi per questo comando.
+      <lit>matrix</lit>, <lit>string</lit>, <lit>bundle</lit> e
+      <lit>array</lit> sono sinonimi per questo comando.
     </para>
     <para context="cli">
       Crea nuove variabili, di solito per mezzo di trasformazioni di
@@ -5198,10 +5198,10 @@
       Gli <emphasis>operatori Booleani</emphasis> disponibili sono
       (ancora in ordine di precedenza): <lit>!</lit> (negazione),
       <lit>&amp;&amp;</lit> (AND logico), <lit>||</lit> (OR logico),
-      <lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>,
+      <lit>&gt;</lit>, <lit>&lt;</lit>, <lit>==</lit>,
       <lit>&gt;=</lit> (maggiore o uguale), <lit>&lt;=</lit>
       (minore o uguale) e <lit>!=</lit> (disuguale).  Gli operatori
-      Booleani possono essere usati per costuire variabili dummy:
+      Booleani possono essere usati per costruire variabili dummy:
       ad esempio <lit>(x > 10)</lit> produce 1 se <lit>x</lit>
     &gt; 10, 0 altrimenti.</para>
 
@@ -5247,7 +5247,7 @@
 	  nel secondo trimestre e 0 altrove, e così via. Nel caso di dati
 	  mensili, le dummy si chiamano <lit>dm1</lit>, <lit>dm2</lit> e così
 	  via. Con altre frequenze dei dati, i nomi delle dummy sono <lit>dummy_1</lit>,
-	  <lit>dummy2</lit>, ecc.
+	  <lit>dummy_2</lit>, ecc.
 	</para>
       </li>
       <li><para><cmd>genr unitdum</cmd> e <cmd>genr timedum</cmd> creano insiemi di
@@ -5280,16 +5280,16 @@
       selezionare alcune osservazioni particolari secondo la data o
       il nome. Ad esempio
       <lit>genr d = (obs&gt;1986:4)</lit>,
-      <lit>genr d = (obs&gt;"2008/04/01")</lit>, oppure
+      <lit>genr d = (obs&gt;"2008-04-01")</lit>, oppure
       <lit>genr d = (obs=="CA")</lit>. Quando si usano in questo contesto date
       giornaliere o etichette per le osservazioni, bisogna
       racchiuderle fra virgolette.  Questo non è necessario per date
       trimestrali o annuali. Si noti che, per serie storiche
-      annuali, l'anno non è sintatticmante distiguibile da un
+      annuali, l'anno non è sintatticamente distinguibile da un
       semplice intero; per cui, per confrontare un'osservazione con
       <lit>obs</lit> per anno, bisogna usare la funzione
       <lit>obsnum</lit> per convertire l'anno in un numero
-      progressivo, come ad esempio in in <lit>genr d =
+      progressivo, come ad esempio in <lit>genr d =
       (obs&gt;obsnum(1986))</lit>.
       </para>
 
@@ -5300,8 +5300,8 @@
 	Il valore di <repl>osservazione</repl> può essere specificato con
 	un numero o una data.
 	Esempi: <lit>x[5]</lit>, <lit>CPI[1996:01]</lit>.  Per i dati
-	giornalieri occorre usare la forma <repl>AAAA/MM/GG</repl>, ad esempio
-	<lit>ibm[1970/01/23]</lit>.
+	giornalieri occorre usare la forma <repl>AAAA-MM-GG</repl>, ad esempio
+	<lit>ibm[1970-01-23]</lit>.
       </para>
 
       <para>
@@ -11756,7 +11756,7 @@ del comando <cmdref targ="set"/>.
     <options>
       <option>
 	<flag>--append</flag>
-	<effect>aggiunge al file</effect>
+	<effect>aggiunge al file (solo nella prima variante) </effect>
       </option>
       <option>
 	<flag>--quiet</flag>
@@ -11781,7 +11781,7 @@ del comando <cmdref targ="set"/>.
   <para>
     Il comando <lit>outfile</lit> inizia un blocco in cui tutto
     l'output stampato viene deviato a un file o a un buffer (o,
-    volendo, semplicemnte buttato via). Tale blocco è chiuso dal
+    volendo, semplicemente buttato via). Tale blocco è chiuso dal
     comando <quote><lit>end outfile</lit></quote>, dopodiché l'output
     viene mandato di nuovo allo stream predefinito.
   </para>
@@ -11791,10 +11791,10 @@ del comando <cmdref targ="set"/>.
     La prima variante manda l'output a un file il cui nome è dato come
     argomento <repl>nomefile</repl>. Di default, viene creato un file
     nuovo (sovrascrivendo il file dello stesso nome, se esiste).
-    L'output verrà scritto nella corrente <cmdref targ="workdir"/>, a
-    meno che il <repl>nomefile</repl> non contenga un percorso
-    completo.  Se invece di sovrascrivere si vuole aggiungere in coda,
-    va usata l'opzione <opt>append</opt>.
+    L'output verrà scritto nella directory corrente (<cmdref
+    targ="workdir"/>), a meno che il <repl>nomefile</repl> non
+    contenga un percorso completo.  Se invece di sovrascrivere si
+    vuole aggiungere in coda, va usata l'opzione <opt>append</opt>.
   </para>
   <para>
     Quello che segue è un semplice esempio, in cui l'output di una
@@ -11813,7 +11813,7 @@ del comando <cmdref targ="set"/>.
   <ilist>
     <li>
       <para>
-	<lit>null</lit>: l'output viene sopppresso fino alla fine
+	<lit>null</lit>: l'output viene soppresso fino alla fine
 	della ridirezione.
       </para>
     </li>
@@ -11835,7 +11835,7 @@ del comando <cmdref targ="set"/>.
   <para>
     L'opzione <opt>buffer</opt> serve a mandare l'ouput a una
     variabile stringa. Il parametro per questa opzione dev'essere il
-    nome di una variabile stringa preesistente, il cuni contenuto sarà
+    nome di una variabile stringa preesistente, il cui contenuto sarà
     sovrascritto.  Quello che segue è lo stesso esempio fatto appena
     sopra, a parte che l'output va ad una stringa. In questo caso
     stampando <lit>model_out</lit> si vedrà l'output reindirizzato.
@@ -11853,18 +11853,19 @@ del comando <cmdref targ="set"/>.
   <para>
     L'opzione <opt>tempfile</opt> serve a mandare l'output a un file
     temporaneo, con un nome costruito automaticamente per assicurarne
-    l'unicità, nella directory <quote>di servizio</quote>. Così come
-    nel caso del buffer, il parametro dell'opzione dev'essere il nome
-    di una variabile stringa, che viene riempita col nome del file
-    temporaneo. <i>Nota bene</i>: i file scritti sulla directory di
-    servizio vengono cancellati quando si esce dal programma: non
-    usate questa forma se volete che il file sia conservato.
+    l'unicità, nella directory <quote>di servizio</quote> in cui gretl
+    mette i file temporanei. Così come nel caso del buffer, il
+    parametro dell'opzione dev'essere il nome di una variabile
+    stringa, che viene riempita col nome del file temporaneo. <i>Nota
+    bene</i>: i file scritti sulla directory di servizio vengono
+    cancellati quando si esce dal programma: non usate questa forma se
+    volete che il file sia conservato.
   </para>
   <para>
     Ripetiamo l'esempio fatto sopra, con un paio di linee in più per
     illustrare il punto che <repl>varstr</repl> dice dove l'output è
-    andato, e volendo lo si può leggere usando la funzione <fncref
-    targ="readfile"/>.
+    andato a finire, e volendo lo si può leggere usando la funzione
+    <fncref targ="readfile"/>.
   </para>
   <code>
     open data4-10
