@@ -4580,16 +4580,16 @@
 	set echo off
 	scalar n = 10
 	loop i=1..n
-	# qualcosa che richiede del tempo
-	loop 100 --quiet
-	a = mnormal(200,200)
-	b = inv(a)
-	endloop
-	# stampa qualcosa in output
-	printf "Iterazione %2d fatta\n", i
-	if i &lt; n
-	flush
-	endif
+	    # qualcosa che richiede del tempo
+	    loop 100 --quiet
+	    a = mnormal(200,200)
+	    b = inv(a)
+	    endloop
+	    # stampa qualcosa in output
+	    printf "Iterazione %2d fatta\n", i
+	    if i &lt; n
+	        flush
+	    endif
 	endloop
       </code>
     </description>
@@ -10266,7 +10266,7 @@ contenga un percorso completo.
 	</li>
 	<li>
           <para>
-            Ripetere il punto 1 per gli alri modelli da
+            Ripetere il punto 1 per gli altri modelli da
             includere nella tabella (fino a un massimo di sei modelli).
           </para>
 	</li>
@@ -10330,7 +10330,7 @@ contenga un percorso completo.
       <para>
 	Per stampare la tabella del modello, si usi l'opzione
 	<opt>output=</opt> seguita dal nome di un file. Se
-	quest'ultimo ha il suffisso <quote><lit>.tex</lit></quote>,
+	quest'ultimo ha l'estensione <quote><lit>.tex</lit></quote>,
 	l'output sarà in formato &tex;; se il suffisso è
 	<quote><lit>.rtf</lit></quote> l'output sarà RTF; in caso
 	contrario sarà in formato di testo. Nel caso di output in
@@ -10344,7 +10344,7 @@ contenga un percorso completo.
       </code>
       <para>
 	L'opzione <opt>options=</opt>, che richiede il nome di un
-	bundle gretl, può essere utilizzato per controllare alcuni
+	bundle gretl, può essere utilizzata per controllare alcuni
 	aspetti della formattazione della tabella del modello. Vengono
 	riconosciute le seguenti chiavi:
       </para>
@@ -10367,7 +10367,7 @@ contenga un percorso completo.
        <li>
 	 <para>
 	   <lit>pvalues</lit>: booleano, include o meno i
-	   <math>P</math>-vaue (default 0).
+	   <math>P</math>-value (default 0).
          </para>
        </li>
        <li>
@@ -17261,36 +17261,35 @@ del comando <cmdref targ="set"/>.
 	</li>
 	<li>
 	  <para>
-	    Tipo di aggregazione: Se si andasse nella direzione
-	    opposta, (aggregando anziché disaggregando) come sarebbe
-	    definita la serie a bassa frequenza? La scelta
-	    <lit>sum</lit> è appropriata se la serie a bassa frequenza
-	    risulta dalla somma dei valori ad alta frequenza
-	    (variabili flusso, come ad esempio il PIL).
-	    Scegliendo <lit>avg</lit> si assume che la serie ad alta
-	    frequenza sia uguale in media al valore a bassa frequenza
-	    (numeri indice, rapporti, o variabili flusso <quote>a
-	    tassi annuali</quote>). La scelta <lit>last</lit> o
-	    <lit>first</lit> va usata per serie di tipo stock, come ad
-	    esempio lo stock di moneta.
+	    Tipo di aggregazione: La scelta <lit>sum</lit> è
+	    appropriata se la serie a bassa frequenza risulta dalla
+	    somma dei valori ad alta frequenza (variabili flusso, come
+	    ad esempio il PIL e le sue componenti).  Scegliendo
+	    <lit>avg</lit> si assume che la serie ad alta frequenza
+	    sia uguale in media al valore a bassa frequenza (numeri
+	    indice, rapporti, o variabili flusso <quote>a tassi
+	    annuali</quote>). Le opzioni <lit>last</lit> e
+	    <lit>first</lit> vanno scelte se si vuole che l'ultima o
+	    la prima osservazione ad alta frequenza coincida con il
+	    valore a bassa frequenza, come può accadere per le
+	    variabili stock, ad esempio lo stock di moneta.
          </para>
        </li>
        <li>
 	 <para>
-	   Basato su regressione o Denton: La prima opzione è quella
+	   Basato su regressione oppure Denton: La prima opzione è quella
 	   generalmente consigliabile. In questo caso, si può
 	   selezionare il metodo di Fernández se si pensa che la serie
 	   contenga una radice unitaria; altrimenti, si può usare
-	   Chow&ndash;Lin. L'so del metodo di Denton è consigliato a
+	   Chow&ndash;Lin. L'uso del metodo di Denton è consigliato a
 	   chi sa cosa sta facendo. I metodi Denton sono in differenze
 	   prime, secondo la modifica di Cholette.
         </para>
       </li>
     </ilist>
   </description>
-
   </command>
-
+  
   <command name="textplot" section="Graphs" label="Grafici ASCII" context="cli">
     <usage>
       <arguments>
@@ -18489,8 +18488,8 @@ del comando <cmdref targ="set"/>.
 
     <description>
       <para>
-	Qui ci sono duo opzioni procedurali, controllate dal set
-	inferiore di bottoni radio.
+	Qui ci sono due modalità operative, controllate dal set
+	di bottoni radio in basso.
       </para>
       <para>
 	Selezionando <quote>Esegui X-13ARIMA direttamente</quote>
@@ -18507,8 +18506,8 @@ del comando <cmdref targ="set"/>.
 	salvarlo col nome voluto. Sarà anche possibile mandarlo in
 	esecuzione con x13a (cliccando il bottone <quote>Run</quote>
 	sulla barra degli strumenti dell'editor) e visualizzarne
-	l'output. In questo caso, tuttavia, non c'è possibilità di
-	salvare i dati prodotti o di produrre grafici.
+	l'output. In questo caso, tuttavia, non è possibile salvare i
+	dati prodotti né produrre grafici.
       </para>
     </description>
   </command>
@@ -18555,10 +18554,10 @@ del comando <cmdref targ="set"/>.
       <para>
 	Di default, se gretl non è in modalità batch, viene prodotto
 	un grafico del correlogramma incrociato. Questo comportamento
-	può essere aggiustato con l'opzione <opt>plot</opt>. Per essa,
+	può essere selezionato con l'opzione <opt>plot</opt>. Per essa,
 	i valori accettabili dei parametri sono <lit>none</lit> (per
 	sopprimere il grafico); <lit>display</lit> (per produrre un
-	grafico gnuplot anche se in modo batch), o il nome di un
+	grafico gnuplot anche se in modalità batch), o il nome di un
 	file. L'effetto di quest'ultima scelta è identico a quello
 	descritto sotto l'opzione <opt>output</opt> del comando
 	<cmdref targ="gnuplot"/>.
@@ -18651,13 +18650,12 @@ del comando <cmdref targ="set"/>.
 	Per impostazione predefinita le celle indicano la frequenza
 	assoluta.  Le opzioni <opt>row</opt> e <opt>column</opt> (che
 	sono mutualmente esclusive) sostituiscono la frequenza
-	assoluta con le frequenze in percentuale relativamente a
-	ciascuna riga o colonna. Le celle con valore di frequenza
-	nullo sono lasciate vuote, a meno che non venga usata
-	l'opzione <opt>zeros</opt>, che mostra esplicitamente i valori
-	pari a zero; questa opzione può essere comoda se occorre
-	importare la tabella in un altro programma, come un foglio di
-	calcolo.
+	assoluta con le percentuali per riga o colonna. Le celle con
+	valore di frequenza pari a 0 sono lasciate vuote, a meno che non
+	venga usata l'opzione <opt>zeros</opt>, che mostra
+	esplicitamente i valori pari a zero; questa opzione può essere
+	comoda se occorre importare la tabella in un altro programma,
+	come un foglio di calcolo.
       </para>
       <para>
 	Il test chi quadro di Pearson per l'indipendenza viene
@@ -18677,7 +18675,7 @@ del comando <cmdref targ="set"/>.
 	sono stati generati i dati.  Il p-value sinistro va usato nel
 	caso in cui l'ipotesi alternativa a quella di indipendenza sia
 	quella dell'associazione negativa (ossia i valori tendono ad
-	accumularsi nelle celle che non appartengono alla diagonale
+	concentrarsi nelle celle che non appartengono alla diagonale
 	della tabella), mentre il p-value destro va usato nell'ipotesi
 	alternativa di associazione positiva. Il p-value a due code di
 	questo test è calcolato seguendo il metodo (b) descritto in
@@ -18708,12 +18706,12 @@ del comando <cmdref targ="set"/>.
 	poterlo copincollare) o, se viene specificato il parametro
 	<repl>nomefile</repl>, nel file corrispondente. (Se
 	<repl>nomefile</repl> non contiene un percorso completo, il
-	file sarà scritto nella locazione <cmdref targ="workdir"/>
+	file sarà scritto nella directory <cmdref targ="workdir"/>
 	attuale). la statistica test non viene calcolata. L'opzione
 	addizionale <opt>equal</opt> viene usata per far sì che
-	venganp stampati in grassetto gli elementi della tabella per
+	vengano stampati in grassetto gli elementi della tabella per
 	cui le variabili riga e colonna hanno lo stesso valore
-	numerico. Quest'opzione è ignorata a se non è presente anche
+	numerico. Quest'opzione è ignorata se non è presente anche
 	l'opzione <opt>tex</opt> o quando una delle due variabili sia
 	di tipo stringa.
       </para>
@@ -18752,7 +18750,7 @@ del comando <cmdref targ="set"/>.
 	sono stati generati i dati.  Il p-value sinistro va usato nel
 	caso in cui l'ipotesi alternativa a quella di indipendenza sia
 	quella dell'associazione negativa (ossia i valori tendono ad
-	accumularsi nelle celle che non appartengono alla diagonale
+	concentrarsi nelle celle che non appartengono alla diagonale
 	della tabella), mentre il p-value destro va usato nell'ipotesi
 	alternativa di associazione positiva. Il p-value a due code di
 	questo test è calcolato seguendo il metodo (b) descritto in
