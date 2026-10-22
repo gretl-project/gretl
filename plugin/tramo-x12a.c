@@ -174,9 +174,28 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
         g_error_free(gerr);
         err = E_EXTERNAL;
     } else if (status != 0) {
-        if (sout && *sout) {
-            gretl_errmsg_set(sout);
-            fprintf(stderr, "spawn: status = %d: '%s'\n", status, sout);
+        /* stderr is the more informative source if it has content
+           (e.g. a Fortran runtime error), otherwise use stdout
+        */
+        const char *msg = NULL;
+        char *bt = NULL;
+
+        if (serr != NULL && !string_is_blank(serr)) {
+            msg = serr;
+            /* drop the backtrace, which is just noise here */
+            bt = strstr(serr, "\nError termination");
+            if (bt == NULL) {
+                bt = strstr(serr, "\nBacktrace");
+            }
+            if (bt != NULL) {
+                *bt = '\0';
+            }
+        } else if (sout != NULL && !string_is_blank(sout)) {
+            msg = sout;
+        }
+        if (msg != NULL) {
+            gretl_errmsg_set(msg);
+            fprintf(stderr, "spawn: status = %d: '%s'\n", status, msg);
         } else {
             gretl_errmsg_set(_("Command failed"));
             fprintf(stderr, "spawn: status = %d\n", status);
