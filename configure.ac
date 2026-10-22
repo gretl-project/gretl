@@ -1130,6 +1130,7 @@ if test "${build_addons}" = "yes" ; then
     addons/KFgui/pkg.inp
     addons/PairPlot/Makefile
     addons/PairPlot/pkg.inp
+    addons/PairPlot/doc/Makefile
     addons/kmeans/Makefile
     addons/kmeans/pkg.inp
     addons/kmeans/doc/Makefile
