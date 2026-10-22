@@ -174,9 +174,28 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
         g_error_free(gerr);
         err = E_EXTERNAL;
     } else if (status != 0) {
-        if (sout && *sout) {
-            gretl_errmsg_set(sout);
-            fprintf(stderr, "spawn: status = %d: '%s'\n", status, sout);
+        /* stderr is the more informative source if it has content
+           (e.g. a Fortran runtime error), otherwise use stdout
+        */
+        const char *msg = NULL;
+        char *bt = NULL;
+
+        if (serr != NULL && !string_is_blank(serr)) {
+            msg = serr;
+            /* drop the backtrace, which is just noise here */
+            bt = strstr(serr, "\nError termination");
+            if (bt == NULL) {
+                bt = strstr(serr, "\nBacktrace");
+            }
+            if (bt != NULL) {
+                *bt = '\0';
+            }
+        } else if (sout != NULL && !string_is_blank(sout)) {
+            msg = sout;
+        }
+        if (msg != NULL) {
+            gretl_errmsg_set(msg);
+            fprintf(stderr, "spawn: status = %d: '%s'\n", status, msg);
         } else {
             gretl_errmsg_set(_("Command failed"));
             fprintf(stderr, "spawn: status = %d\n", status);
@@ -1172,6 +1191,54 @@ static int grab_tramo_output_series (double *y, const double *x,
     return err;
 }
 
+/* Called when an expected X-13 output file is missing: try to
+   construct a useful error message from the program's .err file,
+   which holds the diagnostics (e.g. from SEATS). Returns 1 if a
+   message was set, 0 if not.
+*/
+
+static int set_x13_errmsg (const char *path)
+{
+    char fname[MAXLEN], line[1024];
+    GString *msg;
+    FILE *fp;
+    int n = 0;
+
+    strcpy(fname, path);
+    switch_ext_in_place(fname, "err");
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+        return 0;
+    }
+
+    msg = g_string_new(NULL);
+    /* skip the generic header, up to the first blank line */
+    while (fgets(line, sizeof line, fp)) {
+        if (string_is_blank(line)) {
+            break;
+        }
+    }
+    while (fgets(line, sizeof line, fp)) {
+        if (!string_is_blank(line)) {
+            g_strstrip(line);
+            if (g_utf8_validate(line, -1, NULL)) {
+                g_string_append(msg, line);
+                g_string_append_c(msg, '\n');
+                n++;
+            }
+        }
+    }
+    fclose(fp);
+
+    if (n > 0) {
+        g_strchomp(msg->str);
+        gretl_errmsg_set(msg->str);
+    }
+    g_string_free(msg, TRUE);
+
+    return n > 0;
+}
+
 /* Grabber for X-13ARIMA output: either a single selected series or the
    seasonally adjusted series plus a matrix holding sa, trend and
    irregular. This is called only by adjust_series(), the back-end for
@@ -1234,7 +1301,9 @@ static int grab_x13_output_series (double *y, const double *x,
         if (fp == NULL) {
             /* FIXME "noseas" case? */
             err = E_FOPEN;
-            if (prn != NULL) {
+            if (set_x13_errmsg(sfname)) {
+                err = E_DATA;
+            } else if (prn != NULL) {
                 display_x13a_output(sfname, 1, prn);
             }
             break;
@@ -1285,10 +1354,10 @@ static int grab_x13_output_series (double *y, const double *x,
             /* put results matrix into the caller's bundle */
             gretl_bundle_donate_data(b, "results", Y,
                                      GRETL_TYPE_MATRIX);
-	    /* and transcribe "sa" to return series @y */
-	    for (t=dset->t1; t<=dset->t2; t++) {
-		y[t] = Y->val[t - dset->t1];
-	    }
+            /* and transcribe "sa" to return series @y */
+            for (t=dset->t1; t<=dset->t2; t++) {
+                y[t] = Y->val[t - dset->t1];
+            }
         }
     }
 
