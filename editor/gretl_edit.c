@@ -505,6 +505,13 @@ int main (int argc, char **argv)
 	do_new_script(EDIT_HANSL, NULL, NULL);
     }
 
+    gtk_drag_dest_set(editor, GTK_DEST_DEFAULT_ALL,
+		      gretl_drag_targets, 1,
+		      GDK_ACTION_COPY);
+    g_signal_connect(G_OBJECT(editor), "drag-data-received",
+		     G_CALLBACK(editor_handle_drag),
+		     NULL);
+
 #ifdef MAC_INTEGRATION
     finish_mac_ui();
 #endif
@@ -601,7 +608,7 @@ gboolean open_tryfile (gboolean startup)
 /* Drag 'n' drop: respond to data dropped into the editor window */
 
 static void
-mdata_handle_drag  (GtkWidget *widget,
+editor_handle_drag (GtkWidget *widget,
 		    GdkDragContext *context,
 		    gint x,
 		    gint y,
