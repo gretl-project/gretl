@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-03 12:21-0400\n"
-"PO-Revision-Date: 2026-10-22 14:59-0300\n"
+"PO-Revision-Date: 2026-10-22 15:29-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -555,7 +555,7 @@ msgstr "Sintaxe com erros em %s: %s sem correspondência"
 
 #: lib/src/compare.c:78
 msgid "The model for testing lacks an xlist"
-msgstr ""
+msgstr "O modelo a ser testado não possui uma lista de regressores (xlist)"
 
 #: lib/src/compare.c:286
 #, c-format
@@ -657,6 +657,8 @@ msgid ""
 "replicate_estimator() failed:\n"
 " %d observations used versus %d for the original model"
 msgstr ""
+"Falha em replicate_estimator():\n"
+"%d observações utilizadas, em comparação com %d no modelo original"
 
 #: lib/src/compare.c:963 lib/src/compare.c:2599 lib/src/graphing.c:4824
 #: lib/src/graphing.c:4836 lib/src/graphing.c:7115 lib/src/printout.c:1548
@@ -1161,7 +1163,7 @@ msgstr "Assumindo que as aspas simples são os caracteres de aspas relevantes\n"
 
 #: lib/src/csvdata.c:1600
 msgid "unmatched quotation marks in CSV file"
-msgstr ""
+msgstr "Aspas sem correspondência no arquivo CSV"
 
 #: lib/src/csvdata.c:1601
 msgid "Quotation broken: marks not paired\n"
@@ -1932,7 +1934,7 @@ msgstr "%s: não foram encontrados dados"
 
 #: lib/src/dbread.c:205
 msgid "Database data: buffer shorter than expected"
-msgstr ""
+msgstr "Dados da base: buffer menor que o esperado"
 
 #: lib/src/dbread.c:326 lib/src/foreign_db.c:682
 msgid "Couldn't open database index file"
@@ -2719,11 +2721,11 @@ msgstr "%s: a variável dependente deve ser dado de contagem"
 
 #: lib/src/discrete.c:4355
 msgid "binperms: n must be <= 64"
-msgstr ""
+msgstr "binperms: n deve ser <= 64"
 
 #: lib/src/discrete.c:4361
 msgid "binperms: we need n >= k >= 0"
-msgstr ""
+msgstr "binperms: é necessário que n >= k >= 0"
 
 #: lib/src/estimate.c:192
 #, c-format
@@ -3132,7 +3134,7 @@ msgstr "defarray: nenhum tipo foi especificado"
 
 #: lib/src/geneval.c:15990
 msgid "defarray: at least one argument must be given"
-msgstr ""
+msgstr "defarray: deve ser fornecido ao menos um argumento"
 
 #: lib/src/geneval.c:16374
 #, c-format
@@ -7634,7 +7636,7 @@ msgstr "%s, obs. %s%s%s"
 
 #: lib/src/modelprint.c:2162
 msgid "J'WJ is not positive definite, std. errors not available"
-msgstr ""
+msgstr "J'WJ não é positiva definida, erros padrão indisponíveis"
 
 #: lib/src/modelprint.c:2166
 msgid "Missing or incomplete observations dropped"
@@ -8633,6 +8635,8 @@ msgid ""
 "Deprecated --band syntax: please use the current syntax\n"
 "as described in the help for the 'gnuplot' command"
 msgstr ""
+"Sintaxe obsoleta de --band: use a sintaxe atual,\n"
+"conforme descrito na ajuda do comando 'gnuplot'"
 
 #: lib/src/plotspec.c:223 lib/src/plotspec.c:246
 msgid "lines"
@@ -8688,7 +8692,7 @@ msgstr "Arquivo de datas não adequados para a operação"
 
 #: lib/src/plotspec.c:2334
 msgid "No bars fall within the plot range"
-msgstr ""
+msgstr "Nenhuma barra está dentro dos limites do gráfico"
 
 #: lib/src/plugins.c:422
 #, c-format
@@ -8959,11 +8963,11 @@ msgstr " Para intervalos de confiança de %g%%, t(%d, %g) = %.3f\n"
 
 #: lib/src/printout.c:3406
 msgid "Normal correction applied to point forecast"
-msgstr ""
+msgstr "Correção baseada na normalidade aplicada à previsão pontual"
 
 #: lib/src/printout.c:3408
 msgid "Smearing correction applied to point forecast"
-msgstr ""
+msgstr "Correção smearing aplicada à previsão pontual"
 
 #: lib/src/printout.c:3429
 msgid " std. error"
@@ -9219,11 +9223,13 @@ msgstr "memória esgotada durante codificação em XML"
 #: lib/src/strutils.c:3588
 #, c-format
 msgid "Unknown escape sequence '\\%c'"
-msgstr ""
+msgstr "Sequência de escape desconhecida '\\\\%c'"
 
 #: lib/src/subsample.c:750
 msgid "You cannot subsample a resampled dataset"
 msgstr ""
+"Não é possível selecionar uma subamostra de um conjunto de dados obtido por "
+"reamostragem"
 
 #: lib/src/subsample.c:863
 msgid "Missing sub-sample information; can't merge data\n"
@@ -9849,7 +9855,7 @@ msgstr "A lista '%s' foi acrescentada\n"
 
 #: lib/src/var.c:539
 msgid "ylist, xlist and rxlist must be disjoint"
-msgstr ""
+msgstr "ylist, xlist e rxlist não podem conter variáveis em comum"
 
 #: lib/src/var.c:541
 msgid "ylist and xlist must be disjoint"
@@ -13592,6 +13598,7 @@ msgstr "Atribuir valor de retorno:"
 #: gui/fncall.c:2433
 msgid "Save return value (optional, clear box for no assignment):"
 msgstr ""
+"Salvar valor de retorno (opcional; deixe o campo vazio para não atribuir):"
 
 #: gui/fncall.c:2436
 msgid "Assign return value (optional):"
@@ -13951,6 +13958,9 @@ msgid ""
 "that assignment of the return value from the function is not optional, when\n"
 "it is called from the graphical interface."
 msgstr ""
+"Ao marcar \"atribuição obrigatória\" para uma função pública,\n"
+"você torna obrigatória a atribuição do valor de retorno quando\n"
+"a função é chamada pela interface gráfica."
 
 #: gui/fnsave.c:2822
 msgid "function"
@@ -13958,7 +13968,7 @@ msgstr "﻿função"
 
 #: gui/fnsave.c:2825
 msgid "must assign"
-msgstr ""
+msgstr "atribuição obrigatória"
 
 #: gui/fnsave.c:2861
 msgid ""
@@ -14007,7 +14017,7 @@ msgstr "Dependências"
 
 #: gui/fnsave.c:3839
 msgid "Must assign"
-msgstr ""
+msgstr "Atribuição obrigatória"
 
 #: gui/fnsave.c:3948
 msgid "Email"
@@ -18023,7 +18033,7 @@ msgstr "Desconhecido"
 #: gui/menustate.c:1102
 #, c-format
 msgid "Panel: units %d:%d, time %s:%s"
-msgstr ""
+msgstr "Painel: unidades %d:%d, tempo %s:%s"
 
 #: gui/menustate.c:1134
 #, c-format
@@ -18539,6 +18549,9 @@ msgid ""
 "dependent variable by double-clicking\n"
 "on a series."
 msgstr ""
+"Selecionar. Você também pode selecionar\n"
+"a variável dependente clicando duas vezes\n"
+"em uma série."
 
 #: gui/selector.c:4942
 msgid "lag order:"
@@ -18585,6 +18598,8 @@ msgid ""
 "Add. You can also add a series\n"
 "by right-clicking on it."
 msgstr ""
+"Adicionar. Você também pode adicionar uma série\n"
+"clicando nela com o botão direito do mouse."
 
 #: gui/selector.c:5175
 msgid "All ->"
@@ -18864,7 +18879,7 @@ msgstr "Teste LM usando regressão auxiliar"
 
 #: gui/selector.c:6929
 msgid "Stepwise add, using"
-msgstr ""
+msgstr "Inclusão por etapas (stepwise), usando"
 
 #: gui/selector.c:6960
 msgid "Estimate reduced model"
@@ -19245,7 +19260,7 @@ msgstr "Salvar como TeX..."
 
 #: gui/session.c:194 gui/session.c:3651
 msgid "View using gnuplot"
-msgstr ""
+msgstr "Visualizar com o gnuplot"
 
 #: gui/session.c:195 gui/session.c:3645
 msgid "Edit plot commands"
@@ -19772,7 +19787,7 @@ msgstr "Geral"
 
 #: gui/settings.c:1715
 msgid "Plots"
-msgstr ""
+msgstr "Gráficos"
 
 #: gui/settings.c:1717
 msgid "Programs"
@@ -20536,7 +20551,7 @@ msgstr ""
 
 #: gui/update.c:69
 msgid "Received an invalid update message"
-msgstr ""
+msgstr "Foi recebida uma mensagem de atualização inválida"
 
 #: gui/update.c:72
 msgid "No new files"
@@ -21343,7 +21358,7 @@ msgstr "Densidade estimada de %s"
 #: plugin/kmeans.c:153
 #, c-format
 msgid "Cluster %d is empty; stopping."
-msgstr ""
+msgstr "O grupo %d está vazio; interrompendo a execução."
 
 #: plugin/leverage.c:113 plugin/pca.c:112
 msgid "Variables to save:"
@@ -21800,7 +21815,7 @@ msgstr "Acrescentar"
 
 #: plugin/stepwise.c:780 plugin/stepwise.c:1097
 msgid "Drop"
-msgstr ""
+msgstr "Excluir"
 
 #: plugin/svm.c:323
 #, c-format
@@ -22315,7 +22330,7 @@ msgstr "sim"
 
 #: plugin/tramo-x12a.c:2266
 msgid "auto"
-msgstr ""
+msgstr "automático"
 
 #: plugin/tramo-x12a.c:2285
 msgid "critical"
@@ -22824,7 +22839,7 @@ msgstr "dbnomics"
 
 #: addons/addons-i18n.c:116
 msgid "Don't"
-msgstr ""
+msgstr "Não preencher"
 
 #: addons/addons-i18n.c:117
 msgid "Fill method"
@@ -22872,7 +22887,7 @@ msgstr "Estatística de teste W"
 
 #: addons/addons-i18n.c:128
 msgid "always use normal approx"
-msgstr ""
+msgstr "sempre usar a aproximação normal"
 
 #: addons/addons-i18n.c:129
 msgid "bootstrap type code"
@@ -22900,7 +22915,7 @@ msgstr "Limite superior de truncamento"
 
 #: addons/addons-i18n.c:136
 msgid "two-sided prob mass"
-msgstr ""
+msgstr "probabilidade total nas duas caudas"
 
 #: addons/addons-i18n.c:137
 msgid "wildM"
@@ -22940,7 +22955,7 @@ msgstr "Parametrização"
 
 #: addons/addons-i18n.c:154
 msgid "Quiet"
-msgstr ""
+msgstr "Silencioso"
 
 #: addons/addons-i18n.c:156
 msgid "State transition matrix (T)"
@@ -22956,7 +22971,7 @@ msgstr "Detalhado"
 
 #: addons/addons-i18n.c:159
 msgid "do smoothing"
-msgstr ""
+msgstr "aplicar suavização"
 
 #: addons/addons-i18n.c:160
 msgid "observables"
