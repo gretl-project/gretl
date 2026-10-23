@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleExecutable</key>
+  <string>gretl_edit</string>
+  <key>CFBundleIconFile</key>
+  <string>GretlEdit.icns</string>
+  <key>CFBundleDocumentTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeExtensions</key>
+      <array>
+        <string>inp</string>
+      </array>
+      <key>CFBundleTypeName</key>
+      <string>Gretl script file</string>
+      <key>LSHandlerRank</key>
+      <string>Alternate</string>
+    </dict>  
+  </array>
+  <key>CFBundleIdentifier</key>
+  <string>net.sourceforge.gretledit</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>gretl_edit</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleSignature</key>
+  <string>grtled</string>
+  <key>CFBundleVersion</key>
+  <string>@VERSION@</string>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
+  <key>NSHighResolutionCapable</key>
+  <string>True</string>
+</dict>
+</plist>

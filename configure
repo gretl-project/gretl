@@ -25586,7 +25586,7 @@ ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui/Makefile gui/de
 
 
 if test "${darwin_build}" = "yes" ; then
-  ac_config_files="$ac_config_files macos/Info.plist"
+  ac_config_files="$ac_config_files macos/Info.plist macos/GED.plist"
 
 fi
 
@@ -26822,6 +26822,7 @@ do
     "doc/gretl.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl.sty" ;;
     "doc/gretl-lite.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl-lite.sty" ;;
     "macos/Info.plist") CONFIG_FILES="$CONFIG_FILES macos/Info.plist" ;;
+    "macos/GED.plist") CONFIG_FILES="$CONFIG_FILES macos/GED.plist" ;;
     "win32/windist/mkiss.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/mkiss.sh" ;;
     "win32/windist/post-install.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/post-install.sh" ;;
     "win32/windist/install-runtime.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/install-runtime.sh" ;;

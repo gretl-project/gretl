@@ -1036,6 +1036,7 @@ doc/gretl-lite.sty
 if test "${darwin_build}" = "yes" ; then
   AC_CONFIG_FILES([
     macos/Info.plist
+    macos/GED.plist
   ])
 fi
 
