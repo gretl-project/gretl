@@ -5091,23 +5091,22 @@ int function_package_set_properties (fnpkg *pkg, ...)
     return err;
 }
 
-enum {
-    PUBLIST,
-    GUILIST,
-    PRIVLIST,
-    ASSNLIST
-};
+typedef enum {
+    PUBLIST,  /* public functions */
+    GUILIST,  /* public functions OK for GUI interface list */
+    PRIVLIST, /* private functions */
+    ASSNLIST  /* "must-assign" functions */
+} FnAttr;
 
-/* From a function package get a list of either its public or its
-   private functions, in the form of a simple gretl list.  The
-   elements of this list are just the positions of these functions in
-   the current recorder array for user-functions.  This is fine if
-   the information is to be used right away (as in the GUI function
-   call dialog), but it should _not_ be assumed that the identifiers
-   will remain valid indefinitely.
+/* Get from @pkg a list comprising those of its functions that satisfy
+   the criterion specified by @attr.  The elements of this list are the
+   positions of the functions in question in the current recorder array
+   for user-defined functions.  This is fine if the information is to be
+   used right away (as in the GUI function call dialog), but it should
+   not be assumed that the identifiers will remain valid indefinitely.
 */
 
-static int *function_package_get_list (fnpkg *pkg, int code, int n)
+static int *function_package_get_list (fnpkg *pkg, FnAttr attr, int n)
 {
     int *list = NULL;
     int j = 0;
@@ -5118,25 +5117,26 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
             int i, priv, menu_only;
 
             for (i=0; i<n_ufuns; i++) {
-                if (ufuns[i]->pkg == pkg) {
-                    priv = function_is_private(ufuns[i]);
-                    menu_only = function_is_menu_only(ufuns[i]);
-                    if (code == ASSNLIST && !priv &&
-                        function_must_assign(ufuns[i])) {
-                        list[++j] = i;
-                    }
-                    if (code == PRIVLIST && priv) {
-                        list[++j] = i;
-                    } else if (code == PUBLIST && !priv) {
-                        list[++j] = i;
-                    } else if (code == GUILIST && !priv && !menu_only &&
-                               !pkg_aux_role(ufuns[i]->pkg_role)) {
-                        /* in the GUI list of public functions, don't
-                           display post-processing functions
-                        */
-                        list[++j] = i;
-                    }
-                }
+                if (ufuns[i]->pkg != pkg) {
+		    continue;
+		}
+		priv = function_is_private(ufuns[i]);
+		menu_only = function_is_menu_only(ufuns[i]);
+		if (attr == ASSNLIST && !priv &&
+		    function_must_assign(ufuns[i])) {
+		    list[++j] = i;
+		}
+		if (attr == PRIVLIST && priv) {
+		    list[++j] = i;
+		} else if (attr == PUBLIST && !priv) {
+		    list[++j] = i;
+		} else if (attr == GUILIST && !priv && !menu_only &&
+			   !pkg_aux_role(ufuns[i]->pkg_role)) {
+		    /* in the GUI list of public functions, don't
+		       display post-processing functions
+		    */
+		    list[++j] = i;
+		}
             }
         }
     }
@@ -5204,6 +5204,7 @@ int function_package_get_properties (fnpkg *pkg, ...)
     va_list ap;
     int npub = 0;
     int npriv = 0;
+    int nassn = 0;
     int **plist;
     const char *key;
     UfunRole role;
@@ -5220,6 +5221,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
                 npriv++;
             } else {
                 npub++;
+		if (function_must_assign(ufuns[i])) {
+		    nassn++;
+		}
             }
         }
     }
@@ -5319,7 +5323,7 @@ int function_package_get_properties (fnpkg *pkg, ...)
             *plist = function_package_get_list(pkg, PRIVLIST, npriv);
         } else if (!strcmp(key, "assnlist")) {
             plist = (int **) ptr;
-            *plist = function_package_get_list(pkg, ASSNLIST, npriv);
+            *plist = function_package_get_list(pkg, ASSNLIST, nassn);
         } else if (!strcmp(key, "gui-main-id")) {
             pi = (int *) ptr;
             *pi = pkg_get_special_func_id(pkg, UFUN_GUI_MAIN);
