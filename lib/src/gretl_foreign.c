@@ -1663,9 +1663,11 @@ static int write_gretl_mpi_script (gretlopt opt, DATASET *dset)
 
     fclose(fp);
 
+#ifdef _OPENMP
     if (!err) {
 	set_omp_threads_for_mpi(opt);
     }
+#endif
 
     return err;
 }
