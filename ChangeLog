@@ -1,7 +1,11 @@
 version 2026d, in progress
-- Delete some unused variables flagged by clang
 - Fix bug: potential crash when forecasting based on a
   VAR estimated in the GUI
+- Fix bug: the "must-assign" attribute of packaged functions
+  was not being registered in the function-package GUI
+- Fix bug: potential crash in the deseas() function on
+  getting an error from X-13ARIMA-SEATS
+- Fix bug: missing data in the updated AWM macro dataset
 - L-BFGS-B: the code (originally translated from Fortran via
   f2c) has been rewritten in idiomatic C
 - L-BFGS-B: more robust handling of a criterion that is
@@ -13,6 +17,11 @@ version 2026d, in progress
 - fix bug: BFGSmin, BFGSmax, BFGScmin, BFGScmax, NRmin and
   NRmax could return a criterion value that did not
   correspond exactly to the final parameter vector
+- Delete some unused variables flagged by clang
+- markdown formatter: handle bulleted lists not preceded
+  by a blank line
+- macOS: add installer packages for gretl_edit
+- PairPlot addon: upgrade to PDF documentation
 
 2026-10-12 version 2026c
 - new addons kmeans and PairPlot, from A. Tarassow's
