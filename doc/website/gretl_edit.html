@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd">
+
+<head><title>gretl_edit</title>
+<LINK REL=STYLESHEET TYPE="text/css"
+HREF="../css-gretl.html">
+<META NAME="GENERATOR" CONTENT="GNU Emacs">
+</head>
+<body>
+
+[<a href="index.html">gretl main page</a>]
+
+<center>
+<h1>gretl_edit</h1>
+</center>
+
+<p>
+  <kbd>gretl_edit</kbd> is a lightweight, special-purpose supplementary
+  program for use in conjunction with gretl. It comprises a tabbed
+  script editor along with apparatus to execute scripts
+  (via <kbd>gretlcli</kbd>) and view their output.
+</p>
+<p>
+  You're probably aware that the gretl GUI program has its own built-in
+  script editor. So why are we offering a stand-alone editing program?
+  Well, here's the context for which <kbd>gretl_edit</kbd> is designed:
+  You're working on a relatively complex code project which involves
+  defining several functions (perhaps you're designing a function
+  package) and wish to carry out the following sort of cycle.
+</p>
+<pre>
+  edit code
+  execute the code, inspect results, check for bugs
+  revise code
+  execute again...
+</pre>
+<p>
+  If that's something you do from time to time, we recommend
+  giving <kbd>gretl_edit</kbd> a try. If it's not, you can probably
+  ignore this program.
+</p>
+<p>
+  Note that <kbd>gretl_edit</kbd> is &ldquo;stateless&rdquo;. Unlike the
+  main gretl GUI, there are no saved models, matrices, bundles and
+  whatnot. The only state preserved is that of the script, or scripts,
+  being edited (well, with one exception noted below). In the context
+  we're talking about that's probably what you want: each time a script
+  is executed it starts with a &ldquo;blank slate&rdquo;. That means
+  that if a script uses a dataset, it must include a command to open the
+  dataset.
+</p>
+<p>
+  Obviously, <kbd>gretl_edit</kbd> supports hansl, gretl's own scripting
+  language. Less obviously, it also supports languages that are covered
+  by gretl's &ldquo;foreign&rdquo; apparatus: R, Octave, Julia, Ox,
+  Python and Stata. In the foreign case the script editor is not as
+  full-featured as for hansl: it offers syntax highlighting but not
+  automatic indentation or auto-completion.
+</p>
+<p>
+  For hansl code, <kbd>gretl_edit</kbd> offers special means of
+  navigating in the realm of function definitions:
+</p>
+
+<ul>
+  <li>
+    <p><kbd>Ctrl-FI</kbd> pops up a search bar at the foot of the editor
+    window. Besides the usual search entry-box there's a button labeled
+    &ldquo;Go to function&rdquo;. Click this button to pop up a list of
+    the functions defined within the window. Select a function to go to
+    its definition.
+    </p>
+  </li>
+  <li>
+    <p>The &ldquo;Run&rdquo; button (cogs) in the toolbar at the top of
+      the editor window gives a little menu with the choice of executing
+      the script (with output going to a separate window) or
+      (re-)loading the functions defined in the window. In this context
+      &ldquo;loading&rdquo; means that the functions are loaded into
+      <kbd>gretl_edit</kbd>'s memory-space. Once the functions are
+      loaded, you have these options:
+    </p>
+    <ul>
+      <li>
+      <p>With the cursor in the name of a function defined in the
+	window (for example in a call to that function), <kbd>Alt-.</kbd>
+	takes you to the definition of that function, and then
+	<kbd>Alt-,</kbd> takes you back to where you came from.
+      </p>
+      </li>
+      <li>
+      <p>You can click the question-mark button in the toolbar,
+	move the &ldquo;query&rdquo; cursor into the name of a function
+	defined in the editor, and click to get a pop-up showing the
+	signature of the function along with a link to its definition.
+	This is an extension of the usual apparatus for querying
+	built-in gretl functions. See the example below.
+      </p>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<center>
+<IMG SRC="fnquery.png" ALT="function signature query">
+</center>
+
+<p>&nbsp;</p>
+<hr>
+
+</body>
