@@ -3509,8 +3509,6 @@ void check_for_yscale (gnuplot_info *gi, const double **Z)
     } else {
         gi->y2vars = gretl_list_new(1);
         gi->y2vars[1] = gi->list[oddman]; /* ? */
-        fprintf(stderr, "HERE oddman = %d, gi->list[%d] = %d\n",
-                oddman, oddman, gi->list[oddman]);
     }
 }
 
