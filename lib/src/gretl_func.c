@@ -5093,7 +5093,7 @@ int function_package_set_properties (fnpkg *pkg, ...)
 
 typedef enum {
     PUBLIST,  /* public functions */
-    GUILIST,  /* public functions OK for GUI interface list */
+    GUILIST,  /* functions OK for GUI interface list */
     PRIVLIST, /* private functions */
     ASSNLIST  /* "must-assign" functions */
 } FnAttr;
@@ -5109,36 +5109,35 @@ typedef enum {
 static int *function_package_get_list (fnpkg *pkg, FnAttr attr, int n)
 {
     int *list = NULL;
-    int j = 0;
+    int i, j = 0;
+    int addit;
+    ufunc *f;
 
-    if (n > 0) {
-        list = gretl_list_new(n);
-        if (list != NULL) {
-            int i, priv, menu_only;
+    if (n == 0) {
+	return NULL;
+    }
 
-            for (i=0; i<n_ufuns; i++) {
-                if (ufuns[i]->pkg != pkg) {
-		    continue;
-		}
-		priv = function_is_private(ufuns[i]);
-		menu_only = function_is_menu_only(ufuns[i]);
-		if (attr == ASSNLIST && !priv &&
-		    function_must_assign(ufuns[i])) {
-		    list[++j] = i;
-		}
-		if (attr == PRIVLIST && priv) {
-		    list[++j] = i;
-		} else if (attr == PUBLIST && !priv) {
-		    list[++j] = i;
-		} else if (attr == GUILIST && !priv && !menu_only &&
-			   !pkg_aux_role(ufuns[i]->pkg_role)) {
-		    /* in the GUI list of public functions, don't
-		       display post-processing functions
-		    */
-		    list[++j] = i;
-		}
-            }
-        }
+    list = gretl_list_new(n);
+
+    for (i=0; i<n_ufuns; i++) {
+	f = ufuns[i];
+	if (f->pkg != pkg) {
+	    continue;
+	}
+	addit = 0;
+	if (function_is_private(f)) {
+	    addit = (attr == PRIVLIST);
+	} else if (attr == PUBLIST) {
+	    addit = 1;
+	} else if (attr == ASSNLIST) {
+	    addit = function_must_assign(f);
+	} else if (attr == GUILIST) {
+	    addit = !function_is_menu_only(f) &&
+		!pkg_aux_role(f->pkg_role);
+	}
+	if (addit) {
+	    list[++j] = i;
+	}
     }
 
     if (list != NULL) {
