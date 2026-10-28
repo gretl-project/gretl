@@ -43,7 +43,7 @@ int main (int argc, char **argv)
     fputs("  <gresource prefix=\"/gretl\">\n", fp);
 
     for (i=0; i<2; i++) {
-	struct dirent **list;
+	struct dirent **list = NULL;
 	int n, j;
 
 	sprintf(dirname, "%s/icons/%dx%d", argv[1], px[i], px[i]);
