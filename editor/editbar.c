@@ -380,6 +380,7 @@ static void editor_prefs_callback (GtkWidget *w, windata_t *vwin)
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
     text_set_cursor(vwin->text, GDK_QUESTION_ARROW);
+    maybe_load_functions(vwin);
     set_window_help_active(vwin);
 }
 
