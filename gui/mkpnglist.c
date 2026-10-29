@@ -26,7 +26,7 @@ static int win32_cmp_png (const void *a, const void *p)
     const struct dirent *da = *(const struct dirent **) a;
     const struct dirent *db = *(const struct dirent **) b;
     
-    return strcmp(a->d_name, b->d_name);
+    return strcmp(da->d_name, db->d_name);
 }
 
 int win32_scandir (const char *dirname, struct dirent ***list)
