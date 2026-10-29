@@ -21,6 +21,14 @@ static int cmp_png (const struct dirent **a,
 
 #ifdef _WIN32
 
+static int win32_cmp_png (const void *a, const void *p)
+{
+    const struct dirent *da = *(const struct dirent **) a;
+    const struct dirent *db = *(const struct dirent **) b;
+    
+    return strcmp(a->d_name, b->d_name);
+}
+
 int win32_scandir (const char *dirname, struct dirent ***list)
 {
     DIR *dirp;
@@ -50,7 +58,7 @@ int win32_scandir (const char *dirname, struct dirent ***list)
     closedir(dirp);
 
     if (n > 0) {
-        qsort(mylist, n, sizeof *d, int (*) (const void *, const void *) cmp_png);
+        qsort(mylist, n, sizeof *d, win32_cmp_png);
     }
 
     *list = mylist;
@@ -63,6 +71,14 @@ int win32_scandir (const char *dirname, struct dirent ***list)
     free(mylist);
     closedir(dirp);
     return -1;
+}
+
+#else
+
+static int cmp_png (const struct dirent **a,
+		    const struct dirent **b)
+{
+    return strcmp((*a)->d_name, (*b)->d_name);
 }
 
 #endif
