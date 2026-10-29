@@ -13,7 +13,8 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-static int cmp_png (const struct dirent **a, const struct dirent **b)
+static int cmp_png (const struct dirent **a,
+		    const struct dirent **b)
 {
     return strcmp((*a)->d_name, (*b)->d_name);
 }
@@ -25,7 +26,7 @@ int win32_scandir (const char *dirname, struct dirent ***list)
     DIR *dirp;
     struct dirent *d;
     struct dirent **mylist = NULL;
-    int n = 0;
+    int i, n = 0;
 
     dirp = opendir(dirname);
     if (dirp == NULL) {
@@ -49,7 +50,7 @@ int win32_scandir (const char *dirname, struct dirent ***list)
     closedir(dirp);
 
     if (n > 0) {
-        qsort(mylist, n, sizeof *d, cmp_png);
+        qsort(mylist, n, sizeof *d, int (*) (const void *, const void *) cmp_png);
     }
 
     *list = mylist;
