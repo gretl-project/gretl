@@ -2,16 +2,15 @@ Checklist for making a gretl release
 
 Local:
 * Update the fedstl database if needed
-* Ensure the addon zipfiles are up to date with git
 * Update lib/src/version.h
-* Re-run the configure script in all build directories
 * Update src/Changelog and src/CompatLog with the current date
-* Commit the above changes to git
+* Commit and push the above changes
+* Re-run the configure script in all build directories
 * Rebuild and publish the PDF docs
 * Rebuild and publish the HMTL docs
 * Do "make dist" to create the new gretl-YYYYx.tar.xz
 * Rebuild the gretl library and gretlci to the new version
-* Do "make addons.tar.gz" in the addons directory
+* Do "make clean ; make addons.tar.gz" in the build/addons directory
 * Create a new versioned gretl directory in the sourceforge files area
 * Make and upload the MS Windows installers (32- and 64-bit intel, arm64)
   - bash pkg <version> for x86, x64
@@ -32,7 +31,7 @@ Local:
 * Update all the web docs (this is automated: ./update_html auto)
   and upload them to sourceforge
 * Update the libgretl API docs and upload ("apipack")
-* Send a message to (at least) gretl-announce
+* Send a message to gretl-announce and gretl-users
 
 Allin Cottrell
-last revised, Dec 2024
+last revised, Oct 2026
