@@ -18,6 +18,54 @@ static int cmp_png (const struct dirent **a, const struct dirent **b)
     return strcmp((*a)->d_name, (*b)->d_name);
 }
 
+#ifdef _WIN32
+
+int win32_scandir (const char *dirname, struct dirent ***list)
+{
+    DIR *dirp;
+    struct dirent *d;
+    struct dirent **mylist = NULL;
+    int n = 0;
+
+    dirp = opendir(dirname);
+    if (dirp == NULL) {
+	return -1;
+    }
+
+    while ((d = readdir(dirp)) != NULL) {
+        struct dirent *copy = malloc(sizeof *copy);
+	struct dirent **new_list;
+
+        if (copy == NULL) goto fail;
+        memcpy(copy, d, sizeof *copy);
+        new_list = realloc(mylist, (n + 1) * sizeof *d);
+        if (new_list == NULL) {
+            free(copy);
+            goto fail;
+        }
+        mylist = new_list;
+        mylist[n++] = copy;
+    }
+    closedir(dirp);
+
+    if (n > 0) {
+        qsort(mylist, n, sizeof *d, cmp_png);
+    }
+
+    *list = mylist;
+    return n;
+
+ fail:
+    for (i=0; i<n; i++) {
+	free(mylist[i]);
+    }
+    free(mylist);
+    closedir(dirp);
+    return -1;
+}
+
+#endif
+
 int main (int argc, char **argv)
 {
     char dirname[1024];
@@ -47,7 +95,11 @@ int main (int argc, char **argv)
 	int n, j;
 
 	sprintf(dirname, "%s/icons/%dx%d", argv[1], px[i], px[i]);
+#ifdef _WIN32
+	n = win32_scandir(dirname, &list);
+#else
 	n = scandir(dirname, &list, NULL, cmp_png);
+#endif
 	if (n < 0) {
 	    fprintf(stderr, "%s: couldn't open %s\n", argv[0], dirname);
 	    exit(EXIT_FAILURE);
