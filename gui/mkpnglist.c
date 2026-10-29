@@ -13,75 +13,73 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+#ifdef _WIN32 /* don't try to use POSIX scandir() */
+
+int main (int argc, char **argv)
+{
+    struct dirent *de;
+    char dirname[512];
+    DIR *icond[2];
+    int px[2] = {16, 24};
+    FILE *fp;
+    int i;
+
+    if (argc < 2) {
+	fprintf(stderr, "%s: need path to share dir\n", argv[0]);
+	exit(EXIT_FAILURE);
+    }
+
+    sprintf(dirname, "%s/icons/16x16", argv[1]);
+    icond[0] = opendir(dirname);
+    if (icond[0] == NULL) {
+	fprintf(stderr, "%s: couldn't open %s\n", argv[0], dirname);
+	exit(EXIT_FAILURE);
+    }
+
+    sprintf(dirname, "%s/icons/24x24", argv[1]);
+    icond[1] = opendir(dirname);
+    if (icond[1] == NULL) {
+	fprintf(stderr, "%s: couldn't open %s\n", argv[0], dirname);
+	exit(EXIT_FAILURE);
+    }
+
+    fp = fopen("gretl-icons.xml", "w");
+    if (fp == NULL) {
+	fprintf(stderr, "%s: couldn't open %s\n", argv[0], "gretl-icons.xml");
+	fclose(fp);
+	exit(EXIT_FAILURE);
+    }
+
+    fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fp);
+    fputs("<gresources>\n", fp);
+    fputs("  <gresource prefix=\"/gretl\">\n", fp);
+
+    for (i=0; i<2; i++) {
+	while ((de = readdir(icond[i])) != NULL) {
+	    if (strstr(de->d_name, ".png")) {
+		fprintf(fp, "    <file>icons/%dx%d/%s</file>\n",
+			px[i], px[i], de->d_name);
+	    }
+	}
+    }
+
+    fputs("  </gresource>\n", fp);
+    fputs("</gresources>\n", fp);
+
+    closedir(icond[0]);
+    closedir(icond[1]);
+    fclose(fp);
+
+    return 0;
+}
+
+#else /* not _WIN32: use POSIX scandir() */
+
 static int cmp_png (const struct dirent **a,
 		    const struct dirent **b)
 {
     return strcmp((*a)->d_name, (*b)->d_name);
 }
-
-#ifdef _WIN32
-
-static int win32_cmp_png (const void *a, const void *p)
-{
-    const struct dirent *da = *(const struct dirent **) a;
-    const struct dirent *db = *(const struct dirent **) b;
-    
-    return strcmp(da->d_name, db->d_name);
-}
-
-int win32_scandir (const char *dirname, struct dirent ***list)
-{
-    DIR *dirp;
-    struct dirent *d;
-    struct dirent **mylist = NULL;
-    int i, n = 0;
-
-    dirp = opendir(dirname);
-    if (dirp == NULL) {
-	return -1;
-    }
-
-    while ((d = readdir(dirp)) != NULL) {
-        struct dirent *copy = malloc(sizeof *copy);
-	struct dirent **new_list;
-
-        if (copy == NULL) goto fail;
-        memcpy(copy, d, sizeof *copy);
-        new_list = realloc(mylist, (n + 1) * sizeof *d);
-        if (new_list == NULL) {
-            free(copy);
-            goto fail;
-        }
-        mylist = new_list;
-        mylist[n++] = copy;
-    }
-    closedir(dirp);
-
-    if (n > 0) {
-        qsort(mylist, n, sizeof *d, win32_cmp_png);
-    }
-
-    *list = mylist;
-    return n;
-
- fail:
-    for (i=0; i<n; i++) {
-	free(mylist[i]);
-    }
-    free(mylist);
-    closedir(dirp);
-    return -1;
-}
-
-#else
-
-static int cmp_png (const struct dirent **a,
-		    const struct dirent **b)
-{
-    return strcmp((*a)->d_name, (*b)->d_name);
-}
-
-#endif
 
 int main (int argc, char **argv)
 {
@@ -112,11 +110,7 @@ int main (int argc, char **argv)
 	int n, j;
 
 	sprintf(dirname, "%s/icons/%dx%d", argv[1], px[i], px[i]);
-#ifdef _WIN32
-	n = win32_scandir(dirname, &list);
-#else
 	n = scandir(dirname, &list, NULL, cmp_png);
-#endif
 	if (n < 0) {
 	    fprintf(stderr, "%s: couldn't open %s\n", argv[0], dirname);
 	    exit(EXIT_FAILURE);
@@ -138,3 +132,5 @@ int main (int argc, char **argv)
 
     return 0;
 }
+
+#endif
