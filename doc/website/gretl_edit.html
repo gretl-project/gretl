@@ -64,7 +64,7 @@ HREF="css-gretl.html">
 
 <ul>
   <li>
-    <p><kbd>Ctrl-FI</kbd> pops up a search bar at the foot of the editor
+    <p><kbd>Ctrl-F</kbd> pops up a search bar at the foot of the editor
     window. Besides the usual search entry-box there's a button labeled
     &ldquo;Go to function&rdquo;. Click this button to pop up a list of
     the functions defined within the window. Select a function to go to
@@ -96,6 +96,16 @@ HREF="css-gretl.html">
 	This is an extension of the usual apparatus for querying
 	built-in gretl functions -- see the example below.
       </p>
+      <p>Moreover, if the function contains a comment of the kind
+	  <pre>
+	    /* -doc-
+	    This function does this and that
+	    */
+	  </pre>
+	  This works a bit like a Python docstring, that is a text
+	  element with a (possibly extended) description of what the
+	  function does. This too will be shown in the pop-up window.
+	</p>
       </li>
     </ul>
   </li>
