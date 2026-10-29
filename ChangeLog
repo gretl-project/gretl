@@ -1,4 +1,4 @@
-version 2026d, in progress
+2026-10-29 version 2026d
 - Fix bug: potential crash when forecasting based on a
   VAR estimated in the GUI
 - Fix bug: the "must-assign" attribute of packaged functions
