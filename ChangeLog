@@ -1,3 +1,9 @@
+version 2026e, in progress
+- Factor out plot script to C struct code from gpt_control.c
+  and add to libgretl API as plotspec_read_file()
+- Fix some memory leaks and possible invalid reads in plot-
+  handling code
+
 2026-10-29 version 2026d
 - Fix bug: potential crash when forecasting based on a
   VAR estimated in the GUI
