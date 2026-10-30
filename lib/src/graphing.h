@@ -151,6 +151,21 @@ typedef enum {
 				c == PLOT_MULTI_BASIC || \
 				c == PLOT_PANEL)
 
+/* special graphs for which editing via GUI is not supported */
+
+#define cant_edit(p) (p == PLOT_CORRELOGRAM || \
+		      p == PLOT_LEVERAGE || \
+		      p == PLOT_MULTI_IRF || \
+		      p == PLOT_MULTI_BASIC || \
+		      p == PLOT_PANEL || \
+		      p == PLOT_TRI_GRAPH || \
+		      p == PLOT_BI_GRAPH || \
+		      p == PLOT_ELLIPSE || \
+		      p == PLOT_3D || \
+		      p == PLOT_HEATMAP || \
+		      p == PLOT_GEOMAP || \
+		      p == PLOT_GRIDPLOT)
+
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
 				c == PLOT_FREQ_NORMAL || \
 				c == PLOT_FREQ_GAMMA || \

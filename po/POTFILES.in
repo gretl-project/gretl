@@ -86,6 +86,7 @@ lib/src/options.c
 lib/src/pb_legacy.c
 lib/src/plotbands.c
 lib/src/plotspec.c
+lib/src/plotspec_read.c
 lib/src/plugins.c
 lib/src/princomp_extra.c
 lib/src/printout.c
