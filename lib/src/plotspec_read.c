@@ -992,7 +992,12 @@ static int parse_gp_set_line (GPT_SPEC *spec,
         spec->keyspec = GP_KEY_NONE;
         return 0;
     } else if (!strcmp(key, "label")) {
-        parse_label_line(spec, s, unhandled);
+        if (parse_label_line(spec, s, unhandled) && unhandled != NULL) {
+            /* nothing was stored (e.g. position given in "graph"
+               coordinates), so the line must not be treated as
+               handled */
+            *unhandled = 1;
+        }
         return 0;
     } else if (!strcmp(key, "arrow")) {
         parse_arrow_line(spec, s, unhandled);
@@ -2309,4 +2314,3 @@ int plotspec_read_file (GPT_SPEC *spec, const DATASET *dset,
 
     return err;
 }
-

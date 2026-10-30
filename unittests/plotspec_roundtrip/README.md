@@ -16,7 +16,7 @@ This generates a set of plots with `gretlcli` (`gen_plots.inp`), then
    the first pass, which check 1 cannot see).
 
 Plot types the GUI editor does not support (`cant_edit()`) are skipped.
-Known failures are listed in `XFAIL` in the Makefile.
+Known failures can be listed with `-x name` (see `roundtrip.c`); there are none at present.
 
 Use `./roundtrip -v -k plots/foo.plt` to see successes and keep the
 intermediate files for inspection. Needs `build/` in the top-level source

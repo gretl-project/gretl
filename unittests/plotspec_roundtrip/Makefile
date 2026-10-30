@@ -17,17 +17,6 @@ CFLAGS = -g -O1 -Wall -W -Wno-unused-parameter
 
 PLOTS = plots
 
-# Known round-trip failures. Remove an entry once the underlying
-# problem is fixed (the test then reports XPASS).
-#
-# freq_normal.plt: the "set label ... at graph X, graph Y front" lines
-# carrying the normality test result are dropped. In
-# parse_gp_set_line() the result of parse_label_line() is ignored, so
-# when the label position is not a pair of plain numbers the line is
-# treated as handled by maybe_promote_literal_lines() and removed
-# from the literal lines, although nothing was stored.
-XFAIL = -x freq_normal.plt
-
 all: roundtrip
 
 roundtrip: roundtrip.c $(TOP)/lib/src/plotspec.h
@@ -40,7 +29,7 @@ $(PLOTS)/.stamp: gen_plots.inp
 	touch $@
 
 check: roundtrip $(PLOTS)/.stamp
-	./roundtrip $(XFAIL) $(PLOTS)/*.plt
+	./roundtrip $(PLOTS)/*.plt
 
 clean:
 	rm -rf $(PLOTS) roundtrip
