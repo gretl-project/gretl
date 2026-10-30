@@ -136,18 +136,28 @@ static void plotbars_free (plotbars *bars)
     }
 }
 
-static void free_plotspec_lines (GPT_SPEC *spec)
+/* Free an array of @n lines, as returned by plotspec_clone_lines()
+   or found in spec->lines, along with the strings and lists that
+   the lines own.
+*/
+
+void plotspec_free_lines (GPT_LINE *lines, int n)
 {
     int i;
 
-    for (i=0; i<spec->n_lines; i++) {
-	g_free(spec->lines[i].title);
-	g_free(spec->lines[i].formula);
-	free(spec->lines[i].ustr);
-	free(spec->lines[i].mcols);
+    for (i=0; i<n; i++) {
+	g_free(lines[i].title);
+	g_free(lines[i].formula);
+	free(lines[i].ustr);
+	free(lines[i].mcols);
     }
 
-    free(spec->lines);
+    free(lines);
+}
+
+static void free_plotspec_lines (GPT_SPEC *spec)
+{
+    plotspec_free_lines(spec->lines, spec->n_lines);
 }
 
 void plotspec_destroy (GPT_SPEC *spec)

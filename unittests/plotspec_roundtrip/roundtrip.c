@@ -331,13 +331,7 @@ static int lines_test (void)
                  clone[2].title != NULL)) {
         err = 1;
     }
-    if (clone != NULL) {
-        for (i=0; i<4; i++) {
-            g_free(clone[i].title);
-            g_free(clone[i].formula);
-        }
-        free(clone);
-    }
+    plotspec_free_lines(clone, 4);
 
     plotspec_destroy(spec);
     printf("%s plotspec line management\n", err ? "FAIL" : "ok  ");
