@@ -18,6 +18,14 @@ This generates a set of plots with `gretlcli` (`gen_plots.inp`), then
 Plot types the GUI editor does not support (`cant_edit()`) are skipped.
 Known failures can be listed with `-x name` (see `roundtrip.c`); there are none at present.
 
+    make check-asan
+
+additionally compiles the reader (and `plotspec.c`) into the test binary with
+AddressSanitizer, UBSan and leak detection, repeats the round trip, and then
+feeds the reader tens of thousands of damaged variants of the plots
+(truncated, lines deleted, blanked or cut short, random byte changes). The
+reader may reject these, but must not misuse memory or leak.
+
 Use `./roundtrip -v -k plots/foo.plt` to see successes and keep the
 intermediate files for inspection. Needs `build/` in the top-level source
 directory, with libgretl and gretlcli built.

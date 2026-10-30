@@ -25,10 +25,17 @@
    the same on the second pass. That is what step 4 is for: it
    compares P1 with the original in terms of what gnuplot draws.
 
-   Usage: roundtrip [-v] [-k] [-x name] file1.plt [file2.plt ...]
+   With -f, each file is instead used as the seed for a deterministic
+   robustness test: many truncated and corrupted variants of it are fed
+   to the reader, which may reject them but must not crash. This is
+   most useful when the reader is compiled with AddressSanitizer (see
+   "make check-asan").
+
+   Usage: roundtrip [-v] [-k] [-f] [-x name] file1.plt [file2.plt ...]
 
    -v  report successes as well as failures
    -x  expect the named file (basename) to fail; may be repeated
+   -f  fuzz the reader with damaged versions of each file
    -k  keep the intermediate files P1 and P2 (in a scratch directory
        whose name is printed) for inspection
 
@@ -46,6 +53,7 @@
 
 static int verbose;
 static int keep;
+static int fuzz;
 static int have_gnuplot;
 static const char *xfail[32];
 static int n_xfail;
@@ -152,6 +160,189 @@ static const char *spec_mismatch (const GPT_SPEC *a, const GPT_SPEC *b)
     }
 
     return NULL;
+}
+
+/* Robustness test: feed damaged variants of @fname to the reader.
+   We don't care whether the reader accepts them; the point is that it
+   must neither crash nor (under a sanitizer) misuse memory.
+*/
+
+static void fuzz_one (const char *buf, size_t len, const char *tmpdir,
+                      int *count)
+{
+    char path[FILENAME_MAX];
+    PlotReadInfo info = {0};
+    GPT_SPEC *spec;
+    FILE *fp;
+
+    sprintf(path, "%s/fuzz.plt", tmpdir);
+    fp = fopen(path, "wb");
+    if (fp == NULL) {
+        return;
+    }
+    fwrite(buf, 1, len, fp);
+    fclose(fp);
+
+    spec = plotspec_new();
+    if (spec != NULL) {
+        strcpy(spec->fname, path);
+        plotspec_read_file(spec, NULL, &info);
+        plotspec_destroy(spec);
+        *count += 1;
+    }
+}
+
+static void fuzz_file (const char *fname, const char *tmpdir, int *count)
+{
+    static const char junk[] = "\n ,#'\"$:[]()0123456789?-+*e<=%\\";
+    size_t len = 0, i, k;
+    int nlines;
+    char *orig = slurp(fname, &len);
+    char *buf;
+    int it, j;
+
+    if (orig == NULL || len == 0) {
+        free(orig);
+        return;
+    }
+    buf = malloc(len + 1);
+
+    /* truncation: every byte near the start, then at intervals */
+    for (k=0; k<=len; k += (k < 800)? 1 : 61) {
+        fuzz_one(orig, k, tmpdir, count);
+    }
+
+    /* damage to each of the first few hundred lines in turn: delete
+       it, blank it, reduce it to "#", cut it short at several places
+       (half way, just after the first '#', ',', '=' or quote)
+    */
+    for (i=0, nlines=0; i<len && nlines<400; i++) {
+        if (i == 0 || orig[i-1] == '\n') {
+            const char cuts[] = "#,='\"";
+            size_t e = i;
+            size_t l, c;
+
+            while (e < len && orig[e] != '\n') e++;
+            l = e - i;
+            nlines++;
+
+            /* delete (or if it's the last line, blank) */
+            memcpy(buf, orig, i);
+            if (e < len) {
+                memcpy(buf + i, orig + e + 1, len - e - 1);
+                fuzz_one(buf, len - (e + 1 - i), tmpdir, count);
+            }
+            /* blank */
+            memcpy(buf, orig, len);
+            memmove(buf + i, orig + e, len - e);
+            fuzz_one(buf, len - l, tmpdir, count);
+            /* reduce to "#" */
+            if (l > 0) {
+                memcpy(buf, orig, len);
+                buf[i] = '#';
+                memmove(buf + i + 1, orig + e, len - e);
+                fuzz_one(buf, len - l + 1, tmpdir, count);
+            }
+            /* half length */
+            if (l > 1) {
+                memcpy(buf, orig, len);
+                memmove(buf + i + l / 2, orig + e, len - e);
+                fuzz_one(buf, len - (l - l / 2), tmpdir, count);
+            }
+            /* cut just after the first of each special character,
+               and likewise after the last character before it */
+            for (c=0; c<sizeof cuts - 1; c++) {
+                const char *q = memchr(orig + i, cuts[c], l);
+
+                if (q != NULL) {
+                    size_t k = q - (orig + i) + 1;
+
+                    memcpy(buf, orig, len);
+                    memmove(buf + i + k, orig + e, len - e);
+                    fuzz_one(buf, len - (l - k), tmpdir, count);
+                }
+            }
+        }
+    }
+
+    /* random byte replacement (fixed seed, so reproducible) */
+    srand(12345);
+    for (it=0; it<400; it++) {
+        memcpy(buf, orig, len);
+        for (j=0; j<1 + it % 3; j++) {
+            size_t pos = (size_t) rand() % (len < 3000 ? len : 3000);
+
+            buf[pos] = junk[rand() % (sizeof junk - 1)];
+        }
+        fuzz_one(buf, len, tmpdir, count);
+    }
+
+    free(buf);
+    free(orig);
+}
+
+/* Check plotspec_delete_line() and plotspec_clone_lines(): strings
+   belonging to a line must be neither lost nor left dangling when
+   lines are removed (run under AddressSanitizer to be effective).
+*/
+
+static int lines_test (void)
+{
+    GPT_SPEC *spec = plotspec_new();
+    GPT_LINE *clone;
+    int i, err = 0;
+
+    for (i=0; i<4 && !err; i++) {
+        err = plotspec_add_line(spec);
+        if (!err && i != 2) {
+            /* the third line has no title or formula */
+            spec->lines[i].title = g_strdup_printf("title %d", i);
+            spec->lines[i].formula = g_strdup_printf("x**%d", i);
+        }
+    }
+
+    clone = plotspec_clone_lines(spec, &err);
+
+    /* delete a line with a title, followed by one without */
+    if (!err) {
+        err = plotspec_delete_line(spec, 1);
+    }
+    if (!err && (spec->n_lines != 3 || spec->lines[1].title != NULL ||
+                 strcmp(spec->lines[0].title, "title 0") ||
+                 strcmp(spec->lines[2].title, "title 3"))) {
+        err = 1;
+    }
+    /* delete the last, then the first, then everything */
+    if (!err) {
+        err = plotspec_delete_line(spec, 2);
+    }
+    if (!err) {
+        err = plotspec_delete_line(spec, 0);
+    }
+    if (!err) {
+        err = plotspec_delete_line(spec, 0);
+    }
+    if (!err && spec->n_lines != 0) {
+        err = 1;
+    }
+
+    /* the clone is independent of all that */
+    if (!err && (clone == NULL || strcmp(clone[3].title, "title 3") ||
+                 clone[2].title != NULL)) {
+        err = 1;
+    }
+    if (clone != NULL) {
+        for (i=0; i<4; i++) {
+            g_free(clone[i].title);
+            g_free(clone[i].formula);
+        }
+        free(clone);
+    }
+
+    plotspec_destroy(spec);
+    printf("%s plotspec line management\n", err ? "FAIL" : "ok  ");
+
+    return err;
 }
 
 static int is_xfail (const char *fname)
@@ -358,6 +549,8 @@ int main (int argc, char **argv)
     while (argc > 1 && argv[1][0] == '-') {
         if (!strcmp(argv[1], "-v")) {
             verbose = 1;
+        } else if (!strcmp(argv[1], "-f")) {
+            fuzz = 1;
         } else if (!strcmp(argv[1], "-k")) {
             keep = 1;
         } else if (!strcmp(argv[1], "-x") && argc > 2 && n_xfail < 32) {
@@ -371,7 +564,7 @@ int main (int argc, char **argv)
         argv++;
     }
     if (argc < 2) {
-        fprintf(stderr, "usage: roundtrip [-v] [-k] [-x name] file.plt ...\n");
+        fprintf(stderr, "usage: roundtrip [-v] [-k] [-f] [-x name] file.plt ...\n");
         return 2;
     }
     have_gnuplot = system("command -v gnuplot >/dev/null 2>&1") == 0;
@@ -385,18 +578,33 @@ int main (int argc, char **argv)
 
     libgretl_init();
 
-    for (i=1; i<argc; i++) {
-        nfail += check_file(argv[i], tmpdir) != 0;
-        nfiles++;
-    }
+    if (fuzz) {
+        int count = 0;
 
-    printf("%d files, %d failed\n", nfiles, nfail);
+        nfail += lines_test();
+
+        for (i=1; i<argc; i++) {
+            fuzz_file(argv[i], tmpdir, &count);
+            nfiles++;
+        }
+        printf("%d files, %d damaged variants read without crashing\n",
+               nfiles, count);
+    } else {
+        nfail += lines_test();
+        for (i=1; i<argc; i++) {
+            nfail += check_file(argv[i], tmpdir) != 0;
+            nfiles++;
+        }
+        printf("%d files, %d failed\n", nfiles, nfail);
+    }
 
     libgretl_cleanup();
 
     if (keep) {
         printf("intermediate files left in %s (those of the last file)\n", tmpdir);
     } else {
+        sprintf(p, "%s/fuzz.plt", tmpdir);
+        remove(p);
         sprintf(p, "%s/p1.plt", tmpdir);
         remove(p);
         sprintf(p, "%s/p2.plt", tmpdir);

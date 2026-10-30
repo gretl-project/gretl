@@ -141,6 +141,8 @@ static void free_plotspec_lines (GPT_SPEC *spec)
     int i;
 
     for (i=0; i<spec->n_lines; i++) {
+	g_free(spec->lines[i].title);
+	g_free(spec->lines[i].formula);
 	free(spec->lines[i].ustr);
 	free(spec->lines[i].mcols);
     }
@@ -150,12 +152,17 @@ static void free_plotspec_lines (GPT_SPEC *spec)
 
 void plotspec_destroy (GPT_SPEC *spec)
 {
+    int i;
+
     if (spec == NULL) {
 	return;
     }
 
     if (spec->lines != NULL) {
 	free_plotspec_lines(spec);
+    }
+    for (i=0; i<5; i++) {
+	g_free(spec->titles[i]);
     }
     if (spec->heredata_cols != NULL) {
 	free(spec->heredata_cols);
@@ -422,22 +429,18 @@ static void copy_line_content (GPT_LINE *targ, GPT_LINE *src)
     targ->whiskwidth = src->whiskwidth;
     targ->flags = src->flags;
 
-    if (src->title != NULL) {
-	g_free(targ->title);
-	targ->title = g_strdup(src->title);
-    }
-    if (src->formula != NULL) {
-	g_free(targ->formula);
-	targ->formula = g_strdup(src->formula);
-    }
-    if (src->ustr != NULL) {
-	free(targ->ustr);
-	targ->ustr = gretl_strdup(src->ustr);
-    }
-    if (src->mcols != NULL) {
-	free(targ->mcols);
-	targ->mcols = gretl_list_copy(src->mcols);
-    }
+    /* note: if the source member is NULL the target's must be
+       NULLed too, otherwise it is left stale (and possibly dangling,
+       in the case of plotspec_delete_line)
+    */
+    g_free(targ->title);
+    targ->title = g_strdup(src->title);
+    g_free(targ->formula);
+    targ->formula = g_strdup(src->formula);
+    free(targ->ustr);
+    targ->ustr = src->ustr == NULL ? NULL : gretl_strdup(src->ustr);
+    free(targ->mcols);
+    targ->mcols = src->mcols == NULL ? NULL : gretl_list_copy(src->mcols);
 }
 
 int plotspec_delete_line (GPT_SPEC *spec, int i)
@@ -449,17 +452,27 @@ int plotspec_delete_line (GPT_SPEC *spec, int i)
 	return E_DATA;
     }
 
-    g_free(lines[i].title);
-    g_free(lines[i].formula);
-    free(lines[i].ustr);
-    free(lines[i].mcols);
-
-    /* move the remaining line contents down */
+    /* move the remaining line contents down (this replaces the
+       strings owned by the line being deleted) */
     for (j=i; j<n-1; j++) {
 	copy_line_content(&lines[j], &lines[j+1]);
     }
 
+    /* and release what the last line, now surplus, still holds */
+    g_free(lines[n-1].title);
+    g_free(lines[n-1].formula);
+    free(lines[n-1].ustr);
+    free(lines[n-1].mcols);
+
     spec->n_lines -= 1;
+
+    if (n == 1) {
+	/* we just deleted the only line: realloc(p, 0) would free
+	   @lines and make a NULL return look like failure */
+	free(spec->lines);
+	spec->lines = NULL;
+	return 0;
+    }
 
     lines = realloc(spec->lines, (n - 1) * sizeof *lines);
     if (lines == NULL) {
