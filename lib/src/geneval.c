@@ -817,9 +817,8 @@ static int mutate_bundle_member_node (NODE *n, int type,
     return err;
 }
 
-/* We allow here for some equivocation in type between
-   1 x 1 matrices and scalars in the course of executing
-   a compiled parser with saved aux nodes.
+/* We allow here for some equivocation in type in the course of
+   executing a compiled parser with saved aux nodes.
 */
 
 static void maybe_switch_node_type (NODE *n, int type,
@@ -6150,8 +6149,12 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	int *vlist = array_subspec_list(l, r, p);
 
 	if (!p->err && vlist[0] == 1 && l->t == LIST) {
-	    /* singleton list selection */
-	    ret = list_member_by_pos(l, vlist[1], p);
+	    /* singleton list selection: we were returning a series,
+	       but (experiment 2025-11-02) we now return a one-element
+	       list
+	    */
+	    ret = list_range_node(l->v.ivec, vlist[1], vlist[1], p);
+	    // ret = list_member_by_pos(l, vlist[1], p);
 	} else if (!p->err && gretl_list_is_consecutive(vlist)) {
 	    /* selected elements are consecutive */
 	    int r1 = vlist[1];
