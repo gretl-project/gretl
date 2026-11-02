@@ -2824,6 +2824,31 @@ static int check_integrated_forecast_option (MODEL *pmod,
     return err;
 }
 
+/* Check whether we can sensibly honor the --exponentiate option.
+   Whether the regressand is a log cannot always be determined (a
+   series produced by "genr" need not be recognizable as a log), so
+   we only reject the cases where exponentiation is plainly wrong:
+   combination with --integrate, or a regressand that is marked as
+   a first difference (the user probably wanted --integrate).
+*/
+
+static int check_exponentiate_option (MODEL *pmod, const DATASET *dset,
+				      gretlopt opt)
+{
+    int err = 0;
+
+    if (opt & OPT_I) {
+	err = E_BADOPT;
+    } else if (is_standard_diff(gretl_model_get_depvar(pmod), dset, NULL)) {
+	gretl_errmsg_set(_("fcast: the dependent variable is a first "
+			   "difference, not a log: did you mean "
+			   "--integrate?"));
+	err = E_BADOPT;
+    }
+
+    return err;
+}
+
 static int check_all_probs_option (MODEL *pmod)
 {
     int err = E_BADOPT;
@@ -4071,6 +4096,13 @@ static int model_do_forecast (const char *str, MODEL *pmod,
        variable is not recognized as a first difference */
     if (opt & OPT_I) {
 	err = check_integrated_forecast_option(pmod, dset, NULL);
+	if (err) {
+	    return err;
+	}
+    }
+
+    if (opt & OPT_X) {
+	err = check_exponentiate_option(pmod, dset, opt);
 	if (err) {
 	    return err;
 	}

@@ -69,6 +69,13 @@ assert(rows(bi.fcast) == rows(bi.lower) || rows(bi.lower) == rows(bi.fcse))
 assert(maxr(abs(bi.upper - bi.lower - 2*cv*bi.fcse)) < 1.0e-10)
 assert(minr(bi.fcast) > 5)
 
+# When --exponentiate is wrongly given for a differenced regressand,
+# or together with --integrate, it is rejected
+catch fcast 1985:1 1987:3 --exponentiate --quiet
+assert($error != 0)
+catch fcast 1985:1 1987:3 --exponentiate --integrate --quiet
+assert($error != 0)
+
 # When another command supporting $result runs, $result is replaced
 matrix m = {1,2,3}
 corr LRM LRY --quiet
