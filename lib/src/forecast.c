@@ -3697,7 +3697,7 @@ static void set_fcast_result_bundle (const gretl_matrix *f,
 		fcs = forecast_stats(fr->actual, fr->fitted, t1, t2,
 				     &n_used, OPT_NONE, &serr);
 		if (!serr && fcs != NULL) {
-		    err = gretl_bundle_set_matrix(b, "eval", fcs);
+		    err = gretl_bundle_set_matrix(b, "eval_stats", fcs);
 		    if (!err) {
 			err = gretl_bundle_set_int(b, "eval_obs", n_used);
 		    }
