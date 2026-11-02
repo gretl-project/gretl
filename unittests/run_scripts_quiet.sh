@@ -1,14 +1,15 @@
 #!/bin/bash
 
-if [ "x$1" != "x" ] ; then
-   echo "*** Executing unit tests in the build tree ***"
+if [ "x$1" == "x" ] ; then
+   INPPATH="."
+   GRETLCLI="$(which gretlcli)"
+else
    INPPATH=$1
    GRETLCLI="$(pwd)/../cli/gretlcli"
-else
-   echo "*** Executing unit tests using installed gretlcli ***"
-   INPPATH="."
-   GRETLCLI="gretlcli"
 fi
+
+GCLI=$(realpath $GRETLCLI)
+echo "*** Using $GCLI ***"
 
 # Remove the 'fails' file if it exists
 rm -f fails
