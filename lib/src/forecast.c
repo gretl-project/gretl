@@ -3594,6 +3594,119 @@ static void fr_adjust_sample (FITRESID *fr, int *ft1, int *ft2,
     }
 }
 
+/* Build a bundle holding the forecast results and make it available
+   as $result. @f and @e are the (trimmed) forecast and forecast-error
+   matrices, as saved for $fcast and $fcse; @e may be NULL. @alpha,
+   @df and @asy determine the critical value for confidence intervals.
+   @fr, if non-NULL, supplies metadata and the basis for forecast
+   evaluation statistics. Failure here is not treated as fatal.
+*/
+
+static void set_fcast_result_bundle (const gretl_matrix *f,
+				     const gretl_matrix *e,
+				     double alpha, int df, int asy,
+				     const FITRESID *fr)
+{
+    gretl_bundle *b = gretl_bundle_new();
+    int err = 0;
+
+    if (b == NULL) {
+	return;
+    }
+
+    err = gretl_bundle_set_matrix(b, "fcast", f);
+
+    if (!err && e != NULL) {
+	int k = f->cols;
+	int ft1 = gretl_matrix_get_t1(f);
+	int et1 = gretl_matrix_get_t1(e);
+	double a2 = alpha / 2;
+	double cval, fx, ex;
+	gretl_matrix *lo, *hi;
+	int i, j, s;
+
+	cval = asy ? normal_critval(a2) : student_critval(df, a2);
+	lo = gretl_matrix_copy(e);
+	hi = gretl_matrix_copy(e);
+	if (lo != NULL && hi != NULL && e->cols == k) {
+	    for (j=0; j<k; j++) {
+		for (i=0; i<e->rows; i++) {
+		    s = et1 + i - ft1;
+		    ex = gretl_matrix_get(e, i, j);
+		    if (s < 0 || s >= f->rows) {
+			fx = NADBL;
+		    } else {
+			fx = gretl_matrix_get(f, s, j);
+		    }
+		    if (na(fx) || na(ex)) {
+			gretl_matrix_set(lo, i, j, NADBL);
+			gretl_matrix_set(hi, i, j, NADBL);
+		    } else {
+			gretl_matrix_set(lo, i, j, fx - cval * ex);
+			gretl_matrix_set(hi, i, j, fx + cval * ex);
+		    }
+		}
+	    }
+	    err = gretl_bundle_set_matrix(b, "fcse", e);
+	    if (!err) err = gretl_bundle_set_matrix(b, "lower", lo);
+	    if (!err) err = gretl_bundle_set_matrix(b, "upper", hi);
+	    if (!err) err = gretl_bundle_set_scalar(b, "alpha", alpha);
+	    if (!err) err = gretl_bundle_set_scalar(b, "coverage", 1.0 - alpha);
+	} else {
+	    err = E_ALLOC;
+	}
+	gretl_matrix_free(lo);
+	gretl_matrix_free(hi);
+    }
+
+    if (!err) {
+	err = gretl_bundle_set_int(b, "t1", gretl_matrix_get_t1(f) + 1);
+	if (!err) {
+	    err = gretl_bundle_set_int(b, "t2", gretl_matrix_get_t2(f) + 1);
+	}
+    }
+
+    if (!err && fr != NULL) {
+	const char *mstr = "static";
+	int t1, t2, n_used = 0, serr = 0;
+	gretl_matrix *fcs;
+
+	if (fr->method == FC_DYNAMIC) {
+	    mstr = "dynamic";
+	} else if (fr->method == FC_AUTO) {
+	    mstr = "auto";
+	} else if (fr->method == FC_KSTEP) {
+	    mstr = "k-step";
+	}
+	if (*fr->depvar != '\0') {
+	    err = gretl_bundle_set_string(b, "depvar", fr->depvar);
+	}
+	if (!err) {
+	    err = gretl_bundle_set_string(b, "method", mstr);
+	}
+	if (!err && fr->actual != NULL) {
+	    fcast_get_continuous_range(fr, &t1, &t2);
+	    if (t2 - t1 + 1 > 0) {
+		fcs = forecast_stats(fr->actual, fr->fitted, t1, t2,
+				     &n_used, OPT_NONE, &serr);
+		if (!serr && fcs != NULL) {
+		    err = gretl_bundle_set_matrix(b, "eval", fcs);
+		    if (!err) {
+			err = gretl_bundle_set_int(b, "eval_obs", n_used);
+		    }
+		}
+		gretl_matrix_free(fcs);
+	    }
+	}
+    }
+
+    if (err) {
+	gretl_bundle_destroy(b);
+    } else {
+	set_last_result_data(b, GRETL_TYPE_BUNDLE);
+    }
+}
+
 static int set_forecast_matrices_from_fr (FITRESID *fr)
 {
     gretl_matrix *f = NULL;
@@ -3646,6 +3759,7 @@ static int set_forecast_matrices_from_fr (FITRESID *fr)
     }
 
     set_fcast_matrices(f, e);
+    set_fcast_result_bundle(f, e, fr->alpha, fr->df, fr->asymp, fr);
 
     return err;
 }
@@ -3708,7 +3822,8 @@ static void F_matrix_adjust_sample (const gretl_matrix *F,
 }
 
 static int set_forecast_matrices_from_F (const gretl_matrix *F,
-					 int imin, int imax)
+					 int imin, int imax,
+					 int df, int asy)
 {
     gretl_matrix *F1 = NULL;
     gretl_matrix *f = NULL;
@@ -3787,6 +3902,7 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
     }
 
     set_fcast_matrices(f, e);
+    set_fcast_result_bundle(f, e, 0.05, df, asy, NULL);
 
     if (F1 != NULL) {
 	gretl_matrix_free(F1);
@@ -4099,7 +4215,8 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 
     if (!err) {
 	/* arrange to save forecast and errors */
-	err = set_forecast_matrices_from_F(F, imin, imax);
+	err = set_forecast_matrices_from_F(F, imin, imax, df,
+					   ci == VECM);
     }
 
     if (err) {

@@ -4225,6 +4225,19 @@
 	<repl>vname</repl> is not given, the forecast values can be
 	retrieved using the accessor <fncref targ="$fcast"/>, and the
 	standard errors, if available, via <fncref targ="$fcse"/>.
+	In addition, a bundle is made available via
+	<fncref targ="$result"/>. This contains the members
+	<lit>fcast</lit> and <lit>fcse</lit> (as above) plus, when
+	standard errors are available, the confidence interval
+	bounds <lit>lower</lit> and <lit>upper</lit> along with
+	<lit>alpha</lit> and <lit>coverage</lit>; the first and last
+	forecast observations, <lit>t1</lit> and <lit>t2</lit>; and,
+	for forecasts based on a single-equation model,
+	<lit>depvar</lit>, <lit>method</lit> and, if actual values are
+	available over (part of) the forecast range, forecast
+	evaluation statistics in <lit>eval</lit> (as produced by
+	<cmdref targ="fcstats"/>) with the number of observations used,
+	<lit>eval_obs</lit>.
       </para>
 
       <subhead>Static and dynamic forecasts</subhead>

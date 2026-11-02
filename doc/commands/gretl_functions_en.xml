@@ -837,7 +837,8 @@
 	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>, <cmdref targ="leverage"/>,
 	  <cmdref targ="summary"/>, <cmdref targ="vif"/> and <cmdref targ="xtab"/>
 	  (in which cases the result is a matrix), plus <cmdref targ="pkg"/>
-	  (which optionally stores a bundle result).
+	  (which optionally stores a bundle result) and
+	  <cmdref targ="fcast"/> (bundle result).
 	</para>
       </description>
     </function>

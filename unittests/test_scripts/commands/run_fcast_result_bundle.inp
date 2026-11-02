@@ -1,0 +1,47 @@
+set verbose off
+clear
+set assert stop
+
+# Given an OLS model on a time series dataset
+open denmark.gdt --quiet
+smpl ; 1984:4
+ols LRM const LRY IBO IDE --quiet
+
+# When we forecast out of sample
+smpl full
+fcast 1985:1 1987:3 --quiet
+matrix fc = $fcast
+matrix se = $fcse
+bundle b = $result
+
+# Then $result holds fcast and fcse equal to the old accessors
+assert(typeof(b) == 5)
+assert(maxr(abs(b.fcast - fc)) < 1.0e-12)
+assert(maxr(abs(b.fcse - se)) < 1.0e-12)
+
+# and the confidence interval is fcast -/+ t * se
+scalar cv = critical(t, $df, 0.025)
+assert(maxr(abs(b.lower - (fc - cv*se))) < 1.0e-10)
+assert(maxr(abs(b.upper - (fc + cv*se))) < 1.0e-10)
+assert(b.alpha == 0.05)
+assert(abs(b.coverage - 0.95) < 1.0e-12)
+assert(b.depvar == "LRM")
+assert(b.t2 - b.t1 + 1 == rows(fc))
+
+# When we forecast in sample
+fcast 1983:1 1984:4 --quiet
+bundle b2 = $result
+# Then evaluation statistics are present
+assert(rows(b2.eval) >= 6)
+assert(b2.eval_obs == 8)
+
+# When another command supporting $result runs, $result is replaced
+matrix m = {1,2,3}
+corr LRM LRY --quiet
+matrix cm = $result
+assert(rows(cm) == 2)
+# but $fcast is still available
+assert(rows($fcast) > 0)
+
+print "Successfully finished tests."
+quit
