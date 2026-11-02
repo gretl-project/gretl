@@ -61,6 +61,7 @@ struct Forecast_ {
     int t1;                /* start of forecast range */
     int t2;                /* end of forecast range */
     int model_t2;          /* end of period over which model was estimated */
+    gretl_matrix *probs;   /* matrix of probabilities (--all-probs) */
 };
 
 static gretl_matrix *fcast_matrix;
@@ -145,6 +146,7 @@ void free_fit_resid (FITRESID *fr)
 	free(fr->fitted);
 	free(fr->resid);
 	free(fr->sderr);
+	gretl_matrix_free(fr->probs);
 	free(fr);
     }
 }
@@ -192,6 +194,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
     f->fitted = NULL;
     f->resid = NULL;
     f->sderr = NULL;
+    f->probs = NULL;
 
     *f->depvar = '\0';
     *f->ylabel = '\0';
@@ -2500,9 +2503,8 @@ static int mlogit_allprobs (Forecast *fc, const MODEL *pmod,
     int err = 0;
 
     P = mn_logit_probabilities(pmod, fc->t1, fc->t2, dset, &err);
-    if (P != NULL) {
-	set_fcast_matrices(P, NULL);
-    }
+    /* the caller transfers @P to the FITRESID struct */
+    fc->probs = P;
 
     return err;
 }
@@ -2630,7 +2632,7 @@ static int linear_fcast (Forecast *fc,
 
 	P = ordered_probabilities(pmod, fc->yhat, fc->t1, fc->t2,
 				  dset, &err);
-	set_fcast_matrices(P, NULL);
+	fc->probs = P;
     }
 
     return err;
@@ -2717,6 +2719,7 @@ static void forecast_init (Forecast *fc)
     fc->sderr = NULL;
     fc->eps = NULL;
     fc->dvlags = NULL;
+    fc->probs = NULL;
 }
 
 static void forecast_free (Forecast *fc)
@@ -2728,6 +2731,8 @@ static void forecast_free (Forecast *fc)
     if (fc->eps != NULL) {
 	free(fc->eps);
     }
+
+    gretl_matrix_free(fc->probs);
 }
 
 static int fc_add_eps (Forecast *fc, int n)
@@ -3091,7 +3096,9 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	err = linear_fcast(&fc, pmod, yno, dset, NULL, opt);
     }
 
-    /* free any auxiliary info */
+    /* pass on any probabilities matrix, then free auxiliary info */
+    fr->probs = fc.probs;
+    fc.probs = NULL;
     forecast_free(&fc);
 
     if (opt & OPT_L) {
@@ -4048,6 +4055,12 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 
     if (err) {
         goto bailout;
+    }
+
+    if (!err && (opt & OPT_L) && fr->probs != NULL) {
+	/* --all-probs: make the matrix available as $fcast */
+	set_fcast_matrices(fr->probs, NULL);
+	fr->probs = NULL;
     }
 
     if (!err && (opt & OPT_A)) {
