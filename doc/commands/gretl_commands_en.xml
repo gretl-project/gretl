@@ -4236,7 +4236,7 @@
 	<lit>depvar</lit>, <lit>method</lit> and, if actual values are
 	available over (part of) the forecast range, forecast
 	evaluation statistics in <lit>eval</lit> (as produced by
-	<cmdref targ="fcstats"/>) with the number of observations used,
+	<fncref targ="fcstats"/>) with the number of observations used,
 	<lit>eval_obs</lit>.
       </para>
 
