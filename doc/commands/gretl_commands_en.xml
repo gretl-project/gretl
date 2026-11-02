@@ -4235,9 +4235,20 @@
 	for forecasts based on a single-equation model,
 	<lit>depvar</lit>, <lit>method</lit> and, if actual values are
 	available over (part of) the forecast range, forecast
-	evaluation statistics in <lit>eval</lit> (as produced by
+	evaluation statistics in <lit>eval_stats</lit> (as produced by
 	<fncref targ="fcstats"/>) with the number of observations used,
-	<lit>eval_obs</lit>.
+	<lit>eval_obs</lit>. Note that <lit>fcse</lit>, <lit>lower</lit>
+	and <lit>upper</lit> may cover fewer observations than
+	<lit>fcast</lit> (for example, in-sample static forecasts have no
+	standard errors). With the <lit>--exponentiate</lit> option,
+	<lit>fcast</lit>, <lit>lower</lit> and <lit>upper</lit> are in
+	levels, but <lit>fcse</lit> is the standard error on the log
+	scale, with the interval formed on that scale and then
+	exponentiated; the bundle also records the
+	<lit>correction</lit> applied ("normal", "smearing" or "none")
+	and the factor <lit>a0</lit>. With <lit>--integrate</lit> all
+	members are in levels. The member <lit>transform</lit> is one of
+	"none", "exponentiate" or "integrate".
       </para>
 
       <subhead>Static and dynamic forecasts</subhead>

@@ -32,8 +32,42 @@ assert(b.t2 - b.t1 + 1 == rows(fc))
 fcast 1983:1 1984:4 --quiet
 bundle b2 = $result
 # Then evaluation statistics are present
-assert(rows(b2.eval) >= 6)
+assert(rows(b2.eval_stats) >= 6)
 assert(b2.eval_obs == 8)
+
+# Given an exponentiated forecast (log regressand)
+smpl ; 1984:4
+ols LRM const LRY IBO IDE --quiet
+smpl full
+fcast 1985:1 1987:3 --exponentiate --quiet
+bundle bx = $result
+# Then the interval is formed on the log scale and exponentiated
+scalar cv = critical(t, $df, 0.025)
+matrix fcx = bx.fcast
+matrix sex = bx.fcse
+assert(bx.transform == "exponentiate")
+assert(maxr(abs(bx.lower - exp(log(fcx) - cv*sex))) < 1.0e-6 * maxr(fcx))
+assert(maxr(abs(bx.upper - exp(log(fcx) + cv*sex))) < 1.0e-6 * maxr(fcx))
+assert(minr(bx.lower) > 0)
+assert(minr(bx.fcast - bx.lower) > 0)
+assert(minr(bx.upper - bx.fcast) > 0)
+
+# Given an integrated forecast (differenced regressand)
+open denmark.gdt --quiet
+diff LRM
+smpl ; 1984:4
+ols d_LRM const LRY IBO IDE --quiet
+smpl full
+fcast 1985:1 1987:3 --integrate --quiet
+bundle bi = $result
+cv = critical(t, $df, 0.025)
+# Then the forecast is in levels and the interval is in levels
+assert(bi.transform == "integrate")
+assert(bi.depvar == "LRM")
+assert(bi.t1 == 45 && bi.t2 == 55)
+assert(rows(bi.fcast) == rows(bi.lower) || rows(bi.lower) == rows(bi.fcse))
+assert(maxr(abs(bi.upper - bi.lower - 2*cv*bi.fcse)) < 1.0e-10)
+assert(minr(bi.fcast) > 5)
 
 # When another command supporting $result runs, $result is replaced
 matrix m = {1,2,3}

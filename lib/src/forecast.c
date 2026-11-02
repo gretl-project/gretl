@@ -3629,6 +3629,10 @@ static void set_fcast_result_bundle (const gretl_matrix *f,
 	int et1 = gretl_matrix_get_t1(e);
 	double a2 = alpha / 2;
 	double cval, fx, ex;
+	/* for exponentiated forecasts the standard errors are on the
+	   log scale, and the interval is formed on that scale and
+	   then exponentiated (as in text_print_forecast) */
+	int expon = (fr != NULL && (fr->opt & OPT_X));
 	gretl_matrix *lo, *hi;
 	int i, j, s;
 
@@ -3649,8 +3653,15 @@ static void set_fcast_result_bundle (const gretl_matrix *f,
 			gretl_matrix_set(lo, i, j, NADBL);
 			gretl_matrix_set(hi, i, j, NADBL);
 		    } else {
-			gretl_matrix_set(lo, i, j, fx - cval * ex);
-			gretl_matrix_set(hi, i, j, fx + cval * ex);
+			if (expon) {
+			    double lfx = log(fx);
+
+			    gretl_matrix_set(lo, i, j, exp(lfx - cval * ex));
+			    gretl_matrix_set(hi, i, j, exp(lfx + cval * ex));
+			} else {
+			    gretl_matrix_set(lo, i, j, fx - cval * ex);
+			    gretl_matrix_set(hi, i, j, fx + cval * ex);
+			}
 		    }
 		}
 	    }
@@ -3667,9 +3678,19 @@ static void set_fcast_result_bundle (const gretl_matrix *f,
     }
 
     if (!err) {
-	err = gretl_bundle_set_int(b, "t1", gretl_matrix_get_t1(f) + 1);
+	/* the forecast range proper, which can be narrower than the
+	   range of @f (pre-forecast observations, or in the integrated
+	   case the extra initial observation) */
+	int bt1 = gretl_matrix_get_t1(f);
+	int bt2 = gretl_matrix_get_t2(f);
+
+	if (fr != NULL) {
+	    bt1 = bt1 < fr->t1 ? fr->t1 : bt1;
+	    bt2 = bt2 > fr->t2 ? fr->t2 : bt2;
+	}
+	err = gretl_bundle_set_int(b, "t1", bt1 + 1);
 	if (!err) {
-	    err = gretl_bundle_set_int(b, "t2", gretl_matrix_get_t2(f) + 1);
+	    err = gretl_bundle_set_int(b, "t2", bt2 + 1);
 	}
     }
 
@@ -3685,11 +3706,35 @@ static void set_fcast_result_bundle (const gretl_matrix *f,
 	} else if (fr->method == FC_KSTEP) {
 	    mstr = "k-step";
 	}
+	const char *tstr = "none";
+
+	if (fr->opt & OPT_X) {
+	    tstr = "exponentiate";
+	} else if (fr->opt & OPT_I) {
+	    tstr = "integrate";
+	}
 	if (*fr->depvar != '\0') {
-	    err = gretl_bundle_set_string(b, "depvar", fr->depvar);
+	    /* name of the series being forecast */
+	    const char *yname = (fr->opt & OPT_X)? get_forecast_yname(fr) :
+		fr->depvar;
+
+	    err = gretl_bundle_set_string(b, "depvar", yname);
 	}
 	if (!err) {
 	    err = gretl_bundle_set_string(b, "method", mstr);
+	}
+	if (!err) {
+	    err = gretl_bundle_set_string(b, "transform", tstr);
+	}
+	if (!err && (fr->opt & OPT_X)) {
+	    /* record the log-to-level correction factor */
+	    const char *cstr = fr->a0meth == 1 ? "normal" :
+		fr->a0meth == 2 ? "smearing" : "none";
+
+	    err = gretl_bundle_set_string(b, "correction", cstr);
+	    if (!err && !na(fr->a0)) {
+		err = gretl_bundle_set_scalar(b, "a0", fr->a0);
+	    }
 	}
 	if (!err && fr->actual != NULL) {
 	    fcast_get_continuous_range(fr, &t1, &t2);
