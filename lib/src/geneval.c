@@ -5882,6 +5882,10 @@ static NODE *real_list_series_node (int vnum, parser *p)
     return ret;
 }
 
+#define PREFER_SINGLETON_LIST 1
+
+#if !PREFER_SINGLETON_LIST
+
 /* Handling a context where we have a list under node @l,
    and position within the list in @pos.
 */
@@ -5912,6 +5916,8 @@ static NODE *list_member_by_pos (NODE *l, int pos, parser *p)
 
     return ret;
 }
+
+#endif
 
 /* Handling a context where we have a list under node @l,
    and the name of a (putative) list member under node @r.
@@ -6149,12 +6155,15 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	int *vlist = array_subspec_list(l, r, p);
 
 	if (!p->err && vlist[0] == 1 && l->t == LIST) {
-	    /* singleton list selection: we were returning a series,
-	       but (experiment 2025-11-02) we now return a one-element
-	       list
+	    /* Singleton list selection: we were returning a series,
+	       but (experiment 2026-11-02) we now return a one-element
+	       list.
 	    */
+#if PREFER_SINGLETON_LIST
 	    ret = list_range_node(l->v.ivec, vlist[1], vlist[1], p);
-	    // ret = list_member_by_pos(l, vlist[1], p);
+#else
+	    ret = list_member_by_pos(l, vlist[1], p);
+#endif
 	} else if (!p->err && gretl_list_is_consecutive(vlist)) {
 	    /* selected elements are consecutive */
 	    int r1 = vlist[1];
