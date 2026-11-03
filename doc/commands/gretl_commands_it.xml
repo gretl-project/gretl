@@ -4356,17 +4356,49 @@
 
       <para context="cli">
 	Se l'ultimo modello stimato consiste in un'equazione singola,
-	l'argomento opzionale <repl>nome-variabile</repl> ha l'effetto seguente:
-	i valori della previsione non sono mostrati, ma vengono salvati nel
-	dataset con il nome di variabile indicato. Se l'ultimo modello stimato è
-	un sistema di equazioni, <repl>nome-variabile</repl> ha un effetto
-	diverso, ossia seleziona una particolare variabile endogena per cui
-	effettuare la previsione (l'impostazione predefinita consiste nel
-	produrre previsioni per tutte le variabili endogene). Nel caso del
-	sistema, o se non viene specificata <repl>nome-variabile</repl>, i
-	valori della previsione possono essere recuperati usando la variabile
-	accessoria <fncref targ="$fcast"/>, mentre gli errori standard, se
-	disponibili, sono recuperabili con <fncref targ="$fcse"/>.
+	l'argomento opzionale <repl>nome-variabile</repl> ha l'effetto
+	seguente: i valori della previsione non sono mostrati, ma
+	vengono salvati nel dataset con il nome di variabile
+	indicato. Se l'ultimo modello stimato è un sistema di
+	equazioni, <repl>nome-variabile</repl> ha un effetto diverso,
+	ossia seleziona una particolare variabile endogena per cui
+	effettuare la previsione (l'impostazione predefinita consiste
+	nel produrre previsioni per tutte le variabili endogene). Nel
+	caso di un sistema, o se non viene specificata
+	<repl>nome-variabile</repl>, i valori della previsione possono
+	essere recuperati usando la variabile accessoria <fncref
+	targ="$fcast"/>, mentre gli errori standard, se disponibili,
+	sono recuperabili con <fncref targ="$fcse"/>.  Inoltre,
+	l'accessore <fncref targ="$result"/> ritorna un bundle. Esso
+	contiene gli elementi <lit>fcast</lit> e <lit>fcse</lit> (come
+	indicato sopra) e, qualora siano disponibili gli errori
+	standard, anche gli estremi dell'intervallo di confidenza
+	<lit>lower</lit> e <lit>upper</lit>, insieme a
+	<lit>alpha</lit> e <lit>coverage</lit>; include inoltre, sotto
+	i nomi <lit>t1</lit> e <lit>t2</lit>, la prima e l'ultima
+	osservazione della previsione; infine, per le previsioni
+	basate su un modello a equazione singola, comprende
+	<lit>depvar</lit>, <lit>method</lit> e le statistiche di
+	valutazione della previsione in <lit>eval_stats</lit>
+	(generate tramite <fncref targ="fcstats"/>), accompagnate dal
+	numero di osservazioni utilizzate, <lit>eval_obs</lit>
+	(ovviamente, queste statistiche vengono generate solo se sono
+	disponibili valori effettivi per periodo di previsione, almeno
+	in parte). Si noti che <lit>fcse</lit>, <lit>lower</lit> e
+	<lit>upper</lit> potrebbero riferirsi a un numero inferiore di
+	osservazioni rispetto a <lit>fcast</lit> (ad esempio, le
+	previsioni statiche <quote>in-sample </quote> non presentano
+	errori standard). Con l'opzione <lit>--exponentiate</lit>,
+	<lit>fcast</lit>, <lit>lower</lit> e <lit>upper</lit> sono
+	espressi in livelli, mentre <lit>fcse</lit> rappresenta
+	l'errore standard su scala logaritmica; in questo caso,
+	l'intervallo viene costruito su tale scala e successivamente
+	esponenziato. Il bundle registra inoltre la
+	<lit>correction</lit> applicata ("normal", "smearing" oppure
+	"none") e il fattore <lit>a0</lit>. Con l'opzione
+	<lit>--integrate</lit>, tutti gli elementi sono espressi in
+	livelli. L'elemento <lit>transform</lit> può assumere uno dei
+	seguenti valori: "none", "exponentiate" o "integrate".
       </para>
 
       <subhead>Previsioni statiche e dinamiche</subhead>
