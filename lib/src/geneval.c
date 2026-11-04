@@ -733,6 +733,7 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 
     if (n->t == LIST) {
         free(n->v.ivec);
+	n->v.ivec = NULL;
     } else if (n->t == MAT) {
         /* (how) can we avoid doing this? */
         gretl_matrix_free(n->v.m);
@@ -842,6 +843,24 @@ static void maybe_switch_node_type (NODE *n, int type,
         n->t = MAT;
         n->v.m = NULL;
         n->flags = flags;
+    } else if (n->t == SERIES && type == LIST) {
+	/* a borrowed series (see real_list_series_node) must not be
+	   freed; an owned tmp series must */
+	if (is_tmp_node(n)) {
+	    free(n->v.xvec);
+	}
+	n->t = LIST;
+	n->v.ivec = NULL; /* don't leave xvec aliased as ivec */
+	n->flags = flags;
+	n->vnum = NO_VNUM;
+	n->vname = NULL;
+    } else if (n->t == LIST && type == SERIES) {
+	if (is_tmp_node(n)) {
+	    free(n->v.ivec);
+	}
+	n->t = SERIES;
+	n->v.xvec = NULL;
+	n->flags = flags;
     } else if (type == EMPTY) {
         ; /* LHS mechanism: OK */
     } else if (gen_type_is_arrayable(n->t) && type == ARRAY) {
@@ -882,7 +901,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
             if (ret->t != t) {
                 maybe_switch_node_type(ret, t, flags, p);
             } else if (is_tmp_node(ret) && !(p->flags & P_MSAVE)) {
-                clear_tmp_node_data(ret, p);
+		clear_tmp_node_data(ret, p);
             }
         }
     } else {
@@ -911,11 +930,9 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
             /* invalid aux node spec */
             p->err = E_DATA;
         }
-
         if (!p->err && ret == NULL) {
             p->err = E_ALLOC;
         }
-
         if (!p->err) {
             ret->flags |= AUX_NODE;
         }
@@ -5882,12 +5899,8 @@ static NODE *real_list_series_node (int vnum, parser *p)
     return ret;
 }
 
-#define PREFER_SINGLETON_LIST 1
-
-#if !PREFER_SINGLETON_LIST
-
 /* Handling a context where we have a list under node @l,
-   and position within the list in @pos.
+   and a position within the list in @pos.
 */
 
 static NODE *list_member_by_pos (NODE *l, int pos, parser *p)
@@ -5916,8 +5929,6 @@ static NODE *list_member_by_pos (NODE *l, int pos, parser *p)
 
     return ret;
 }
-
-#endif
 
 /* Handling a context where we have a list under node @l,
    and the name of a (putative) list member under node @r.
@@ -6155,15 +6166,8 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	int *vlist = array_subspec_list(l, r, p);
 
 	if (!p->err && vlist[0] == 1 && l->t == LIST) {
-	    /* Singleton list selection: we were returning a series,
-	       but (experiment 2026-11-02) we now return a one-element
-	       list.
-	    */
-#if PREFER_SINGLETON_LIST
-	    ret = list_range_node(l->v.ivec, vlist[1], vlist[1], p);
-#else
+	    /* singleton list selection: we return a series */
 	    ret = list_member_by_pos(l, vlist[1], p);
-#endif
 	} else if (!p->err && gretl_list_is_consecutive(vlist)) {
 	    /* selected elements are consecutive */
 	    int r1 = vlist[1];
@@ -6266,13 +6270,12 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
         } else {
             ret = aux_ivec_node(p, 2);
             if (ret != NULL) {
+		if (ret->v.ivec == NULL) {
+		    ret->v.ivec = malloc(2 * sizeof(int));
+		}
                 ret->v.ivec[0] = node_get_int(l, p);
-                if (null_node(r)) {
-                    ret->v.ivec[1] = MSEL_MAX; /* placeholder */
-                } else {
-                    ret->v.ivec[1] = node_get_int(r, p);
-                }
-            }
+		ret->v.ivec[1] = null_node(r) ? MSEL_MAX : node_get_int(r, p);
+	    }
         }
     } else {
         ret = aux_ivec_node(p, 2);
