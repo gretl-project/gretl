@@ -822,7 +822,31 @@ static int mutate_bundle_member_node (NODE *n, int type,
    executing a compiled parser with saved aux nodes.
 */
 
-static void maybe_switch_node_type (NODE *n, int type,
+/* Free the payload of a tmp node that owns its data, and null the
+   pointer; for use when a node is about to change type.
+*/
+
+static void free_tmp_node_payload (NODE *n)
+{
+    if (is_tmp_node(n)) {
+        if (n->t == LIST) {
+            free(n->v.ivec);
+        } else if (n->t == SERIES) {
+            free(n->v.xvec);
+        } else if (n->t == MAT) {
+            gretl_matrix_free(n->v.m);
+        } else if (n->t == STR) {
+            free(n->v.str);
+        } else if (n->t == BUNDLE) {
+            gretl_bundle_destroy(n->v.b);
+        } else if (n->t == ARRAY) {
+            gretl_array_destroy(n->v.a);
+        }
+    }
+    n->v.ptr = NULL;
+}
+
+static void maybe_switch_node_type (NODE *n, int type, int size,
                                     int flags, parser *p)
 {
     if (mutable_node(n)) {
@@ -843,29 +867,35 @@ static void maybe_switch_node_type (NODE *n, int type,
         n->t = MAT;
         n->v.m = NULL;
         n->flags = flags;
+        n->vnum = NO_VNUM;
+        n->vname = NULL;
     } else if (n->t == SERIES && type == LIST) {
-	/* a borrowed series (see real_list_series_node) must not be
-	   freed; an owned tmp series must */
-	if (is_tmp_node(n)) {
-	    free(n->v.xvec);
-	}
+	/* a borrowed series (see real_list_series_node) is not
+	   tmp, hence not freed; an owned tmp series is */
+	free_tmp_node_payload(n); /* also nulls the aliased pointer */
 	n->t = LIST;
-	n->v.ivec = NULL; /* don't leave xvec aliased as ivec */
 	n->flags = flags;
 	n->vnum = NO_VNUM;
 	n->vname = NULL;
     } else if (n->t == LIST && type == SERIES) {
-	if (is_tmp_node(n)) {
-	    free(n->v.ivec);
-	}
+	free_tmp_node_payload(n);
 	n->t = SERIES;
-	n->v.xvec = NULL;
 	n->flags = flags;
+	if (size > 0) {
+	    /* as newseries() would do */
+	    n->v.xvec = na_array(size);
+	    if (n->v.xvec == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
     } else if (type == EMPTY) {
         ; /* LHS mechanism: OK */
     } else if (gen_type_is_arrayable(n->t) && type == ARRAY) {
+	free_tmp_node_payload(n);
         n->t = ARRAY;
         n->flags = flags;
+	n->vnum = NO_VNUM;
+	n->vname = NULL;
     } else {
         /* any other discrepancy presumably means that
            things have gone badly wrong
@@ -899,7 +929,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
         /* got a pre-existing aux node */
         if (starting(p)) {
             if (ret->t != t) {
-                maybe_switch_node_type(ret, t, flags, p);
+                maybe_switch_node_type(ret, t, n, flags, p);
             } else if (is_tmp_node(ret) && !(p->flags & P_MSAVE)) {
 		clear_tmp_node_data(ret, p);
             }
