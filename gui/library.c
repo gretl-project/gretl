@@ -9169,25 +9169,25 @@ static gretlopt store_action_to_opt (const char *fname, int action,
     return opt;
 }
 
-/* suppress inclusion of observations column when exporting
-   data as CSV? */
-static gboolean csv_exclude_obs;
+/* should we include an observations column when exporting
+   data as CSV?
+*/
+static gboolean csv_include_obs = 1;
 
 /* apparatus for use by the CSV options dialog */
 
-void set_csv_exclude_obs (gboolean s)
+void set_csv_include_obs (gboolean s)
 {
-    csv_exclude_obs = s;
+    csv_include_obs = s;
 }
 
-gboolean get_csv_exclude_obs (void)
+gboolean get_csv_include_obs (void)
 {
-    return csv_exclude_obs;
+    return csv_include_obs;
 }
 
-/* This is called from the file selector when doing a
-   data save, and also from the callback from Ctrl-S
-   in the main gretl window.
+/* This is called from the file selector when doing a data save, and
+   also from the callback from Ctrl-S in the main gretl window.
 */
 
 int do_store (char *filename, int action, gpointer data)
@@ -9244,15 +9244,13 @@ int do_store (char *filename, int action, gpointer data)
         }
     }
 
-    if (opt & OPT_X) {
-        ; /* inside a session: "exporting" gdt */
-    } else if (opt != OPT_NONE) {
-        /* not a bog-standard native save */
-        if (action == EXPORT_CSV && csv_exclude_obs) {
-            /* pick up option to exclude obs column */
-            opt |= OPT_X;
-        }
-        lib_command_strcat(print_flags(opt, STORE));
+    if (!(opt & OPT_X)) {
+	if (action == EXPORT_CSV && !csv_include_obs) {
+	    opt |= OPT_X;
+	}
+	if (opt != OPT_NONE) {
+	    lib_command_strcat(print_flags(opt, STORE));
+	}
     }
 
     err = parse_lib_command();

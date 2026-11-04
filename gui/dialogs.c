@@ -482,7 +482,7 @@ typedef struct {
     GtkWidget *comma_sep;
     gint delim;     /* delimiter (comma, etc.) */
     gint decpoint;  /* decimal character */
-    gboolean xobs;  /* exclude obs column on export? */
+    gboolean obs;   /* include obs column on export? */
 } csv_stuff;
 
 static void set_dec (GtkWidget *w, csv_stuff *csv)
@@ -516,16 +516,16 @@ static void set_delim (GtkWidget *w, csv_stuff *csv)
     }
 }
 
-static void toggle_csv_xobs (GtkToggleButton *b, csv_stuff *csv)
+static void toggle_csv_obs (GtkToggleButton *b, csv_stuff *csv)
 {
-    csv->xobs = !gtk_toggle_button_get_active(b);
+    csv->obs = gtk_toggle_button_get_active(b);
 }
 
 static void really_set_csv_stuff (GtkWidget *w, csv_stuff *csv)
 {
     set_data_export_delimiter(csv->delim);
     set_data_export_decimal_comma(csv->decpoint == ',');
-    set_csv_exclude_obs(csv->xobs);
+    set_csv_include_obs(csv->obs);
 }
 
 static void destroy_delim_dialog (GtkWidget *w, gint *p)
@@ -572,10 +572,11 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
 	imin = 0;
     } else {
 	csvp->delim = ',';
+	csvp->obs = TRUE;
     }
 
     csvp->decpoint = '.';
-    csvp->xobs = get_csv_exclude_obs();
+    csvp->obs = get_csv_include_obs();
 
     title = (ci == COPY_CSV)? titles[1] : titles[0];
     dialog = gretl_dialog_new(_(title), parent, GRETL_DLG_BLOCK);
@@ -644,9 +645,9 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
             hsep_done = 1;
             tmp = gtk_check_button_new_with_label(_("include observations column"));
             g_signal_connect(G_OBJECT(tmp), "toggled",
-                             G_CALLBACK(toggle_csv_xobs), csvp);
+                             G_CALLBACK(toggle_csv_obs), csvp);
             pack_in_hbox(tmp, vbox, 0);
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), !csvp->xobs);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), csvp->obs);
         }
 
         if (any_missing_user_values(dataset)) {

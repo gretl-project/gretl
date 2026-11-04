@@ -8887,7 +8887,6 @@ static int data_export_selection_callback (selector *sr)
     if (ci == EXPORT_CSV) {
         int resp = csv_options_dialog(EXPORT_CSV, GRETL_OBJ_DSET,
                                       NULL);
-
         if (canceled(resp)) {
             set_selector_storelist(NULL);
             return 0;

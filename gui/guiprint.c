@@ -1809,7 +1809,7 @@ static int real_series_to_clipboard (const int *list,
     if (format == GRETL_FORMAT_XML) {
 	err = gretl_write_gdt_to_prn(prn, list, dataset);
     } else {
-	if (get_csv_exclude_obs()) {
+	if (get_csv_include_obs() == FALSE) {
 	    opt = OPT_X;
 	}
 	err = data_to_buf_as_csv(list, opt, prn);
