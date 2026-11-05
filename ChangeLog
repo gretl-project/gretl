@@ -3,7 +3,9 @@ version 2026e, in progress
   and add to libgretl API as plotspec_read_file()
 - Fix some memory leaks and possible invalid reads in plot-
   handling code
-- "fcast" command: add a comprehensive $result accessor.
+- "fcast" command: add a comprehensive $result accessor
+- Fix bug(): name collision with R's lbfgsb() in "foreign"
+  with R_lib on
 
 2026-10-29 version 2026d
 - Fix bug: potential crash when forecasting based on a
