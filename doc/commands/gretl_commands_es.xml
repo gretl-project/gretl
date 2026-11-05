@@ -4170,7 +4170,7 @@
         </option>
       </options>
       <examples>
-        <example>fcast 1997:1 2001:4 f1</example>
+  <example>fcast 1997:1 2001:4 f1</example>
 	<example>fcast fit2</example>
 	<example>fcast 2004:1 2008:3 4 rfcast --recursive</example>
 	<demos>
@@ -4182,9 +4182,21 @@
     <description>
 
       <para context="gui">
-	Debe ir después de una instrucción de estimación. Las predicciones se generan
-	para el rango especificado de observaciones. Dependiendo de la naturaleza del
-	modelo, también pueden generarse las desviaciones típicas (mira abajo).
+	Las predicciones se generan para el rango especificado de observaciones.
+	Dependiendo de la naturaleza del modelo, también pueden generarse las
+	desviaciones típicas (mira abajo).
+      </para>
+
+      <subhead context="gui">Predicciones transformadas</subhead>
+      <para context="gui">
+	Si la variable dependiente se reconoce que es el logaritmo de unha serie
+	del conjunto de datos, tienes la elección de generar una predicción para
+	el logaritmo de la variable o para su nivel. En el último caso, a la
+	predicción en logaritmos se le aplica la transformación exponencial, con
+	una corrección del sesgo que depende de que se rechace o no la Normalidad
+  del término de perturbación. De modo similar, cuando se reconoce que
+  la variable dependiente es la primera diferencia de una serie, tienes la
+  posibilidad de generar una predicción integrada (en nivel).
       </para>
 
       <para context="cli">
@@ -4213,6 +4225,30 @@
 	indicas <repl>nombrev</repl>, puedes recuperar los valores de
 	predicción utilizando el accesor <fncref targ="$fcast"/> y, si están
 	disponibles, las desviaciones típicas mediante <fncref targ="$fcse"/>.
+	Además, también está disponible un 'bundle' vía <fncref targ="$result"/>.
+	Este contiene los elementos <lit>fcast</lit> y <lit>fcse</lit> como antes,
+	junto (en caso de estar disponibles las desviaciones típicas) con los
+	límites inferior y superior,<lit>lower</lit> y <lit>upper</lit>, de los
+	intervalos de confianza más el nivel <lit>alfa</lit> y la <lit>cobertura</lit>;
+	también la primera y última observaciones de la predicción, <lit>t1</lit>
+	y <lit>t2</lit>; y, para predicciones basadas en un modelo uniecuacional,
+	la variable dependiente (<lit>depvar</lit>), el método (<lit>method</lit>),
+	y los estadísticos para evaluar la predicción en <lit>eval_stats</lit>
+	(como los generados por <fncref targ="fcstats"/>) con el número de
+	observaciones utilizadas (<lit>eval_obs</lit>) cuando los valores
+	vigentes estén disponibles a lo largo de (parte del) rango de predicción.
+	Ten en cuenta que <lit>fcse</lit>, <lit>lower</lit> y <lit>upper</lit> pueden
+	abarcar menos observaciones que <lit>fcast</lit> (por ejemplo, las
+	predicciones estáticas en la muestra no tienen desviaciones típicas).
+	Con la opción <lit>--exponentiate</lit>, estarán en niveles <lit>fcast</lit>,
+	<lit>lower</lit> y <lit>upper</lit> pero <lit>fcse</lit> será el error
+	típico en la escala logarítmica, con lo que el intervalo se configura en
+	esa escala y se calcula después con la función exponencial; el 'bundle'
+	también registra la corrección (<lit>correction</lit>) que se aplica
+	("normal", "retransformación" o "ninguna") y el factor <lit>a0</lit>. Con
+	la opción <lit>--integrate</lit> todos los elementos están en niveles.
+	El elemento de transformación (<lit>transform</lit>) es uno de los tres:
+	"ninguna", "exponenciar" o "integrar".
       </para>
 
       <subhead>Predicciones estáticas y dinámicas</subhead>
@@ -12716,7 +12752,7 @@
 	    literal crra(x,s) = (x**(1-s) - 1)/(1-s)
 	    printf "plot crra(x, 0) t 'sigma=0', \\"
 	    printf " log(x) t 'sigma=1', \\"
-	    printf " crra(x,3) t 'sigma=3"
+	    printf " crra(x,3) t 'sigma=3'"
 	end plot --output=display
       </code>
     </description>

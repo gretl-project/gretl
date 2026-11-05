@@ -837,7 +837,8 @@
 	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>, <cmdref targ="leverage"/>,
 	  <cmdref targ="summary"/>, <cmdref targ="vif"/> y <cmdref targ="xtab"/>
 	  (en cuyos casos, el resultado es una matriz), además de
-	  <cmdref targ="pkg"/> (en cuyo caso, se guarda opcionalmente un 'bundle').
+	  <cmdref targ="pkg"/> (en cuyo caso, se guarda opcionalmente
+	  un 'bundle') y <cmdref targ="fcast"/> (resultado de 'bundle').
 	</para>
       </description>
     </function>
@@ -5635,14 +5636,14 @@
 	  factores; pero puede ser una operación más eficiente realizar la
 	  estimación MCO sobre los datos a los que se les restaron las medias
 	  de los valores por factor, que es lo que hace esta función. Si la
-	  versión con la media detraída de <argname>X</argname> resulta ser
-	  singular, la función devuelve un fallo. En el contexto de un panel, el
-	  resultado de esta función sería el estimador de efectos fijos de MCO,
-	  si se considera que el factor <argname>f</argname> identifica las
-	  unidades del panel.
+	  versión con la media detraída de <argname>X</argname> resulta que no
+	  tiene rango pleno, la función devuelve un fallo. En el contexto de un
+	  panel, el resultado de esta función sería el estimador de efectos fijos
+	  de MCO, si se considera que el factor <argname>f</argname> identifica
+	  las unidades del panel.
 	</para>
 	<para>
-	  Los argumentos son los siguientes..
+	  Los argumentos son los siguientes...
 	</para>
 	<ilist>
 	  <li>

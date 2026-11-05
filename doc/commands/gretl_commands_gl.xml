@@ -4170,7 +4170,7 @@
         </option>
       </options>
       <examples>
-        <example>fcast 1997:1 2001:4 f1</example>
+  <example>fcast 1997:1 2001:4 f1</example>
 	<example>fcast fit2</example>
 	<example>fcast 2004:1 2008:3 4 rfcast --recursive</example>
 	<demos>
@@ -4182,9 +4182,21 @@
     <description>
 
       <para context="gui">
-	Debe de ir despois dunha instrución de estimación. As predicións xéranse
-	para o rango especificado de observacións. Dependendo da natureza do
-	modelo, tamén poden xerarse os desvíos padrón (mira abaixo).
+	As predicións xéranse para o rango especificado de observacións.
+	Dependendo da natureza do modelo, tamén poden xerarse os desvíos
+	padrón (mira abaixo).
+      </para>
+
+      <subhead context="gui">Predicións transformadas</subhead>
+      <para context="gui">
+	Se a variable dependente se recoñece que é o logaritmo dunha serie
+	do conxunto de datos, tes a elección de xerar unha predición para
+	o logaritmo da variable ou para o seu nivel. No último caso, á predición
+	en logaritmos se lle aplica a transformación exponencial, cunha
+	corrección do nesgo que depende de que se rexeite ou non a Normalidade
+	do termo de perturbación. De xeito similar, cando se recoñece que
+	a variable dependente é a primeira diferenza dunha serie, tes a
+	posibilidade de xerar unha predición integrada (en nivel).
       </para>
 
       <para context="cli">
@@ -4207,12 +4219,36 @@
 	non se presentan os valores da predición, senón que se gardan no
 	conxunto de datos co nome indicado. Se o último modelo é un sistema
 	de ecuacións, <repl>nomev</repl> ten un efecto distinto xa que,
-	concretamente, escolle unha variable endóxena en particular para facer
-	a predición (pois por defecto xéranse as predicións para todas as
-	variables endóxenas). No caso dun sistema ou se non indicas
+	concretamente, escolle unha variable endóxena en particular para
+	facer a predición (pois por defecto xéranse as predicións para todas
+	as variables endóxenas). No caso dun sistema ou se non indicas
 	<repl>nomev</repl>, podes recuperar os valores de predición utilizando
 	o accesorio <fncref targ="$fcast"/> e, se están dispoñibles, os
-	desvíos padrón mediante <fncref targ="$fcse"/>.
+	desvíos padrón mediante <fncref targ="$fcse"/>. Amais, tamén está
+	dispoñible un feixe mediante <fncref targ="$result"/>. Este contén
+	os elementos <lit>fcast</lit> e <lit>fcse</lit> como antes, xunto
+	(no caso de estar dispoñibles os desvíos padrón) cos límites inferior e
+	superior, <lit>lower</lit> e <lit>upper</lit>, dos intervalos de confianza
+	ademais do nivel <lit>alfa</lit> e a <lit>cobertura</lit>; tamén
+	a primeira e última observacións da predición, <lit>t1</lit> e
+	<lit>t2</lit>; e, para predicións baseadas nun modelo uniecuacional,
+	a variable dependente (<lit>depvar</lit>), o método (<lit>method</lit>),
+	e os estatísticos para avaliar a predición en <lit>eval_stats</lit>
+	(como os xerados por <fncref targ="fcstats"/>) co número de observacións
+	utilizadas (<lit>eval_obs</lit>) cando os valores vixentes estean
+	dispoñibles ao longo de (parte do) rango de predición. Cae na conta de
+	que <lit>fcse</lit>, <lit>lower</lit> e <lit>upper</lit> poden abranguer
+	menos observacións que <lit>fcast</lit> (por exemplo, as predicións
+	estáticas na mostra non teñen desvíos padrón). Coa opción
+	<lit>--exponentiate</lit>, estarán en niveis <lit>fcast</lit>, 
+	<lit>lower</lit> e <lit>upper</lit> pero <lit>fcse</lit> será o erro
+	padrón na escala logarítmica, co que o intervalo se configura nesa escala
+	e calcúlase despois coa función exponencial; o feixe tamén rexistra a
+	corrección (<lit>correction</lit>) que se aplica ("normal",
+	"retransformación" ou "ningunha") así como o factor <lit>a0</lit>. Coa
+	opción <lit>--integrate</lit> tódolos elementos están en niveis.
+	O elemento de transformación (<lit>transform</lit>) é un dos tres:
+	"ningunha", "exponenciar" ou "integrar".
       </para>
 
       <subhead>Predicións estáticas e dinámicas</subhead>
@@ -12716,7 +12752,7 @@
 	    literal crra(x,s) = (x**(1-s) - 1)/(1-s)
 	    printf "plot crra(x, 0) t 'sigma=0', \\"
 	    printf " log(x) t 'sigma=1', \\"
-	    printf " crra(x,3) t 'sigma=3"
+	    printf " crra(x,3) t 'sigma=3'"
 	end plot --output=display
       </code>
     </description>
