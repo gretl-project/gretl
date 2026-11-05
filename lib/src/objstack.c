@@ -1351,10 +1351,10 @@ int saved_object_get_series (double *x, const char *oname,
     return err;
 }
 
-/* starting point for getting a matrix from a saved model
-   of one kind or another.  We start by looking for the right
-   model: this is either a match for @oname, or if @oname
-   is NULL or blank, the last model estimated.
+/* starting point for getting a matrix from a saved model of one kind or
+   another.  We start by looking for the right model: this is either a
+   match for @oname, or if @oname is NULL or blank, the last model
+   estimated.
 */
 
 gretl_matrix *
@@ -1401,9 +1401,9 @@ static gretl_matrix *get_all_probs (MODEL *pmod, int idx,
     return NULL;
 }
 
-/* similar to the above, but in this case the matrix to be
-   retrieved is not pre-built, and requires (or may require)
-   access to the current dataset for its building.
+/* Similar to saved_object_get_matrix(), but in this case the matrix to
+   be retrieved is not pre-built, and requires (or may require) access
+   to the current dataset for its building.
 */
 
 gretl_matrix *
