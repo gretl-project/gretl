@@ -1802,7 +1802,7 @@ int LBFGS_max (double *b, int n,
     li.u = u;
     li.nbd = nbd;
 
-    ret = lbfgsb(n, m, b, l, u, nbd, factr, pgtol, &f, g,
+    ret = gretl_lbfgsb(n, m, b, l, u, nbd, factr, pgtol, &f, g,
                  lbfgs_fg, lbfgs_iter, &li, NULL, NULL, msg);
     err = li.err;
 

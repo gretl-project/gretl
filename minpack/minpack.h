@@ -71,7 +71,7 @@ enum {
     LBFGSB_NONFINITE
 };
 
-int lbfgsb (int n, int m, double *x, const double *l, const double *u,
+int gretl_lbfgsb (int n, int m, double *x, const double *l, const double *u,
 	    const int *nbd, double factr, double pgtol, double *f,
 	    double *g, LBFGSB_FG fgfunc, LBFGSB_ITER iterfunc,
 	    void *data, int *iter, int *nfg, char *msg);

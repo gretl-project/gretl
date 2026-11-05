@@ -1786,7 +1786,7 @@ static void reset_memory (bfgs_memory *bm)
  * not finite at the starting point).
  */
 
-int lbfgsb (int n, int m, double *x, const double *l, const double *u,
+int gretl_lbfgsb (int n, int m, double *x, const double *l, const double *u,
             const int *nbd, double factr, double pgtol, double *f,
             double *g, LBFGSB_FG fgfunc, LBFGSB_ITER iterfunc,
             void *data, int *iter, int *nfg, char *msg)
