@@ -827,30 +827,42 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
             }
         }
     } else if (mode == VERT) {
-	/* vertical concatenation */
-	int ii, j, k, rpos = 0;
-	double complex z;
-	double x;
+	size_t rpos = 0;
+	int j, k;
 
 	for (k=0; k<A->n; k++) {
 	    m = A->data[k];
-	    if (!gretl_is_null_matrix(m)) {
+	    if (gretl_is_null_matrix(m)) {
+		continue;
+	    }
+	    size_t mr = m->rows;
+
+	    if (!cmplx) {
+		/* all real */
 		for (j=0; j<c; j++) {
-		    for (i=0, ii=rpos; i<m->rows; i++, ii++) {
-			if (cmplx && !m->is_complex) {
-			    z = gretl_matrix_get(m, i, j);
-			    gretl_cmatrix_set(ret, ii, j, z);
-			} else if (cmplx) {
-			    z = gretl_cmatrix_get(m, i, j);
-			    gretl_cmatrix_set(ret, ii, j, z);
-			} else {
-			    x = gretl_matrix_get(m, i, j);
-			    gretl_matrix_set(ret, ii, j, x);
-			}
+		    memcpy(ret->val + j * (size_t) r + rpos,
+			   m->val + j * mr,
+			   mr * sizeof *ret->val);
+		}
+	    } else if (m->is_complex) {
+		for (j=0; j<c; j++) {
+		    memcpy(ret->z + j * (size_t) r + rpos,
+			   m->z + j * mr,
+			   mr * sizeof *ret->z);
+		}
+	    } else {
+		/* real source, complex destination */
+		for (j=0; j<c; j++) {
+		    double complex *zd = ret->z + j * (size_t) r + rpos;
+		    const double *x = m->val + j * mr;
+		    size_t i;
+
+		    for (i=0; i<mr; i++) {
+			zd[i] = x[i];
 		    }
 		}
-		rpos += m->rows;
 	    }
+	    rpos += mr;
 	}
     } else if (mode == VECWISE) {
 	if (cmplx && real) {
@@ -866,8 +878,7 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 			memcpy(dest, m->z, nvals * sizeof *dest);
 		    } else {
 			for (k=0; k<nvals; k++) {
-			    z = m->val[k];
-			    gretl_cmatrix_set(ret, k, i, z);
+			    dest[k] = m->val[k];
 			}
 		    }
 		    dest += nvals;
