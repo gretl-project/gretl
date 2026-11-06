@@ -868,7 +868,6 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 	if (cmplx && real) {
 	    /* vecwise: mixed matrices */
 	    double complex *dest = ret->z;
-	    double complex z;
             int k = 0;
 
 	    for (i=0; i<A->n; i++) {
