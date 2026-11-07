@@ -3182,6 +3182,18 @@ static void depvar_opt_changed (GtkComboBox *box,
     }
 }
 
+#define ALLOW_NAIVE 0 /* not yet */
+
+#if ALLOW_NAIVE
+static void toggle_bias_corr_sensitive (GtkWidget *combo,
+					GtkWidget *b)
+{
+    int s = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
+
+    gtk_widget_set_sensitive(b, s > 0);
+}
+#endif
+
 static GtkWidget *depvar_form_selector (GtkWidget *vbox,
 					FcastFlags flags,
 					const MODEL *pmod,
@@ -3225,6 +3237,19 @@ static GtkWidget *depvar_form_selector (GtkWidget *vbox,
 		     G_CALLBACK(depvar_opt_changed), optp);
     gtk_box_pack_start(GTK_BOX(hbox), depvar_combo, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+#if ALLOW_NAIVE
+    if (flags & FC_EXPON_OK) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_check_button_new_with_label(_("Apply bias correction"));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+	gtk_widget_set_sensitive(tmp, FALSE);
+	g_signal_connect(G_OBJECT(depvar_combo), "changed",
+			 G_CALLBACK(toggle_bias_corr_sensitive), tmp);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    }
+#endif
 
     return depvar_combo;
 }
