@@ -4633,6 +4633,10 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
 	    *flags |= FC_AUTO_OK;
 	}
 	return;
+    } else if (pmod->ci == ARMA) {
+	if (series_is_log(dset, dv, NULL)) {
+	    *flags |= FC_EXPON_OK;
+	}
     }
 
     *dt2max = *st2max = pmod->t2;
