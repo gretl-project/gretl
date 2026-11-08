@@ -3412,6 +3412,8 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 	} else if (fr->a0meth == 2) {
 	    pprintf(prn, " %s\n", _("Normality rejected: smearing correction applied"));
 	}
+    } else if (expon) {
+	pprintf(prn, " %s\n", _("Forecast is exponentiated without bias correction"));
     }
 
     obslen = max_obs_marker_length(dset);

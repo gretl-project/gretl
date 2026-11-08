@@ -2039,6 +2039,9 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	       temporary OPT_N */
 	    set_optval_int(FCAST, OPT_X, 3);
 	    gopt &= ~OPT_N;
+	} else {
+	    /* select the automatic variant */
+	    set_optval_int(FCAST, OPT_X, 0);
 	}
     }
 
