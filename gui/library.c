@@ -1924,8 +1924,8 @@ int out_of_sample_info (int add_ok, int *t2)
    forecast).
 */
 
-static void maybe_copy_options (gretlopt *gopt,
-                                gretlopt *fopt)
+static void maybe_copy_fcast_options (gretlopt *gopt,
+				      gretlopt *fopt)
 {
     gretlopt to_copy = OPT_I | OPT_X;
     gretlopt isect = *gopt & to_copy;
@@ -1988,8 +1988,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         premax = dataset->n - 1;
     }
 
-    /* if there are spare obs available, default to an
-       out-of-sample forecast */
+    /* If there are spare obs available, default to an
+       out-of-sample forecast. */
     if (t2 > pmod->t2) {
         t1 = pmod->t2 + 1;
         if (ts) {
@@ -2030,7 +2030,17 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         recursive = 1;
     }
 
-    maybe_copy_options(&gopt, &fopt);
+    maybe_copy_fcast_options(&gopt, &fopt);
+
+    if (fopt & OPT_X) {
+	/* the --exponentiate option is set */
+	if (gopt & OPT_N) {
+	    /* select the "naive" variant and delete the
+	       temporary OPT_N */
+	    set_optval_int(FCAST, OPT_X, 3);
+	    gopt &= ~OPT_N;
+	}
+    }
 
     if (recursive) {
         fr = recursive_OLS_k_step_fcast(pmod, dataset,
