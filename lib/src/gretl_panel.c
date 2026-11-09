@@ -1841,7 +1841,7 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
         }
         for (t=0; t<pan->T; t++) {
             s = panel_index(i, t);
-            if (s >= pmod->t2) {
+            if (s > pmod->t2) {
                 in_bounds = 0;
                 break;
             }
