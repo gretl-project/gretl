@@ -1055,6 +1055,15 @@
 	misspecified model.
       </para>
       <para context="cli">
+	The OPG is computed from numerical derivatives of the
+	per-observation contributions to the full exact loglikelihood,
+	treating the innovation variance as an additional parameter
+	(only the block pertaining to the ARMA coefficients is
+	reported). With the <opt>robust</opt> option the covariance
+	matrix is a <quote>sandwich</quote> of the inverse of the
+	numerical Hessian of the same loglikelihood and this OPG.
+      </para>
+      <para context="cli">
 	The option <opt>lbfgs</opt> is specific to estimation using
 	native ARMA code and exact ML: it calls for use of the
 	<quote>limited memory</quote> L-BFGS-B algorithm in place

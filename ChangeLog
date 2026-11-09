@@ -13,6 +13,15 @@ version 2026e, in progress
   the number of eigenvalues is very large
 - Fix bug: Durbin-Watson statistic for panel data failed to
   take into account the last observation in the sample
+- Fix bug: the "arima" option --opg (and the arma_vcv setting
+  "op") did not give an outer product of the gradient: it used
+  the derivatives of the standardized prediction errors, i.e. a
+  Gauss-Newton matrix, and --robust inherited this. Both now use
+  the per-observation scores of the full exact loglikelihood,
+  with the innovation variance as an additional parameter, in
+  all of the AS 154, AS 197 and Kalman variants. The standard
+  errors will differ (in short or strongly seasonal samples,
+  notably) from those produced previously.
 
 2026-10-29 version 2026d
 - Fix bug: potential crash when forecasting based on a
