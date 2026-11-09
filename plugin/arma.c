@@ -42,9 +42,15 @@ static const double *as197_llt_callback (const double *b,
 static const double *as154_llt_callback (const double *b,
 					 int i, void *data);
 
-static const double *kalman_arma_llt_callback (const double *b,
-					       int i,
-                                               void *data);
+static const double *as197_score_callback (const double *b,
+					   int i, void *data);
+
+static const double *as154_score_callback (const double *b,
+					   int i, void *data);
+
+static double as_full_ll (const double *b, void *data);
+
+static int as_nrows (void *data);
 
 int maybe_correct_MA (arma_info *ainfo,
 		      double *theta,
@@ -175,85 +181,195 @@ int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
    Gradient
 */
 
+static const double *kalman_arma_score_callback (const double *b,
+                                                 int i, void *data);
+static int kalman_arma_nrows (void *data);
+
+static double kalman_arma_full_ll (const double *b, void *data);
+
+/* Genuine OPG for the Kalman case: G holds numerical derivatives of
+   the per-observation loglikelihood with respect to the k ARMA
+   parameters and the innovation variance s2. We invert G'G and
+   retain the k x k block pertaining to the ARMA parameters.
+*/
+
+/* select the per-observation loglikelihood callback, the full
+   loglikelihood function and the row count appropriate to the
+   estimation algorithm
+*/
+
+static void arma_score_funcs (int algo, void *data,
+                              BFGS_LLT_FUNC *lltfun,
+                              BFGS_CRIT_FUNC *llfun,
+                              int *nrows)
+{
+    if (algo == 154) {
+        *lltfun = as154_score_callback;
+        *llfun = as_full_ll;
+        *nrows = as_nrows(data);
+    } else if (algo == 197) {
+        *lltfun = as197_score_callback;
+        *llfun = as_full_ll;
+        *nrows = as_nrows(data);
+    } else {
+        *lltfun = kalman_arma_score_callback;
+        *llfun = kalman_arma_full_ll;
+        *nrows = kalman_arma_nrows(data);
+    }
+}
+
+static int arma_full_OPG_vcv (MODEL *pmod, void *data, int algo,
+                              double *b, double s2, int k)
+{
+    BFGS_LLT_FUNC lltfun;
+    BFGS_CRIT_FUNC llfun;
+    int T;
+    gretl_matrix *G = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *Vk = NULL;
+    double *b1;
+    int err = 0;
+
+    b1 = malloc((k + 1) * sizeof *b1);
+    if (b1 == NULL) {
+        return E_ALLOC;
+    }
+    memcpy(b1, b, k * sizeof *b1);
+    b1[k] = s2;
+
+    /* use the full number of rows, allowing for missing values */
+    arma_score_funcs(algo, data, &lltfun, &llfun, &T);
+
+    G = numerical_score_matrix(b1, T, k + 1, lltfun, data, &err);
+    free(b1);
+
+    if (!err) {
+        V = gretl_matrix_XTX_new(G);
+        if (V == NULL) {
+            err = E_ALLOC;
+        }
+    }
+    if (!err) {
+        double rcond = gretl_symmetric_matrix_rcond(V, &err);
+
+        if (!err && rcond < 1.0E-10) {
+            err = 1;
+        }
+    }
+    if (!err) {
+        err = gretl_invert_symmetric_matrix(V);
+    }
+    if (!err) {
+        Vk = gretl_matrix_alloc(k, k);
+        if (Vk == NULL) {
+            err = E_ALLOC;
+        } else {
+            gretl_matrix_extract_matrix(Vk, V, 0, 0, GRETL_MOD_NONE);
+            err = gretl_model_write_vcv(pmod, Vk);
+        }
+    }
+
+    gretl_matrix_free(G);
+    gretl_matrix_free(V);
+    gretl_matrix_free(Vk);
+
+    return err;
+}
+
+/* QML covariance: H^{-1} (G'G) H^{-1}, where H is
+   the Hessian of the full loglikelihood with respect to the k ARMA
+   parameters and s2, and G is the score matrix as in kalman_OPG_vcv().
+   We retain the k x k block pertaining to the ARMA parameters.
+*/
+
+static int arma_full_QML_vcv (MODEL *pmod, void *data, int algo,
+                              double *b, double s2, int k)
+{
+    BFGS_LLT_FUNC lltfun;
+    BFGS_CRIT_FUNC llfun;
+    int T;
+    gretl_matrix *G = NULL;
+    gretl_matrix *GG = NULL;
+    gretl_matrix *H = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *Vk = NULL;
+    double *b1;
+    int k1 = k + 1;
+    int err = 0;
+
+    b1 = malloc(k1 * sizeof *b1);
+    if (b1 == NULL) {
+        return E_ALLOC;
+    }
+    memcpy(b1, b, k * sizeof *b1);
+    b1[k] = s2;
+
+    arma_score_funcs(algo, data, &lltfun, &llfun, &T);
+
+    G = numerical_score_matrix(b1, T, k1, lltfun, data, &err);
+    if (!err) {
+        H = gretl_zero_matrix_new(k1, k1);
+        GG = gretl_matrix_XTX_new(G);
+        V = gretl_matrix_alloc(k1, k1);
+        Vk = gretl_matrix_alloc(k, k);
+        if (H == NULL || GG == NULL || V == NULL || Vk == NULL) {
+            err = E_ALLOC;
+        }
+    }
+    if (!err) {
+        /* positive definite Hessian of -loglikelihood */
+        err = numerical_hessian(b1, H, llfun, data, 1, 0.0);
+    }
+    if (!err) {
+        err = gretl_invert_symmetric_matrix(H);
+    }
+    if (!err) {
+        err = gretl_matrix_qform(H, GRETL_MOD_NONE, GG, V, GRETL_MOD_NONE);
+    }
+    if (!err) {
+        gretl_matrix_extract_matrix(Vk, V, 0, 0, GRETL_MOD_NONE);
+        err = gretl_model_write_vcv(pmod, Vk);
+    }
+    if (!err) {
+        gretl_model_set_vcv_info(pmod, VCV_ML, ML_QML);
+        pmod->opt |= OPT_R;
+    }
+
+    free(b1);
+    gretl_matrix_free(G);
+    gretl_matrix_free(GG);
+    gretl_matrix_free(H);
+    gretl_matrix_free(V);
+    gretl_matrix_free(Vk);
+
+    return err;
+}
+
+/* add covariance matrix and standard errors based on the Outer
+   Product of the Gradient (OPG), that is, the per-observation scores
+   of the full loglikelihood (including the innovation variance @s2),
+   for any of the three estimation algorithms
+*/
+
 static int arma_OPG_vcv (MODEL *pmod, void *data, int algo,
 			 double *b, double s2,
 			 int k, int T,
 			 PRN *prn)
 {
-    gretl_matrix *G = NULL;
-    gretl_matrix *V = NULL;
-    int err = 0;
-
-    if (algo == 154) {
-	G = numerical_score_matrix(b, T, k, as154_llt_callback,
-				   data, &err);
-    } else if (algo == 197) {
-	G = numerical_score_matrix(b, T, k, as197_llt_callback,
-				   data, &err);
-    } else {
-	G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback,
-				   data, &err);
-    }
-
-    if (!err) {
-	V = gretl_matrix_XTX_new(G);
-	if (V == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	double rcond = gretl_symmetric_matrix_rcond(V, &err);
-
-	if (!err && rcond < 1.0E-10) {
-	    pprintf(prn, _("OPG: rcond = %g; will try Hessian\n"), rcond);
-	    err = 1;
-	}
-    }
-
-    if (!err) {
-	err = gretl_invert_symmetric_matrix(V);
-    }
-
-    if (!err) {
-	gretl_matrix_multiply_by_scalar(V, s2);
-	err = gretl_model_write_vcv(pmod, V);
-    }
-
-    gretl_matrix_free(G);
-    gretl_matrix_free(V);
-
-    return err;
+    return arma_full_OPG_vcv(pmod, data, algo, b, s2, k);
 }
+
+/* QML ("sandwich") covariance matrix using the full Hessian and
+   the OPG of the full loglikelihood; the Hessian @H of the
+   concentrated loglikelihood is not used
+*/
 
 static int arma_QML_vcv (MODEL *pmod, gretl_matrix *H,
 			 void *data, int algo,
 			 double *b, double s2, int k, int T,
 			 PRN *prn)
 {
-    gretl_matrix *G;
-    int err = 0;
-
-    if (algo == 154) {
-	G = numerical_score_matrix(b, T, k, as154_llt_callback,
-				   data, &err);
-    } else if (algo == 197) {
-	G = numerical_score_matrix(b, T, k, as197_llt_callback,
-				   data, &err);
-    } else {
-	G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback,
-				   data, &err);
-    }
-
-    if (!err) {
-	gretl_matrix_divide_by_scalar(G, sqrt(s2));
-	err = gretl_model_add_QML_vcv(pmod, ARMA, H, G,
-				      NULL, OPT_NONE, NULL);
-    }
-
-    gretl_matrix_free(G);
-
-    return err;
+    return arma_full_QML_vcv(pmod, data, algo, b, s2, k);
 }
 
 static int arima_ydiff_only (arma_info *ainfo)

@@ -20,6 +20,7 @@ struct as_info {
     double *phi, *theta;
      /* dependent var and forecast errors */
     double *y, *y0, *e;
+    double *lnf; /* log of prediction error variances */
     /* AS 197 workspace */
     double *vw, *vl, *vk;
     /* AS 154 workspace */
@@ -54,10 +55,11 @@ static int as_154_alloc (struct as_info *as)
     as->V =     malloc(as->np * sizeof *as->V);
     as->e =     malloc(as->n * sizeof *as->e);
     as->evec =  malloc(as->r * sizeof *as->evec);
+    as->lnf =   malloc(as->n * sizeof *as->lnf);
 
     if (as->phi == NULL || as->theta == NULL || as->A == NULL ||
 	as->P0 == NULL || as->V == NULL || as->e == NULL ||
-	as->evec == NULL) {
+	as->evec == NULL || as->lnf == NULL) {
 	err = E_ALLOC;
     }
 
@@ -102,7 +104,7 @@ static int as_197_alloc (struct as_info *as)
     }
 
     if (!err) {
-	int worklen = as->n + 2*as->rp1 + as->r;
+	int worklen = 2 * as->n + 2*as->rp1 + as->r;
 
 	as->e =  malloc(worklen * sizeof *as->e);
 	if (as->e == NULL) {
@@ -111,6 +113,7 @@ static int as_197_alloc (struct as_info *as)
 	    as->vw = as->e + as->n;
 	    as->vl = as->vw + as->rp1;
 	    as->vk = as->vl + as->rp1;
+	    as->lnf = as->vk + as->r;
 	}
     }
 
@@ -184,6 +187,7 @@ static void as_info_free (struct as_info *as)
 	free(as->P0);
 	free(as->V);
 	free(as->evec);
+	free(as->lnf);
 	free(as->thetab);
     }
 
@@ -358,7 +362,7 @@ static double as197_iteration (const double *b, void *data)
     as->ifault = flikam(as->phi, as->plen, as->theta, as->qlen,
 			as->y, as->e, as->n, &as->sumsq, &as->fact,
 			as->vw, as->vl, as->rp1, as->vk, as->r,
-			as->toler);
+			as->toler, as->lnf);
 
     if (as->ifault > 0) {
 	if (as->ifault == 5) {
@@ -415,7 +419,7 @@ static double as154_iteration (const double *b, void *data)
 	  as->phi, as->theta, as->A, as->P0, as->V,
 	  as->n, as->y, as->e,
 	  &as->sumlog, &as->sumsq, as->iupd,
-	  as->toler, as->evec, &nit);
+	  as->toler, as->evec, &nit, as->lnf);
 
     if (isnan(as->sumlog) || isnan(as->sumsq) || as->sumsq <= 0) {
 	; // fprintf(stderr, "karma: got NaNs, nit = %d\n", nit);
@@ -436,7 +440,7 @@ static const double *as197_llt_callback (const double *b, int i,
     err = flikam(as->phi, as->plen, as->theta, as->qlen,
 		 as->y, as->e, as->n, &as->sumsq, &as->fact,
 		 as->vw, as->vl, as->rp1, as->vk, as->r,
-		 as->toler);
+		 as->toler, as->lnf);
 
     return (err)? NULL : as->e;
 }
@@ -458,7 +462,7 @@ static const double *as154_llt_callback (const double *b, int i,
 	  as->phi, as->theta, as->A, as->P0, as->V,
 	  as->n, as->y, as->e,
 	  &as->sumlog, &as->sumsq, as->iupd,
-	  as->toler, as->evec, &nit);
+	  as->toler, as->evec, &nit, as->lnf);
 
     if (isnan(as->sumlog) || isnan(as->sumsq) || as->sumsq <= 0) {
 	fprintf(stderr, "as154_llt_callback: failed\n");
@@ -466,6 +470,85 @@ static const double *as154_llt_callback (const double *b, int i,
     }
 
     return (err)? NULL : as->e;
+}
+
+/* Callbacks giving the per-observation contributions to the full
+   (unconcentrated) loglikelihood,
+
+     l_t = -0.5 * [log(2 pi) + log(s2) + log(f_t) + e_t^2 / s2]
+
+   where e_t is the standardized prediction error and f_t the
+   prediction error variance for unit innovation variance (f_t = 1
+   in the "quick recursions" phase). @b has k + 1 elements: the
+   ARMA parameters followed by s2. Missing observations contribute 0.
+*/
+
+static const double *as_score_fill (struct as_info *as, double s2)
+{
+    int t;
+
+    for (t=0; t<as->n; t++) {
+	if (isnan(as->y[t]) || isnan(as->e[t])) {
+	    as->lnf[t] = 0;
+	} else {
+	    as->lnf[t] = -0.5 * (log(2 * M_PI) + log(s2) + as->lnf[t] +
+				 as->e[t] * as->e[t] / s2);
+	}
+    }
+
+    return as->lnf;
+}
+
+static const double *as197_score_callback (const double *b, int i,
+					   void *data)
+{
+    struct as_info *as = data;
+    const double *e = as197_llt_callback(b, i, data);
+
+    return (e == NULL)? NULL : as_score_fill(as, b[as->ai->nc]);
+}
+
+static const double *as154_score_callback (const double *b, int i,
+					   void *data)
+{
+    struct as_info *as = data;
+    const double *e = as154_llt_callback(b, i, data);
+
+    return (e == NULL)? NULL : as_score_fill(as, b[as->ai->nc]);
+}
+
+static double as_full_ll (const double *b, void *data)
+{
+    struct as_info *as = data;
+    const double *x;
+    double ll = 0;
+    int t;
+
+    if (b[as->ai->nc] <= 0) {
+	return NADBL;
+    }
+
+    if (as->algo == 154) {
+	x = as154_score_callback(b, 0, data);
+    } else {
+	x = as197_score_callback(b, 0, data);
+    }
+
+    if (x == NULL) {
+	return NADBL;
+    }
+    for (t=0; t<as->n; t++) {
+	ll += x[t];
+    }
+
+    return ll;
+}
+
+static int as_nrows (void *data)
+{
+    struct as_info *as = data;
+
+    return as->n;
 }
 
 /* Undo scalings, allowing for standardization of exogenous

@@ -27,7 +27,7 @@ int flikam (const double *phi, int p,
 	    const double *w, double *e, int n,
 	    double *sumsq, double *fact,
 	    double *vw, double *vl, int rp1,
-	    double *vk, int r, double toler)
+	    double *vk, int r, double toler, double *lnf)
 {
     double eps1 = 1.0e-10;
     double detman = 1.0;
@@ -42,6 +42,11 @@ int flikam (const double *phi, int p,
     int i, j, k, ret = 0;
 
     *sumsq = *fact = 0;
+
+    /* @lnf receives log(h2) for the exact phase, 0 thereafter */
+    for (i=0; i<n; i++) {
+	lnf[i] = 0;
+    }
 
     /* calculation of the autocovariance function of a process with
        unit innovation variance (vw) and the covariance between the
@@ -124,6 +129,7 @@ int flikam (const double *phi, int p,
 	wi = w[i];
 	a = wi - vw0;
 	e[i] = a / sqrt(h2);
+	lnf[i] = log(h2);
 	aor = a / h2;
 	*sumsq += a * aor;
         vl0 = vl[0];
