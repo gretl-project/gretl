@@ -276,10 +276,10 @@ static int arma_full_OPG_vcv (MODEL *pmod, void *data, int algo,
     return err;
 }
 
-/* QML covariance: H^{-1} (G'G) H^{-1}, where H is
-   the Hessian of the full loglikelihood with respect to the k ARMA
-   parameters and s2, and G is the score matrix as in kalman_OPG_vcv().
-   We retain the k x k block pertaining to the ARMA parameters.
+/* QML covariance: H^{-1} (G'G) H^{-1}, where H is the Hessian of the
+   full loglikelihood with respect to the k ARMA parameters and s2, and
+   G is the score matrix as in arma_full_OPG_vcv().  We retain the k x k
+   block pertaining to the ARMA parameters.
 */
 
 static int arma_full_QML_vcv (MODEL *pmod, void *data, int algo,
@@ -345,10 +345,10 @@ static int arma_full_QML_vcv (MODEL *pmod, void *data, int algo,
     return err;
 }
 
-/* add covariance matrix and standard errors based on the Outer
-   Product of the Gradient (OPG), that is, the per-observation scores
-   of the full loglikelihood (including the innovation variance @s2),
-   for any of the three estimation algorithms
+/* Add covariance matrix and standard errors based on the Outer Product
+   of the Gradient (OPG), that is, the per-observation scores of the
+   full loglikelihood (including the innovation variance @s2), for any
+   of the three estimation algorithms.
 */
 
 static int arma_OPG_vcv (MODEL *pmod, void *data, int algo,
@@ -359,9 +359,9 @@ static int arma_OPG_vcv (MODEL *pmod, void *data, int algo,
     return arma_full_OPG_vcv(pmod, data, algo, b, s2, k);
 }
 
-/* QML ("sandwich") covariance matrix using the full Hessian and
-   the OPG of the full loglikelihood; the Hessian @H of the
-   concentrated loglikelihood is not used
+/* QML ("sandwich") covariance matrix using the full Hessian and the OPG
+   of the full loglikelihood; the Hessian @H of the concentrated
+   loglikelihood is not used.
 */
 
 static int arma_QML_vcv (MODEL *pmod, gretl_matrix *H,
