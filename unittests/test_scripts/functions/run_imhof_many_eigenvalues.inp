@@ -1,0 +1,42 @@
+set verbose off
+clear
+set assert stop
+
+# Regression test: imhof() used to fail (spurious non-convergence) when
+# there were so many eigenvalues that exp(rho/4) overflowed in the
+# integrand. The integrand is now computed on the log scale.
+# Date: November 2026
+
+function void test_imhof_many_eigenvalues (void)
+    print "Start testing imhof() with ~2500 eigenvalues"
+
+    # Given
+    matrix ev = {}
+    loop q = 1..5
+        ev |= 4 * sin($pi * q / 12)^2 * ones(q == 5 ? 497 : 500, 1)
+    endloop
+    matrix w = ev - 1.94
+
+    # When
+    catch scalar p = imhof(w, 0)
+
+    # Then
+    assert($error == 0)
+    assert(abs(p - 0.0526816) < 1.0e-5)
+end function
+
+function void test_imhof_few_eigenvalues (void)
+    print "Start testing imhof() against chi-square(20)"
+
+    # Given: u'Au with A = I_20 is chi-square(20)
+    matrix w = ones(20, 1)
+
+    # When
+    scalar p = imhof(w, 18)
+
+    # Then
+    assert(abs(p - cdf(X, 20, 18)) < 1.0e-3)
+end function
+
+test_imhof_many_eigenvalues()
+test_imhof_few_eigenvalues()

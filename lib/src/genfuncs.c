@@ -5559,7 +5559,8 @@ static double imhof_bound (const gretl_matrix *lambda, int *err)
 
 static double imhof_f (double u, const gretl_matrix *lambda, double arg)
 {
-    double ul, rho = 0.0;
+    double rho = 0.0;
+    double ul = 0.0;
     double theta = -u * arg;
     int i, k = lambda->rows;
 
@@ -5581,7 +5582,25 @@ static double imhof_f (double u, const gretl_matrix *lambda, double arg)
         rho += log(1.0 + ul * ul);
     }
 
-    return sin(0.5 * theta) / (u * exp(0.25 * rho));
+    /* The integrand is sin(theta/2) / (u * exp(rho/4)), where rho is
+       already a sum of logs. With many eigenvalues rho can be so big
+       that exp(rho/4) overflows, so we combine everything on the log
+       scale and exponentiate only at the end. A result that
+       underflows is harmless: the integrand really is negligible.
+    */
+    {
+	double s = sin(0.5 * theta);
+	double lg;
+
+	if (s == 0.0) {
+	    return 0.0;
+	}
+	lg = log(fabs(s)) - log(u) - 0.25 * rho;
+	if (lg < -700.0) {
+	    return 0.0; /* underflow: treat as zero */
+	}
+	return s < 0 ? -exp(lg) : exp(lg);
+    }
 }
 
 #define gridlimit 2048
@@ -5608,6 +5627,11 @@ static double imhof_integral (double arg, const gretl_matrix *lambda,
 
     base = imhof_f(0, lambda, arg);
     base += imhof_f(bound, lambda, arg);
+
+    if (na(base)) {
+	*err = E_NOCONV;
+	return ret;
+    }
 
     while (n < gridlimit) {
         step = bound / n;
@@ -5640,14 +5664,15 @@ static double imhof_integral (double arg, const gretl_matrix *lambda,
 
 /* Implements the "imhof" function in genr: computes the probability
    P(u'Au < arg) for a quadratic form in Normal(0,1) variables.  The
-   argument @m may be either the square matrix A or a vector
-   containing the precomputed eigenvalues of A.
+   argument @m may be either the square matrix A or a vector containing
+   the precomputed eigenvalues of A.
 */
 
 double imhof (const gretl_matrix *m, double arg, int *err)
 {
     gretl_matrix *lambda = NULL;
-    double bound, ret = NADBL;
+    double bound = NADBL;
+    double ret = NADBL;
     int free_lambda = 0;
 
     errno = 0;
@@ -5666,6 +5691,7 @@ double imhof (const gretl_matrix *m, double arg, int *err)
 
     if (!*err) {
         bound = imhof_bound(lambda, err);
+	
     }
     if (!*err) {
         ret = imhof_integral(arg, lambda, bound, err);
