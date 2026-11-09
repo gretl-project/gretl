@@ -6,6 +6,9 @@ version 2026e, in progress
 - "fcast" command: add a comprehensive $result accessor
 - Fix bug(): name collision with R's lbfgsb() in "foreign"
   with R_lib on
+- Fix bug: two-way clustered standard errors for panel-data
+  models were not computed correctly except when given the
+  specification --cluster=$unit,$time
 
 2026-10-29 version 2026d
 - Fix bug: potential crash when forecasting based on a
