@@ -6316,7 +6316,11 @@ static void print_confband_data (const double *x,
             if (mode == CONF_LOW || mode == CONF_HIGH) {
                 fprintf(fp, "%.10g %s\n", x[t], GPNA);
             } else {
-                fprintf(fp, "%.10g %s %s\n", x[t], GPNA, GPNA);
+		if (mode == CONF_BARS && fix_ci) {
+		    fprintf(fp, "%.10g %s %s %s\n", x[t], GPNA, GPNA, GPNA);
+		} else {
+		    fprintf(fp, "%.10g %s %s\n", x[t], GPNA, GPNA);
+		}
             }
         } else {
 	    if (fix_ci) {
