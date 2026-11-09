@@ -711,7 +711,10 @@ generic_cluster_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
     int err = 0;
 
     if (ci->pooled) {
-	cvar = dset->Z[ci->dcid[idx]];
+	/* idx == 2 means the combined series, which has no dcid entry */
+	int vc = (idx == 2)? ci->pcid[2] : ci->dcid[idx];
+
+	cvar = dset->Z[vc];
     }
 
     R = panel_cval_count_max(pmod, pan, ci, cvar);
