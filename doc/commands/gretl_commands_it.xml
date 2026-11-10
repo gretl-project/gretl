@@ -1092,6 +1092,16 @@
         solito indice di un modello mal specificato.
       </para>
       <para context="cli">
+        L'OPG viene calcolata a partire dalle derivate numeriche dei
+        contributi di ciascuna osservazione alla log-verosimiglianza
+        esatta, trattando la varianza delle innovazioni come un
+        parametro aggiuntivo (viene riportato solo il blocco relativo
+        ai coefficienti ARMA). Con l'opzione <opt>robust</opt>, la
+        matrice di covarianza è costituita da una struttura a
+        <quote>sandwich</quote> che combina l'inversa dell'Hessiano
+        numerico con l'OPG.
+        </para>
+      <para context="cli">
 	L'opzione <opt>lbfgs</opt> è riservata alla stima basata su codice
 	ARMA nativo e MV esatta; quando viene indicata, la stima usa l'algoritmo
 	L-BFGS a <quote>memoria limitata</quote> anziché l'ottimizzatore BFGS

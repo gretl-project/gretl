@@ -192,10 +192,10 @@ static int get_gpt_data (GPT_SPEC *spec,
 
             got = bufgets(s, sizeof s, buf);
             if (got == NULL) {
+		fprintf(stderr, "FAIL 1\n");
                 err = 1;
                 break;
             }
-
             nf = 0;
             if (ncols == 5) {
                 nf = sscanf(s, "%31s %31s %31s %31s %31s", test[0], test[1], test[2],
@@ -208,9 +208,10 @@ static int get_gpt_data (GPT_SPEC *spec,
                 nf = sscanf(s, "%31s %31s", test[0], test[1]);
             }
             if (nf != ncols) {
+		fprintf(stderr, "get_gpt_data: expected %d columns, got %d\n",
+			ncols, nf);
                 err = 1;
             }
-
             for (j=offset; j<nf && !err; j++) {
                 if (gp_missing(test[j])) {
                     x[j][t] = NADBL;
@@ -222,7 +223,6 @@ static int get_gpt_data (GPT_SPEC *spec,
             if (missing) {
                 okobs--;
             }
-
             if (i <= imin && *do_markers) {
                 *do_markers = get_gpt_marker(s, spec->markers[t], obsfmt);
                 if (spec->code == PLOT_FACTORIZED && imin == 0) {
@@ -1700,10 +1700,12 @@ static int plot_get_data_and_markers (GPT_SPEC *spec,
     fprintf(stderr, "plot_get_data, allocating: nobs=%d, n_datacols=%d",
             spec->nobs, spec->n_datacols);
     if (spec->code == PLOT_FACTORIZED) {
-	fputs(" (factorized)\n", stderr);
-    } else {
-	fputc('\n', stderr);
+	fputs(" (factorized)", stderr);
     }
+    if (*do_markers) {
+	fputs(" (do_markers)", stderr);
+    }
+    fputc('\n', stderr);
 #endif
 
     /* allocate for the plot data... */

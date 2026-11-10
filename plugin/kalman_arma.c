@@ -22,6 +22,8 @@ struct kalman_helper_ {
     gretl_matrix *Z;
     gretl_matrix *Q;
     gretl_matrix *V;
+    gretl_matrix *F;
+    gretl_matrix *L;
     gretl_matrix *avar;
 
     gretl_matrix *avar2;
@@ -74,6 +76,8 @@ static khelper *kalman_helper_new (arma_info *ainfo,
 				    &kh->Z, r, 1,
 				    &kh->Q, r, r,
 				    &kh->V, ainfo->fullT, 1,
+				    &kh->F, ainfo->fullT, 1,
+				    &kh->L, ainfo->fullT, 1,
 				    &kh->avar, r2, r2,
 				    NULL);
 
@@ -389,6 +393,10 @@ static int write_kalman_matrices (khelper *kh,
             rewrite_T = 1;
         } else if (idx >= ainfo->ifc && idx < tmax) {
             rewrite_Z = 1;
+            if (arima_levels(ainfo)) {
+                /* theta also appears in T in this case */
+                rewrite_T = 1;
+            }
         } else {
             rewrite_B = 1;
         }
@@ -507,19 +515,85 @@ static int rewrite_kalman_matrices (kalman *K, const double *b, int i)
     return err;
 }
 
-/* used only in obtaining the OPG, if wanted */
+/* Callback giving the per-observation contributions to the full
+   (unconcentrated) loglikelihood,
 
-static const double *kalman_arma_llt_callback (const double *b, int i,
-                                               void *data)
+     l_t = -0.5 * [log(2 pi) + log(s2) + log(f_t) + v_t^2/(s2 f_t)]
+
+   where v_t and f_t are the innovation and its variance from the
+   filter run with unit innovation variance. @b has k + 1 elements:
+   the ARMA parameters followed by s2, the innovation variance. This
+   is what's needed for a genuine OPG matrix.
+*/
+
+static const double *kalman_arma_score_callback (const double *b, int i,
+                                                 void *data)
 {
     kalman *K = (kalman *) data;
     khelper *kh = kalman_get_data(K);
-    int err;
+    arma_info *ainfo = kh->kainfo;
+    double s2 = b[ainfo->nc];
+    int t, err;
 
     rewrite_kalman_matrices(K, b, i);
     err = kfilter_standard(K, NULL);
 
-    return (err)? NULL : kh->V->val;
+    if (err) {
+        return NULL;
+    }
+
+    for (t=0; t<kh->V->rows; t++) {
+        double vt = kh->V->val[t];
+        double ft = kh->F->val[t];
+
+        if (na(vt) || na(ft) || ft <= 0) {
+            kh->L->val[t] = 0;
+        } else {
+            kh->L->val[t] = -0.5 * (log(2 * M_PI) + log(s2) + log(ft) +
+                                    vt * vt / (s2 * ft));
+        }
+    }
+
+    return kh->L->val;
+}
+
+/* Full (unconcentrated) loglikelihood as a function of the k ARMA
+   parameters plus s2 in b[k]; used for the Hessian that goes into
+   the QML (sandwich) covariance matrix.
+*/
+
+/* number of rows in the per-observation arrays: this includes
+   any rows for missing observations, which contribute zero
+*/
+
+static int kalman_arma_nrows (void *data)
+{
+    khelper *kh = kalman_get_data((kalman *) data);
+
+    return kh->kainfo->fullT;
+}
+
+static double kalman_arma_full_ll (const double *b, void *data)
+{
+    kalman *K = (kalman *) data;
+    khelper *kh = kalman_get_data(K);
+    const double *x;
+    double ll = 0;
+    int t;
+
+    if (b[kh->kainfo->nc] <= 0) {
+        return NADBL;
+    }
+
+    x = kalman_arma_score_callback(b, KALMAN_ALL, data);
+    if (x == NULL) {
+        return NADBL;
+    }
+    for (t=0; t<kh->kainfo->fullT; t++) {
+        ll += x[t];
+    }
+
+    return ll;
 }
 
 static double kalman_arma_ll (const double *b, void *data)
@@ -778,6 +852,7 @@ static int kalman_arma (const double *coeff,
         kalman_attach_printer(K, ainfo->prn);
         kalman_attach_data(K, kh);
 	kalman_set_arma_ll(K);
+	kalman_set_F_output(K, kh->F);
 
         BFGS_defaults(&maxit, &toler, ARMA);
 
