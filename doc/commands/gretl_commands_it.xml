@@ -4333,10 +4333,16 @@
 	livelli. In quest'ultimo caso, la previsione in logaritmi
 	viene esponenziata, applicando una correzione della
 	distorsione. La natura di quest'ultima dipende dal rifiuto o
-	meno di un test di normalità del termine di
-	errore. Analogamente, se la variabile dipendente è
-	riconosciuta come una differenza prima, è possibile scegliere
-	di produrre una previsione integrata (in livelli).
+	meno di un test di normalità del termine di errore. Per
+	ottenere una previsione che sia semplicemente esponenziata (il
+	che è sconsigliabile, se non a fini didattici), bisogna
+	deselezionare la casella contrassegnata con <quote>Correzione
+	della distorsione</quote>.
+      </para>
+      <para>
+	Analogamente, se la variabile dipendente è riconosciuta come
+	una differenza prima, è possibile scegliere di produrre una
+	previsione integrata (in livelli).
       </para>
 
       <para context="cli">
