@@ -11970,6 +11970,10 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     if (querying) {
 	ret = aux_empty_node(p);
 	ret->t = gen_type_from_gretl_type(type);
+	if (type == GRETL_TYPE_ARRAY && !is_virtual) {
+	    /* typename() needs the array's content type */
+	    ret->v.a = (gretl_array *) val;
+	}
 	return ret;
     }
 
