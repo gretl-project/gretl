@@ -22,6 +22,8 @@ version 2026e, in progress
   all of the AS 154, AS 197 and Kalman variants. The standard
   errors will differ (in short or strongly seasonal samples,
   notably) from those produced previously.
+- Fix bug: regression whereby typename() would fail to produce
+  the correct type name for an array inside a bundle
 
 2026-10-29 version 2026d
 - Fix bug: potential crash when forecasting based on a
