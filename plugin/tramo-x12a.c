@@ -1737,7 +1737,7 @@ static int write_x13a_spc_file (const char *fname,
 
     if (xopt->seats) {
         save_strings = x13_seats_save_strings;
-        fputs("seats{", fp);
+        fputs("seats{noadmiss=yes ", fp);
     } else {
         save_strings = x11_save_strings;
         fputs("x11{", fp);
