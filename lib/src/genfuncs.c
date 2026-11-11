@@ -1837,7 +1837,14 @@ int panel_expand (const gretl_matrix *x, double *y,
 
 static double default_hp_lambda (const DATASET *dset)
 {
+    /* changed 2026-11-11 */
+#if 0
+    /* 100 for annual, 1600 for quarterly and 14,400 for monthly */
     return 100 * dset->pd * dset->pd;
+#else
+    /* 6.25 for annual, 1600 for quarterly and 129,600 for monthly */
+    return 6.25 * pow(dset->pd, 4.0);
+#endif
 }
 
 /**
@@ -5691,7 +5698,7 @@ double imhof (const gretl_matrix *m, double arg, int *err)
 
     if (!*err) {
         bound = imhof_bound(lambda, err);
-	
+
     }
     if (!*err) {
         ret = imhof_integral(arg, lambda, bound, err);
