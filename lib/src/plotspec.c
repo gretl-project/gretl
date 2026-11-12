@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "plotspec.h"
+#include "nonparam.h"
 
 struct plotbars_ {
     int n;         /* number of available start-stop "bar" pairs */

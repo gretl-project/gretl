@@ -32,6 +32,7 @@
 #include "matrix_extra.h"
 #include "gretl_btree.h"
 #include "gretl_func.h"
+#include "nonparam.h"
 #include "kalman.h"
 #include "../../cephes/cephes.h"
 

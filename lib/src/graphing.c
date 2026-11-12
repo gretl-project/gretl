@@ -39,6 +39,7 @@
 #include "gretl_plot.h"
 #include "plot_priv.h"
 #include "gretl_color.h"
+#include "nonparam.h"
 
 #ifdef WIN32
 # include "gretl_win32.h"

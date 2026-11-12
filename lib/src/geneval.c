@@ -49,6 +49,7 @@
 #include "flow_control.h"
 #include "mapinfo.h"
 #include "gretl_sampler.h"
+#include "nonparam.h"
 
 #include <time.h> /* for the $now accessor */
 

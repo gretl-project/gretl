@@ -49,6 +49,7 @@
 #include "addons_utils.h"
 #include "gretl_gridplot.h"
 #include "gretl_sampler.h"
+#include "nonparam.h"
 #include "gretl_untar.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
