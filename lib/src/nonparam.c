@@ -1245,26 +1245,18 @@ int signed_rank_test (const double *x, const double *y,
 }
 
 int rank_sum_test (const double *x, const double *y,
-                   int v1, int v2, const DATASET *dset,
-                   double *result, gretlopt opt, PRN *prn)
+                   int n1, int n2, int v1, int v2,
+		   const DATASET *dset, double *result,
+		   gretlopt opt, PRN *prn)
 {
     struct ranker *r;
     double wa, z = NADBL, pval = NADBL;
     char xc = 'a', yc = 'b';
-    int na = 0, nb = 0;
+    int na = n1, nb = n2;
     int quiet = (opt & OPT_Q);
-    int i, t, n = 0;
+    int i, j, t, n = 0;
 
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (!na(x[t])) na++;
-	if (!na(y[t])) nb++;
-    }
-
-    if (na == 0 || nb == 0) {
-	return E_MISSDATA;
-    }
-
-    n = na + nb;
+    n = n1 + n2;
     r = malloc(n * sizeof *r);
     if (r == NULL) {
 	return E_ALLOC;
@@ -1280,19 +1272,17 @@ int rank_sum_test (const double *x, const double *y,
 	yc = 'a';
     }
 
-    i = 0;
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (!na(x[t])) {
-	    r[i].val = x[t];
-	    r[i].c = xc;
-	    i++;
-	}
-	if (!na(y[t])) {
-	    r[i].val = y[t];
-	    r[i].c = yc;
-	    i++;
-	}
+    j = 0;
+    for (i=0; i<n1; i++) {
+	r[j].val = x[i];
+	r[j].c = xc;
+	j++;
     }
+    for (i=0; i<n2; i++) {
+	r[j].val = y[i];
+	r[j].c = yc;
+	j++;
+    }	
 
     qsort(r, n, sizeof *r, gretl_compare_doubles);
 
@@ -1302,7 +1292,6 @@ int rank_sum_test (const double *x, const double *y,
 	for (t=i+1; t<n && r[t].val == r[i].val; t++) {
 	    m++;
 	}
-
 	if (m == 1) {
 	    r[i].rank = i + 1;
 	} else {

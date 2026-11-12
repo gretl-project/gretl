@@ -7072,7 +7072,7 @@ static int test_data_from_dummy (const DATASET *dset,
     double *y = NULL;
     int n1 = 0;
     int n2 = 0;
-    int t, ix, iy;
+    int t, i, j;
 
     if (!gretl_isdummy(dset->t1, dset->t2, dset->Z[v2])) {
         return E_INVARG;
@@ -7091,6 +7091,8 @@ static int test_data_from_dummy (const DATASET *dset,
         return E_TOOFEW;
     }
 
+    fprintf(stderr, "test_data_from_dummy: n1 %d, n2 %d\n", n1, n2);
+
     x = malloc(n1 * sizeof *x);
     y = malloc(n2 * sizeof *y);
     if (x == NULL || y == NULL) {
@@ -7098,14 +7100,14 @@ static int test_data_from_dummy (const DATASET *dset,
         return E_ALLOC;
     }
 
-    ix = iy = 0;
+    i = j = 0;
     for (t=dset->t1; t<=dset->t2; t++) {
         if (na(dset->Z[v1][t])) {
             continue;
         } else if (dset->Z[v2][t] == 0.0) {
-            x[ix++] = dset->Z[v1][t];
+            x[i++] = dset->Z[v1][t];
         } else if (dset->Z[v2][t] == 1.0) {
-            y[iy++] = dset->Z[v1][t];
+            y[j++] = dset->Z[v1][t];
         }
     }
 
@@ -7371,7 +7373,7 @@ int diff_test (const int *list, const DATASET *dset,
     }
 
     if (opt & OPT_R) {
-	err = rank_sum_test(x, y, v1, v2, dset, result, opt, prn);
+	err = rank_sum_test(x, y, n1, n2, v1, v2, dset, result, opt, prn);
     } else if (opt & OPT_I) {
 	err = signed_rank_test(x, y, v1, v2, dset, result, opt, prn);
     } else {
