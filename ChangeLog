@@ -1,6 +1,8 @@
 version 2026e, in progress
 - Factor out plot-script-to-C-struct code from gpt_control.c
   and add to libgretl API as plotspec_read_file()
+- hpfilt() function: switch to the recommendation of Ravn and
+  Uhlig (2002) for the default lambda value
 - Fix some memory leaks and possible invalid reads in plot-
   handling code
 - "fcast" command: add a comprehensive $result accessor
@@ -26,6 +28,9 @@ version 2026e, in progress
   the correct type name for an array inside a bundle
 - Fix bug: "difftest" command broken for the --rank-sum and
   --signed-rank options
+- Fix bug in gretl_edit: spurious "maximum length of command
+  line exceeded" message when doing "(Re-)load functions" and
+  the current script lacks a terminating newline.
 
 2026-10-29 version 2026d
 - Fix bug: potential crash when forecasting based on a

@@ -6527,18 +6527,22 @@
       <description>
 	<para>
 	  Returns the cycle component from application of the
-	  Hodrick&ndash;Prescott filter to series <argname>y</argname>. If the
-	  smoothing parameter, <argname>lambda</argname>, is not supplied then
-	  a data-based default is used, namely 100 times the square of the
-	  periodicity (100 for annual data, 1600 for quarterly data, and so
-	  on).
+	  Hodrick&ndash;Prescott filter to series
+	  <argname>y</argname>. If the smoothing parameter,
+	  <argname>lambda</argname>, is not supplied then a data-based
+	  default is used, namely that recommended by <cite
+	  key="ravn-uhlig02">Ravn and Uhlig (2002)</cite>: 6.25 times
+	  the periodicity of the data to the fourth power. (Up till
+	  gretl version 2026d the default was the 100 times the square
+	  of the periodicity; you can recreate that by passing
+	  <lit>100*$pd^2</lit> for the second argument.)
 	</para>
 	<para>
 	  By default the filter is the usual two-sided version, but if
-	  the optional third argument is given with a non-zero
-	  value a one-sided variant (with no look-ahead) is computed
-	  in the manner of <cite key="stock-watson1999">Stock and
-	  Watson (1999)</cite>.
+	  the optional third argument is given with a non-zero value a
+	  one-sided variant (with no look-ahead) is computed in the
+	  manner of <cite key="stock-watson1999">Stock and Watson
+	  (1999)</cite>.
 	</para>
 	<para>
 	  The most common use of the HP filter is detrending, but if
