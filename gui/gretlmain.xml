@@ -87,6 +87,19 @@
 	<menuitem action="NistVVerbose"/>
       </menu>
     </menu>
+    <menu action="Packages">
+      <menuitem action="LocalGfn"/>
+      <menuitem action="RemoteGfn"/>
+      <separator/>
+      <menuitem action="InstallPkg"/>
+      <separator/>
+      <menuitem action="EditGfn"/>
+      <menuitem action="NewGfn"/>
+      <menuitem action="UploadGfn"/>
+      <menuitem action="EditSpec"/>
+      <separator/>
+      <placeholder name="RecentGfns"/>
+    </menu>
     <menu action="Data">
       <menuitem action="DataSelectAll"/>
       <separator/>
@@ -300,19 +313,6 @@
       <menuitem action="gmm"/>
       <menuitem action="system"/>
       <menuitem action="KFgui"/>
-    </menu>
-    <menu action="Packages">
-      <menuitem action="LocalGfn"/>
-      <menuitem action="RemoteGfn"/>
-      <separator/>
-      <menuitem action="InstallPkg"/>
-      <separator/>
-      <menuitem action="EditGfn"/>
-      <menuitem action="NewGfn"/>
-      <menuitem action="UploadGfn"/>
-      <menuitem action="EditSpec"/>
-      <separator/>
-      <placeholder name="RecentGfns"/>
     </menu>
     <menu action="Help">
       <menuitem action="TextCmdRef"/>

@@ -1837,6 +1837,17 @@ GtkActionEntry main_entries[] = {
     { "NistVerbose", NULL, N_("_Verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
     { "NistVVerbose", NULL, N_("V_ery verbose"), NULL, NULL, G_CALLBACK(do_nistcheck) },
 
+    /* Packages */
+    { "Packages", NULL, N_("_Packages"), NULL, NULL, NULL },
+    { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
+    { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
+    { "InstallPkg", NULL, N_("Install from file..."), NULL, NULL, G_CALLBACK(install_pkg_callback) },
+    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_gfn_callback) },
+    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
+    { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
+    { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
+    { "AddonResources", NULL, N_("_Resource from addon"), NULL, NULL, NULL },
+
     /* Data */
     { "Data", NULL, N_("_Data"), NULL, NULL, NULL },
     { "DataSelectAll", NULL, N_("Select _all"), CTRL_ALL, NULL, G_CALLBACK(mdata_select_all) },
@@ -2037,17 +2048,6 @@ GtkActionEntry main_entries[] = {
     { "gmm", NULL, N_("_GMM"), NULL, NULL, G_CALLBACK(gretl_callback) },
     { "system", NULL, N_("_Simultaneous equations"), NULL, NULL, G_CALLBACK(gretl_callback) },
     { "KFgui", NULL, N_("State space model"), NULL, NULL, G_CALLBACK(gfn_menu_callback) },
-
-    /* Packages */
-    { "Packages", NULL, N_("_Packages"), NULL, NULL, NULL },
-    { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },
-    { "RemoteGfn", GTK_STOCK_NETWORK, N_("On _server..."), NULL, NULL, G_CALLBACK(show_files) },
-    { "InstallPkg", NULL, N_("Install from file..."), NULL, NULL, G_CALLBACK(install_pkg_callback) },
-    { "EditGfn", GTK_STOCK_EDIT, N_("Edit package..."), NULL, NULL, G_CALLBACK(edit_gfn_callback) },
-    { "NewGfn", GTK_STOCK_NEW, N_("_New package"), "", NULL, G_CALLBACK(new_gfn_callback) },
-    { "UploadGfn", GTK_STOCK_NETWORK, N_("_Upload package..."), "", NULL, G_CALLBACK(upload_package_callback) },
-    { "EditSpec", GTK_STOCK_EDIT, N_("Edit spec file..."), NULL, NULL, G_CALLBACK(edit_spec_callback) },
-    { "AddonResources", NULL, N_("_Resource from addon"), NULL, NULL, NULL },
 
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
