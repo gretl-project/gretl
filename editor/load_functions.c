@@ -87,7 +87,7 @@ static int real_load_functions (const gchar *buf,
 	if (state->in_comment) {
 	    tailstrip(line);
 	} else {
-	    int contd = top_n_tail(line, sizeof line, &err);
+	    int contd = top_n_tail(line, MAXLINE, &err);
 
 	    while (contd && !state->in_comment && !err) {
 		/* handle continued lines */
@@ -104,7 +104,7 @@ static int real_load_functions (const gchar *buf,
 			compress_spaces(line);
 		    }
 		}
-		contd = top_n_tail(line, sizeof line, &err);
+		contd = top_n_tail(line, MAXLINE, &err);
 	    }
 	}
 
