@@ -7391,16 +7391,14 @@ int diff_test (const int *list, const DATASET *dset,
     double result[2] = {0};
     int usedum = (opt & OPT_D)? 1 : 0;
     int v1, v2;
-    int nx = 0;
-    int ny = 0;
     int err = 0;
 
     if (usedum && !(opt & OPT_R)) {
         /* OPT_D is supported only in conjunction with OPT_R */
-        return E_BADOPT;
+        err = E_BADOPT;
+    } else {
+	err = incompatible_options(opt, OPT_G | OPT_R | OPT_I);
     }
-
-    err = incompatible_options(opt, OPT_G | OPT_R | OPT_I);
     if (err) {
         return err;
     }
@@ -7409,33 +7407,37 @@ int diff_test (const int *list, const DATASET *dset,
     if (usedum) {
         v2 = splitby_varnum(DIFFTEST, dset);
         if (v2 < 0) {
-            err = E_UNKVAR;
+            return E_UNKVAR;
         }
     } else {
         v2 = list[2];
     }
 
-    if (err) {
-        return err;
-    }
-
-    if (usedum) {
-        /* get @x and @y as portions of series v1 */
-        err = test_data_from_dummy(dset, v1, v2, &x, &y, &nx, &ny);
-    } else if (opt & OPT_I) {
-	/* the signed rank test needs paired data */
-	err = transcribe_ok_pairs(dset, v1, v2, &x, &y, &nx);
-    } else if (opt & OPT_R) {
-        /* get @x and @y from the series v1 and v2 */
-        err = test_data_from_list(dset, v1, v2, &x, &y, &nx, &ny);
-    }
-
     if (opt & OPT_R) {
-	err = rank_sum_test(x, y, nx, ny, v1, v2, dset, result, opt, prn);
+	/* the rank sum case */
+	int nx, ny;
+
+	if (usedum) {
+	    /* get @x and @y as portions of series v1 */
+	    err = test_data_from_dummy(dset, v1, v2, &x, &y, &nx, &ny);
+	} else {
+	    /* get @x and @y from the series v1 and v2 */
+	    err = test_data_from_list(dset, v1, v2, &x, &y, &nx, &ny);
+	}
+	if (!err) {
+	    err = rank_sum_test(x, y, nx, ny, v1, v2, dset, result, opt, prn);
+	}
     } else if (opt & OPT_I) {
-	err = signed_rank_test(x, y, nx, v1, v2, dset, result, opt, prn);
+	/* the signed rank case: needs paired data */
+	int n;
+
+	err = transcribe_ok_pairs(dset, v1, v2, &x, &y, &n);
+	if (!err) {
+	    err = signed_rank_test(x, y, n, v1, v2, dset, result, opt, prn);
+	}
     } else {
-        err = sign_test(v1, v2, dset, result, opt, prn);
+	/* the sign test case (OPT_G or default) */
+	err = sign_test(v1, v2, dset, result, opt, prn);
     }
 
     free(x);

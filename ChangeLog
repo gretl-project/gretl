@@ -24,6 +24,8 @@ version 2026e, in progress
   notably) from those produced previously.
 - Fix bug: regression whereby typename() would fail to produce
   the correct type name for an array inside a bundle
+- Fix bug: "difftest" command broken for the --rank-sum and
+  --signed-rank options
 
 2026-10-29 version 2026d
 - Fix bug: potential crash when forecasting based on a
