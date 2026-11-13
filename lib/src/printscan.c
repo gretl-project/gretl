@@ -1444,11 +1444,11 @@ int do_printf_command (const char *parm, const char *args,
 int generate_obs_markers (const char *s, DATASET *dset)
 {
     char format[16] = {0};
-    char args[32] = {0};
+    char args[2*VNAMELEN + 8] = {0};
     PRN *prn = NULL;
     int n, t, err = 0;
 
-    n = sscanf(s, "\"%15[^\"]\", %31[^\r\n]", format, args);
+    n = sscanf(s, "\"%15[^\"]\", %71[^\r\n]", format, args);
     if (n != 2) {
 	return E_PARSE;
     }
