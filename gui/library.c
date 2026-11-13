@@ -1783,6 +1783,8 @@ int do_save_markers (const char *fname)
 
 /* called from main window Data menu */
 
+#define PANEL_MARKERS 1
+
 void markers_callback (void)
 {
     if (dataset->S != NULL) {
@@ -1804,8 +1806,10 @@ void markers_callback (void)
             lib_command_strcpy("markers --delete");
             record_command_verbatim();
         }
+#if PANEL_MARKERS
     } else if (dataset_is_panel(dataset)) {
 	panel_markers_dialog();
+#endif
     } else {
         if (yes_no_dialog("gretl",
                           _("The dataset has no observation markers.\n"
