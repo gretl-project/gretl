@@ -65,6 +65,7 @@
 #include "guiprint.h"
 #include "varinfo.h"
 #include "fncall.h"
+#include "panelmarkers.h"
 
 #ifdef G_OS_WIN32
 # include <io.h>
@@ -1744,11 +1745,11 @@ void do_add_markers (const char *fname)
     int err = add_obs_markers_from_file(dataset, fname);
 
     if (err) {
-        gui_errmsg(err);
+	gui_errmsg(err);
     } else {
-        lib_command_sprintf("markers --from-file=\"%s\"", fname);
-        record_command_verbatim();
-        mark_dataset_as_modified();
+	lib_command_sprintf("markers --from-file=\"%s\"", fname);
+	record_command_verbatim();
+	mark_dataset_as_modified();
     }
 }
 
@@ -1803,6 +1804,8 @@ void markers_callback (void)
             lib_command_strcpy("markers --delete");
             record_command_verbatim();
         }
+    } else if (dataset_is_panel(dataset)) {
+	panel_markers_dialog();
     } else {
         if (yes_no_dialog("gretl",
                           _("The dataset has no observation markers.\n"
