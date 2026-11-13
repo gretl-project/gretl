@@ -38,6 +38,14 @@ typedef struct pm_info_ {
 } pm_info;
 
 #define PM_NPREVIEW 4   /* number of leading rows to show */
+#define PM_SEQ (-1)     /* "period" is just 1..T within each unit */
+
+/* number of digits needed for the largest sequence number, T */
+
+static int seq_width (void)
+{
+    return snprintf(NULL, 0, "%d", dataset->pd);
+}
 
 /* The dataset is already a panel, with N = n/T units of T rows each.
    Use that structure to vet candidate series. Always applied over the
@@ -64,8 +72,9 @@ static int cmp_doubles (const void *a, const void *b)
     return (x > y) - (x < y);
 }
 
-/* returns 0 if @v is not a plausible unit identifier, otherwise 1
-   (usable, but long strings) or 2 (usable, comfortable fit) */
+/* Returns 0 if @v is not a plausible unit identifier, otherwise 1
+   (usable, but long strings) or 2 (usable, comfortable fit).
+*/
 
 static int unit_candidate (int v)
 {
@@ -126,7 +135,7 @@ static int unit_candidate (int v)
     return ret;
 }
 
-/* returns 0 if @v is not a plausible period identifier, 1 if it is
+/* Returns 0 if @v is not a plausible period identifier, 1 if it is
    a numeric one, 2 if it is a string-valued one (such as "2008Q4"
    or "Jun1990"). For a string-valued series we cannot check ordering
    but require distinct values within each unit's block, with strings
@@ -242,7 +251,8 @@ static int get_candidates (pm_info *pmi)
     pmi->ulist = ul;
     pmi->tlist = tl;
 
-    return ul[0] > 0 && tl[0] > 0;
+    /* a period series is optional: we can fall back on 1..T */
+    return ul[0] > 0;
 
  bailout:
     free(ul);
@@ -252,8 +262,9 @@ static int get_candidates (pm_info *pmi)
     return 0;
 }
 
-/* write the marker for row @t into @targ (size OBSLEN); returns 1 if
-   the result had to be truncated */
+/* Write the marker for row @t into @targ (size OBSLEN); returns 1 if
+   the result had to be truncated.
+*/
 
 static int make_marker (int u, int p, int t, char *targ)
 {
@@ -267,7 +278,9 @@ static int make_marker (int u, int p, int t, char *targ)
 	if (k == 1) {
 	    *q++ = ':';
 	}
-	if (is_string_valued(dataset, v)) {
+	if (v == PM_SEQ) {
+	    q += sprintf(q, "%0*d", seq_width(), t % dataset->pd + 1);
+	} else if (is_string_valued(dataset, v)) {
 	    const char *s = series_get_string_for_obs(dataset, v, t);
 
 	    q += sprintf(q, "%s", s != NULL ? s : "");
@@ -286,7 +299,12 @@ static int combo_series_id (GtkWidget *combo, const int *list)
 {
     int k = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
 
-    return k >= 0 ? list[k+1] : 0;
+    if (k < 0) {
+	return 0;
+    }
+
+    /* the period combo has one extra entry at the end */
+    return k >= list[0] ? PM_SEQ : list[k+1];
 }
 
 /* Refresh the preview and the OK button: warn about markers that
@@ -301,7 +319,7 @@ static void pm_update_preview (GtkWidget *w, pm_info *pmi)
     GHashTable *seen = NULL;
     char mk[OBSLEN];
     int ndup = 0, ntrunc = 0;
-    int t, ok = (u > 0 && p > 0 && u != p);
+    int t, ok = (u > 0 && p != 0 && u != p);
 
     if (!ok) {
 	g_string_append(gs, _("Please select two different series"));
@@ -335,6 +353,67 @@ static void pm_update_preview (GtkWidget *w, pm_info *pmi)
     g_string_free(gs, TRUE);
 }
 
+/* Variant of pm_apply for the "sequence number" option. The markers
+   command can only take series as arguments, so we generate a
+   temporary series holding the within-unit index, use it, and delete
+   it. All three commands are recorded so the result is reproducible.
+*/
+
+static void pm_apply_seq (pm_info *pmi, int u, PRN *prn)
+{
+    char tmp[VNAMELEN] = "pmseq";
+    gchar *l1, *l2, *l3;
+    int save_t1 = dataset->t1;
+    int save_t2 = dataset->t2;
+    int i, err;
+
+    /* find a name that doesn't clash with an existing series */
+    for (i=2; current_series_index(dataset, tmp) >= 0; i++) {
+	sprintf(tmp, "pmseq%d", i);
+    }
+
+    l1 = g_strdup_printf("series %s = $obsminor", tmp);
+    l2 = g_strdup_printf("markers = \"%%%c:%%0%dd\", %s, %s",
+			 is_string_valued(dataset, u) ? 's' : 'd',
+			 seq_width(), dataset->varname[u], tmp);
+    l3 = g_strdup_printf("delete %s", tmp);
+
+    /* markers apply to all rows, whatever the current sample */
+    dataset->t1 = 0;
+    dataset->t2 = dataset->n - 1;
+    err = gui_run_genr(l1, dataset, OPT_NONE, prn);
+    if (!err) {
+	err = gui_run_genr(l2, dataset, OPT_NONE, prn);
+	/* clean up regardless of the outcome */
+	i = current_series_index(dataset, tmp);
+	if (i > 0) {
+	    int vl[2] = {1, i};
+
+	    dataset_drop_listed_variables(vl, dataset, NULL, NULL);
+	}
+    }
+    dataset->t1 = save_t1;
+    dataset->t2 = save_t2;
+
+    if (err) {
+	errmsg_plus(err, gretl_print_get_buffer(prn));
+    } else {
+	lib_command_sprintf("genr %s", l1);
+	record_command_verbatim();
+	lib_command_sprintf("genr %s", l2);
+	record_command_verbatim();
+	lib_command_sprintf("%s", l3);
+	record_command_verbatim();
+	mark_dataset_as_modified();
+	refresh_data();
+	gtk_widget_destroy(pmi->dlg);
+    }
+
+    g_free(l1);
+    g_free(l2);
+    g_free(l3);
+}
+
 static void pm_apply (GtkWidget *w, pm_info *pmi)
 {
     int u = combo_series_id(pmi->ucombo, pmi->ulist);
@@ -343,7 +422,13 @@ static void pm_apply (GtkWidget *w, pm_info *pmi)
     PRN *prn;
     int err;
 
-    if (u <= 0 || p <= 0 || u == p || bufopen(&prn)) {
+    if (u <= 0 || p == 0 || u == p || bufopen(&prn)) {
+	return;
+    }
+
+    if (p == PM_SEQ) {
+	pm_apply_seq(pmi, u, prn);
+	gretl_print_destroy(prn);
 	return;
     }
 
@@ -375,7 +460,8 @@ static void pm_info_free (GtkWidget *w, pm_info *pmi)
 }
 
 static GtkWidget *pm_combo (GtkWidget *table, int row, const char *label,
-			    const int *list, pm_info *pmi)
+			    const int *list, const char *extra,
+			    pm_info *pmi)
 {
     GtkWidget *l = gtk_label_new(label);
     GtkWidget *c = gtk_combo_box_text_new();
@@ -387,6 +473,9 @@ static GtkWidget *pm_combo (GtkWidget *table, int row, const char *label,
 
     for (i=1; i<=list[0]; i++) {
 	combo_box_append_text(c, dataset->varname[list[i]]);
+    }
+    if (extra != NULL) {
+	combo_box_append_text(c, extra);
     }
 
     return c;
@@ -427,9 +516,8 @@ void panel_markers_dialog (void)
     }
 
     if (!get_candidates(pmi)) {
-	infobox(_("Cannot find suitable series: we need one identifying the "
-		  "units (ideally a string-valued series) and one "
-		  "identifying the period (e.g. year)"));
+	infobox(_("Cannot find a suitable series identifying the units "
+		  "(ideally a string-valued series)"));
 	pm_info_free(NULL, pmi);
 	return;
     }
@@ -447,8 +535,9 @@ void panel_markers_dialog (void)
     table = gtk_table_new(2, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(table), 5);
     gtk_table_set_row_spacings(GTK_TABLE(table), 5);
-    pmi->ucombo = pm_combo(table, 0, _("Unit identifier"), pmi->ulist, pmi);
-    pmi->tcombo = pm_combo(table, 1, _("Period identifier"), pmi->tlist, pmi);
+    pmi->ucombo = pm_combo(table, 0, _("Unit identifier"), pmi->ulist, NULL, pmi);
+    pmi->tcombo = pm_combo(table, 1, _("Period identifier"), pmi->tlist,
+			  _("(sequence number 1, 2, ...)"), pmi);
     gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 5);
 
     frame = gtk_frame_new(_("Example"));
