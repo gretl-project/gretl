@@ -38,64 +38,178 @@ typedef struct pm_info_ {
 
 #define PM_NPREVIEW 4   /* number of leading rows to show */
 
-/* Non-negative integer values on every observation, and not
-   constant: the same criterion as panelvars_list_ok() in datawiz.c.
-   Always applied over the whole dataset, since markers apply to all
-   observations whatever the current sample.
+/* The dataset is already a panel, with N = n/T units of T rows each.
+   Use that structure to vet candidate series. Always applied over the
+   whole dataset, since markers apply to all observations whatever the
+   current sample.
+
+   Unit candidate: constant within each block of T rows, with distinct
+   values across blocks. If string-valued, the longest string must also
+   leave room in the marker (OBSLEN - 1 chars) for ':' and at least one
+   digit of the period.
+
+   Period candidate: integer-valued, non-negative, and strictly
+   increasing within each block.
 */
 
-static int int_index_candidate (int v)
+#define UNIT_STR_MAX (OBSLEN - 3)   /* longest usable unit string */
+#define UNIT_STR_OK  (OBSLEN - 6)   /* leaves room for a 4-digit year */
+
+static int cmp_doubles (const void *a, const void *b)
+{
+    double x = *(const double *) a;
+    double y = *(const double *) b;
+
+    return (x > y) - (x < y);
+}
+
+/* returns 0 if @v is not a plausible unit identifier, otherwise 1
+   (usable, but long strings) or 2 (usable, comfortable fit) */
+
+static int unit_candidate (int v)
 {
     const double *x = dataset->Z[v];
-    int t;
+    int T = dataset->pd;
+    int N = dataset->n / T;
+    int sv = is_string_valued(dataset, v);
+    int maxlen = 0;
+    double *first;
+    int i, s, ret = 2;
 
-    for (t=0; t<dataset->n; t++) {
-	if (na(x[t]) || x[t] < 0 || x[t] != floor(x[t])) {
-	    return 0;
+    first = malloc(N * sizeof *first);
+    if (first == NULL) {
+	return 0;
+    }
+
+    for (i=0; i<N && ret; i++) {
+	first[i] = x[i*T];
+	if (na(first[i])) {
+	    ret = 0;
+	}
+	for (s=1; s<T && ret; s++) {
+	    if (x[i*T + s] != first[i]) {
+		ret = 0; /* not constant within unit */
+	    }
+	}
+	if (ret && sv) {
+	    const char *str = series_get_string_for_obs(dataset, v, i*T);
+	    int len = str != NULL ? g_utf8_strlen(str, -1) : 0;
+
+	    if (len > maxlen) {
+		maxlen = len;
+	    }
 	}
     }
 
-    return !gretl_isconst(0, dataset->n - 1, x);
+    if (ret) {
+	/* distinct across units? */
+	qsort(first, N, sizeof *first, cmp_doubles);
+	for (i=1; i<N; i++) {
+	    if (first[i] == first[i-1]) {
+		ret = 0;
+		break;
+	    }
+	}
+    }
+
+    if (ret && sv) {
+	if (maxlen > UNIT_STR_MAX) {
+	    ret = 0;
+	} else if (maxlen > UNIT_STR_OK) {
+	    ret = 1;
+	}
+    }
+
+    free(first);
+
+    return ret;
 }
 
-/* Build the candidate lists: units may be string-valued series
-   (listed first, as the most plausible) or integer-valued ones;
-   periods must be integer-valued and not string-valued.
-   Returns 0 if we can't offer both roles.
+static int period_candidate (int v)
+{
+    const double *x = dataset->Z[v];
+    int T = dataset->pd;
+    int N = dataset->n / T;
+    int i, s;
+
+    if (is_string_valued(dataset, v)) {
+	return 0;
+    }
+
+    for (i=0; i<N; i++) {
+	for (s=0; s<T; s++) {
+	    double xt = x[i*T + s];
+
+	    if (na(xt) || xt < 0 || xt != floor(xt)) {
+		return 0;
+	    }
+	    if (s > 0 && xt <= x[i*T + s - 1]) {
+		return 0;
+	    }
+	}
+    }
+
+    return 1;
+}
+
+/* Build the candidate lists. Unit candidates are ordered with the
+   comfortable string series first, then string series that will only
+   just fit, then numeric ones. Returns 0 if we can't offer both roles.
 */
 
 static int get_candidates (pm_info *pmi)
 {
     int *ul = gretl_list_new(dataset->v);
     int *tl = gretl_list_new(dataset->v);
-    int i, pass;
+    int *rank = NULL;
+    int i, r;
 
-    if (ul == NULL || tl == NULL) {
-	free(ul); free(tl);
-	return 0;
+    if (ul == NULL || tl == NULL || dataset->pd < 2 ||
+	dataset->n < 2 * dataset->pd) {
+	goto bailout;
+    }
+
+    rank = calloc(dataset->v, sizeof *rank);
+    if (rank == NULL) {
+	goto bailout;
     }
 
     ul[0] = tl[0] = 0;
 
-    for (pass=0; pass<2; pass++) {
-	for (i=1; i<dataset->v; i++) {
-	    int sv = is_string_valued(dataset, i);
-
-	    if (pass == 0 && sv) {
-		if (!gretl_isconst(0, dataset->n - 1, dataset->Z[i])) {
-		    ul[++ul[0]] = i;
-		}
-	    } else if (pass == 1 && !sv && int_index_candidate(i)) {
-		ul[++ul[0]] = i;
-		tl[++tl[0]] = i;
-	    }
+    for (i=1; i<dataset->v; i++) {
+	if (period_candidate(i)) {
+	    tl[++tl[0]] = i;
+	} else {
+	    rank[i] = unit_candidate(i);
 	}
     }
 
+    /* string-valued first (best fit first), then numeric */
+    for (r=2; r>=1; r--) {
+	for (i=1; i<dataset->v; i++) {
+	    if (rank[i] == r && is_string_valued(dataset, i)) {
+		ul[++ul[0]] = i;
+	    }
+	}
+    }
+    for (i=1; i<dataset->v; i++) {
+	if (rank[i] > 0 && !is_string_valued(dataset, i)) {
+	    ul[++ul[0]] = i;
+	}
+    }
+
+    free(rank);
     pmi->ulist = ul;
     pmi->tlist = tl;
 
-    return ul[0] > 0 && tl[0] > 0 && (ul[0] + tl[0] > 2 || ul[1] != tl[1]);
+    return ul[0] > 0 && tl[0] > 0;
+
+ bailout:
+    free(ul);
+    free(tl);
+    free(rank);
+
+    return 0;
 }
 
 /* write the marker for row @t into @targ (size OBSLEN); returns 1 if
