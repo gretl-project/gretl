@@ -10,12 +10,13 @@
 
 /* GUI access to "genr markers = ..." for panel data: let the user
    pick a unit-identifier series (string-valued, or integer-valued)
-   and a period-identifier series (integer-valued, e.g. year), show
+   and a period-identifier series (e.g. year, or a string date), show
    a live preview of the resulting markers, and then execute
 
      genr markers = "%s:%d", <unit>, <period>
 
-   (or "%d:%d" if the unit series is numeric).
+   with %s or %d for each role according to whether the series is
+   string-valued or numeric.
 */
 
 #include "gretl.h"
@@ -125,31 +126,62 @@ static int unit_candidate (int v)
     return ret;
 }
 
+/* returns 0 if @v is not a plausible period identifier, 1 if it is
+   a numeric one, 2 if it is a string-valued one (such as "2008Q4"
+   or "Jun1990"). For a string-valued series we cannot check ordering
+   but require distinct values within each unit's block, with strings
+   short enough to fit in a marker.
+*/
+
 static int period_candidate (int v)
 {
     const double *x = dataset->Z[v];
     int T = dataset->pd;
     int N = dataset->n / T;
-    int i, s;
+    int sv = is_string_valued(dataset, v);
+    double *blk = NULL;
+    int i, s, ret = sv ? 2 : 1;
 
-    if (is_string_valued(dataset, v)) {
-	return 0;
+    if (sv) {
+	blk = malloc(T * sizeof *blk);
+	if (blk == NULL) {
+	    return 0;
+	}
     }
 
-    for (i=0; i<N; i++) {
-	for (s=0; s<T; s++) {
+    for (i=0; i<N && ret; i++) {
+	for (s=0; s<T && ret; s++) {
 	    double xt = x[i*T + s];
 
-	    if (na(xt) || xt < 0 || xt != floor(xt)) {
-		return 0;
+	    if (na(xt)) {
+		ret = 0;
+	    } else if (sv) {
+		const char *str = series_get_string_for_obs(dataset, v, i*T + s);
+
+		if (str == NULL || g_utf8_strlen(str, -1) > UNIT_STR_MAX) {
+		    ret = 0;
+		}
+		blk[s] = xt;
+	    } else if (xt < 0 || xt != floor(xt)) {
+		ret = 0;
+	    } else if (s > 0 && xt <= x[i*T + s - 1]) {
+		ret = 0;
 	    }
-	    if (s > 0 && xt <= x[i*T + s - 1]) {
-		return 0;
+	}
+	if (ret && sv) {
+	    qsort(blk, T, sizeof *blk, cmp_doubles);
+	    for (s=1; s<T; s++) {
+		if (blk[s] == blk[s-1]) {
+		    ret = 0;
+		    break;
+		}
 	    }
 	}
     }
 
-    return 1;
+    free(blk);
+
+    return ret;
 }
 
 /* Build the candidate lists. Unit candidates are ordered with the
@@ -177,10 +209,18 @@ static int get_candidates (pm_info *pmi)
     ul[0] = tl[0] = 0;
 
     for (i=1; i<dataset->v; i++) {
-	if (period_candidate(i)) {
+	int pc = period_candidate(i);
+
+	if (pc == 1) {
 	    tl[++tl[0]] = i;
-	} else {
+	} else if (pc == 0) {
 	    rank[i] = unit_candidate(i);
+	}
+    }
+    /* string-valued periods go after numeric ones */
+    for (i=1; i<dataset->v; i++) {
+	if (is_string_valued(dataset, i) && period_candidate(i) == 2) {
+	    tl[++tl[0]] = i;
 	}
     }
 
@@ -217,14 +257,23 @@ static int get_candidates (pm_info *pmi)
 
 static int make_marker (int u, int p, int t, char *targ)
 {
-    char full[2 * VNAMELEN + 32];
+    char full[2 * (2 * VNAMELEN) + 8];
+    char *q = full;
+    int k;
 
-    if (is_string_valued(dataset, u)) {
-	const char *s = series_get_string_for_obs(dataset, u, t);
+    for (k=0; k<2; k++) {
+	int v = k == 0 ? u : p;
 
-	sprintf(full, "%s:%d", s != NULL ? s : "", (int) dataset->Z[p][t]);
-    } else {
-	sprintf(full, "%d:%d", (int) dataset->Z[u][t], (int) dataset->Z[p][t]);
+	if (k == 1) {
+	    *q++ = ':';
+	}
+	if (is_string_valued(dataset, v)) {
+	    const char *s = series_get_string_for_obs(dataset, v, t);
+
+	    q += sprintf(q, "%s", s != NULL ? s : "");
+	} else {
+	    q += sprintf(q, "%d", (int) dataset->Z[v][t]);
+	}
     }
 
     *targ = '\0';
@@ -290,7 +339,6 @@ static void pm_apply (GtkWidget *w, pm_info *pmi)
 {
     int u = combo_series_id(pmi->ucombo, pmi->ulist);
     int p = combo_series_id(pmi->tcombo, pmi->tlist);
-    const char *fmt = is_string_valued(dataset, u) ? "%s:%d" : "%d:%d";
     gchar *line;
     PRN *prn;
     int err;
@@ -299,7 +347,9 @@ static void pm_apply (GtkWidget *w, pm_info *pmi)
 	return;
     }
 
-    line = g_strdup_printf("markers = \"%s\", %s, %s", fmt,
+    line = g_strdup_printf("markers = \"%%%c:%%%c\", %s, %s",
+			   is_string_valued(dataset, u) ? 's' : 'd',
+			   is_string_valued(dataset, p) ? 's' : 'd',
 			   dataset->varname[u], dataset->varname[p]);
     err = gui_run_genr(line, dataset, OPT_NONE, prn);
 
