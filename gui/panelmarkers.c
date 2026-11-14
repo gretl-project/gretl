@@ -33,8 +33,8 @@ typedef struct pm_info_ {
     GtkWidget *tcombo;   /* period selector */
     GtkWidget *preview;  /* label showing sample markers */
     GtkWidget *ok;
-    int *ulist;          /* candidate unit series IDs */
-    int *tlist;          /* candidate period series IDs */
+    const int *ulist;    /* candidate unit series IDs */
+    const int *tlist;    /* candidate period series IDs */
 } pm_info;
 
 #define PM_NPREVIEW 4   /* number of leading rows to show */
@@ -76,7 +76,7 @@ static int cmp_doubles (const void *a, const void *b)
    (usable, but long strings) or 2 (usable, comfortable fit).
 */
 
-static int unit_candidate (int v)
+static int is_unit_candidate (int v)
 {
     const double *x = dataset->Z[v];
     int T = dataset->pd;
@@ -142,7 +142,7 @@ static int unit_candidate (int v)
    short enough to fit in a marker.
 */
 
-static int period_candidate (int v)
+static int is_period_candidate (int v)
 {
     const double *x = dataset->Z[v];
     int T = dataset->pd;
@@ -198,38 +198,29 @@ static int period_candidate (int v)
    just fit, then numeric ones. Returns 0 if we can't offer both roles.
 */
 
-static int get_candidates (pm_info *pmi)
+int get_candidate_lists (int **ul, int **tl)
 {
-    int *ul = gretl_list_new(dataset->v);
-    int *tl = gretl_list_new(dataset->v);
-    int *rank = NULL;
+    int *rank;
     int i, r;
-
-    if (ul == NULL || tl == NULL || dataset->pd < 2 ||
-	dataset->n < 2 * dataset->pd) {
-	goto bailout;
-    }
 
     rank = calloc(dataset->v, sizeof *rank);
     if (rank == NULL) {
-	goto bailout;
+	return E_ALLOC;
     }
 
-    ul[0] = tl[0] = 0;
-
     for (i=1; i<dataset->v; i++) {
-	int pc = period_candidate(i);
+	int pc = is_period_candidate(i);
 
 	if (pc == 1) {
-	    tl[++tl[0]] = i;
+	    gretl_list_append_term(tl, i);
 	} else if (pc == 0) {
-	    rank[i] = unit_candidate(i);
+	    rank[i] = is_unit_candidate(i);
 	}
     }
     /* string-valued periods go after numeric ones */
     for (i=1; i<dataset->v; i++) {
-	if (is_string_valued(dataset, i) && period_candidate(i) == 2) {
-	    tl[++tl[0]] = i;
+	if (is_string_valued(dataset, i) && is_period_candidate(i) == 2) {
+	    gretl_list_append_term(tl, i);
 	}
     }
 
@@ -237,26 +228,16 @@ static int get_candidates (pm_info *pmi)
     for (r=2; r>=1; r--) {
 	for (i=1; i<dataset->v; i++) {
 	    if (rank[i] == r && is_string_valued(dataset, i)) {
-		ul[++ul[0]] = i;
+		gretl_list_append_term(ul, i);
 	    }
 	}
     }
     for (i=1; i<dataset->v; i++) {
 	if (rank[i] > 0 && !is_string_valued(dataset, i)) {
-	    ul[++ul[0]] = i;
+	    gretl_list_append_term(ul, i);
 	}
     }
 
-    free(rank);
-    pmi->ulist = ul;
-    pmi->tlist = tl;
-
-    /* a period series is optional: we can fall back on 1..T */
-    return ul[0] > 0;
-
- bailout:
-    free(ul);
-    free(tl);
     free(rank);
 
     return 0;
@@ -362,7 +343,7 @@ static void pm_update_preview (GtkWidget *w, pm_info *pmi)
 static void pm_apply_seq (pm_info *pmi, int u, PRN *prn)
 {
     char tmp[VNAMELEN] = "pmseq";
-    gchar *l1, *l2, *l3;
+    gchar *ll[3];
     int save_t1 = dataset->t1;
     int save_t2 = dataset->t2;
     int i, err;
@@ -372,18 +353,18 @@ static void pm_apply_seq (pm_info *pmi, int u, PRN *prn)
 	sprintf(tmp, "pmseq%d", i);
     }
 
-    l1 = g_strdup_printf("series %s = $obsminor", tmp);
-    l2 = g_strdup_printf("markers = \"%%%c:%%0%dd\", %s, %s",
-			 is_string_valued(dataset, u) ? 's' : 'd',
-			 seq_width(), dataset->varname[u], tmp);
-    l3 = g_strdup_printf("delete %s", tmp);
+    ll[0] = g_strdup_printf("series %s = $obsminor", tmp);
+    ll[1] = g_strdup_printf("genr markers = \"%%%c:%%0%dd\", %s, %s",
+			    is_string_valued(dataset, u) ? 's' : 'd',
+			    seq_width(), dataset->varname[u], tmp);
+    ll[2] = g_strdup_printf("delete %s", tmp);
 
     /* markers apply to all rows, whatever the current sample */
     dataset->t1 = 0;
     dataset->t2 = dataset->n - 1;
-    err = gui_run_genr(l1, dataset, OPT_NONE, prn);
+    err = gui_run_genr(ll[0], dataset, OPT_NONE, prn);
     if (!err) {
-	err = gui_run_genr(l2, dataset, OPT_NONE, prn);
+	err = gui_run_genr(ll[1], dataset, OPT_NONE, prn);
 	/* clean up regardless of the outcome */
 	i = current_series_index(dataset, tmp);
 	if (i > 0) {
@@ -398,20 +379,18 @@ static void pm_apply_seq (pm_info *pmi, int u, PRN *prn)
     if (err) {
 	errmsg_plus(err, gretl_print_get_buffer(prn));
     } else {
-	lib_command_sprintf("genr %s", l1);
-	record_command_verbatim();
-	lib_command_sprintf("genr %s", l2);
-	record_command_verbatim();
-	lib_command_sprintf("%s", l3);
-	record_command_verbatim();
+	for (i=0; i<3; i++) {
+	    lib_command_strcpy(ll[i]);
+	    record_command_verbatim();
+	}
 	mark_dataset_as_modified();
 	refresh_data();
 	gtk_widget_destroy(pmi->dlg);
     }
 
-    g_free(l1);
-    g_free(l2);
-    g_free(l3);
+    for (i=0; i<3; i++) {
+	g_free(ll[i]);
+    }
 }
 
 static void pm_apply (GtkWidget *w, pm_info *pmi)
@@ -432,7 +411,7 @@ static void pm_apply (GtkWidget *w, pm_info *pmi)
 	return;
     }
 
-    line = g_strdup_printf("markers = \"%%%c:%%%c\", %s, %s",
+    line = g_strdup_printf("genr markers = \"%%%c:%%%c\", %s, %s",
 			   is_string_valued(dataset, u) ? 's' : 'd',
 			   is_string_valued(dataset, p) ? 's' : 'd',
 			   dataset->varname[u], dataset->varname[p]);
@@ -441,7 +420,7 @@ static void pm_apply (GtkWidget *w, pm_info *pmi)
     if (err) {
 	errmsg_plus(err, gretl_print_get_buffer(prn));
     } else {
-	lib_command_sprintf("genr %s", line);
+	lib_command_strcpy(line);
 	record_command_verbatim();
 	mark_dataset_as_modified();
 	refresh_data();
@@ -454,8 +433,6 @@ static void pm_apply (GtkWidget *w, pm_info *pmi)
 
 static void pm_info_free (GtkWidget *w, pm_info *pmi)
 {
-    free(pmi->ulist);
-    free(pmi->tlist);
     free(pmi);
 }
 
@@ -500,27 +477,18 @@ static int preferred_period (const int *tlist)
     return 0;
 }
 
-void panel_markers_dialog (void)
+void panel_markers_dialog (const int *ulist, const int *tlist)
 {
     pm_info *pmi;
     GtkWidget *vbox, *hbox, *table, *frame, *w;
-
-    if (!dataset_is_panel(dataset)) {
-	errbox(_("This is not a panel dataset"));
-	return;
-    }
 
     pmi = calloc(1, sizeof *pmi);
     if (pmi == NULL) {
 	return;
     }
 
-    if (!get_candidates(pmi)) {
-	infobox(_("Cannot find a suitable series identifying the units "
-		  "(ideally a string-valued series)"));
-	pm_info_free(NULL, pmi);
-	return;
-    }
+    pmi->ulist = ulist;
+    pmi->tlist = tlist;
 
     pmi->dlg = gretl_dialog_new(_("Observation markers"), mdata->main,
 				GRETL_DLG_BLOCK);
@@ -566,4 +534,20 @@ void panel_markers_dialog (void)
 		     G_CALLBACK(pm_update_preview), pmi);
 
     gtk_widget_show_all(pmi->dlg);
+}
+
+/* Preliminary dialog to offer a choice: applicable only if we found at
+   least one series suitable for identifying the panel unit.
+*/
+
+int panel_markers_choice (void)
+{
+    const char *opts[] = {
+	N_("Construct markers from series"),
+	N_("Add markers from text file")
+    };
+
+    return radio_dialog(_("Observation markers"),
+			_("The dataset has no observation markers"),
+			opts, 2, 0, 0 /* help code? */, NULL);
 }

@@ -1763,7 +1763,6 @@ int do_save_markers (const char *fname)
     }
 
     fp = gretl_fopen(fname, "w");
-
     if (fp == NULL) {
         file_write_errbox(fname);
         return E_FOPEN;
@@ -1781,42 +1780,59 @@ int do_save_markers (const char *fname)
     return 0;
 }
 
-/* called from main window Data menu */
+static void export_or_delete_markers (void)
+{
+    const char *opts[] = {
+	N_("Export the markers to file"),
+	N_("Remove the markers")
+    };
+    int resp;
 
-#define PANEL_MARKERS 1
+    resp = radio_dialog("gretl", _("The dataset has observation markers.\n"
+				   "Would you like to:"),
+			opts, 2, 0, 0, NULL);
+    if (resp == 0) {
+	file_selector(SAVE_MARKERS, FSEL_DATA_NONE, NULL);
+    } else if (resp == 1) {
+	dataset_destroy_obs_markers(dataset);
+	mark_dataset_as_modified();
+	lib_command_strcpy("markers --delete");
+	record_command_verbatim();
+    }
+}
+
+/* called from main window Data menu */
 
 void markers_callback (void)
 {
     if (dataset->S != NULL) {
         /* we have markers in place */
-        const char *opts[] = {
-            N_("Export the markers to file"),
-            N_("Remove the markers")
-        };
-        int resp;
-
-        resp = radio_dialog("gretl", _("The dataset has observation markers.\n"
-                                "Would you like to:"),
-                            opts, 2, 0, 0, NULL);
-        if (resp == 0) {
-            file_selector(SAVE_MARKERS, FSEL_DATA_NONE, NULL);
-        } else if (resp == 1) {
-            dataset_destroy_obs_markers(dataset);
-            mark_dataset_as_modified();
-            lib_command_strcpy("markers --delete");
-            record_command_verbatim();
-        }
-#if PANEL_MARKERS
+	export_or_delete_markers();
+	return; /* handled */
     } else if (dataset_is_panel(dataset)) {
-	panel_markers_dialog();
-#endif
-    } else {
-        if (yes_no_dialog("gretl",
-                          _("The dataset has no observation markers.\n"
-                            "Add some from file now?"),
-                          NULL) == GRETL_YES) {
-            file_selector(OPEN_MARKERS, FSEL_DATA_NONE, NULL);
-        }
+	int *ulist = NULL;
+	int *tlist = NULL;
+
+	get_candidate_lists(&ulist, &tlist);
+	if (ulist != NULL) {
+	    int resp = panel_markers_choice();
+
+	    if (resp == 0) {
+		panel_markers_dialog(ulist, tlist);
+	    } else if (resp == 1) {
+		file_selector(OPEN_MARKERS, FSEL_DATA_NONE, NULL);
+	    }
+	    free(ulist);
+	    free(tlist);
+	    return; /* handled */
+	}
+    }
+
+    if (yes_no_dialog("gretl",
+		      _("The dataset has no observation markers.\n"
+			"Add some from file now?"),
+		      NULL) == GRETL_YES) {
+	file_selector(OPEN_MARKERS, FSEL_DATA_NONE, NULL);
     }
 }
 
@@ -3826,13 +3842,12 @@ void errmsg_plus (int err, const char *plus)
     }
 }
 
-/* The point of the following is to take a line such as
-   "matrix M = I(5)", with leading type specification,
-   and to pre-process it as the tokenizer does for "genr"
-   expressions entered via script or command line. That is,
-   strip out the type-word (if present) but use the
-   information it carries to fill out the @gtype argument to
-   the libgretl generate() function.
+/* The point of the following is to take a line such as "matrix M =
+   I(5)", with leading type specification, and to pre-process it as the
+   tokenizer does for "genr" expressions entered via script or command
+   line. That is, strip out the type-word (if present) but use the
+   information it carries to fill out the @gtype argument to the
+   libgretl generate() function.
 */
 
 int gui_run_genr (const char *line, DATASET *dset,
