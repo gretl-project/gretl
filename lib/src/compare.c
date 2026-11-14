@@ -151,13 +151,13 @@ double wald_omit_test (const int *list, char *mask,
     gretl_matrix *C = NULL;
     gretl_vector *b = NULL;
     int free_mask = 0;
-    int df = 0;
-    double X2 = NADBL;
+    double ret = NADBL;
 
     if (mask == NULL) {
 	mask = mask_from_test_list(list, pmod, err);
 	if (*err) {
 	    free(mask);
+	    fprintf(stderr, "wald_omit_test: failed\n");
 	    return NADBL;
 	}
 	free_mask = 1;
@@ -166,7 +166,6 @@ double wald_omit_test (const int *list, char *mask,
     if (!*err) {
 	C = gretl_vcv_matrix_from_model(pmod, mask, err);
     }
-
     if (!*err) {
 	b = gretl_coeff_vector_from_model(pmod, mask, err);
     }
@@ -186,15 +185,17 @@ double wald_omit_test (const int *list, char *mask,
 	    gretl_matrix_multiply_mod(b, GRETL_MOD_TRANSPOSE,
 				      tmp, GRETL_MOD_NONE,
 				      mx, GRETL_MOD_NONE);
-	    X2 = mx->val[0];
+	    ret = mx->val[0];
 	    gretl_matrix_free(tmp);
 	    gretl_matrix_free(mx);
+	    if (opt & OPT_F) {
+		ret /= gretl_vector_get_length(b);
+	    }
 	}
-	df = gretl_vector_get_length(b);
     }
 
 #if WDEBUG
-    fprintf(stderr, "Wald chi-square (quadratic form) = %g\n", X2);
+    fprintf(stderr, "Wald stat (quadratic form) = %g\n", ret);
 #endif
 
     if (free_mask) {
@@ -203,7 +204,7 @@ double wald_omit_test (const int *list, char *mask,
     gretl_matrix_free(C);
     gretl_matrix_free(b);
 
-    return (opt & OPT_F)? X2 / df : X2;
+    return ret;
 }
 
 /**
