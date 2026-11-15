@@ -187,11 +187,13 @@ double wald_omit_test (const int *list, char *mask,
 				      mx, GRETL_MOD_NONE);
 	    ret = mx->val[0];
 	    gretl_matrix_free(tmp);
-	    gretl_matrix_free(mx);
-	    if (opt & OPT_F) {
+	    if (ret < 0) {
+		ret = NADBL;
+	    } else if (opt & OPT_F) {
 		ret /= gretl_vector_get_length(b);
 	    }
 	}
+	gretl_matrix_free(mx);
     }
 
 #if WDEBUG
