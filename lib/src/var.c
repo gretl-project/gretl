@@ -1586,8 +1586,7 @@ gretl_VAR_get_residual_matrix (const GRETL_VAR *var)
 
 #define samesize(p,q) (p->rows == q->rows && p->cols == q->cols)
 
-gretl_matrix *
-gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
+gretl_matrix *gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
 {
     gretl_matrix *Yh = NULL;
 
@@ -1603,9 +1602,9 @@ gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
     return Yh;
 }
 
-gretl_matrix *
-gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATASET *dset,
-                          int *err)
+gretl_matrix *gretl_VAR_get_vma_matrix (const GRETL_VAR *var,
+					const DATASET *dset,
+					int *err)
 {
     int h = default_VAR_horizon(dset);
     int ar, n = var->neqns;
