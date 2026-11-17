@@ -21,10 +21,12 @@
 
 #include "gretl.h"
 #include "libset.h"
+#include "gretl_func.h"
 
 #include "toolbar.h"
 #include "winstack.h"
 #include "dlgutils.h"
+#include "textbuf.h"
 #include "tabwin.h"
 
 #ifndef G_OS_WIN32
@@ -138,7 +140,8 @@ int tryfile_is_set (void)
 
 static int script_type (const char *fname)
 {
-    if (has_suffix(fname, ".inp")) {
+    if (has_suffix(fname, ".inp") ||
+	has_suffix(fname, ".gfn")) {
 	return EDIT_HANSL;
     } else if (has_suffix(fname, ".R")) {
 	return EDIT_R;
@@ -546,6 +549,57 @@ void set_wm_icon (GtkWidget *w)
 
 #endif
 
+static char *grab_gfn_code (const char *fname)
+{
+    char *buf = NULL;
+    PRN *prn = NULL;
+    int err = 0;
+
+    if (bufopen(&prn)) {
+        return NULL;
+    }
+
+    err = print_function_package_code(fname, tabwidth, prn);
+    if (err) {
+        gui_errmsg(err);
+    } else {
+	buf = gretl_print_steal_buffer(prn);
+    }
+
+    gretl_print_destroy(prn);
+    return buf;
+}
+
+gboolean open_gfn_as_script (const char *fname)
+{
+    char *buf = NULL;
+    FILE *fp = NULL;
+    int vsize = 1.5 * SCRIPT_HEIGHT;
+    char tmpname[MAXLEN];
+    windata_t *vwin;
+
+    buf = grab_gfn_code(fname);
+    if (buf == NULL) {
+	return FALSE;
+    }
+
+    sprintf(tmpname, "%sscript_tmp.XXXXXX", gretl_dotdir());
+    fp = gretl_tempfile_open(tmpname);
+    if (fp == NULL) {
+	return FALSE;
+    }
+
+    fputs(buf, fp);
+    fclose(fp);
+    free(buf);
+
+    strcpy(scriptfile, tmpname);
+    vwin = view_file(tmpname, 1, TMP_FILE, SCRIPT_WIDTH, vsize, EDIT_HANSL);
+    mark_vwin_content_changed(vwin);
+
+    return TRUE;
+}
+
 /* At start-up only: if we can't open a script file specified on the
    command line, give the user a choice between creating a new file
    (of the given name, if writable) and quitting the program.
@@ -555,7 +609,11 @@ static gboolean maybe_open_script (int stype)
 {
     if (gretl_test_fopen(tryfile, "r") == 0) {
 	/* file can be opened OK */
-	return do_open_script(stype);
+	if (has_suffix(tryfile, ".gfn")) {
+	    return open_gfn_as_script(tryfile);
+	} else {
+	    return do_open_script(stype);
+	}
     } else {
 	int noname = 0;
 	gchar *msg;
