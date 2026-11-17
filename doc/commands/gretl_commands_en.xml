@@ -10460,9 +10460,44 @@
 	   label="Message Passing Interface">
     <usage>
       <arguments>
-	<argument>see below</argument>
+	<argument>none as such</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--np</flag>
+	  <optparm>n</optparm>
+	  <effect>number of MPI processes</effect>
+        </option>
+        <option>
+	  <flag>--omp-threads</flag>
+	  <optparm>m</optparm>
+	  <effect>number of OpenMP threads per process</effect>
+        </option>
+        <option>
+	  <flag>--send-data</flag>
+	  <optparm optional="true">list</optparm>
+	  <effect>send series data to MPI</effect>
+        </option>
+        <option>
+	  <flag>--send-functions</flag>
+	  <optparm optional="true">names</optparm>
+	  <effect>send function definitions</effect>
+        </option>
+        <option>
+	  <flag>--local</flag>
+	  <effect>ignore MPI hosts file, if present</effect>
+        </option>
+        <option>
+	  <flag>--single-rng</flag>
+	  <effect>use a single random number generator</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>print extra information</effect>
+        </option>
+      </options>
     </usage>
+
     <description>
       <para>
 	The <lit>mpi</lit> command starts a block of statements (which

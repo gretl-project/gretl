@@ -796,7 +796,7 @@ static SavedObjectFlags model_save_flags (const void *ptr,
 static int maybe_write_function_file (char *fullname)
 {
     session_file_make_path(fullname, "functions.xml", NULL);
-    return write_loaded_functions_file(fullname, OPT_NONE);
+    return write_loaded_functions_file(fullname, NULL, OPT_NONE);
 }
 
 static int write_settings_file (char *fullname)

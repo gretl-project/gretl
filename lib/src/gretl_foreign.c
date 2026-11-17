@@ -1580,11 +1580,13 @@ static int mpi_send_data_setup (const DATASET *dset,
 
 static int mpi_send_funcs_setup (FILE *fp)
 {
+    const char *fids;
     gchar *fname;
     int err;
 
+    fids = get_optval_string(MPI, OPT_F);
     fname = gretl_make_dotpath("mpi-funcs-tmp.xml");
-    err = write_loaded_functions_file(fname, OPT_M);
+    err = write_loaded_functions_file(fname, fids, OPT_M);
 
     if (!err) {
         fprintf(fp, "include \"%s\"\n", fname);
