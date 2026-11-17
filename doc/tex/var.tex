@@ -355,16 +355,16 @@ row $i$ and column $j$ of the $C_k$ matrices. In symbols:
 \[
   \mathcal{I}_{i,j,k} = \pder{y_{i,t}}{u_{j, t-k}}
 \]
-As a rule, Impulse Response Functions are plotted as a function of $k$
+Impulse Response Functions are generally plotted as a function of $k$
 and are interpreted as the effect of a given shock on a specified
 observable variable through time. Of course, what we observe are
 estimated IRFs, so it is natural to provide confidence intervals.
 Following common practice gretl computes the confidence intervals by
 using the bootstrap;\footnote{It is possible, in principle, to compute
   analytical confidence intervals via an asymptotic approximation, but
-  this is not a popular choice: asymptotic formulae are known to
-  often give a poor approximation of the finite-sample properties.}
-details are given later in this section.
+  this is not a popular choice: asymptotic formulae are known to often
+  give a poor approximation of the finite-sample properties.}  details
+are given later in this section.
 
 Another quantity of interest that may be computed from the structural
 VMA representation is the Forecast Error Variance Decomposition
@@ -387,13 +387,13 @@ $j$-th shock after $h$ periods equals
     ({}_kc_{i.l})^2 } .
 \]
 This makes it possible to determine which shocks have the most important
-effect on a certain variable over a given time horizon.
+effect on a given variable over a given time horizon.
 
 \subsection{Triangularization}
 
-The formula \ref{eq:svma} takes $K$ as known, while of course it has to
-be estimated. This estimation problem has been the subject of an large
-body of literature we will not attempt to summarize here: see for
+The formula \ref{eq:svma} takes $K$ as known, while in fact it has to be
+estimated. This estimation problem has been the subject of an large body
+of literature which we will not attempt to summarize here---see for
 example \cite[chapter 9]{Lutkepohl05}.
 
 Suffice it to say that the most popular choice dates back to
@@ -404,7 +404,7 @@ variables within the vector $y_t$ becomes meaningful: since $K$ is also
 the matrix of Impulse Response Functions at lag 0, the triangularity
 assumption means that the first variable in the ordering responds
 instantaneously only to shock number 1, the second one only to shocks 1
-and 2, and so on. For this reason, each variable is thought to ``own''
+and 2, and so on. So each variable can be thought of as ``owning''
 one shock: variable 1 owns shock number 1, and so on.
 
 In this sort of exercise, therefore, the ordering of the $y$ variables
@@ -463,19 +463,19 @@ equation.
 
 \subsection{IRF bootstrap}
 
-The IRFs described above are estimates and as such they are uncertain.
-They are nonlinear functions of the VAR parameters, and the standard way
-of quantifying this uncertainty, in the form of confidence intervals or
-bands, is via a bootstrap approach. Again, more advanced options are
-available with the \app{SVAR} addon, but the \cmd{irf} function used
-after the built-in \cmd{var} or \cmd{vecm} command also provides the
-option to run a bootstrap based on resampling from the residuals.  (The
-number of bootstrap iterations can be adjusted through \dtk{set
-  boot_iters n}, where \texttt{n} must be larger than 499.)  The desired
-nominal confidence level must be specified as the third argument
-following the target and shock numbers. Then the return vector becomes a
-three-column matrix where the lower and upper bounds of the confidence
-intervals are given in the two additional columns.
+The IRFs described above are estimates and as such are uncertain.  They
+are nonlinear functions of the VAR parameters, and the standard way of
+quantifying their uncertainty, in the form of confidence intervals or
+bands, is via a bootstrap approach. The \cmd{irf} function, used after
+the built-in \cmd{var} or \cmd{vecm} command, offers the option of
+running a bootstrap based on resampling from the
+residuals.\footnote{Again, more advanced options are available with the
+  \app{SVAR} addon.} The number of bootstrap iterations can be adjusted
+via \dtk{set boot_iters n}, where \texttt{n} must be larger than
+499. The desired nominal confidence level must be specified as the third
+argument following the target and shock numbers. Then the return vector
+becomes a three-column matrix where the lower and upper bounds of the
+confidence intervals are given in the two additional columns.
 
 \subsection{Menu-driven usage}
 
@@ -502,34 +502,34 @@ GUI.\footnote{Note that you cannot directly invoke the \app{SVAR} addon
 \section{Residual-based diagnostic tests}
 
 Three diagnostic tests based on residuals are available after estimating
-a VAR---for normality, autocorrelation and ARCH (Autoregressive
-Conditional Heteroskedasticity). These are implemented by the
+a VAR---for normality, autocorrelation, and ARCH (Autoregressive
+Conditional Heteroskedasticity). They are implemented by the
 \cmd{modtest} command, using the options \option{normality},
 \option{autocorr} and \option{arch}, respectively.
 
 The (multivariate) normality test is that of \cite{doornik-hansen94};
 it is based on the skewness and kurtosis of the VAR residuals.
 
-The autocorrelation and ARCH test are also by default multivariate;
-they are described in detail by \cite{Lutkepohl05} (see sections 4.4.4
-and 16.5.1). Both tests are of the LM type, although the
-autocorrelation test statistic is referred to a Rao $F$ distribution
+The autocorrelation and ARCH test are also by default multivariate; they
+are described in detail by \cite{Lutkepohl05} (see sections 4.4.4 and
+16.5.1). Both tests are of the LM type, although the autocorrelation
+test statistic is referred to a Rao $F$ distribution
 \citep{Rao73}. These tests may involve estimation of a large number of
 parameters, depending on the lag horizon chosen, and can fail for lack
 of degrees of freedom in small samples. As a fallback, the
-\option{univariate} option can be used to specify that the tests
-be run per-equation rather than in multivariate mode.
+\option{univariate} option can be used to specify that the tests be run
+per-equation rather than in multivariate mode.
 
 Listing~\ref{ex:var-autocorrelation} illustrates the VAR autocorrelation
 tests, replicating an example given by \citet[p.\ 174]{Lutkepohl05}.
-Note the difference in the interpretation of the \textsl{order}
-argument to \cmd{modtest} with the \option{autocorr} option (this also
-applies to the ARCH test): in the multivariate version \textsl{order}
-is taken as the \textit{maximum} lag order and tests are run from lag
-1 up to the maximum; but in the univariate version a single test is
-run for each equation using just the specified lag order. The example
-also exposes what exactly is returned by the \dollar{test} and
-\dollar{pvalue} accessors in the two variants.
+Note the difference in the interpretation of the \textsl{order} argument
+to \cmd{modtest} with the \option{autocorr} option (this also applies to
+the ARCH test): in the multivariate version \textsl{order} is taken as
+the \textit{maximum} lag order and tests are run from lag 1 up to the
+maximum; but in the univariate version a single test is run for each
+equation using just the specified lag order. The example also exposes
+what exactly is returned by the \dollar{test} and \dollar{pvalue}
+accessors in the two variants.
 
 \begin{script}[htbp]
   \scriptinfo{var-autocorrelation}{VAR autocorrelation test from L\"utkepohl}
