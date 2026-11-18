@@ -798,8 +798,13 @@ static void compute_VAR_dataset (irfboot *b, GRETL_VAR *var,
 	for (i=0; i<var->neqns; i++) {
 	    k = var->ifc + i*nl;
 	    x = b->Yt->val[i];
-	    for (j=1; j<=nl && t+j < var->T; j++) {
-		gretl_matrix_set(var->X, t+j, k++, x);
+	    for (j=1; j<=nl; j++, k++) {
+		/* actual lag: allow for a gappy lag list */
+		int lag = (var->lags != NULL)? var->lags[j] : j;
+
+		if (t + lag < var->T) {
+		    gretl_matrix_set(var->X, t+lag, k, x);
+		}
 	    }
 	}
     }
@@ -905,37 +910,55 @@ static int irf_boot_quantiles (irfboot *b,
     return 0;
 }
 
-static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
+/* Replace @targ with @src, freeing the former. If @partial is
+   non-zero, a NULL @src means "not backed up" and @targ is left alone.
+*/
+
+static void restore_matrix (gretl_matrix **targ, gretl_matrix *src,
+			    int partial)
 {
-    gretl_matrix_replace(&v->Y, vbak->Y);
-    gretl_matrix_replace(&v->X, vbak->X);
-    gretl_matrix_replace(&v->B, vbak->B);
-    gretl_matrix_replace(&v->XTX, vbak->XTX);
-    gretl_matrix_replace(&v->A, vbak->A);
-    gretl_matrix_replace(&v->E, vbak->E);
-    gretl_matrix_replace(&v->C, vbak->C);
-    gretl_matrix_replace(&v->S, vbak->S);
+    if (src != NULL || !partial) {
+	gretl_matrix_replace(targ, src);
+    }
+}
+
+/* Restore the data backed up in @vbak into @v, and free @vbak (which
+   must not be used afterward). If @partial is non-zero, @vbak may be
+   incompletely filled (back-up failed midway): members of @vbak that
+   are NULL are then skipped, leaving the corresponding members of @v
+   untouched.
+*/
+
+static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak, int partial)
+{
+    restore_matrix(&v->Y, vbak->Y, partial);
+    restore_matrix(&v->X, vbak->X, partial);
+    restore_matrix(&v->B, vbak->B, partial);
+    restore_matrix(&v->XTX, vbak->XTX, partial);
+    restore_matrix(&v->A, vbak->A, partial);
+    restore_matrix(&v->E, vbak->E, partial);
+    restore_matrix(&v->C, vbak->C, partial);
+    restore_matrix(&v->S, vbak->S, partial);
 
     if (vbak->jinfo != NULL) {
-	gretl_matrix_replace(&v->jinfo->R0, vbak->jinfo->R0);
-	gretl_matrix_replace(&v->jinfo->R1, vbak->jinfo->R1);
-	gretl_matrix_replace(&v->jinfo->S00, vbak->jinfo->S00);
-	gretl_matrix_replace(&v->jinfo->S11, vbak->jinfo->S11);
-	gretl_matrix_replace(&v->jinfo->S01, vbak->jinfo->S01);
-	gretl_matrix_replace(&v->jinfo->Beta, vbak->jinfo->Beta);
-	gretl_matrix_replace(&v->jinfo->Alpha, vbak->jinfo->Alpha);
-
-	if (vbak->ylist != NULL) {
-	    free(v->ylist);
-	    v->ylist = vbak->ylist;
-	}
-
-	if (vbak->rlist != NULL) {
-	    free(v->rlist);
-	    v->rlist = vbak->rlist;
-	}
-
+	restore_matrix(&v->jinfo->R0, vbak->jinfo->R0, partial);
+	restore_matrix(&v->jinfo->R1, vbak->jinfo->R1, partial);
+	restore_matrix(&v->jinfo->S00, vbak->jinfo->S00, partial);
+	restore_matrix(&v->jinfo->S11, vbak->jinfo->S11, partial);
+	restore_matrix(&v->jinfo->S01, vbak->jinfo->S01, partial);
+	restore_matrix(&v->jinfo->Beta, vbak->jinfo->Beta, partial);
+	restore_matrix(&v->jinfo->Alpha, vbak->jinfo->Alpha, partial);
 	free(vbak->jinfo);
+    }
+
+    if (vbak->ylist != NULL) {
+	free(v->ylist);
+	v->ylist = vbak->ylist;
+    }
+
+    if (vbak->rlist != NULL) {
+	free(v->rlist);
+	v->rlist = vbak->rlist;
     }
 
     free(vbak);
@@ -1030,8 +1053,8 @@ static GRETL_VAR *back_up_VAR (GRETL_VAR *v)
     }
 
     if (err) {
-	restore_VAR_data(v, vbak);
-	gretl_VAR_free(vbak);
+	/* this also frees @vbak */
+	restore_VAR_data(v, vbak, 1);
 	vbak = NULL;
     } else {
 	vbak->T = v->T;
@@ -1142,7 +1165,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 
  bailout:
 
-    restore_VAR_data(var, vbak);
+    restore_VAR_data(var, vbak, 0);
 
     if (*err) {
 	gretl_matrix_free(R);

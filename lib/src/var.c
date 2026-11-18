@@ -5524,6 +5524,24 @@ static GRETL_VAR *build_VAR_from_bundle (gretl_bundle *b,
         var->ylist = gretl_bundle_get_list(b, "ylist", NULL);
         var->xlist = gretl_bundle_get_list(b, "xlist", NULL);
         var->rlist = gretl_bundle_get_list(b, "rlist", NULL);
+	if (gretl_bundle_has_key(b, "lags")) {
+	    /* gappy lags: unlike the other lists this is a copy
+	       owned by @var, and freed by gretl_VAR_free()
+	    */
+	    const gretl_matrix *lv = gretl_bundle_get_matrix(b, "lags", err);
+	    int k = gretl_vector_get_length(lv);
+
+	    if (!*err && k > 0) {
+		var->lags = gretl_list_new(k);
+		if (var->lags == NULL) {
+		    *err = E_ALLOC;
+		} else {
+		    for (i=0; i<k; i++) {
+			var->lags[i+1] = (int) lv->val[i];
+		    }
+		}
+	    }
+	}
     }
 
     if (!*err) {
