@@ -343,7 +343,7 @@ The main object of interest in this setting is the sequence of
 matrices
 \begin{equation}
   \label{eq:svma}
-  C_k = \frac{\partial y_t}{\partial u_{t-i}} = \Theta_k K, 
+  C_k = \frac{\partial y_t}{\partial u_{t-k}} = \Theta_k K
 \end{equation}
 known as the structural VMA representation. From the $C_k$ matrices
 defined in equation \eqref{eq:svma} two quantities of interest may be
@@ -355,12 +355,12 @@ row $i$ and column $j$ of the $C_k$ matrices. In symbols:
 \[
   \mathcal{I}_{i,j,k} = \pder{y_{i,t}}{u_{j, t-k}}
 \]
-Impulse Response Functions are generally plotted as a function of $k$
-and are interpreted as the effect of a given shock on a specified
-observable variable through time. Of course, what we observe are
-estimated IRFs, so it is natural to provide confidence intervals.
+Impulse Response Functions are generally plotted as a function of the
+lag $k$ and are interpreted as the effect of a given shock on a
+specified observable variable through time. Of course, what we observe
+are estimated IRFs, so it is natural to provide confidence intervals.
 Following common practice gretl computes the confidence intervals by
-using the bootstrap;\footnote{It is possible, in principle, to compute
+using the bootstrap;\footnote{It is possible in principle to compute
   analytical confidence intervals via an asymptotic approximation, but
   this is not a popular choice: asymptotic formulae are known to often
   give a poor approximation of the finite-sample properties.}  details

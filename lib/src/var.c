@@ -1602,6 +1602,10 @@ gretl_matrix *gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
     return Yh;
 }
 
+/* Called directly only by saved_object_build_matrix() in objstack.c,
+   but indirectly from geneval.c and genfuncs.c.
+*/
+
 gretl_matrix *gretl_VAR_get_vma_matrix (const GRETL_VAR *var,
 					const DATASET *dset,
 					int *err)
@@ -1828,6 +1832,10 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
     return C;
 }
 
+/* Transcribe (or cumulate, if @add is non-zero) the k x k matrix @src
+   into the northwest block of @targ.
+*/
+
 void copy_north_west (gretl_matrix *targ,
 		      const gretl_matrix *src,
 		      int add)
@@ -1847,6 +1855,30 @@ void copy_north_west (gretl_matrix *targ,
             }
             gretl_matrix_set(targ, i, j, xij);
         }
+    }
+}
+
+/* Alternative to copy_north_west(), used locally when @src is
+   implicitly the identity matrix of order @k.
+*/
+
+static void fill_north_west (gretl_matrix *targ,
+			     int k, int add)
+{
+    double d;
+    int i;
+
+    if (!add) {
+        gretl_matrix_zero(targ);
+    }
+
+    for (i=0; i<k; i++) {
+	if (add) {
+	    d = gretl_matrix_get(targ, i, i);
+	    gretl_matrix_set(targ, i, i, d + 1.0);
+	} else {
+	    gretl_matrix_set(targ, i, i, 1.0);
+	}
     }
 }
 
@@ -1874,7 +1906,11 @@ static int real_point_responses (const gretl_matrix *A,
     for (t=0; t<resp->rows; t++) {
         if (t == 0) {
             /* initial estimated responses */
-	    copy_north_west(rtmp, C, 0);
+	    if (C == NULL) {
+		fill_north_west(rtmp, n, 0);
+	    } else {
+		copy_north_west(rtmp, C, 0);
+	    }
         } else {
             /* calculate further estimated responses */
             gretl_matrix_multiply(A, rtmp, ctmp);
@@ -1912,7 +1948,7 @@ static int real_point_responses (const gretl_matrix *A,
     return 0;
 }
 
-/* Calculate the VMA representation based on the A and C matrices,
+/* Calculate the VMA representation based on matrices @A and @C,
    for a given horizon.
 */
 
@@ -1920,7 +1956,6 @@ gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
 		       int horizon, int *err)
 {
     gretl_matrix *resp = NULL;
-    gretl_matrix *realC = C;
     gretl_matrix *realA = A;
     int neqns, dim;
 
@@ -1932,15 +1967,7 @@ gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
     neqns = A->rows;
     dim = A->cols;
 
-    if (realC == NULL) {
-	/* manufacture "plain" @C for convenience */
-	realC = gretl_identity_matrix_new(neqns);
-	if (realC == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (!*err && dim > neqns) {
+    if (dim > neqns) {
 	/* the incoming @A is just the top @neqns rows
 	   of the companion matrix
 	*/
@@ -1951,22 +1978,18 @@ gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
 	int nresp = neqns * neqns;
 
 	resp = gretl_matrix_alloc(horizon, nresp);
-
 	if (resp == NULL) {
 	    *err = E_ALLOC;
 	} else {
 	    if (neqns == 1) {
 		/* "all" means "first" in this case */
-		*err = real_point_responses(realA, realC, resp, 0, 0);
+		*err = real_point_responses(realA, C, resp, 0, 0);
 	    } else {
-		*err = real_point_responses(realA, realC, resp, -1, -1);
+		*err = real_point_responses(realA, C, resp, -1, -1);
 	    }
 	}
     }
 
-    if (realC != C) {
-	gretl_matrix_free(realC);
-    }
     if (realA != A) {
 	gretl_matrix_free(realA);
     }

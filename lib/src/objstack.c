@@ -1402,8 +1402,9 @@ static gretl_matrix *get_all_probs (MODEL *pmod, int idx,
 }
 
 /* Similar to saved_object_get_matrix(), but in this case the matrix to
-   be retrieved is not pre-built, and requires (or may require) access
-   to the current dataset for its building.
+   be retrieved is not pre-built, and may require access to the current
+   dataset for its construction. Called from model_var_node() in
+   geneval.c and list_ok_dollar_vars() in genfuncs.c.
 */
 
 gretl_matrix *
