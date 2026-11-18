@@ -1400,8 +1400,9 @@
 	<para>
 	  Must follow the estimation of a VAR or a VECM; returns a
 	  matrix containing the VMA representation up to the order
-	  specified via the <lit>set horizon</lit> command. See
-	  <guideref targ="chap:var"/> for details.
+	  specified via the <lit>set horizon</lit> command. See also the
+	  <fncref targ="vma"/> function, and <guideref targ="chap:var"/>
+	  for details.
 	</para>
       </description>
     </function>
@@ -15321,19 +15322,29 @@ d =  8.0000000
         </para>
         <para>
           The coefficient matrix <argname>A</argname> is composed by
-	  stacking the <math>A</math><sub>i</sub> matrices horizontally;
-	  it is <by r="n" c="np"/>, with one row per equation. This
-	  corresponds to the first <math>n</math> rows of the matrix
-	  <lit>$compan</lit> provided by gretl's <lit>var</lit> and
-	  <lit>vecm</lit> commands. The <argname>K</argname> matrix is
-	  optional, and defaults to the identity matrix if omitted.
+          stacking the <math>A</math><sub>i</sub> matrices horizontally;
+          it is <by r="n" c="np"/>, where <math>n</math> is the number
+          of equations in the VAR and <math>p</math> is the lag order,
+          with one row per equation. This corresponds to the first
+          <math>n</math> rows of the matrix <lit>$compan</lit> provided
+          by gretl's <lit>var</lit> and <lit>vecm</lit> commands.
+	</para>
+	<para>
+	  If <argname>K</argname> is not given it defaults to the
+	  identity matrix, in which case the result is the plain MA
+	  representation, identical to <fncref targ="$vma"/> (apart from
+	  column ordering). For orthogonalized responses based on a
+	  recursive identification, pass the Cholesky factor of the
+	  error covariance matrix; following estimation of a VAR this
+	  can be obtained as <lit>cholesky($sigma)</lit> or
+	  <lit>$system.C</lit>.
 	</para>
         <para>
-          The returned matrix will have <argname>horizon</argname>
-	  rows and <math>n</math><sup>2</sup> columns: its
-	  <math>i</math>-th row contains <math>C</math><sub>i-1</sub>
-	  in vectorized form. The <argname>horizon</argname> value
-	  defaults to 24 if omitted.
+          The returned matrix will have <argname>horizon</argname> rows
+          and <math>n</math><sup>2</sup> columns: its <math>i</math>-th
+          row contains <math>C</math><sub>i-1</sub> in vectorized
+          form. The <argname>horizon</argname> value defaults to 24 if
+          the third argument is omitted.
 	</para>
 	<para>
 	  <seelist>
