@@ -157,20 +157,23 @@ static int is_period_candidate (int v)
 
     for (i=0; i<N && ret; i++) {
 	for (s=0; s<T && ret; s++) {
-	    double xt = x[i*T + s];
+	    int idx = i*T + s;
+	    double xt = x[idx];
 
 	    if (na(xt)) {
 		ret = 0;
 	    } else if (sv) {
-		const char *str = series_get_string_for_obs(dataset, v, i*T + s);
+		const char *str = series_get_string_for_obs(dataset, v, idx);
 
-		if (str == NULL || g_utf8_strlen(str, -1) > UNIT_STR_MAX) {
+		if (str == NULL || strlen(str) > UNIT_STR_MAX) {
 		    ret = 0;
 		}
 		blk[s] = xt;
 	    } else if (xt < 0 || xt != floor(xt)) {
+		/* we insist on non-negative integers */
 		ret = 0;
-	    } else if (s > 0 && xt <= x[i*T + s - 1]) {
+	    } else if (s > 0 && xt <= x[idx - 1]) {
+		/* and on monotonic increase */
 		ret = 0;
 	    }
 	}
@@ -181,6 +184,19 @@ static int is_period_candidate (int v)
 		    ret = 0;
 		    break;
 		}
+	    }
+	} else if (ret && x[0] == 1.0) {
+	    /* a simple sequence 1, 2, 3,... adds no value */
+	    int simple = 1;
+
+	    for (s=1; s<T; s++) {
+		if (x[s] != x[s-1] + 1) {
+		    simple = 0;
+		    break;
+		}
+	    }
+	    if (simple) {
+		ret = 0;
 	    }
 	}
     }
@@ -370,9 +386,8 @@ static void pm_update_preview (GtkWidget *w, pm_info *pmi)
 	    }
 	}
 	if (ndup > 0) {
-	    g_string_append_printf(gs, _("\nWarning: %d markers are not unique "
-					 "(these series may not identify "
-					 "unit and period)"), ndup);
+	    g_string_append_printf(gs, _("\nWarning: %d markers are not unique"),
+				   ndup);
 	}
 	g_hash_table_destroy(seen);
     } else {
