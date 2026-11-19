@@ -35,6 +35,7 @@ typedef struct pm_info_ {
     GtkWidget *ok;
     const int *ulist;    /* candidate unit series IDs */
     const int *tlist;    /* candidate period series IDs */
+    int ulim;            /* max feasible unit-ID length */
 } pm_info;
 
 #define PM_NPREVIEW 4   /* number of leading rows to show */
@@ -81,7 +82,6 @@ static int is_unit_candidate (int v)
     const double *x = dataset->Z[v];
     int T = dataset->pd;
     int N = dataset->n / T;
-    int sv = is_string_valued(dataset, v);
     int maxlen = 0;
     double *first;
     int i, s, ret = 2;
@@ -101,9 +101,9 @@ static int is_unit_candidate (int v)
 		ret = 0; /* not constant within unit */
 	    }
 	}
-	if (ret && sv) {
+	if (ret) {
 	    const char *str = series_get_string_for_obs(dataset, v, i*T);
-	    int len = str != NULL ? g_utf8_strlen(str, -1) : 0;
+	    int len = str != NULL ? strlen(str) : 0;
 
 	    if (len > maxlen) {
 		maxlen = len;
@@ -122,12 +122,9 @@ static int is_unit_candidate (int v)
 	}
     }
 
-    if (ret && sv) {
-	if (maxlen > UNIT_STR_MAX) {
-	    ret = 0;
-	} else if (maxlen > UNIT_STR_OK) {
-	    ret = 1;
-	}
+    if (ret && maxlen > UNIT_STR_OK) {
+	/* downgrade the return value somewhat */
+	ret = 1;
     }
 
     free(first);
@@ -201,40 +198,36 @@ static int is_period_candidate (int v)
 int get_candidate_lists (int **ul, int **tl)
 {
     int *rank;
-    int i, r;
+    int v, r;
 
     rank = calloc(dataset->v, sizeof *rank);
     if (rank == NULL) {
 	return E_ALLOC;
     }
 
-    for (i=1; i<dataset->v; i++) {
-	int pc = is_period_candidate(i);
+    for (v=1; v<dataset->v; v++) {
+	int pc = is_period_candidate(v);
 
 	if (pc == 1) {
-	    gretl_list_append_term(tl, i);
-	} else if (pc == 0) {
-	    rank[i] = is_unit_candidate(i);
-	}
-    }
-    /* string-valued periods go after numeric ones */
-    for (i=1; i<dataset->v; i++) {
-	if (is_string_valued(dataset, i) && is_period_candidate(i) == 2) {
-	    gretl_list_append_term(tl, i);
+	    gretl_list_append_term(tl, v);
+	} else if (pc == 0 && is_string_valued(dataset, v)) {
+	    rank[v] = is_unit_candidate(v);
 	}
     }
 
-    /* string-valued first (best fit first), then numeric */
-    for (r=2; r>=1; r--) {
-	for (i=1; i<dataset->v; i++) {
-	    if (rank[i] == r && is_string_valued(dataset, i)) {
-		gretl_list_append_term(ul, i);
-	    }
+    /* string-valued periods go after numeric ones */
+    for (v=1; v<dataset->v; v++) {
+	if (is_string_valued(dataset, v) && is_period_candidate(v) == 2) {
+	    gretl_list_append_term(tl, v);
 	}
     }
-    for (i=1; i<dataset->v; i++) {
-	if (rank[i] > 0 && !is_string_valued(dataset, i)) {
-	    gretl_list_append_term(ul, i);
+
+    /* units: string-valued only (best fit first) */
+    for (r=2; r>0; r--) {
+	for (v=1; v<dataset->v; v++) {
+	    if (rank[v] == r && is_string_valued(dataset, v)) {
+		gretl_list_append_term(ul, v);
+	    }
 	}
     }
 
@@ -243,14 +236,58 @@ int get_candidate_lists (int **ul, int **tl)
     return 0;
 }
 
-/* Write the marker for row @t into @targ (size OBSLEN); returns 1 if
-   the result had to be truncated.
+/* Return the length to which panel-unit strings must be truncated
+   so that all obs markers fit into a buffer of length OBSLEN.
+   In principle the result could be non-positive, which would
+   indicate that the obs-markers recipe is infeasible.
 */
 
-static int make_marker (int u, int p, int t, char *targ)
+static int markers_dry_run (int u, int p)
 {
-    char full[2 * (2 * VNAMELEN) + 8];
-    char *q = full;
+    const char *s;
+    double xt;
+    int T = dataset->pd;
+    int umax = 0;
+    int pmax = 0;
+    int i, t, len;
+
+    /* examine the unit strings */
+    for (i=0; i<dataset->n; i+=T) {
+	s = series_get_string_for_obs(dataset, u, i);
+	len = strlen(s);
+	if (len > umax) {
+	    umax = len;
+	}
+    }
+
+    /* examine the period strings or numbers */
+    for (t=0; t<T; t++) {
+	if (p > 0) {
+	    if (is_string_valued(dataset, p)) {
+		s = series_get_string_for_obs(dataset, p, t);
+		len = strlen(s);
+	    } else {
+		xt = floor(dataset->Z[p][t]);
+		len = 1 + (int) floor(log10(xt));
+	    }
+	} else {
+	    len = 1 + (int) floor(log10((double) T+1));
+	}
+	if (len > pmax) {
+	    pmax = len;
+	}
+    }
+
+    return OBSLEN - pmax - 2;
+}
+
+/* Write the marker for row @t into @targ (size OBSLEN) */
+
+static int make_marker (int u, int p, int t,
+			int ulim, char *targ)
+{
+    char *q = targ;
+    char *tmp;
     int k;
 
     for (k=0; k<2; k++) {
@@ -260,20 +297,34 @@ static int make_marker (int u, int p, int t, char *targ)
 	    *q++ = ':';
 	}
 	if (v == PM_SEQ) {
+	    /* automatic numeric period ID */
 	    q += sprintf(q, "%0*d", seq_width(), t % dataset->pd + 1);
 	} else if (is_string_valued(dataset, v)) {
 	    const char *s = series_get_string_for_obs(dataset, v, t);
 
-	    q += sprintf(q, "%s", s != NULL ? s : "");
+	    if (s == NULL) {
+		; /* "can't happen" */
+	    } else if (v == u) {
+		/* unit string */
+		if (strlen(s) > ulim) {
+		    tmp = g_strdup(s);
+		    gretl_utf8_truncate_b(tmp, ulim);
+		    q += sprintf(q, "%s", tmp);
+		    g_free(tmp);
+		} else {
+		    q += snprintf(q, ulim+1, "%s", s);
+		}
+	    } else {
+		/* period string */
+		q += sprintf(q, "%s", s);
+	    }
 	} else {
+	    /* numeric series */
 	    q += sprintf(q, "%d", (int) dataset->Z[v][t]);
 	}
     }
 
-    *targ = '\0';
-    strncat(targ, full, OBSLEN - 1);
-
-    return strlen(full) >= OBSLEN;
+    return strlen(targ);
 }
 
 static int combo_series_id (GtkWidget *combo, const int *list)
@@ -297,17 +348,18 @@ static void pm_update_preview (GtkWidget *w, pm_info *pmi)
     int u = combo_series_id(pmi->ucombo, pmi->ulist);
     int p = combo_series_id(pmi->tcombo, pmi->tlist);
     GString *gs = g_string_new(NULL);
-    GHashTable *seen = NULL;
-    char mk[OBSLEN];
-    int ndup = 0, ntrunc = 0;
-    int t, ok = (u > 0 && p != 0 && u != p);
+    int ok = (u > 0 && p != 0 && u != p);
 
-    if (!ok) {
-	g_string_append(gs, _("Please select two different series"));
-    } else {
+    if (ok) {
+	GHashTable *seen = NULL;
+	char mk[OBSLEN];
+	int ndup = 0;
+	int t;
+
+	pmi->ulim = markers_dry_run(u, p);
 	seen = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 	for (t=0; t<dataset->n; t++) {
-	    ntrunc += make_marker(u, p, t, mk);
+	    make_marker(u, p, t, pmi->ulim, mk);
 	    if (!g_hash_table_add(seen, g_strdup(mk))) {
 		ndup++;
 	    }
@@ -317,16 +369,14 @@ static void pm_update_preview (GtkWidget *w, pm_info *pmi)
 		g_string_append(gs, "...\n");
 	    }
 	}
-	if (ntrunc > 0) {
-	    g_string_append_printf(gs, _("\nWarning: %d markers are too long "
-					 "and will be truncated"), ntrunc);
-	}
 	if (ndup > 0) {
 	    g_string_append_printf(gs, _("\nWarning: %d markers are not unique "
 					 "(these series may not identify "
 					 "unit and period)"), ndup);
 	}
 	g_hash_table_destroy(seen);
+    } else {
+	g_string_append(gs, _("Please select two different series"));
     }
 
     gtk_label_set_text(GTK_LABEL(pmi->preview), gs->str);
@@ -334,62 +384,32 @@ static void pm_update_preview (GtkWidget *w, pm_info *pmi)
     g_string_free(gs, TRUE);
 }
 
-/* Variant of pm_apply for the "sequence number" option. The markers
-   command can only take series as arguments, so we generate a
-   temporary series holding the within-unit index, use it, and delete
-   it. All three commands are recorded so the result is reproducible.
-*/
-
-static void pm_apply_seq (pm_info *pmi, int u, PRN *prn)
+static void pm_record (int u, int p, int ulim)
 {
-    char tmp[VNAMELEN] = "pmseq";
-    gchar *ll[3];
-    int save_t1 = dataset->t1;
-    int save_t2 = dataset->t2;
-    int i, err;
+    if (p == PM_SEQ) {
+	/* name for temporary sequence series */
+	char tmp[VNAMELEN] = "pmseq";
+	int i;
 
-    /* find a name that doesn't clash with an existing series */
-    for (i=2; current_series_index(dataset, tmp) >= 0; i++) {
-	sprintf(tmp, "pmseq%d", i);
-    }
+	/* find a name that doesn't clash with an existing series */
+	for (i=2; current_series_index(dataset, tmp) >= 0; i++) {
+	    sprintf(tmp, "pmseq%d", i);
+	}
 
-    ll[0] = g_strdup_printf("series %s = $obsminor", tmp);
-    ll[1] = g_strdup_printf("genr markers = \"%%%c:%%0%dd\", %s, %s",
-			    is_string_valued(dataset, u) ? 's' : 'd',
+	lib_command_sprintf("series %s = $obsminor", tmp);
+	record_command_verbatim();
+	lib_command_sprintf("genr markers = \"%%.%d%c:%%0%dd\", %s, %s",
+			    ulim, is_string_valued(dataset, u) ? 's' : 'd',
 			    seq_width(), dataset->varname[u], tmp);
-    ll[2] = g_strdup_printf("delete %s", tmp);
-
-    /* markers apply to all rows, whatever the current sample */
-    dataset->t1 = 0;
-    dataset->t2 = dataset->n - 1;
-    err = gui_run_genr(ll[0], dataset, OPT_NONE, prn);
-    if (!err) {
-	err = gui_run_genr(ll[1], dataset, OPT_NONE, prn);
-	/* clean up regardless of the outcome */
-	i = current_series_index(dataset, tmp);
-	if (i > 0) {
-	    int vl[2] = {1, i};
-
-	    dataset_drop_listed_variables(vl, dataset, NULL, NULL);
-	}
-    }
-    dataset->t1 = save_t1;
-    dataset->t2 = save_t2;
-
-    if (err) {
-	errmsg_plus(err, gretl_print_get_buffer(prn));
+	record_command_verbatim();
+	lib_command_sprintf("delete %s", tmp);
+	record_command_verbatim();
     } else {
-	for (i=0; i<3; i++) {
-	    lib_command_strcpy(ll[i]);
-	    record_command_verbatim();
-	}
-	mark_dataset_as_modified();
-	refresh_data();
-	gtk_widget_destroy(pmi->dlg);
-    }
-
-    for (i=0; i<3; i++) {
-	g_free(ll[i]);
+	lib_command_sprintf("genr markers = \"%%.%d%c:%%%c\", %s, %s", ulim,
+			    is_string_valued(dataset, u) ? 's' : 'd',
+			    is_string_valued(dataset, p) ? 's' : 'd',
+			    dataset->varname[u], dataset->varname[p]);
+	record_command_verbatim();
     }
 }
 
@@ -397,38 +417,20 @@ static void pm_apply (GtkWidget *w, pm_info *pmi)
 {
     int u = combo_series_id(pmi->ucombo, pmi->ulist);
     int p = combo_series_id(pmi->tcombo, pmi->tlist);
-    gchar *line;
-    PRN *prn;
-    int err;
+    int i, err;
 
-    if (u <= 0 || p == 0 || u == p || bufopen(&prn)) {
-	return;
-    }
-
-    if (p == PM_SEQ) {
-	pm_apply_seq(pmi, u, prn);
-	gretl_print_destroy(prn);
-	return;
-    }
-
-    line = g_strdup_printf("genr markers = \"%%%c:%%%c\", %s, %s",
-			   is_string_valued(dataset, u) ? 's' : 'd',
-			   is_string_valued(dataset, p) ? 's' : 'd',
-			   dataset->varname[u], dataset->varname[p]);
-    err = gui_run_genr(line, dataset, OPT_NONE, prn);
+    err = dataset_allocate_obs_markers(dataset);
 
     if (err) {
-	errmsg_plus(err, gretl_print_get_buffer(prn));
+	gui_errmsg(err);
     } else {
-	lib_command_strcpy(line);
-	record_command_verbatim();
+	for (i=0; i<dataset->n; i++) {
+	    make_marker(u, p, i, pmi->ulim, dataset->S[i]);
+	}
+	pm_record(u, p, pmi->ulim);
 	mark_dataset_as_modified();
-	refresh_data();
 	gtk_widget_destroy(pmi->dlg);
     }
-
-    g_free(line);
-    gretl_print_destroy(prn);
 }
 
 static void pm_info_free (GtkWidget *w, pm_info *pmi)
