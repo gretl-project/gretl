@@ -373,6 +373,8 @@ version 2026e, in progress
 - flatten() function: add an extra (vec-wise) mode for matrices
 - matrix "left division" operator: improve efficiency when the
   left-hand operand is triangular
+- extend the horizontal concatenation operator (the tilde) to
+  create string arrays from strings and matrices
 - Fix bug: append via console not updating series list in the
   main gretl window
 - Fix bug: console command-line broken following use of "printf"
