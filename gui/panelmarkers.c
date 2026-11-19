@@ -206,9 +206,17 @@ static int is_period_candidate (int v)
     return ret;
 }
 
-/* Build the candidate lists. Unit candidates are ordered with the
-   comfortable string series first, then string series that will only
-   just fit, then numeric ones. Returns 0 if we can't offer both roles.
+/* Build candidate lists of series that identify panel units (@ul) and
+   time (@tl), if possible, with the aim of offering apparatus to create
+   series-based panel observation markers. This function is called from
+   markers_callback() in library.c, where the condition for proceeding
+   is that at least @ul is non-NULL.
+
+   Unit candidates are ordered with any comfortably fitting string
+   series (relative to OBSLEN) first, then string series that will only
+   just fit. Period series may be numeric or string valued. If no
+   period-identifying series are found we can substitute a simple
+   numeric sequence.
 */
 
 int get_candidate_lists (int **ul, int **tl)
