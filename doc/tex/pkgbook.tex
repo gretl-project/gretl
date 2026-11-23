@@ -1711,6 +1711,147 @@ properties.'' The chapter titled ``User-defined functions'' in
 writers, details various refinements available when defining
 parameters to a function for use in the GUI.
 
+\subsection{Virtual bundle members}
+
+From version 2026c of gretl, \textit{virtual} bundle members (of type
+\texttt{series} or \texttt{matrix}) are supported. In brief, a virtual
+bundle member takes the form of a special string which specifies how
+to produce a series or matrix using `real' (non-virtual) objects
+contained in the bundle.
+
+The use case envisaged for this facility is where a function package has
+a public function, accessible via a menu item in the graphical
+interface, which both prints some output and returns a bundle. This is a
+common idiom in gretl's function-package ecosystem. In such cases gretl
+opens a window showing the printed output, with the returned bundle
+attached in the background.  The toolbar at the top of this window
+includes a bundle icon: when clicked, this pops down a menu allowing the
+user to save members of the bundle.\footnote{There's also a Save icon
+  which enables saving of the entire bundle, but that's not so relevant
+  here.} If the bundle includes virtual members they will have entries
+in that menu along with the `real' members.
+
+Why might this be useful? Here are two possibilities.
+\begin{enumerate}
+\item The function in question computes a certain matrix with several
+  columns and a row dimension which by construction equals the length of
+  the current sample range. The writer of the function doesn't know in
+  advance whether the user will want to access the matrix as such, or
+  would prefer to add one or more of its columns to the dataset as
+  series.
+\item Again say the function computes a matrix, but now it's a
+  covariance matrix. And the function writer doesn't know in advance
+  whether the user is primarily interested in this matrix as such or is
+  more interested in its inverse, a precision matrix.\label{case2}
+\end{enumerate}
+
+One way of meeting such cases is to include everything that could be of
+interest to the caller in the bundle that the function returns: include
+several series as well as the matrix in case 1; include both the
+covariance matrix and its inverse in case 2. But this involves an
+inelegant level of redundancy or `bloat'. The alternative is to include
+as `real' members only the primary results but make certain derived
+results available to the caller on demand: that's exactly what virtual
+members achieve.
+
+A real example of case 1 above is provided by the \textsf{ETS} package,
+which implements several variants of exponential smoothing.  We'll
+illustrate by reference to the case where the specification includes
+both a trend and seasonality \citep{winters60}.  The primary member of
+the bundle returned by the \texttt{ETS} function is a matrix \texttt{S},
+which in this case has 5 columns, containing the original data, the
+three estimated components (level, trend, sesonal), and forecast values.
+Listing~\ref{list:winters} shows a function (private to the package)
+which makes available as virtual series columns 2 to 5 of \texttt{S}
+along with the `irregular' component, namely the difference between
+actual and forecast.  Note that when this function is called the bundle
+\texttt{b} already contains its primary members, including the string
+\texttt{yname} holding the name of the input series.
+
+\begin{script}[p]
+\begin{scode}
+function void add_virtual_series (bundle *b)
+   string s = sprintf("%s_level", b.yname)
+   b[s] = "virtual_series:S[,2]"
+   s = sprintf("%s_trend", b.yname)
+   b[s] = "virtual_series:S[,3]"
+   s = sprintf("%s_season", b.yname)
+   b[s] = "virtual_series:S[,4]"
+   s = sprintf("%s_fcast", b.yname)
+   b[s] = "virtual_series:S[,5]"
+   s = sprintf("%s_irreg", b.yname)
+   b[s] = "virtual_series:S[,1]-W[,5]"
+end function
+\end{scode}
+  \caption{Hansl code that adds virtual series to a bundle}
+  \label{list:winters}
+\end{script}
+
+Listing~\ref{list:winters} illustrates the required syntax. The leading
+portion of the string added to the bundle, \dtk{virtual_series} followed
+by a colon, is mandatory. This must be followed immediately by a hansl
+expression which defines a series---in this case by extracting a column
+from a matrix or calculating the difference between two columns.
+
+If the series passed as an argument to \texttt{ETS} was called
+\texttt{Trips} the key for the smoothed level of this series, as shown in
+the bundle-content menu (Figure~\ref{fig:menu}), will be
+\dtk{Trips_level}. If the user clicks on this item, the hansl expression
+\texttt{S[,2]} will be evaluated by gretl, producing a result that can be
+saved as a series.  Note that in this context the evaluator operates in
+the namespace of the bundle contents---so the correct expression is
+indeed just \texttt{S[,2]}, not \texttt{b.S[,2]}.
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[scale=0.6]{figures/ETS_output_window.png}
+  \caption{Bundle content menu showing virtual series}
+  \label{fig:menu}
+\end{figure}
+
+Returning to the second case on page~\pageref{case2}, one could add to a
+return bundle \texttt{b} the virtual inverse of a covariance matrix
+\texttt{V} as follows.
+\begin{code}
+b.P = "virtual_matrix:invpd(V)"
+# optional refinement
+setnote(b, "P", "precision matrix")
+\end{code}
+The syntax is the same as for a virtual series except for the string
+that precedes the colon, where \texttt{matrix} takes the place of
+\texttt{series}.
+
+In the examples above the expressions that define the virtual series or
+matrix are short and simple. We would expect that to be the norm, but
+what if you want to define a virtual bundle member via a relatively
+complex procedure requiring more than one line of hansl code? That usage
+is supported thus: you define a private function that implements the
+procedure, and in the string that specifies the virtual object you call
+that function. In skeleton form it might look like this:
+\begin{code}
+function series my_vfunc (const matrix M)
+    # define the series ret, using M in some devious way,
+    # taking as many lines of code as you need
+    return ret
+end function
+b.special = "virtual_series:my_vfunc(M)"
+\end{code}
+
+In closing on this topic, recall how we stated the intended context for
+virtual bundle members: use of function packages via the GUI. In
+scripting use, assuming the function package in question is reasonably
+well documented, users will know that they can assign the returned
+bundle, access its members, and carry out operations such as extracting
+the columns of a suitable matrix as series or inverting a given matrix,
+via straightforward use of the tools provided by gretl. In that case
+virtual members are arguably redundant.
+
+The design of the \textsf{ETS} package reflects this thinking. There
+are two main public functions, \dtk{ETS_gui} for GUI use and
+\texttt{ETS} for scripting. Internally, \dtk{ETS_gui} calls
+\texttt{ETS} then adds the virtual members to the bundle it returns,
+so the presence of virtual members is specific to GUI usage.
+
 \subsection{Model-related packages}
 
 The packages we've considered above offer ``top-level'' functionality,
