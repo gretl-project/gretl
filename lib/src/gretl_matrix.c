@@ -15978,10 +15978,6 @@ static gretl_matrix *reorder_A (const gretl_matrix *A,
             for (k=0; k<=p/2; k++) {
                 from = k*n;
                 to = n*(p-k-1);
-                if (to < 0) {           /* @temporal fix for Sven's varsimul crash example; @Allin - please review */
-                    *err = E_NONCONF;
-                    return NULL;
-                }
                 for (i=0; i<n; i++) {
                     x = gretl_matrix_get(A, j, from + i);
                     y = gretl_matrix_get(A, j, to + i);
@@ -16032,6 +16028,11 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
     int np = n * p;
     int T = p + U->rows;
     int t, i;
+
+    if (p == 0) {
+	X = gretl_matrix_copy(U);
+	return X;
+    }
 
     if (A->rows != n || A->cols != np || U->cols != n) {
         *err = E_NONCONF;
