@@ -1884,19 +1884,19 @@ static void fill_north_west (gretl_matrix *targ,
 
 static int real_point_responses (const gretl_matrix *A,
 				 const gretl_matrix *C,
+				 int neqns,
 				 gretl_matrix *resp,
 				 int targ, int shock)
 {
     gretl_matrix *rtmp;
     gretl_matrix *ctmp;
     double rij;
-    int n = C->rows;
     int np = A->cols;
     int i, j, k, t;
 
     /* workspace */
-    rtmp = gretl_matrix_alloc(np, n);
-    ctmp = gretl_zero_matrix_new(np, n);
+    rtmp = gretl_matrix_alloc(np, neqns);
+    ctmp = gretl_zero_matrix_new(np, neqns);
     if (rtmp == NULL || ctmp == NULL) {
 	gretl_matrix_free(rtmp);
 	gretl_matrix_free(ctmp);
@@ -1907,7 +1907,7 @@ static int real_point_responses (const gretl_matrix *A,
         if (t == 0) {
             /* initial estimated responses */
 	    if (C == NULL) {
-		fill_north_west(rtmp, n, 0);
+		fill_north_west(rtmp, neqns, 0);
 	    } else {
 		copy_north_west(rtmp, C, 0);
 	    }
@@ -1920,21 +1920,21 @@ static int real_point_responses (const gretl_matrix *A,
             resp->val[t] = gretl_matrix_get(rtmp, targ, shock);
         } else if (shock >= 0) {
             /* all targets for one shock */
-            for (i=0; i<n; i++) {
+            for (i=0; i<neqns; i++) {
                 rij = gretl_matrix_get(rtmp, i, shock);
                 gretl_matrix_set(resp, t, i, rij);
             }
         } else if (targ >= 0) {
             /* all shocks for one target */
-            for (j=0; j<n; j++) {
+            for (j=0; j<neqns; j++) {
                 rij = gretl_matrix_get(rtmp, targ, j);
                 gretl_matrix_set(resp, t, j, rij);
             }
         } else {
             /* all shocks, all targets */
             k = 0;
-            for (i=0; i<n; i++) {
-                for (j=0; j<n; j++) {
+            for (i=0; i<neqns; i++) {
+                for (j=0; j<neqns; j++) {
                     rij = gretl_matrix_get(rtmp, i, j);
                     gretl_matrix_set(resp, t, k++, rij);
                 }
@@ -1983,9 +1983,9 @@ gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
 	} else {
 	    if (neqns == 1) {
 		/* "all" means "first" in this case */
-		*err = real_point_responses(realA, C, resp, 0, 0);
+		*err = real_point_responses(realA, C, neqns, resp, 0, 0);
 	    } else {
-		*err = real_point_responses(realA, C, resp, -1, -1);
+		*err = real_point_responses(realA, C, neqns, resp, -1, -1);
 	    }
 	}
     }
@@ -2007,6 +2007,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 {
     gretl_matrix *resp = NULL;
     gretl_matrix *C = var->C;
+    int n = C->rows;
     int nresp = 1;
 
     if (shock >= var->neqns) {
@@ -2042,7 +2043,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
     if (resp == NULL) {
         *err = E_ALLOC;
     } else {
-	*err = real_point_responses(var->A, C, resp, targ, shock);
+	*err = real_point_responses(var->A, C, n, resp, targ, shock);
     }
 
     if (C != var->C) {
