@@ -5719,12 +5719,12 @@
         <option>
 	  <flag>--width</flag>
 	  <optparm>pixels</optparm>
-	  <effect>set plot width (requires <opt>height</opt>)</effect>
+	  <effect>set plot width</effect>
         </option>
         <option>
 	  <flag>--height</flag>
 	  <optparm>pixels</optparm>
-	  <effect>set plot height (requires <opt>width</opt>)</effect>
+	  <effect>set plot height</effect>
         </option>
         <option>
 	  <flag>--control</flag>
@@ -5813,6 +5813,16 @@
 	<lit>y2</lit> against <lit>x</lit>, such that <lit>y2</lit> is
 	represented by a line but <lit>y1</lit> by points.
       </para>
+      <para>
+	The <opt>width</opt> and <opt>height</opt> options, which must
+	be given together, set the size of the plot in pixels,
+	overriding the default sizing which depends on the type of the
+	plot. These options apply to plots shown on screen or saved in
+	PNG format.  For example:
+      </para>
+      <code>
+	gnuplot y x --width=800 --height=500 --output=display
+      </code>
       <subhead>Two y axes</subhead>
       <para>
 	When <repl>yvars</repl> contains more than one variable it may
