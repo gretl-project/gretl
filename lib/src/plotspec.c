@@ -108,6 +108,8 @@ GPT_SPEC *plotspec_new (void)
     spec->markers = NULL;
     spec->n_markers = 0;
     spec->scale = 1.0;
+    spec->xpix = 0;
+    spec->ypix = 0;
     spec->labeled = NULL;
     spec->ptr = NULL;
     spec->bars = NULL;

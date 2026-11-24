@@ -1180,6 +1180,30 @@ static int get_boxplot_auxdata (GPT_SPEC *spec, char *line,
     return err;
 }
 
+static int get_plot_dimensions (const char *line,
+				 GPT_SPEC *spec)
+{
+    const char *s = strstr(line, " size ");
+    int xp = 0;
+    int yp = 0;
+    int n = 0;
+
+    if (s != NULL) {
+	n = sscanf(s + 6, "%d,%d", &xp, &yp);
+    }
+
+    if (n == 2) {
+	spec->xpix = xp;
+	spec->ypix = yp;
+    } else {
+	/* fallback */
+	spec->xpix = 640;
+	spec->ypix = 480;
+    }
+
+    return 1;
+}
+
 /* Determine the number of data points in a plot. While we're at it,
    determine the type of plot, check whether there are any data-point
    markers along with the data, and see if there are are definitions of
@@ -1195,6 +1219,7 @@ static void get_plot_nobs (GPT_SPEC *spec,
 {
     int nobs = 0, started = -1;
     int startmin = 1;
+    int dims = 0;
     long auxpos = 0;
     char line[MAXLEN], test[12];
     char *eod = NULL;
@@ -1204,6 +1229,9 @@ static void get_plot_nobs (GPT_SPEC *spec,
     *do_markers = 0;
 
     while (bufgets(line, MAXLEN - 1, buf)) {
+	if (!dims && strstr(line, "set term pngcairo")) {
+	    dims = get_plot_dimensions(line, spec);
+	}
         if (*line == '#' && line[1] != '\0' && spec->code == PLOT_REGULAR) {
             tailstrip(line);
             spec->code = plot_type_from_string(line);
