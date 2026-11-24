@@ -66,10 +66,10 @@ typedef struct GPT_SPEC_ GPT_SPEC;
 
 #define N_GP_LINETYPES 8
 
-#define GP_WIDTH      640
-#define GP_HEIGHT     480
-#define GP_LB_WIDTH   680
-#define GP_LB_HEIGHT  400
+#define GP_WIDTH      640 /* standard width for scatterplots */
+#define GP_HEIGHT     480 /* standard height, scatterplots */
+#define GP_LB_WIDTH   680 /* "letterbox" width for time series */
+#define GP_LB_HEIGHT  400 /* "letterbox" height, time series */
 #define GP_XL_WIDTH   680
 #define GP_XL_HEIGHT  510
 #define GP_XXL_WIDTH  680
