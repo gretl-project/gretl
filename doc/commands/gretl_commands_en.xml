@@ -5717,6 +5717,16 @@
 	  <effect>use log scale for vertical axis</effect>
         </option>
         <option>
+	  <flag>--width</flag>
+	  <optparm>pixels</optparm>
+	  <effect>set plot width (requires <opt>height</opt>)</effect>
+        </option>
+        <option>
+	  <flag>--height</flag>
+	  <optparm>pixels</optparm>
+	  <effect>set plot height (requires <opt>width</opt>)</effect>
+        </option>
+        <option>
 	  <flag>--control</flag>
 	  <effect>see below</effect>
         </option>
@@ -5867,6 +5877,12 @@
       <para>
 	plots the data such that the vertical axis is expressed as
 	powers of 2. If the base is not specified it defaults to 10.
+      </para>
+      <para>
+	The <opt>width</opt> and <opt>height</opt> options, which must be
+	given together, set the size of the plot in pixels. For example,
+	<code>gnuplot y x --width=800 --height=500</code>. They apply
+	to plots shown on screen or saved in PNG format.
       </para>
       <subhead>Taking data from a matrix</subhead>
       <para>

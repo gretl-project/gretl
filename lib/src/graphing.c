@@ -4519,6 +4519,43 @@ static int time_fit_wanted (gretlopt *popt)
     return 0;
 }
 
+/* Handle the --width and --height options (OPT_K, OPT_H) of the
+   gnuplot command: if both are present we register a custom plot
+   size in pixels, which is picked up (and cleared) when the
+   terminal line is written. Both must be given, and both must be
+   positive integers.
+*/
+
+static int maybe_set_plot_size (gretlopt opt)
+{
+    int w = 0, h = 0;
+    int err = 0;
+
+    if (!(opt & (OPT_K | OPT_H)) || plot_ci != GNUPLOT) {
+        return 0;
+    }
+
+    if (!(opt & OPT_K) || !(opt & OPT_H)) {
+        gretl_errmsg_set(_("The options --width and --height must be "
+                           "given together"));
+        return E_BADOPT;
+    }
+
+    w = get_optval_int(GNUPLOT, OPT_K, &err);
+    if (!err) {
+        h = get_optval_int(GNUPLOT, OPT_H, &err);
+    }
+    if (!err && (w < 1 || h < 1)) {
+        gretl_errmsg_set(_("The plot width and height must be positive"));
+        err = E_INVARG;
+    }
+    if (!err) {
+        set_special_plot_size(w, h);
+    }
+
+    return err;
+}
+
 /**
  * gnuplot:
  * @plotlist: list of variables to plot, by ID number.
@@ -4528,11 +4565,29 @@ static int time_fit_wanted (gretlopt *popt)
  *
  * Writes a gnuplot plot file to display the values of the
  * variables in @list and calls gnuplot to make the graph.
- * The option flags available in hansl are set out in
- * options.c (see GNUPLOT). Three additional flags are
- * supported for use in C code: OPT_S is equivalent to
- * the hansl option --fit=none; OPT_A and OPT_S signal
- * a residual plot and a fitted/actual plot, respectively.
+ *
+ * The user-visible option flags (those available in hansl) are
+ * set out in lib/src/options.c (see GNUPLOT). At present these are:
+ *
+ * OPT_I --input, OPT_O --with-lines, OPT_F --fit, OPT_M --with-impulses,
+ * OPT_P --with-lp, OPT_B --with-boxes, OPT_Q --with-steps,
+ * OPT_T --time-series, OPT_Z --factorized (alias --dummy),
+ * OPT_C --control, OPT_U --output, OPT_b --outbuf (alias --buffer),
+ * OPT_i --inbuf, OPT_Y --single-yaxis, OPT_X --matrix, OPT_N --band,
+ * OPT_J --band-style, OPT_a --bands, OPT_W --font, OPT_L --ylogscale,
+ * OPT_D --y2axis, OPT_E --alpha, OPT_K --width, OPT_H --height.
+ *
+ * Four further flags are "private": they have no counterpart in
+ * options.c and are supplied only by C code (all are handled in
+ * get_gp_flags()):
+ *
+ * OPT_S: suppress the auto-fitted line (equivalent to --fit=none);
+ * OPT_R: residual plot (sets GPT_RESIDS);
+ * OPT_A: fitted-versus-actual plot (sets GPT_FA);
+ * OPT_G: save the plot as an icon (sets GPT_ICON).
+ *
+ * Flags not currently in use for gnuplot(): OPT_V, plus bit 29 of
+ * the gretlopt enumeration (which has no OPT_ symbol as yet).
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */
@@ -4586,6 +4641,11 @@ int gnuplot (const int *plotlist, const char *literal,
 #endif
 
     err = gpinfo_init(&gi, opt, plotlist, literal, dset);
+    if (err) {
+        goto bailout;
+    }
+
+    err = maybe_set_plot_size(opt);
     if (err) {
         goto bailout;
     }
@@ -4933,6 +4993,10 @@ int gnuplot (const int *plotlist, const char *literal,
 
  bailout:
 
+    if (err) {
+        /* don't leave a stale custom size lying around */
+        clear_special_plot_size();
+    }
     g_free(fitline);
     clear_gpinfo(&gi);
 
