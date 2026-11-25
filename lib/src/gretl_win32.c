@@ -43,9 +43,8 @@ void set_windebug (int s)
     windebug = s;
 }
 
-static void win32_print_last_error (void)
+static void win32_print_error (DWORD dw)
 {
-    DWORD dw = GetLastError();
     LPVOID buf = NULL;
 
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -108,7 +107,7 @@ int read_reg_val (HKEY tree, const char *base,
 		      0,         /* reserved */
 		      KEY_READ,  /* access mask */
 		      &regkey    /* key handle */
-		      );
+		     );
 
     if (ls == ERROR_SUCCESS) {
 	gunichar2 *wkeyname;
@@ -140,6 +139,8 @@ int read_reg_val (HKEY tree, const char *base,
 		} else {
 		    err = 1;
 		}
+	    } else {
+		err = 1;
 	    }
 	    g_free(wkeyname);
 	}
@@ -151,8 +152,9 @@ int read_reg_val (HKEY tree, const char *base,
     g_free(regpath);
 
     if (err) {
-	if (ls != ERROR_SUCCESS) {
-	    win32_print_last_error();
+	/* Missing registry entries are normal during path discovery. */
+	if (ls != ERROR_SUCCESS && ls != ERROR_FILE_NOT_FOUND) {
+	    win32_print_error((DWORD) ls);
 	}
 	*keyval = '\0';
     }
@@ -2222,8 +2224,10 @@ int try_for_CP_65001 (void)
 	    }
 	    gotinfo = 1;
 	} else if (windebug) {
+	    DWORD dw = GetLastError();
+
 	    fprintf(fdb, "GetCurrentConsoleFontEx failed\n");
-	    win32_print_last_error();
+	    win32_print_error(dw);
 	}
     }
 
@@ -2238,8 +2242,10 @@ int try_for_CP_65001 (void)
 		fprintf(fdb, "got nFont = %d\n", finfo.nFont);
 	    }
 	} else if (windebug) {
+	    DWORD dw = GetLastError();
+
 	    fprintf(fdb, "GetCurrentConsoleFont failed\n");
-	    win32_print_last_error();
+	    win32_print_error(dw);
 	}
     }
 
@@ -2312,7 +2318,7 @@ int win32_get_core_count (void)
     return n_cores;
 }
 
-/* requres _WIN32_WINNT >= 0x0602 (Windows 8) */
+/* requires _WIN32_WINNT >= 0x0602 (Windows 8) */
 
 int win32_get_stack_size (void)
 {
