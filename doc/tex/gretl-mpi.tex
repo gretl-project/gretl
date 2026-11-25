@@ -587,14 +587,14 @@ The gretl \texttt{mpi} command supports the following options:
 \verb|--|\texttt{np=}\textsl{n} & specify the number of MPI processes\\
 \verb|--|\texttt{omp-threads=}\textsl{m} &
   specify the number of OpenMP threads per process \\
-\verb|--|\texttt{send-functions} &
+\verb|--|\texttt{send-functions}[\texttt{=}\textsl{names}] &
   share function definitions with \texttt{gretlmpi} \\
 \verb|--|\texttt{send-data}[\texttt{=}\textsl{list}] &
   share all or part of the current dataset \\
 \verb|--|\texttt{local} & ignore MPI hosts file, if present \\
 \verb|--|\texttt{single-rng} &
-  use a single pseudo-random number generator \\
-\verb|--|\texttt{verbose} & print extra information, including
+  use a single random number generator \\
+\verb|--|\texttt{verbose} & show extra output, including
   the \texttt{mpiexec} command used
 \end{tabular}
 \end{center}
@@ -612,11 +612,13 @@ section~\ref{sec:contention} for an account of why and when you might
 want to use this option.
 
 The effect of the \verb|--send-functions| option is to send to
-\texttt{gretlmpi} the definitions of any hansl functions present
-in the workspace of the calling gretl process. (It's OK to define
-functions within an \texttt{mpi} block, but in some cases it may be more
+\texttt{gretlmpi} the definitions of any hansl functions present in the
+workspace of the calling gretl process. (It's OK to define functions
+within an \texttt{mpi} block, but in some cases it may be more
 convenient to define functions at the ``main'' script level and pass
-them on.)
+them on.) The optional parameter for this option can be used to specify
+a subset of functions to send. The specification should take the form of
+a comma-separated list of function names, with no embedded spaces.
 
 The \verb|--send-data| option can be used to send to \texttt{gretlmpi}
 the content of the current dataset. (It will provoke an error if no

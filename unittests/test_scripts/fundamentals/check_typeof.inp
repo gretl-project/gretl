@@ -38,6 +38,12 @@ s = typename(M)
 assert(s == "matrices")
 s = typename(M[1])
 assert(s == "matrix")
+# array held in a bundle
+bundle bm = _(M)
+s = typename(bm.M)
+assert(s == "matrices")
+t = typeof(bm.M)
+assert(t == 6)
 # out of bounds value
 t = typeof(M[2])
 assert(t == 0)

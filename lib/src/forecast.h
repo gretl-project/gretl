@@ -34,6 +34,7 @@ struct FITRESID_ {
     double *fitted; /* array of fitted values */
     double *resid;  /* array of residuals */
     double *sderr;  /* array of forecast standard errors (or NULL) */
+    gretl_matrix *probs; /* outcome probabilities (--all-probs), or NULL */
     double sigma;   /* standard error of regression */
     double alpha;   /* for confidence intervals */
     double a0;      /* correction factor for log-to-level forecasts */

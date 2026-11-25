@@ -1067,6 +1067,15 @@ void kalman_set_arma_ll (kalman *K)
     K->flags |= KALMAN_ARMA_LL;
 }
 
+/* non-bundle C API: supply an external (caller-owned) N x 1 matrix
+   to receive F_t (univariate case) on each filtering run
+*/
+
+void kalman_set_F_output (kalman *K, gretl_matrix *F)
+{
+    K->F = F;
+}
+
 /* end of functions dedicated to non-bundle C API */
 
 static int statemat_out_of_bounds (kalman *K)

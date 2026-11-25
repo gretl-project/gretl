@@ -1,3 +1,13 @@
+version 2027a, in progress
+
+The default formula for the lambda parameter in the hpfilt()
+function has been changed from 100 * $pd^2 to that suggested by
+Ravn and Uhlig (2002), namely 6.25 * $pd^4.
+
+2026-10-29 version 2026d
+
+No known incompatible changes.
+
 2026-10-12 version 2026c
 
 In the GUI forecast dialog, the option of specifying the

@@ -482,7 +482,7 @@ typedef struct {
     GtkWidget *comma_sep;
     gint delim;     /* delimiter (comma, etc.) */
     gint decpoint;  /* decimal character */
-    gboolean xobs;  /* exclude obs column on export? */
+    gboolean obs;   /* include obs column on export? */
 } csv_stuff;
 
 static void set_dec (GtkWidget *w, csv_stuff *csv)
@@ -516,16 +516,16 @@ static void set_delim (GtkWidget *w, csv_stuff *csv)
     }
 }
 
-static void toggle_csv_xobs (GtkToggleButton *b, csv_stuff *csv)
+static void toggle_csv_obs (GtkToggleButton *b, csv_stuff *csv)
 {
-    csv->xobs = !gtk_toggle_button_get_active(b);
+    csv->obs = gtk_toggle_button_get_active(b);
 }
 
 static void really_set_csv_stuff (GtkWidget *w, csv_stuff *csv)
 {
     set_data_export_delimiter(csv->delim);
     set_data_export_decimal_comma(csv->decpoint == ',');
-    set_csv_exclude_obs(csv->xobs);
+    set_csv_include_obs(csv->obs);
 }
 
 static void destroy_delim_dialog (GtkWidget *w, gint *p)
@@ -572,10 +572,11 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
 	imin = 0;
     } else {
 	csvp->delim = ',';
+	csvp->obs = TRUE;
     }
 
     csvp->decpoint = '.';
-    csvp->xobs = get_csv_exclude_obs();
+    csvp->obs = get_csv_include_obs();
 
     title = (ci == COPY_CSV)? titles[1] : titles[0];
     dialog = gretl_dialog_new(_(title), parent, GRETL_DLG_BLOCK);
@@ -644,9 +645,9 @@ int csv_options_dialog (int ci, GretlObjType otype, GtkWidget *parent)
             hsep_done = 1;
             tmp = gtk_check_button_new_with_label(_("include observations column"));
             g_signal_connect(G_OBJECT(tmp), "toggled",
-                             G_CALLBACK(toggle_csv_xobs), csvp);
+                             G_CALLBACK(toggle_csv_obs), csvp);
             pack_in_hbox(tmp, vbox, 0);
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), !csvp->xobs);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), csvp->obs);
         }
 
         if (any_missing_user_values(dataset)) {
@@ -3181,6 +3182,26 @@ static void depvar_opt_changed (GtkComboBox *box,
     }
 }
 
+static void toggle_bias_corr_sensitive (GtkWidget *combo,
+					GtkWidget *b)
+{
+    int s = gtk_combo_box_get_active(GTK_COMBO_BOX(combo));
+
+    gtk_widget_set_sensitive(b, s > 0);
+}
+
+static void toggle_bias_corr (GtkWidget *b,
+			      gretlopt *optp)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b))) {
+	/* scrub the "naive" modifier */
+	*optp &= ~OPT_N;
+    } else {
+	/* include the "naive" modifier */
+	*optp |= OPT_N;
+    }
+}
+
 static GtkWidget *depvar_form_selector (GtkWidget *vbox,
 					FcastFlags flags,
 					const MODEL *pmod,
@@ -3224,6 +3245,20 @@ static GtkWidget *depvar_form_selector (GtkWidget *vbox,
 		     G_CALLBACK(depvar_opt_changed), optp);
     gtk_box_pack_start(GTK_BOX(hbox), depvar_combo, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    if (flags & FC_EXPON_OK) {
+	/* allow choice of no bias correction */
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_check_button_new_with_label(_("Apply bias correction"));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+	gtk_widget_set_sensitive(tmp, FALSE);
+	g_signal_connect(G_OBJECT(depvar_combo), "changed",
+			 G_CALLBACK(toggle_bias_corr_sensitive), tmp);
+	g_signal_connect(G_OBJECT(tmp), "toggled",
+			 G_CALLBACK(toggle_bias_corr), optp);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    }
 
     return depvar_combo;
 }

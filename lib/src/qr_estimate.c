@@ -143,11 +143,17 @@ static void qr_compute_stats (MODEL *pmod, const DATASET *dset,
 {
     int yconst, ifc = pmod->ifc;
     int yno = pmod->list[1];
+    int dfd;
+
+    if (pmod->xlist == NULL) {
+	pmod->xlist = gretl_list_sublist(pmod->list, 2, -1);
+    }
 
     pmod->tss = qr_get_tss(pmod, dset, &ifc, &yconst);
     pmod->chisq = NADBL;
+    dfd = pmod->nobs - pmod->ncoeff;
 
-    if (yconst && pmod->dfd > 0) {
+    if (yconst && dfd > 0) {
         double y0 = dset->Z[yno][pmod->t1];
 
         if (y0 > 0) {
@@ -156,8 +162,8 @@ static void qr_compute_stats (MODEL *pmod, const DATASET *dset,
             pmod->rsq = 1 - (pmod->ess / tss);
             gretl_model_set_int(pmod, "uncentered", 1);
         }
-    } else if (pmod->dfd > 0) {
-        double den = pmod->tss * pmod->dfd;
+    } else if (dfd > 0) {
+        double den = pmod->tss * dfd;
 
         pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
         pmod->adjrsq = 1.0 - (pmod->ess * (n - 1) / den);
@@ -170,13 +176,13 @@ static void qr_compute_stats (MODEL *pmod, const DATASET *dset,
         return;
     }
 
-    if (pmod->dfd > 0 && pmod->dfn > 0) {
+    if (dfd > 0 && pmod->dfn > 0) {
         if (opt & OPT_R) {
             pmod->fstt = wald_omit_F(NULL, pmod);
         } else if (pmod->rsq == 1.0) {
             pmod->fstt = NADBL;
         } else {
-            pmod->fstt = (pmod->tss - pmod->ess) * pmod->dfd /
+            pmod->fstt = (pmod->tss - pmod->ess) * dfd /
                 (pmod->ess * pmod->dfn);
         }
     } else {

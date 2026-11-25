@@ -25586,7 +25586,7 @@ ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui/Makefile gui/de
 
 
 if test "${darwin_build}" = "yes" ; then
-  ac_config_files="$ac_config_files macos/Info.plist"
+  ac_config_files="$ac_config_files macos/Info.plist macos/GED.plist"
 
 fi
 
@@ -25748,7 +25748,7 @@ if test "${build_docs}" = "yes" ; then
 fi
 
 if test "${build_addons}" = "yes" ; then
-  ac_config_files="$ac_config_files addons/Makefile addons/gig/Makefile addons/gig/pkg.inp addons/gig/doc/Makefile addons/HIP/Makefile addons/HIP/pkg.inp addons/HIP/doc/Makefile addons/ivpanel/Makefile addons/ivpanel/pkg.inp addons/ivpanel/doc/Makefile addons/SVAR/Makefile addons/SVAR/pkg.inp addons/SVAR/doc/Makefile addons/dbnomics/Makefile addons/dbnomics/pkg.inp addons/dbnomics/doc/Makefile addons/extra/pkg.inp addons/extra/Makefile addons/extra/doc/Makefile addons/geoplot/Makefile addons/geoplot/pkg.inp addons/geoplot/doc/Makefile addons/geoplot/examples/Makefile addons/regls/Makefile addons/regls/pkg.inp addons/regls/doc/Makefile addons/logging/Makefile addons/logging/pkg.inp addons/logging/doc/Makefile addons/KFgui/Makefile addons/KFgui/pkg.inp addons/PairPlot/Makefile addons/PairPlot/pkg.inp addons/kmeans/Makefile addons/kmeans/pkg.inp addons/kmeans/doc/Makefile"
+  ac_config_files="$ac_config_files addons/Makefile addons/gig/Makefile addons/gig/pkg.inp addons/gig/doc/Makefile addons/HIP/Makefile addons/HIP/pkg.inp addons/HIP/doc/Makefile addons/ivpanel/Makefile addons/ivpanel/pkg.inp addons/ivpanel/doc/Makefile addons/SVAR/Makefile addons/SVAR/pkg.inp addons/SVAR/doc/Makefile addons/dbnomics/Makefile addons/dbnomics/pkg.inp addons/dbnomics/doc/Makefile addons/extra/pkg.inp addons/extra/Makefile addons/extra/doc/Makefile addons/geoplot/Makefile addons/geoplot/pkg.inp addons/geoplot/doc/Makefile addons/geoplot/examples/Makefile addons/regls/Makefile addons/regls/pkg.inp addons/regls/doc/Makefile addons/logging/Makefile addons/logging/pkg.inp addons/logging/doc/Makefile addons/KFgui/Makefile addons/KFgui/pkg.inp addons/PairPlot/Makefile addons/PairPlot/pkg.inp addons/PairPlot/doc/Makefile addons/kmeans/Makefile addons/kmeans/pkg.inp addons/kmeans/doc/Makefile"
 
 fi
 
@@ -26822,6 +26822,7 @@ do
     "doc/gretl.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl.sty" ;;
     "doc/gretl-lite.sty") CONFIG_FILES="$CONFIG_FILES doc/gretl-lite.sty" ;;
     "macos/Info.plist") CONFIG_FILES="$CONFIG_FILES macos/Info.plist" ;;
+    "macos/GED.plist") CONFIG_FILES="$CONFIG_FILES macos/GED.plist" ;;
     "win32/windist/mkiss.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/mkiss.sh" ;;
     "win32/windist/post-install.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/post-install.sh" ;;
     "win32/windist/install-runtime.sh") CONFIG_FILES="$CONFIG_FILES win32/windist/install-runtime.sh" ;;
@@ -26872,6 +26873,7 @@ do
     "addons/KFgui/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/KFgui/pkg.inp" ;;
     "addons/PairPlot/Makefile") CONFIG_FILES="$CONFIG_FILES addons/PairPlot/Makefile" ;;
     "addons/PairPlot/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/PairPlot/pkg.inp" ;;
+    "addons/PairPlot/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/PairPlot/doc/Makefile" ;;
     "addons/kmeans/Makefile") CONFIG_FILES="$CONFIG_FILES addons/kmeans/Makefile" ;;
     "addons/kmeans/pkg.inp") CONFIG_FILES="$CONFIG_FILES addons/kmeans/pkg.inp" ;;
     "addons/kmeans/doc/Makefile") CONFIG_FILES="$CONFIG_FILES addons/kmeans/doc/Makefile" ;;

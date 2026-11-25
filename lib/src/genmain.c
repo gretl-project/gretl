@@ -137,13 +137,12 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
     pputc(prn, '\n');
 }
 
-static int maybe_record_lag_info (parser *p)
+static int maybe_record_series_transform (parser *p)
 {
     const char *s = p->input;
     int n = strlen(p->lh.name);
-    char vname[VNAMELEN];
-    char fmt[16];
-    int lag;
+    char vname[VNAMELEN] = {0};
+    char pname[VNAMELEN] = {0};
 
     if (!strncmp(s, "genr ", 5)) {
 	s += 5;
@@ -165,23 +164,43 @@ static int maybe_record_lag_info (parser *p)
 	series_delete_metadata(p->dset, p->lh.vnum);
     }
 
-    sprintf(fmt, "%%%d[^ ()](%%d)", VNAMELEN-1);
+    if (sscanf(s, "log(%31[^)])", pname) == 1) {
+	if (strlen(s) == 5 + strlen(pname)) {
+	    series_set_parent(p->dset, p->lh.vnum, pname);
+	    series_set_transform(p->dset, p->lh.vnum, LOGS);
+	}
+    } else if (sscanf(s, "diff(%31[^)])", pname) == 1) {
+	if (strlen(s) == 6 + strlen(pname)) {
+	    series_set_parent(p->dset, p->lh.vnum, pname);
+	    series_set_transform(p->dset, p->lh.vnum, DIFF);
+	}
+    } else if (sscanf(s, "ldiff(%31[^)])", pname) == 1) {
+	if (strlen(s) == 7 + strlen(pname)) {
+	    series_set_parent(p->dset, p->lh.vnum, pname);
+	    series_set_transform(p->dset, p->lh.vnum, LDIFF);
+	}
+    } else {
+	char fmt[16];
+	int lag;
 
-    if (sscanf(s, fmt, vname, &lag) == 2) {
-	s = strchr(s, ')');
-	if (s != NULL && string_is_blank(s + 1)) {
-	    int pv = series_index(p->dset, vname);
+	sprintf(fmt, "%%%d[^ ()](%%d)", VNAMELEN-1);
 
-	    if (pv < p->dset->v && function_lookup(vname)) {
-		/* rule out the case of a series name shadowing
-		   a built-in function
-		*/
-		pv = -1;
-	    }
-	    if (pv > 0 && pv < p->dset->v) {
-		series_set_parent(p->dset, p->lh.vnum, p->dset->varname[pv]);
-		series_set_transform(p->dset, p->lh.vnum, LAGS);
-		series_set_lag(p->dset, p->lh.vnum, -lag);
+	if (sscanf(s, fmt, vname, &lag) == 2) {
+	    s = strchr(s, ')');
+	    if (s != NULL && string_is_blank(s + 1)) {
+		int pv = series_index(p->dset, vname);
+
+		if (pv < p->dset->v && function_lookup(vname)) {
+		    /* rule out the case of a series name shadowing
+		       a built-in function
+		    */
+		    pv = -1;
+		}
+		if (pv > 0 && pv < p->dset->v) {
+		    series_set_parent(p->dset, p->lh.vnum, p->dset->varname[pv]);
+		    series_set_transform(p->dset, p->lh.vnum, LAGS);
+		    series_set_lag(p->dset, p->lh.vnum, -lag);
+		}
 	    }
 	}
     }
@@ -222,7 +241,7 @@ static void series_write_metadata (parser *p, int oldv)
     }
 
     if (p->targ == SERIES && p->input != NULL) {
-	maybe_record_lag_info(p);
+	maybe_record_series_transform(p);
     }
 
     if (vnum < oldv && p->targ == SERIES) {

@@ -27,6 +27,7 @@
 #include "plotspec.h"
 #include "usermat.h"
 #include "genfuncs.h"
+#include "nonparam.h"
 
 #include <unistd.h>
 
@@ -7062,57 +7063,72 @@ int satterthwaite_df (double v1, int n1,
     return (int) floor(v);
 }
 
+/* test_data_from_dummy: constructs arrays @x and @y by splitting the
+   series with index @v1 according to the value (0 or 1) of the dummy
+   series with index @v2. We pass these arrays to the caller via @px and
+   @py, and also pass the respective numbers of observations via @pnx
+   and @pny. Returns 0 on success.
+*/
+
 static int test_data_from_dummy (const DATASET *dset,
                                  int v1, int v2,
                                  double **px,
                                  double **py,
-                                 int *pn1, int *pn2)
+                                 int *pnx, int *pny)
 {
+    const double *z;
+    const double *d;
     double *x = NULL;
     double *y = NULL;
-    int n1 = 0;
-    int n2 = 0;
-    int t, ix, iy;
+    int nx = 0;
+    int ny = 0;
+    int t, i, j;
 
     if (!gretl_isdummy(dset->t1, dset->t2, dset->Z[v2])) {
+	/* we need a 0/1 dummy */
         return E_INVARG;
     }
 
+    z = dset->Z[v1];
+    d = dset->Z[v2];
+
+    /* count the valid observations */
     for (t=dset->t1; t<=dset->t2; t++) {
-        if (na(dset->Z[v1][t])) {
+        if (na(z[t]) || na(d[t])) {
             continue;
-        } else if (dset->Z[v2][t] == 0.0) {
-            n1++;
-        } else if (dset->Z[v2][t] == 1.0) {
-            n2++;
+        } else if (d[t] == 0.0) {
+            nx++;
+        } else if (d[t] == 1.0) {
+            ny++;
         }
     }
-    if (n1 < 2 || n2 < 2) {
+    if (nx < 4 || ny < 4) {
         return E_TOOFEW;
     }
 
-    x = malloc(n1 * sizeof *x);
-    y = malloc(n2 * sizeof *y);
+    /* allocate the two arrays */
+    x = malloc(nx * sizeof *x);
+    y = malloc(ny * sizeof *y);
     if (x == NULL || y == NULL) {
         free(x); free(y);
         return E_ALLOC;
     }
 
-    ix = iy = 0;
+    i = j = 0;
     for (t=dset->t1; t<=dset->t2; t++) {
-        if (na(dset->Z[v1][t])) {
+        if (na(z[t]) || na(d[t])) {
             continue;
-        } else if (dset->Z[v2][t] == 0.0) {
-            x[ix++] = dset->Z[v1][t];
-        } else if (dset->Z[v2][t] == 1.0) {
-            y[iy++] = dset->Z[v1][t];
+        } else if (d[t] == 0.0) {
+            x[i++] = z[t];
+        } else if (d[t] == 1.0) {
+            y[j++] = z[t];
         }
     }
 
     *px = x;
     *py = y;
-    *pn1 = n1;
-    *pn2 = n2;
+    *pnx = nx;
+    *pny = ny;
 
     return 0;
 }
@@ -7120,17 +7136,17 @@ static int test_data_from_dummy (const DATASET *dset,
 static double *transcribe_ok_obs (const DATASET *dset, int v,
                                   int *pn, int *err)
 {
-    const double *src = dset->Z[v];
+    const double *x = dset->Z[v];
     double *ret = NULL;
-    int t, n = 0;
+    int i, t, n = 0;
 
     for (t=dset->t1; t<=dset->t2; t++) {
-        if (!na(src[t])) {
+        if (!na(x[t])) {
             n++;
         }
     }
 
-    if (n < 2) {
+    if (n < 4) {
         *err = E_TOOFEW;
     } else {
         ret = malloc(n * sizeof *ret);
@@ -7139,26 +7155,68 @@ static double *transcribe_ok_obs (const DATASET *dset, int v,
         }
     }
     if (!*err) {
-        *pn = n;
-        n = 0;
+        i = 0;
         for (t=dset->t1; t<=dset->t2; t++) {
-            if (!na(src[t])) {
-                ret[n++] = src[t];
+            if (!na(x[t])) {
+                ret[i++] = x[t];
             }
         }
+	*pn = n;
     }
 
     return ret;
 }
 
-static double *transcribe_ok_pairs (const DATASET *dset,
+static int transcribe_ok_pairs (const DATASET *dset,
+				int v1, int v2,
+				double **px, double **py,
+				int *pn)
+{
+    const double *z1 = dset->Z[v1];
+    const double *z2 = dset->Z[v2];
+    double *x = NULL;
+    double *y = NULL;
+    int t, s, n = 0;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+        if (!na(z1[t]) && !na(z2[t])) {
+            n++;
+        }
+    }
+    if (n < 4) {
+        return E_TOOFEW;
+    }
+
+    x = malloc(n * sizeof *x);
+    y = malloc(n * sizeof *y);
+    if (x == NULL || y == NULL) {
+	free(x); free(y);
+	return E_ALLOC;
+    }
+
+    for (t=dset->t1, s=0; t<=dset->t2; t++) {
+	if (!na(z1[t]) && !na(z2[t])) {
+	    x[s] = z1[t];
+	    y[s] = z2[t];
+	    s++;
+	}
+    }
+
+    *px = x;
+    *py = y;
+    *pn = n;
+
+    return 0;
+}
+
+static double *transcribe_ok_diffs (const DATASET *dset,
                                     int v1, int v2,
                                     int *pn, int *err)
 {
     const double *x = dset->Z[v1];
     const double *y = dset->Z[v2];
-    double *ret = NULL;
-    int t, n = 0;
+    double *d = NULL;
+    int t, s, n = 0;
 
     for (t=dset->t1; t<=dset->t2; t++) {
         if (!na(x[t]) && !na(y[t])) {
@@ -7166,25 +7224,24 @@ static double *transcribe_ok_pairs (const DATASET *dset,
         }
     }
 
-    if (n < 2) {
+    if (n < 4) {
         *err = E_TOOFEW;
     } else {
-        ret = malloc(n * sizeof *ret);
-        if (ret == NULL) {
+        d = malloc(n * sizeof *d);
+        if (d == NULL) {
             *err = E_ALLOC;
         }
     }
     if (!*err) {
-        *pn = n;
-        n = 0;
-        for (t=dset->t1; t<=dset->t2; t++) {
+        for (t=dset->t1, s=0; t<=dset->t2; t++) {
             if (!na(x[t]) && !na(y[t])) {
-                ret[n++] = x[t] - y[t];
+                d[s++] = x[t] - y[t];
             }
         }
+	*pn = n;
     }
 
-    return ret;
+    return d;
 }
 
 /* HAC difference of means test using OLS on stacked data */
@@ -7243,36 +7300,36 @@ static int test_data_from_list (const DATASET *dset,
                                 int v1, int v2,
                                 double **px,
                                 double **py,
-                                int *pn1, int *pn2)
+                                int *pnx, int *pny)
 {
     double *x, *y;
-    int n1, n2;
+    int nx, ny;
     int err = 0;
 
-    x = transcribe_ok_obs(dset, v1, &n1, &err);
+    x = transcribe_ok_obs(dset, v1, &nx, &err);
     if (!err) {
-        y = transcribe_ok_obs(dset, v2, &n2, &err);
+        y = transcribe_ok_obs(dset, v2, &ny, &err);
     }
     if (!err) {
         *px = x;
         *py = y;
-        *pn1 = n1;
-        *pn2 = n2;
+        *pnx = nx;
+        *pny = ny;
     }
 
     return err;
 }
 
-static int paired_data_from_list (const DATASET *dset,
-                                  int v1, int v2,
-                                  double **px, int *pn)
+static int paired_diffs_from_list (const DATASET *dset,
+				   int v1, int v2,
+				   double **pd, int *pn)
 {
-    double *x;
+    double *d;
     int n, err = 0;
 
-    x = transcribe_ok_pairs(dset, v1, v2, &n, &err);
+    d = transcribe_ok_diffs(dset, v1, v2, &n, &err);
     if (!err) {
-        *px = x;
+        *pd = d;
         *pn = n;
     }
 
@@ -7334,16 +7391,14 @@ int diff_test (const int *list, const DATASET *dset,
     double result[2] = {0};
     int usedum = (opt & OPT_D)? 1 : 0;
     int v1, v2;
-    int n1 = 0;
-    int n2 = 0;
     int err = 0;
 
     if (usedum && !(opt & OPT_R)) {
         /* OPT_D is supported only in conjunction with OPT_R */
-        return E_BADOPT;
+        err = E_BADOPT;
+    } else {
+	err = incompatible_options(opt, OPT_G | OPT_R | OPT_I);
     }
-
-    err = incompatible_options(opt, OPT_G | OPT_R | OPT_I);
     if (err) {
         return err;
     }
@@ -7352,31 +7407,41 @@ int diff_test (const int *list, const DATASET *dset,
     if (usedum) {
         v2 = splitby_varnum(DIFFTEST, dset);
         if (v2 < 0) {
-            err = E_UNKVAR;
+            return E_UNKVAR;
         }
     } else {
         v2 = list[2];
     }
 
-    if (err) {
-        return err;
-    }
-
-    if (usedum) {
-        /* get @x and @y as portions of series v1 */
-        err = test_data_from_dummy(dset, v1, v2, &x, &y, &n1, &n2);
-    } else {
-        /* get @x and @y from the series v1 and v2 */
-        err = test_data_from_list(dset, v1, v2, &x, &y, &n1, &n2);
-    }
-
     if (opt & OPT_R) {
-	err = rank_sum_test(x, y, v1, v2, dset, result, opt, prn);
+	/* the rank sum case */
+	int nx, ny;
+
+	if (usedum) {
+	    /* get @x and @y as portions of series v1 */
+	    err = test_data_from_dummy(dset, v1, v2, &x, &y, &nx, &ny);
+	} else {
+	    /* get @x and @y from the series v1 and v2 */
+	    err = test_data_from_list(dset, v1, v2, &x, &y, &nx, &ny);
+	}
+	if (!err) {
+	    err = rank_sum_test(x, y, nx, ny, v1, v2, dset, result, opt, prn);
+	}
     } else if (opt & OPT_I) {
-	err = signed_rank_test(x, y, v1, v2, dset, result, opt, prn);
+	/* the signed rank case: needs paired data */
+	int n;
+
+	err = transcribe_ok_pairs(dset, v1, v2, &x, &y, &n);
+	if (!err) {
+	    err = signed_rank_test(x, y, n, v1, v2, dset, result, opt, prn);
+	}
     } else {
-        err = sign_test(x, y, v1, v2, dset, result, opt, prn);
+	/* the sign test case (OPT_G or default) */
+	err = sign_test(v1, v2, dset, result, opt, prn);
     }
+
+    free(x);
+    free(y);
 
     record_test_result(result[0], result[1]);
 
@@ -7447,7 +7512,7 @@ int means_test (const int *list, const DATASET *dset,
 
     if (paired) {
         /* fill @x with paired differences between series v1 and v2 */
-        err = paired_data_from_list(dset, v1, v2, &x, &n1);
+        err = paired_diffs_from_list(dset, v1, v2, &x, &n1);
     } else if (usedum) {
         /* get @x and @y as portions of series v1 */
         err = test_data_from_dummy(dset, v1, v2, &x, &y, &n1, &n2);

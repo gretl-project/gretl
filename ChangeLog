@@ -1,7 +1,45 @@
-version 2026d, in progress
-- Delete some unused variables flagged by clang
+version 2026e, in progress
+- Factor out plot-script-to-C-struct code from gpt_control.c
+  and add to libgretl API as plotspec_read_file()
+- hpfilt() function: switch to the recommendation of Ravn and
+  Uhlig (2002) for the default lambda value
+- Fix some memory leaks and possible invalid reads in plot-
+  handling code
+- "fcast" command: add a comprehensive $result accessor
+- Fix bug(): name collision with R's lbfgsb() in "foreign"
+  with R_lib on
+- Fix bug: two-way clustered standard errors for panel-data
+  models were not computed correctly except when given the
+  specification --cluster=$unit,$time
+- Fix bug: spurious out-of-range error from imhof() when
+  the number of eigenvalues is very large
+- Fix bug: Durbin-Watson statistic for panel data failed to
+  take into account the last observation in the sample
+- Fix bug: the "arima" option --opg (and the arma_vcv setting
+  "op") did not give an outer product of the gradient: it used
+  the derivatives of the standardized prediction errors, i.e. a
+  Gauss-Newton matrix, and --robust inherited this. Both now use
+  the per-observation scores of the full exact loglikelihood,
+  with the innovation variance as an additional parameter, in
+  all of the AS 154, AS 197 and Kalman variants. The standard
+  errors will differ (in short or strongly seasonal samples,
+  notably) from those produced previously.
+- Fix bug: regression whereby typename() would fail to produce
+  the correct type name for an array inside a bundle
+- Fix bug: "difftest" command broken for the --rank-sum and
+  --signed-rank options
+- Fix bug in gretl_edit: spurious "maximum length of command
+  line exceeded" message when doing "(Re-)load functions" and
+  the current script lacks a terminating newline.
+
+2026-10-29 version 2026d
 - Fix bug: potential crash when forecasting based on a
   VAR estimated in the GUI
+- Fix bug: the "must-assign" attribute of packaged functions
+  was not being registered in the function-package GUI
+- Fix bug: potential crash in the deseas() function on
+  getting an error from X-13ARIMA-SEATS
+- Fix bug: missing data in the updated AWM macro dataset
 - L-BFGS-B: the code (originally translated from Fortran via
   f2c) has been rewritten in idiomatic C
 - L-BFGS-B: more robust handling of a criterion that is
@@ -13,6 +51,11 @@ version 2026d, in progress
 - fix bug: BFGSmin, BFGSmax, BFGScmin, BFGScmax, NRmin and
   NRmax could return a criterion value that did not
   correspond exactly to the final parameter vector
+- Delete some unused variables flagged by clang
+- markdown formatter: handle bulleted lists not preceded
+  by a blank line
+- macOS: add installer packages for gretl_edit
+- PairPlot addon: upgrade to PDF documentation
 
 2026-10-12 version 2026c
 - new addons kmeans and PairPlot, from A. Tarassow's
@@ -330,6 +373,8 @@ version 2026d, in progress
 - flatten() function: add an extra (vec-wise) mode for matrices
 - matrix "left division" operator: improve efficiency when the
   left-hand operand is triangular
+- extend the horizontal concatenation operator (the tilde) to
+  create string arrays from strings and matrices
 - Fix bug: append via console not updating series list in the
   main gretl window
 - Fix bug: console command-line broken following use of "printf"

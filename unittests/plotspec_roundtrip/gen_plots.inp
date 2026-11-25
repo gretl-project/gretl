@@ -1,0 +1,98 @@
+# Generate a set of gnuplot scripts for the plotspec round-trip test
+# (see roundtrip.c). The output files go into the current working
+# directory, so run this as, e.g.
+#
+#   mkdir plots && cd plots && DISPLAY= gretlcli -b -q ../gen_plots.inp
+#
+# We want the scripts as written for interactive display (they then
+# include the plot-type comments that the GUI relies on), as opposed
+# to "--output=file" scripts. Gnuplot itself is not wanted here, so
+# each command is wrapped in "catch" to allow for the display step
+# failing, and we then pick up the script from libgretl's temporary
+# file.
+
+function void snap (string fname)
+    string s = readfile(sprintf("%s/gpttmp.plt", $dotdir))
+    if strlen(s) == 0
+        funcerr "no plot file for " ~ fname
+    endif
+    outfile @fname
+        printf "%s", s
+    end outfile
+end function
+
+open denmark -q
+series d = diff(LRM)
+series dum = (obs >= 1980:1)
+
+# simple scatter, with and without fitted lines
+catch gnuplot LRM LRY --output=display
+snap("scatter.plt")
+catch gnuplot LRM LRY --fit=quadratic --output=display
+snap("fit_quadratic.plt")
+catch gnuplot LRM LRY --fit=loess --output=display
+snap("fit_loess.plt")
+catch gnuplot LRM LRY --fit=none --output=display
+snap("fit_none.plt")
+
+# time series: single, multiple, y2 axis
+catch gnuplot LRM --time-series --with-lines --output=display
+snap("ts_single.plt")
+catch gnuplot LRM LRY IBO --time-series --with-lines --output=display
+snap("ts_multi.plt")
+catch gnuplot LRM LRY --time-series --with-lines --single-yaxis --output=display
+snap("ts_single_axis.plt")
+catch gnuplot LRM IBO --time-series --with-lines --output=display
+snap("ts_y2.plt")
+catch gnuplot LRM --time-series --with-impulses --output=display
+snap("ts_impulses.plt")
+catch gnuplot LRM --time-series --with-steps --output=display
+snap("ts_steps.plt")
+
+# with colour-by-dummy
+catch gnuplot LRM LRY dum --output=display
+snap("dummy.plt")
+
+# user-supplied "set" lines and literal gnuplot code (note that the
+# writer adds "front" to labels, hence we give it here, so that the
+# rendering comparison in roundtrip.c is not upset by the layering)
+catch gnuplot LRM LRY --output=display { set title "foo bar"; \
+  set xlabel "the x label"; set ylabel "the y label"; set grid; }
+snap("lit_basic.plt")
+catch gnuplot LRM LRY --output=display { set xrange [5.7:6.2]; \
+  set yrange [11:12.5]; set key left top; }
+snap("lit_ranges.plt")
+catch gnuplot LRM LRY --output=display { \
+  set linetype 1 lc rgb "blue" lw 2 pt 6; set xzeroaxis; set yzeroaxis; }
+snap("lit_styles.plt")
+catch gnuplot LRM LRY --output=display { \
+  set label "a label" at 5.9,11.8 front; set arrow from 5.8,11.6 to 6.0,12.0; \
+  set xtics 0.1; set format y "%.2f"; }
+snap("lit_misc.plt")
+catch gnuplot LRM LRY --output=display { set logscale y; }
+snap("lit_logscale.plt")
+
+# other plot types
+catch freq LRM --plot=display
+snap("freq.plt")
+catch freq LRM --normal --plot=display
+snap("freq_normal.plt")
+catch boxplot LRM LRY --output=display
+snap("boxplot.plt")
+catch boxplot LRM LRY --notches --output=display
+snap("boxplot_notches.plt")
+catch boxplot LRM dum --factorized --output=display
+snap("boxplot_fact.plt")
+catch corrgm LRM 8 --plot=display
+snap("corrgm.plt")
+
+# plots from model output and from matrices
+ols LRM 0 LRY IBO -q
+series yh = $yhat
+catch gnuplot LRM yh --time-series --with-lines --output=display
+snap("fitted_actual.plt")
+matrix M = {1,2; 2,3; 3,5; 4,4; 5,7}
+catch gnuplot 2 1 --matrix=M --output=display
+snap("matrix_scatter.plt")
+catch gnuplot 2 1 --matrix=M --with-lines --output=display
+snap("matrix_lines.plt")

@@ -61,6 +61,7 @@ struct Forecast_ {
     int t1;                /* start of forecast range */
     int t2;                /* end of forecast range */
     int model_t2;          /* end of period over which model was estimated */
+    gretl_matrix *probs;   /* matrix of probabilities (--all-probs) */
 };
 
 static gretl_matrix *fcast_matrix;
@@ -145,6 +146,7 @@ void free_fit_resid (FITRESID *fr)
 	free(fr->fitted);
 	free(fr->resid);
 	free(fr->sderr);
+	gretl_matrix_free(fr->probs);
 	free(fr);
     }
 }
@@ -192,6 +194,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
     f->fitted = NULL;
     f->resid = NULL;
     f->sderr = NULL;
+    f->probs = NULL;
 
     *f->depvar = '\0';
     *f->ylabel = '\0';
@@ -2500,9 +2503,8 @@ static int mlogit_allprobs (Forecast *fc, const MODEL *pmod,
     int err = 0;
 
     P = mn_logit_probabilities(pmod, fc->t1, fc->t2, dset, &err);
-    if (P != NULL) {
-	set_fcast_matrices(P, NULL);
-    }
+    /* the caller transfers @P to the FITRESID struct */
+    fc->probs = P;
 
     return err;
 }
@@ -2630,7 +2632,7 @@ static int linear_fcast (Forecast *fc,
 
 	P = ordered_probabilities(pmod, fc->yhat, fc->t1, fc->t2,
 				  dset, &err);
-	set_fcast_matrices(P, NULL);
+	fc->probs = P;
     }
 
     return err;
@@ -2717,6 +2719,7 @@ static void forecast_init (Forecast *fc)
     fc->sderr = NULL;
     fc->eps = NULL;
     fc->dvlags = NULL;
+    fc->probs = NULL;
 }
 
 static void forecast_free (Forecast *fc)
@@ -2728,6 +2731,8 @@ static void forecast_free (Forecast *fc)
     if (fc->eps != NULL) {
 	free(fc->eps);
     }
+
+    gretl_matrix_free(fc->probs);
 }
 
 static int fc_add_eps (Forecast *fc, int n)
@@ -2814,6 +2819,31 @@ static int check_integrated_forecast_option (MODEL *pmod,
 	    /* in caller, make yno = ID of level variable */
 	    *pyno = parent;
 	}
+    }
+
+    return err;
+}
+
+/* Check whether we can sensibly honor the --exponentiate option.
+   Whether the regressand is a log cannot always be determined (a
+   series produced by "genr" need not be recognizable as a log), so
+   we only reject the cases where exponentiation is plainly wrong:
+   combination with --integrate, or a regressand that is marked as
+   a first difference (the user probably wanted --integrate).
+*/
+
+static int check_exponentiate_option (MODEL *pmod, const DATASET *dset,
+				      gretlopt opt)
+{
+    int err = 0;
+
+    if (opt & OPT_I) {
+	err = E_BADOPT;
+    } else if (is_standard_diff(gretl_model_get_depvar(pmod), dset, NULL)) {
+	gretl_errmsg_set(_("fcast: the dependent variable is a first "
+			   "difference, not a log: did you mean "
+			   "--integrate?"));
+	err = E_BADOPT;
     }
 
     return err;
@@ -3091,7 +3121,9 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	err = linear_fcast(&fc, pmod, yno, dset, NULL, opt);
     }
 
-    /* free any auxiliary info */
+    /* pass on any probabilities matrix, then free auxiliary info */
+    fr->probs = fc.probs;
+    fc.probs = NULL;
     forecast_free(&fc);
 
     if (opt & OPT_L) {
@@ -3594,6 +3626,164 @@ static void fr_adjust_sample (FITRESID *fr, int *ft1, int *ft2,
     }
 }
 
+/* Build a bundle holding the forecast results and make it available
+   as $result. @f and @e are the (trimmed) forecast and forecast-error
+   matrices, as saved for $fcast and $fcse; @e may be NULL. @alpha,
+   @df and @asy determine the critical value for confidence intervals.
+   @fr, if non-NULL, supplies metadata and the basis for forecast
+   evaluation statistics. Failure here is not treated as fatal.
+*/
+
+static void set_fcast_result_bundle (const gretl_matrix *f,
+				     const gretl_matrix *e,
+				     double alpha, int df, int asy,
+				     const FITRESID *fr)
+{
+    gretl_bundle *b = gretl_bundle_new();
+    int err = 0;
+
+    if (b == NULL) {
+	return;
+    }
+
+    err = gretl_bundle_set_matrix(b, "fcast", f);
+
+    if (!err && e != NULL) {
+	int k = f->cols;
+	int ft1 = gretl_matrix_get_t1(f);
+	int et1 = gretl_matrix_get_t1(e);
+	double a2 = alpha / 2;
+	double cval, fx, ex;
+	/* for exponentiated forecasts the standard errors are on the
+	   log scale, and the interval is formed on that scale and
+	   then exponentiated (as in text_print_forecast) */
+	int expon = (fr != NULL && (fr->opt & OPT_X));
+	gretl_matrix *lo, *hi;
+	int i, j, s;
+
+	cval = asy ? normal_critval(a2) : student_critval(df, a2);
+	lo = gretl_matrix_copy(e);
+	hi = gretl_matrix_copy(e);
+	if (lo != NULL && hi != NULL && e->cols == k) {
+	    for (j=0; j<k; j++) {
+		for (i=0; i<e->rows; i++) {
+		    s = et1 + i - ft1;
+		    ex = gretl_matrix_get(e, i, j);
+		    if (s < 0 || s >= f->rows) {
+			fx = NADBL;
+		    } else {
+			fx = gretl_matrix_get(f, s, j);
+		    }
+		    if (na(fx) || na(ex)) {
+			gretl_matrix_set(lo, i, j, NADBL);
+			gretl_matrix_set(hi, i, j, NADBL);
+		    } else {
+			if (expon) {
+			    double lfx = log(fx);
+
+			    gretl_matrix_set(lo, i, j, exp(lfx - cval * ex));
+			    gretl_matrix_set(hi, i, j, exp(lfx + cval * ex));
+			} else {
+			    gretl_matrix_set(lo, i, j, fx - cval * ex);
+			    gretl_matrix_set(hi, i, j, fx + cval * ex);
+			}
+		    }
+		}
+	    }
+	    err = gretl_bundle_set_matrix(b, "fcse", e);
+	    if (!err) err = gretl_bundle_set_matrix(b, "lower", lo);
+	    if (!err) err = gretl_bundle_set_matrix(b, "upper", hi);
+	    if (!err) err = gretl_bundle_set_scalar(b, "alpha", alpha);
+	    if (!err) err = gretl_bundle_set_scalar(b, "coverage", 1.0 - alpha);
+	} else {
+	    err = E_ALLOC;
+	}
+	gretl_matrix_free(lo);
+	gretl_matrix_free(hi);
+    }
+
+    if (!err) {
+	/* the forecast range proper, which can be narrower than the
+	   range of @f (pre-forecast observations, or in the integrated
+	   case the extra initial observation) */
+	int bt1 = gretl_matrix_get_t1(f);
+	int bt2 = gretl_matrix_get_t2(f);
+
+	if (fr != NULL) {
+	    bt1 = bt1 < fr->t1 ? fr->t1 : bt1;
+	    bt2 = bt2 > fr->t2 ? fr->t2 : bt2;
+	}
+	err = gretl_bundle_set_int(b, "t1", bt1 + 1);
+	if (!err) {
+	    err = gretl_bundle_set_int(b, "t2", bt2 + 1);
+	}
+    }
+
+    if (!err && fr != NULL) {
+	const char *mstr = "static";
+	int t1, t2, n_used = 0, serr = 0;
+	gretl_matrix *fcs;
+
+	if (fr->method == FC_DYNAMIC) {
+	    mstr = "dynamic";
+	} else if (fr->method == FC_AUTO) {
+	    mstr = "auto";
+	} else if (fr->method == FC_KSTEP) {
+	    mstr = "k-step";
+	}
+	const char *tstr = "none";
+
+	if (fr->opt & OPT_X) {
+	    tstr = "exponentiate";
+	} else if (fr->opt & OPT_I) {
+	    tstr = "integrate";
+	}
+	if (*fr->depvar != '\0') {
+	    /* name of the series being forecast */
+	    const char *yname = (fr->opt & OPT_X)? get_forecast_yname(fr) :
+		fr->depvar;
+
+	    err = gretl_bundle_set_string(b, "depvar", yname);
+	}
+	if (!err) {
+	    err = gretl_bundle_set_string(b, "method", mstr);
+	}
+	if (!err) {
+	    err = gretl_bundle_set_string(b, "transform", tstr);
+	}
+	if (!err && (fr->opt & OPT_X)) {
+	    /* record the log-to-level correction factor */
+	    const char *cstr = fr->a0meth == 1 ? "normal" :
+		fr->a0meth == 2 ? "smearing" : "none";
+
+	    err = gretl_bundle_set_string(b, "correction", cstr);
+	    if (!err && !na(fr->a0)) {
+		err = gretl_bundle_set_scalar(b, "a0", fr->a0);
+	    }
+	}
+	if (!err && fr->actual != NULL) {
+	    fcast_get_continuous_range(fr, &t1, &t2);
+	    if (t2 - t1 + 1 > 0) {
+		fcs = forecast_stats(fr->actual, fr->fitted, t1, t2,
+				     &n_used, OPT_NONE, &serr);
+		if (!serr && fcs != NULL) {
+		    err = gretl_bundle_set_matrix(b, "eval_stats", fcs);
+		    if (!err) {
+			err = gretl_bundle_set_int(b, "eval_obs", n_used);
+		    }
+		}
+		gretl_matrix_free(fcs);
+	    }
+	}
+    }
+
+    if (err) {
+	gretl_bundle_destroy(b);
+    } else {
+	set_last_result_data(b, GRETL_TYPE_BUNDLE);
+    }
+}
+
 static int set_forecast_matrices_from_fr (FITRESID *fr)
 {
     gretl_matrix *f = NULL;
@@ -3646,6 +3836,7 @@ static int set_forecast_matrices_from_fr (FITRESID *fr)
     }
 
     set_fcast_matrices(f, e);
+    set_fcast_result_bundle(f, e, fr->alpha, fr->df, fr->asymp, fr);
 
     return err;
 }
@@ -3708,7 +3899,8 @@ static void F_matrix_adjust_sample (const gretl_matrix *F,
 }
 
 static int set_forecast_matrices_from_F (const gretl_matrix *F,
-					 int imin, int imax)
+					 int imin, int imax,
+					 int df, int asy)
 {
     gretl_matrix *F1 = NULL;
     gretl_matrix *f = NULL;
@@ -3787,6 +3979,7 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
     }
 
     set_fcast_matrices(f, e);
+    set_fcast_result_bundle(f, e, 0.05, df, asy, NULL);
 
     if (F1 != NULL) {
 	gretl_matrix_free(F1);
@@ -3908,6 +4101,13 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	}
     }
 
+    if (opt & OPT_X) {
+	err = check_exponentiate_option(pmod, dset, opt);
+	if (err) {
+	    return err;
+	}
+    }
+
     err = parse_forecast_string(str, opt, pmod, pmod->t2, dset,
 				&t1, &t2, &k, vname, &os_case);
     if (err) {
@@ -3932,6 +4132,12 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 
     if (err) {
         goto bailout;
+    }
+
+    if (!err && (opt & OPT_L) && fr->probs != NULL) {
+	/* --all-probs: make the matrix available as $fcast */
+	set_fcast_matrices(fr->probs, NULL);
+	fr->probs = NULL;
     }
 
     if (!err && (opt & OPT_A)) {
@@ -4099,7 +4305,8 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 
     if (!err) {
 	/* arrange to save forecast and errors */
-	err = set_forecast_matrices_from_F(F, imin, imax);
+	err = set_forecast_matrices_from_F(F, imin, imax, df,
+					   ci == VECM);
     }
 
     if (err) {
@@ -4426,6 +4633,10 @@ void forecast_options_for_model (MODEL *pmod, const DATASET *dset,
 	    *flags |= FC_AUTO_OK;
 	}
 	return;
+    } else if (pmod->ci == ARMA) {
+	if (series_is_log(dset, dv, NULL)) {
+	    *flags |= FC_EXPON_OK;
+	}
     }
 
     *dt2max = *st2max = pmod->t2;

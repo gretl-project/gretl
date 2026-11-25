@@ -1,0 +1,60 @@
+set verbose off
+clear
+set assert stop
+
+/*
+Bootstrapped IRF confidence intervals for a VAR with a gappy lag
+list, estimated and then passed via its bundle. Formerly the bootstrap
+assumed contiguous lags 1..n when rewriting the lag columns of X (and
+the bundle-reconstituted VAR lost its lag list), which overran X and
+corrupted the heap.
+*/
+
+open denmark --quiet
+set boot_iters 499
+
+function void test_boot_gappy_lags (const list L)
+    print "Start testing IRF bootstrap for VAR with lags {1,3}."
+
+    # Given
+    var {1,3} L --silent
+    bundle b = $system
+    matrix point = irf(1, 2, 0, b)
+
+    # When
+    set seed 12345
+    matrix ci = irf(1, 2, 0.1, b)
+
+    # Then
+    assert(rows(ci) == rows(point))
+    assert(cols(ci) == 3)
+    assert(maxr(abs(ci[,1] - point)) < 1.0e-12)
+    assert(minr(ci[,3] - ci[,2]) >= 0)
+    assert(sumc(sumr(isnan(ci))) == 0)
+end function
+
+function void test_boot_contig_vs_plain (const list L)
+    print "Start testing IRF bootstrap: lags {1,2,3} vs plain order 3."
+
+    # Given
+    var {1,2,3} L --silent
+    bundle b1 = $system
+    var 3 L --silent
+    bundle b2 = $system
+
+    # When
+    set seed 12345
+    matrix ci1 = irf(1, 2, 0.1, b1)
+    set seed 12345
+    matrix ci2 = irf(1, 2, 0.1, b2)
+
+    # Then
+    assert(maxr(abs(vec(ci1 - ci2))) < 1.0e-12)
+end function
+
+list L = LRM LRY
+test_boot_gappy_lags(L)
+test_boot_contig_vs_plain(L)
+
+print "Successfully finished tests."
+quit

@@ -5091,54 +5091,53 @@ int function_package_set_properties (fnpkg *pkg, ...)
     return err;
 }
 
-enum {
-    PUBLIST,
-    GUILIST,
-    PRIVLIST,
-    ASSNLIST
-};
+typedef enum {
+    PUBLIST,  /* public functions */
+    GUILIST,  /* functions OK for GUI interface list */
+    PRIVLIST, /* private functions */
+    ASSNLIST  /* "must-assign" functions */
+} FnAttr;
 
-/* From a function package get a list of either its public or its
-   private functions, in the form of a simple gretl list.  The
-   elements of this list are just the positions of these functions in
-   the current recorder array for user-functions.  This is fine if
-   the information is to be used right away (as in the GUI function
-   call dialog), but it should _not_ be assumed that the identifiers
-   will remain valid indefinitely.
+/* Get from @pkg a list comprising those of its functions that satisfy
+   the criterion specified by @attr.  The elements of this list are the
+   positions of the functions in question in the current recorder array
+   for user-defined functions.  This is fine if the information is to be
+   used right away (as in the GUI function call dialog), but it should
+   not be assumed that the identifiers will remain valid indefinitely.
 */
 
-static int *function_package_get_list (fnpkg *pkg, int code, int n)
+static int *function_package_get_list (fnpkg *pkg, FnAttr attr, int n)
 {
     int *list = NULL;
-    int j = 0;
+    int i, j = 0;
+    int addit;
+    ufunc *f;
 
-    if (n > 0) {
-        list = gretl_list_new(n);
-        if (list != NULL) {
-            int i, priv, menu_only;
+    if (n == 0) {
+	return NULL;
+    }
 
-            for (i=0; i<n_ufuns; i++) {
-                if (ufuns[i]->pkg == pkg) {
-                    priv = function_is_private(ufuns[i]);
-                    menu_only = function_is_menu_only(ufuns[i]);
-                    if (code == ASSNLIST && !priv &&
-                        function_must_assign(ufuns[i])) {
-                        list[++j] = i;
-                    }
-                    if (code == PRIVLIST && priv) {
-                        list[++j] = i;
-                    } else if (code == PUBLIST && !priv) {
-                        list[++j] = i;
-                    } else if (code == GUILIST && !priv && !menu_only &&
-                               !pkg_aux_role(ufuns[i]->pkg_role)) {
-                        /* in the GUI list of public functions, don't
-                           display post-processing functions
-                        */
-                        list[++j] = i;
-                    }
-                }
-            }
-        }
+    list = gretl_list_new(n);
+
+    for (i=0; i<n_ufuns; i++) {
+	f = ufuns[i];
+	if (f->pkg != pkg) {
+	    continue;
+	}
+	addit = 0;
+	if (function_is_private(f)) {
+	    addit = (attr == PRIVLIST);
+	} else if (attr == PUBLIST) {
+	    addit = 1;
+	} else if (attr == ASSNLIST) {
+	    addit = function_must_assign(f);
+	} else if (attr == GUILIST) {
+	    addit = !function_is_menu_only(f) &&
+		!pkg_aux_role(f->pkg_role);
+	}
+	if (addit) {
+	    list[++j] = i;
+	}
     }
 
     if (list != NULL) {
@@ -5204,6 +5203,7 @@ int function_package_get_properties (fnpkg *pkg, ...)
     va_list ap;
     int npub = 0;
     int npriv = 0;
+    int nassn = 0;
     int **plist;
     const char *key;
     UfunRole role;
@@ -5220,6 +5220,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
                 npriv++;
             } else {
                 npub++;
+		if (function_must_assign(ufuns[i])) {
+		    nassn++;
+		}
             }
         }
     }
@@ -5319,7 +5322,7 @@ int function_package_get_properties (fnpkg *pkg, ...)
             *plist = function_package_get_list(pkg, PRIVLIST, npriv);
         } else if (!strcmp(key, "assnlist")) {
             plist = (int **) ptr;
-            *plist = function_package_get_list(pkg, ASSNLIST, npriv);
+            *plist = function_package_get_list(pkg, ASSNLIST, nassn);
         } else if (!strcmp(key, "gui-main-id")) {
             pi = (int *) ptr;
             *pi = pkg_get_special_func_id(pkg, UFUN_GUI_MAIN);
@@ -5500,19 +5503,22 @@ static int validate_function_package (fnpkg *pkg)
    MPI.
 */
 
-int write_loaded_functions_file (const char *fname, gretlopt opt)
+int write_loaded_functions_file (const char *fname,
+				 const char *parm,
+				 gretlopt opt)
 {
     PRN *prn;
+    gchar **fids = NULL;
     int mpicall;
     int unpackaged;
     int i, nf;
     int err = 0;
 
-    unpackaged = (opt & OPT_U)? 1 : 0;
-
     if (n_ufuns == 0) {
         return 0;
     }
+
+    unpackaged = (opt & OPT_U)? 1 : 0;
 
     if (unpackaged && !has_suffix(fname, ".xml")) {
         gretl_errmsg_set("Storing functions: the filename suffix must be '.xml'");
@@ -5525,6 +5531,9 @@ int write_loaded_functions_file (const char *fname, gretlopt opt)
     }
 
     mpicall = (opt & OPT_M)? 1 : 0;
+    if (mpicall && parm != NULL) {
+	fids = g_strsplit(parm, ",", 0);
+    }
 
     gretl_xml_header(prn);
     pputs(prn, "<gretl-functions>\n");
@@ -5542,26 +5551,47 @@ int write_loaded_functions_file (const char *fname, gretlopt opt)
     }
 #endif
 
-    if (!unpackaged) {
-        /* write any loaded function packages */
-        for (i=0; i<n_pkgs; i++) {
-            if (validate_function_package(pkgs[i])) {
-                real_write_function_package(pkgs[i], prn, mpicall);
-            }
-        }
-    }
+    if (fids != NULL) {
+	/* write only the specified functions */
+	int n = g_strv_length(fids);
+	int found = 0;
+	int j;
 
-    /* then any unpackaged functions */
-    nf = 0;
-    for (i=0; i<n_ufuns; i++) {
-        if (ufuns[i]->pkg == NULL) {
-            write_function_xml(ufuns[i], prn, mpicall);
-            nf++;
-        }
-    }
-    if (unpackaged && nf == 0) {
-        gretl_errmsg_set("No unpackaged functiond were found");
-        err = E_DATA;
+	for (i=0; i<n_ufuns && found<n; i++) {
+	    for (j=0; j<n; j++) {
+		if (!strcmp(ufuns[i]->name, fids[j])) {
+		    write_function_xml(ufuns[i], prn, mpicall);
+		    found++;
+		    break;
+		}
+	    }
+	}
+	g_strfreev(fids);
+	if (found < n) {
+	    gretl_errmsg_set("Some specified function(s) were not found");
+	    err = E_INVARG;
+	}
+    } else {
+	/* write any loaded function packages, if wanted */
+	if (!unpackaged) {
+	    for (i=0; i<n_pkgs; i++) {
+		if (validate_function_package(pkgs[i])) {
+		    real_write_function_package(pkgs[i], prn, mpicall);
+		}
+	    }
+	}
+	/* then any unpackaged functions */
+	nf = 0;
+	for (i=0; i<n_ufuns; i++) {
+	    if (ufuns[i]->pkg == NULL) {
+		write_function_xml(ufuns[i], prn, mpicall);
+		nf++;
+	    }
+	}
+	if (unpackaged && nf == 0) {
+	    gretl_errmsg_set("No unpackaged functions were found");
+	    err = E_DATA;
+	}
     }
 
     pputs(prn, "</gretl-functions>\n");

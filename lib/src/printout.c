@@ -3412,6 +3412,8 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 	} else if (fr->a0meth == 2) {
 	    pprintf(prn, " %s\n", _("Normality rejected: smearing correction applied"));
 	}
+    } else if (expon) {
+	pprintf(prn, " %s\n", _("Forecast is exponentiated without bias correction"));
     }
 
     obslen = max_obs_marker_length(dset);
@@ -3838,6 +3840,14 @@ char *bufgets (char *s, size_t size, const char *buf)
     int i, status = 0;
     const char *p;
 
+    if (s == NULL || size == 0) {
+	/* no room even for the terminator. Note that size == 1 is
+	   legitimate: getline() passes it for an empty line, which
+	   must still be consumed.
+	*/
+	return NULL;
+    }
+
     p = rbuf_get_point(buf);
     if (p == NULL) {
 	return NULL;
@@ -3850,14 +3860,14 @@ char *bufgets (char *s, size_t size, const char *buf)
 
     *s = '\0';
 
-    /* advance to line-end, end of buffer, or maximum size,
-       whichever comes first */
+    /* Advance to line-end, end of buffer, or maximum size,
+       whichever comes first.
+    */
     for (i=0; ; i++) {
 	s[i] = p[i];
 	if (p[i] == '\0') {
 	    break;
-	}
-	if (p[i] == '\r') {
+	} else if (p[i] == '\r') {
 	    s[i] = '\0';
 	    if (p[i+1] == '\n') {
 		status = GOT_CRLF;
@@ -3865,13 +3875,11 @@ char *bufgets (char *s, size_t size, const char *buf)
 		status = GOT_CR;
 	    }
 	    break;
-	}
-	if (p[i] == '\n') {
+	} else 	if (p[i] == '\n') {
 	    s[i] = '\0';
 	    status = GOT_LF;
 	    break;
-	}
-	if (i == size - 1) {
+	} else if (i == size - 1) {
 	    fprintf(stderr, "*** bufgets: line too long: max %d characters\n",
 		    (int) size);
 	    s[i] = '\0';

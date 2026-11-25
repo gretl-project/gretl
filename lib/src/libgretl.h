@@ -463,7 +463,6 @@ typedef struct MODEL_ {
 #include "modelprint.h"
 #include "graphing.h"
 #include "random.h"
-#include "nonparam.h"
 #include "options.h"
 #include "discrete.h"
 #include "adf_kpss.h"

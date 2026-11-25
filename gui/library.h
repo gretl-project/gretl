@@ -330,9 +330,9 @@ int do_store (char *filename, int action, gpointer data);
 
 int do_local_pkg_install (const char *filename);
 
-void set_csv_exclude_obs (gboolean s);
+void set_csv_include_obs (gboolean s);
 
-gboolean get_csv_exclude_obs (void);
+gboolean get_csv_include_obs (void);
 
 int gui_exec_line (ExecState *s, DATASET *dset,
 		   GtkWidget *parent);

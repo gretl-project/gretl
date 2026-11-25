@@ -40,16 +40,16 @@ double lockes_test (const double *x, int t1, int t2, int *err);
 
 double vge_gamma_test (const double *x, int t1, int t2, int *err);
 
-int sign_test (const double *x, const double *y,
-	      int v1, int v2, const DATASET *dset,
+int sign_test (int v1, int v2, const DATASET *dset,
                double *result, gretlopt opt, PRN *prn);
 
 int rank_sum_test (const double *x, const double *y,
-                   int v1, int v2, const DATASET *dset,
-                   double *result, gretlopt opt, PRN *prn);
+                   int nx, int ny, int v1, int v2,
+		   const DATASET *dset, double *result,
+		   gretlopt opt, PRN *prn);
 
 int signed_rank_test (const double *x, const double *y,
-                      int v1, int v2, const DATASET *dset,
+                      int N, int v1, int v2, const DATASET *dset,
                       double *result, gretlopt opt, PRN *prn);
 
 int runs_test (int v, const DATASET *dset,

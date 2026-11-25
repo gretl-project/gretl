@@ -16029,6 +16029,11 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
     int T = p + U->rows;
     int t, i;
 
+    if (p == 0) {
+	X = gretl_matrix_copy(U);
+	return X;
+    }
+
     if (A->rows != n || A->cols != np || U->cols != n) {
         *err = E_NONCONF;
         return NULL;

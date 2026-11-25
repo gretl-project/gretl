@@ -1586,8 +1586,7 @@ gretl_VAR_get_residual_matrix (const GRETL_VAR *var)
 
 #define samesize(p,q) (p->rows == q->rows && p->cols == q->cols)
 
-gretl_matrix *
-gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
+gretl_matrix *gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
 {
     gretl_matrix *Yh = NULL;
 
@@ -1603,9 +1602,13 @@ gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
     return Yh;
 }
 
-gretl_matrix *
-gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATASET *dset,
-                          int *err)
+/* Called directly only by saved_object_build_matrix() in objstack.c,
+   but indirectly from geneval.c and genfuncs.c.
+*/
+
+gretl_matrix *gretl_VAR_get_vma_matrix (const GRETL_VAR *var,
+					const DATASET *dset,
+					int *err)
 {
     int h = default_VAR_horizon(dset);
     int ar, n = var->neqns;
@@ -1829,6 +1832,10 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
     return C;
 }
 
+/* Transcribe (or cumulate, if @add is non-zero) the k x k matrix @src
+   into the northwest block of @targ.
+*/
+
 void copy_north_west (gretl_matrix *targ,
 		      const gretl_matrix *src,
 		      int add)
@@ -1851,21 +1858,45 @@ void copy_north_west (gretl_matrix *targ,
     }
 }
 
+/* Alternative to copy_north_west(), used locally when @src is
+   implicitly the identity matrix of order @k.
+*/
+
+static void fill_north_west (gretl_matrix *targ,
+			     int k, int add)
+{
+    double d;
+    int i;
+
+    if (!add) {
+        gretl_matrix_zero(targ);
+    }
+
+    for (i=0; i<k; i++) {
+	if (add) {
+	    d = gretl_matrix_get(targ, i, i);
+	    gretl_matrix_set(targ, i, i, d + 1.0);
+	} else {
+	    gretl_matrix_set(targ, i, i, 1.0);
+	}
+    }
+}
+
 static int real_point_responses (const gretl_matrix *A,
 				 const gretl_matrix *C,
+				 int neqns,
 				 gretl_matrix *resp,
 				 int targ, int shock)
 {
     gretl_matrix *rtmp;
     gretl_matrix *ctmp;
     double rij;
-    int n = C->rows;
     int np = A->cols;
     int i, j, k, t;
 
     /* workspace */
-    rtmp = gretl_matrix_alloc(np, n);
-    ctmp = gretl_zero_matrix_new(np, n);
+    rtmp = gretl_matrix_alloc(np, neqns);
+    ctmp = gretl_zero_matrix_new(np, neqns);
     if (rtmp == NULL || ctmp == NULL) {
 	gretl_matrix_free(rtmp);
 	gretl_matrix_free(ctmp);
@@ -1875,7 +1906,11 @@ static int real_point_responses (const gretl_matrix *A,
     for (t=0; t<resp->rows; t++) {
         if (t == 0) {
             /* initial estimated responses */
-	    copy_north_west(rtmp, C, 0);
+	    if (C == NULL) {
+		fill_north_west(rtmp, neqns, 0);
+	    } else {
+		copy_north_west(rtmp, C, 0);
+	    }
         } else {
             /* calculate further estimated responses */
             gretl_matrix_multiply(A, rtmp, ctmp);
@@ -1885,21 +1920,21 @@ static int real_point_responses (const gretl_matrix *A,
             resp->val[t] = gretl_matrix_get(rtmp, targ, shock);
         } else if (shock >= 0) {
             /* all targets for one shock */
-            for (i=0; i<n; i++) {
+            for (i=0; i<neqns; i++) {
                 rij = gretl_matrix_get(rtmp, i, shock);
                 gretl_matrix_set(resp, t, i, rij);
             }
         } else if (targ >= 0) {
             /* all shocks for one target */
-            for (j=0; j<n; j++) {
+            for (j=0; j<neqns; j++) {
                 rij = gretl_matrix_get(rtmp, targ, j);
                 gretl_matrix_set(resp, t, j, rij);
             }
         } else {
             /* all shocks, all targets */
             k = 0;
-            for (i=0; i<n; i++) {
-                for (j=0; j<n; j++) {
+            for (i=0; i<neqns; i++) {
+                for (j=0; j<neqns; j++) {
                     rij = gretl_matrix_get(rtmp, i, j);
                     gretl_matrix_set(resp, t, k++, rij);
                 }
@@ -1913,7 +1948,7 @@ static int real_point_responses (const gretl_matrix *A,
     return 0;
 }
 
-/* Calculate the VMA representation based on the A and C matrices,
+/* Calculate the VMA representation based on matrices @A and @C,
    for a given horizon.
 */
 
@@ -1921,7 +1956,6 @@ gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
 		       int horizon, int *err)
 {
     gretl_matrix *resp = NULL;
-    gretl_matrix *realC = C;
     gretl_matrix *realA = A;
     int neqns, dim;
 
@@ -1933,15 +1967,7 @@ gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
     neqns = A->rows;
     dim = A->cols;
 
-    if (realC == NULL) {
-	/* manufacture "plain" @C for convenience */
-	realC = gretl_identity_matrix_new(neqns);
-	if (realC == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (!*err && dim > neqns) {
+    if (dim > neqns) {
 	/* the incoming @A is just the top @neqns rows
 	   of the companion matrix
 	*/
@@ -1952,22 +1978,18 @@ gretl_matrix *vma_rep (gretl_matrix *A, gretl_matrix *C,
 	int nresp = neqns * neqns;
 
 	resp = gretl_matrix_alloc(horizon, nresp);
-
 	if (resp == NULL) {
 	    *err = E_ALLOC;
 	} else {
 	    if (neqns == 1) {
 		/* "all" means "first" in this case */
-		*err = real_point_responses(realA, realC, resp, 0, 0);
+		*err = real_point_responses(realA, C, neqns, resp, 0, 0);
 	    } else {
-		*err = real_point_responses(realA, realC, resp, -1, -1);
+		*err = real_point_responses(realA, C, neqns, resp, -1, -1);
 	    }
 	}
     }
 
-    if (realC != C) {
-	gretl_matrix_free(realC);
-    }
     if (realA != A) {
 	gretl_matrix_free(realA);
     }
@@ -1985,6 +2007,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 {
     gretl_matrix *resp = NULL;
     gretl_matrix *C = var->C;
+    int n = C->rows;
     int nresp = 1;
 
     if (shock >= var->neqns) {
@@ -2020,7 +2043,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
     if (resp == NULL) {
         *err = E_ALLOC;
     } else {
-	*err = real_point_responses(var->A, C, resp, targ, shock);
+	*err = real_point_responses(var->A, C, n, resp, targ, shock);
     }
 
     if (C != var->C) {
@@ -5502,6 +5525,24 @@ static GRETL_VAR *build_VAR_from_bundle (gretl_bundle *b,
         var->ylist = gretl_bundle_get_list(b, "ylist", NULL);
         var->xlist = gretl_bundle_get_list(b, "xlist", NULL);
         var->rlist = gretl_bundle_get_list(b, "rlist", NULL);
+	if (gretl_bundle_has_key(b, "lags")) {
+	    /* gappy lags: unlike the other lists this is a copy
+	       owned by @var, and freed by gretl_VAR_free()
+	    */
+	    const gretl_matrix *lv = gretl_bundle_get_matrix(b, "lags", err);
+	    int k = gretl_vector_get_length(lv);
+
+	    if (!*err && k > 0) {
+		var->lags = gretl_list_new(k);
+		if (var->lags == NULL) {
+		    *err = E_ALLOC;
+		} else {
+		    for (i=0; i<k; i++) {
+			var->lags[i+1] = (int) lv->val[i];
+		    }
+		}
+	    }
+	}
     }
 
     if (!*err) {

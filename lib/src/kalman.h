@@ -53,6 +53,8 @@ int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P);
 
 void kalman_set_arma_ll (kalman *K);
 
+void kalman_set_F_output (kalman *K, gretl_matrix *F);
+
 void kalman_attach_data (kalman *K, void *data);
 
 void *kalman_get_data (const kalman *K);

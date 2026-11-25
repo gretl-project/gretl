@@ -65,6 +65,7 @@
 #include "guiprint.h"
 #include "varinfo.h"
 #include "fncall.h"
+#include "panelmarkers.h"
 
 #ifdef G_OS_WIN32
 # include <io.h>
@@ -1744,11 +1745,11 @@ void do_add_markers (const char *fname)
     int err = add_obs_markers_from_file(dataset, fname);
 
     if (err) {
-        gui_errmsg(err);
+	gui_errmsg(err);
     } else {
-        lib_command_sprintf("markers --from-file=\"%s\"", fname);
-        record_command_verbatim();
-        mark_dataset_as_modified();
+	lib_command_sprintf("markers --from-file=\"%s\"", fname);
+	record_command_verbatim();
+	mark_dataset_as_modified();
     }
 }
 
@@ -1762,7 +1763,6 @@ int do_save_markers (const char *fname)
     }
 
     fp = gretl_fopen(fname, "w");
-
     if (fp == NULL) {
         file_write_errbox(fname);
         return E_FOPEN;
@@ -1780,36 +1780,59 @@ int do_save_markers (const char *fname)
     return 0;
 }
 
+static void export_or_delete_markers (void)
+{
+    const char *opts[] = {
+	N_("Export the markers to file"),
+	N_("Remove the markers")
+    };
+    int resp;
+
+    resp = radio_dialog("gretl", _("The dataset has observation markers.\n"
+				   "Would you like to:"),
+			opts, 2, 0, 0, NULL);
+    if (resp == 0) {
+	file_selector(SAVE_MARKERS, FSEL_DATA_NONE, NULL);
+    } else if (resp == 1) {
+	dataset_destroy_obs_markers(dataset);
+	mark_dataset_as_modified();
+	lib_command_strcpy("markers --delete");
+	record_command_verbatim();
+    }
+}
+
 /* called from main window Data menu */
 
 void markers_callback (void)
 {
     if (dataset->S != NULL) {
         /* we have markers in place */
-        const char *opts[] = {
-            N_("Export the markers to file"),
-            N_("Remove the markers")
-        };
-        int resp;
+	export_or_delete_markers();
+	return; /* handled */
+    } else if (dataset_is_panel(dataset)) {
+	int *ulist = NULL;
+	int *tlist = NULL;
 
-        resp = radio_dialog("gretl", _("The dataset has observation markers.\n"
-                                "Would you like to:"),
-                            opts, 2, 0, 0, NULL);
-        if (resp == 0) {
-            file_selector(SAVE_MARKERS, FSEL_DATA_NONE, NULL);
-        } else if (resp == 1) {
-            dataset_destroy_obs_markers(dataset);
-            mark_dataset_as_modified();
-            lib_command_strcpy("markers --delete");
-            record_command_verbatim();
-        }
-    } else {
-        if (yes_no_dialog("gretl",
-                          _("The dataset has no observation markers.\n"
-                            "Add some from file now?"),
-                          NULL) == GRETL_YES) {
-            file_selector(OPEN_MARKERS, FSEL_DATA_NONE, NULL);
-        }
+	get_candidate_lists(&ulist, &tlist);
+	if (ulist != NULL) {
+	    int resp = panel_markers_choice();
+
+	    if (resp == 0) {
+		panel_markers_dialog(ulist, tlist);
+	    } else if (resp == 1) {
+		file_selector(OPEN_MARKERS, FSEL_DATA_NONE, NULL);
+	    }
+	    free(ulist);
+	    free(tlist);
+	    return; /* handled */
+	}
+    }
+
+    if (yes_no_dialog("gretl",
+		      _("The dataset has no observation markers.\n"
+			"Add some from file now?"),
+		      NULL) == GRETL_YES) {
+	file_selector(OPEN_MARKERS, FSEL_DATA_NONE, NULL);
     }
 }
 
@@ -1924,8 +1947,8 @@ int out_of_sample_info (int add_ok, int *t2)
    forecast).
 */
 
-static void maybe_copy_options (gretlopt *gopt,
-                                gretlopt *fopt)
+static void maybe_copy_fcast_options (gretlopt *gopt,
+				      gretlopt *fopt)
 {
     gretlopt to_copy = OPT_I | OPT_X;
     gretlopt isect = *gopt & to_copy;
@@ -1988,8 +2011,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         premax = dataset->n - 1;
     }
 
-    /* if there are spare obs available, default to an
-       out-of-sample forecast */
+    /* If there are spare obs available, default to an
+       out-of-sample forecast. */
     if (t2 > pmod->t2) {
         t1 = pmod->t2 + 1;
         if (ts) {
@@ -2030,7 +2053,20 @@ void gui_do_forecast (GtkAction *action, gpointer p)
         recursive = 1;
     }
 
-    maybe_copy_options(&gopt, &fopt);
+    maybe_copy_fcast_options(&gopt, &fopt);
+
+    if (fopt & OPT_X) {
+	/* the --exponentiate option is set */
+	if (gopt & OPT_N) {
+	    /* select the "naive" variant and delete the
+	       temporary OPT_N */
+	    set_optval_int(FCAST, OPT_X, 3);
+	    gopt &= ~OPT_N;
+	} else {
+	    /* select the automatic variant */
+	    set_optval_int(FCAST, OPT_X, 0);
+	}
+    }
 
     if (recursive) {
         fr = recursive_OLS_k_step_fcast(pmod, dataset,
@@ -3806,13 +3842,12 @@ void errmsg_plus (int err, const char *plus)
     }
 }
 
-/* The point of the following is to take a line such as
-   "matrix M = I(5)", with leading type specification,
-   and to pre-process it as the tokenizer does for "genr"
-   expressions entered via script or command line. That is,
-   strip out the type-word (if present) but use the
-   information it carries to fill out the @gtype argument to
-   the libgretl generate() function.
+/* The point of the following is to take a line such as "matrix M =
+   I(5)", with leading type specification, and to pre-process it as the
+   tokenizer does for "genr" expressions entered via script or command
+   line. That is, strip out the type-word (if present) but use the
+   information it carries to fill out the @gtype argument to the
+   libgretl generate() function.
 */
 
 int gui_run_genr (const char *line, DATASET *dset,
@@ -9169,25 +9204,25 @@ static gretlopt store_action_to_opt (const char *fname, int action,
     return opt;
 }
 
-/* suppress inclusion of observations column when exporting
-   data as CSV? */
-static gboolean csv_exclude_obs;
+/* should we include an observations column when exporting
+   data as CSV?
+*/
+static gboolean csv_include_obs = 1;
 
 /* apparatus for use by the CSV options dialog */
 
-void set_csv_exclude_obs (gboolean s)
+void set_csv_include_obs (gboolean s)
 {
-    csv_exclude_obs = s;
+    csv_include_obs = s;
 }
 
-gboolean get_csv_exclude_obs (void)
+gboolean get_csv_include_obs (void)
 {
-    return csv_exclude_obs;
+    return csv_include_obs;
 }
 
-/* This is called from the file selector when doing a
-   data save, and also from the callback from Ctrl-S
-   in the main gretl window.
+/* This is called from the file selector when doing a data save, and
+   also from the callback from Ctrl-S in the main gretl window.
 */
 
 int do_store (char *filename, int action, gpointer data)
@@ -9244,15 +9279,13 @@ int do_store (char *filename, int action, gpointer data)
         }
     }
 
-    if (opt & OPT_X) {
-        ; /* inside a session: "exporting" gdt */
-    } else if (opt != OPT_NONE) {
-        /* not a bog-standard native save */
-        if (action == EXPORT_CSV && csv_exclude_obs) {
-            /* pick up option to exclude obs column */
-            opt |= OPT_X;
-        }
-        lib_command_strcat(print_flags(opt, STORE));
+    if (!(opt & OPT_X)) {
+	if (action == EXPORT_CSV && !csv_include_obs) {
+	    opt |= OPT_X;
+	}
+	if (opt != OPT_NONE) {
+	    lib_command_strcat(print_flags(opt, STORE));
+	}
     }
 
     err = parse_lib_command();

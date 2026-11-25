@@ -1087,33 +1087,31 @@ struct ranker {
 };
 
 /* Wilcoxon signed-rank test, with handling of zero-differences and
-   non-zero ties, plus continuity correction, as in E. Cureton, "The
+   non-zero ties plus continuity correction, as in E. Cureton, "The
    Normal Approximation to the Signed-Rank Sampling Distribution when
    Zero Differences are Present", JASA(62), 1967, 1068-1069.
 */
 
 int signed_rank_test (const double *x, const double *y,
-                      int v1, int v2, const DATASET *dset,
-                      double *result, gretlopt opt, PRN *prn)
+                      int N, int v1, int v2,
+		      const DATASET *dset, double *result,
+		      gretlopt opt, PRN *prn)
 {
     struct ranker *r;
     double d, T, wp, wm;
     double z = NADBL, pval = NADBL;
     int quiet = (opt & OPT_Q);
-    int Z = 0, N = 0;
-    int i, k, t, n = 0;
-
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (!na(x[t]) && !na(y[t])) {
-	    if (x[t] != y[t]) {
-		n++;
-	    }
-	    N++;
-	}
-    }
+    int Z = 0;
+    int i, j, k, t, n = 0;
 
     if (N == 0) {
 	return E_MISSDATA;
+    }
+
+    for (i=0; i<N; i++) {
+	if (x[i] != y[i]) {
+	    n++;
+	}
     }
 
     Z = N - n; /* number of zero-differences */
@@ -1123,13 +1121,12 @@ int signed_rank_test (const double *x, const double *y,
 	return E_ALLOC;
     }
 
-    i = 0;
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (!na(x[t]) && !na(y[t]) && x[t] != y[t]) {
-	    d = x[t] - y[t];
-	    r[i].val = fabs(d);
-	    r[i].c = (d > 0)? '+' : '-';
-	    i++;
+    for (i=0, j=0; i<N; i++) {
+	if (x[i] != y[i]) {
+	    d = x[i] - y[i];
+	    r[j].val = fabs(d);
+	    r[j].c = (d > 0)? '+' : '-';
+	    j++;
 	}
     }
 
@@ -1144,7 +1141,6 @@ int signed_rank_test (const double *x, const double *y,
 	for (t=i+1; t<n && r[t].val == r[i].val; t++) {
 	    m++;
 	}
-
 	if (m == 0) {
 	    r[i].rank = Z + i + 1;
 	} else {
@@ -1245,26 +1241,18 @@ int signed_rank_test (const double *x, const double *y,
 }
 
 int rank_sum_test (const double *x, const double *y,
-                   int v1, int v2, const DATASET *dset,
-                   double *result, gretlopt opt, PRN *prn)
+                   int nx, int ny, int v1, int v2,
+		   const DATASET *dset, double *result,
+		   gretlopt opt, PRN *prn)
 {
     struct ranker *r;
     double wa, z = NADBL, pval = NADBL;
     char xc = 'a', yc = 'b';
-    int na = 0, nb = 0;
+    int na = nx, nb = ny;
     int quiet = (opt & OPT_Q);
-    int i, t, n = 0;
+    int i, j, t, n = 0;
 
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (!na(x[t])) na++;
-	if (!na(y[t])) nb++;
-    }
-
-    if (na == 0 || nb == 0) {
-	return E_MISSDATA;
-    }
-
-    n = na + nb;
+    n = nx + ny;
     r = malloc(n * sizeof *r);
     if (r == NULL) {
 	return E_ALLOC;
@@ -1280,18 +1268,16 @@ int rank_sum_test (const double *x, const double *y,
 	yc = 'a';
     }
 
-    i = 0;
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (!na(x[t])) {
-	    r[i].val = x[t];
-	    r[i].c = xc;
-	    i++;
-	}
-	if (!na(y[t])) {
-	    r[i].val = y[t];
-	    r[i].c = yc;
-	    i++;
-	}
+    j = 0;
+    for (i=0; i<nx; i++) {
+	r[j].val = x[i];
+	r[j].c = xc;
+	j++;
+    }
+    for (i=0; i<ny; i++) {
+	r[j].val = y[i];
+	r[j].c = yc;
+	j++;
     }
 
     qsort(r, n, sizeof *r, gretl_compare_doubles);
@@ -1302,7 +1288,6 @@ int rank_sum_test (const double *x, const double *y,
 	for (t=i+1; t<n && r[t].val == r[i].val; t++) {
 	    m++;
 	}
-
 	if (m == 1) {
 	    r[i].rank = i + 1;
 	} else {
@@ -1376,10 +1361,11 @@ int rank_sum_test (const double *x, const double *y,
     return 0;
 }
 
-int sign_test (const double *x, const double *y,
-	      int v1, int v2, const DATASET *dset,
-	      double *result, gretlopt opt, PRN *prn)
+int sign_test (int v1, int v2, const DATASET *dset,
+	       double *result, gretlopt opt, PRN *prn)
 {
+    const double *x = dset->Z[v1];
+    const double *y = dset->Z[v2];
     double pv;
     int n, w, t;
 

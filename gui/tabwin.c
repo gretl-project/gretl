@@ -125,8 +125,8 @@ static gboolean maybe_block_tabedit_quit (tabwin_t *tabwin,
     return ret;
 }
 
-/* Called from winstack.c on program exit: @w will be the top-level of a
-   tabbed window.
+/* Called on program exit: @w will be the top-level
+   of a tabbed window.
 */
 
 gboolean tabwin_exit_check (GtkWidget *w)

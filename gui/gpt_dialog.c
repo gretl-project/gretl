@@ -916,7 +916,8 @@ static void maybe_set_point_type (GPT_LINE *line, GtkWidget *w, int i)
 
 static void plot_editor_sync (plot_editor *ed)
 {
-    free(ed->old_lines);
+    /* the backup lines own strings, so free those too */
+    plotspec_free_lines(ed->old_lines, ed->old_n_lines);
     old_lines_init(ed);
 
     free(ed->old_labels);
@@ -3516,7 +3517,7 @@ static void plot_editor_destroy (plot_editor *ed)
 {
     if (restore_lines(ed)) {
 	/* undo any unapplied changes to lines */
-	free(ed->spec->lines);
+	plotspec_free_lines(ed->spec->lines, ed->spec->n_lines);
 	ed->spec->lines = ed->old_lines;
 	ed->spec->n_lines = ed->old_n_lines;
     }

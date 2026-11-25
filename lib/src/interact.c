@@ -49,6 +49,7 @@
 #include "addons_utils.h"
 #include "gretl_gridplot.h"
 #include "gretl_sampler.h"
+#include "nonparam.h"
 #include "gretl_untar.h"
 #ifdef USE_CURL
 # include "gretl_www.h"
@@ -3946,7 +3947,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         } else if (cmd->opt & OPT_A) {
             err = write_matrix_as_dataset(cmd->param, cmd->opt, prn);
         } else if (cmd->opt & OPT_U) {
-            err = write_loaded_functions_file(cmd->param, cmd->opt);
+            err = write_loaded_functions_file(cmd->param, NULL, cmd->opt);
         } else if (dset == NULL || dset->Z == NULL) {
             err = E_NODATA;
         } else {

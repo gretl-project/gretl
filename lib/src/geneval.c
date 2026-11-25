@@ -49,6 +49,7 @@
 #include "flow_control.h"
 #include "mapinfo.h"
 #include "gretl_sampler.h"
+#include "nonparam.h"
 
 #include <time.h> /* for the $now accessor */
 
@@ -733,6 +734,7 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 
     if (n->t == LIST) {
         free(n->v.ivec);
+	n->v.ivec = NULL;
     } else if (n->t == MAT) {
         /* (how) can we avoid doing this? */
         gretl_matrix_free(n->v.m);
@@ -817,12 +819,35 @@ static int mutate_bundle_member_node (NODE *n, int type,
     return err;
 }
 
-/* We allow here for some equivocation in type between
-   1 x 1 matrices and scalars in the course of executing
-   a compiled parser with saved aux nodes.
+/* We allow here for some equivocation in type in the course of
+   executing a compiled parser with saved aux nodes.
 */
 
-static void maybe_switch_node_type (NODE *n, int type,
+/* Free the payload of a tmp node that owns its data, and null the
+   pointer; for use when a node is about to change type.
+*/
+
+static void free_tmp_node_payload (NODE *n)
+{
+    if (is_tmp_node(n)) {
+        if (n->t == LIST) {
+            free(n->v.ivec);
+        } else if (n->t == SERIES) {
+            free(n->v.xvec);
+        } else if (n->t == MAT) {
+            gretl_matrix_free(n->v.m);
+        } else if (n->t == STR) {
+            free(n->v.str);
+        } else if (n->t == BUNDLE) {
+            gretl_bundle_destroy(n->v.b);
+        } else if (n->t == ARRAY) {
+            gretl_array_destroy(n->v.a);
+        }
+    }
+    n->v.ptr = NULL;
+}
+
+static void maybe_switch_node_type (NODE *n, int type, int size,
                                     int flags, parser *p)
 {
     if (mutable_node(n)) {
@@ -843,11 +868,35 @@ static void maybe_switch_node_type (NODE *n, int type,
         n->t = MAT;
         n->v.m = NULL;
         n->flags = flags;
+        n->vnum = NO_VNUM;
+        n->vname = NULL;
+    } else if (n->t == SERIES && type == LIST) {
+	/* a borrowed series (see real_list_series_node) is not
+	   tmp, hence not freed; an owned tmp series is */
+	free_tmp_node_payload(n); /* also nulls the aliased pointer */
+	n->t = LIST;
+	n->flags = flags;
+	n->vnum = NO_VNUM;
+	n->vname = NULL;
+    } else if (n->t == LIST && type == SERIES) {
+	free_tmp_node_payload(n);
+	n->t = SERIES;
+	n->flags = flags;
+	if (size > 0) {
+	    /* as newseries() would do */
+	    n->v.xvec = na_array(size);
+	    if (n->v.xvec == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
     } else if (type == EMPTY) {
         ; /* LHS mechanism: OK */
     } else if (gen_type_is_arrayable(n->t) && type == ARRAY) {
+	free_tmp_node_payload(n);
         n->t = ARRAY;
         n->flags = flags;
+	n->vnum = NO_VNUM;
+	n->vname = NULL;
     } else {
         /* any other discrepancy presumably means that
            things have gone badly wrong
@@ -881,9 +930,9 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
         /* got a pre-existing aux node */
         if (starting(p)) {
             if (ret->t != t) {
-                maybe_switch_node_type(ret, t, flags, p);
+                maybe_switch_node_type(ret, t, n, flags, p);
             } else if (is_tmp_node(ret) && !(p->flags & P_MSAVE)) {
-                clear_tmp_node_data(ret, p);
+		clear_tmp_node_data(ret, p);
             }
         }
     } else {
@@ -912,11 +961,9 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
             /* invalid aux node spec */
             p->err = E_DATA;
         }
-
         if (!p->err && ret == NULL) {
             p->err = E_ALLOC;
         }
-
         if (!p->err) {
             ret->flags |= AUX_NODE;
         }
@@ -5885,7 +5932,7 @@ static NODE *real_list_series_node (int vnum, parser *p)
 }
 
 /* Handling a context where we have a list under node @l,
-   and position within the list in @pos.
+   and a position within the list in @pos.
 */
 
 static NODE *list_member_by_pos (NODE *l, int pos, parser *p)
@@ -6151,7 +6198,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	int *vlist = array_subspec_list(l, r, p);
 
 	if (!p->err && vlist[0] == 1 && l->t == LIST) {
-	    /* singleton list selection */
+	    /* singleton list selection: we return a series */
 	    ret = list_member_by_pos(l, vlist[1], p);
 	} else if (!p->err && gretl_list_is_consecutive(vlist)) {
 	    /* selected elements are consecutive */
@@ -6255,13 +6302,12 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
         } else {
             ret = aux_ivec_node(p, 2);
             if (ret != NULL) {
+		if (ret->v.ivec == NULL) {
+		    ret->v.ivec = malloc(2 * sizeof(int));
+		}
                 ret->v.ivec[0] = node_get_int(l, p);
-                if (null_node(r)) {
-                    ret->v.ivec[1] = MSEL_MAX; /* placeholder */
-                } else {
-                    ret->v.ivec[1] = node_get_int(r, p);
-                }
-            }
+		ret->v.ivec[1] = null_node(r) ? MSEL_MAX : node_get_int(r, p);
+	    }
         }
     } else {
         ret = aux_ivec_node(p, 2);
@@ -11930,9 +11976,13 @@ static NODE *get_or_steal_bundle_member (NODE *l, NODE *r, parser *p, int steal)
     }
 
     if (querying) {
-        ret = aux_empty_node(p);
-        ret->t = gen_type_from_gretl_type(type);
-        return ret;
+	ret = aux_empty_node(p);
+	ret->t = gen_type_from_gretl_type(type);
+	if (type == GRETL_TYPE_ARRAY && !is_virtual) {
+	    /* typename() needs the array's content type */
+	    ret->v.a = (gretl_array *) val;
+	}
+	return ret;
     }
 
     if (type != GRETL_TYPE_SERIES && !is_virtual) {

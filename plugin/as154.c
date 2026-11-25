@@ -193,7 +193,7 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 	   double *theta, double *a, double *p0,
 	   double *v, int n, double *w, double *resid,
 	   double *sumlog, double *ssq, int iupd,
-	   double delta, double *e, int *nit)
+	   double delta, double *e, int *nit, double *lnf)
 {
     double g, a0;
     int i, j, l, ii;
@@ -205,6 +205,11 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 
     for (i=0; i<ir; i++) {
 	e[i] = 0;
+    }
+
+    /* @lnf receives log(f_t) for the exact phase, 0 thereafter */
+    for (i=0; i<n; i++) {
+	lnf[i] = 0;
     }
 
     /* for non-zero values of @nit, perform quick recursions */
@@ -285,7 +290,8 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 	    inde = 0;
 	}
 	*ssq += ut * ut / ft;
-	*sumlog += log(ft);
+	lnf[i] = log(ft);
+	*sumlog += lnf[i];
 	skip = 0;
     }
 

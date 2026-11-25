@@ -21,10 +21,12 @@
 
 #include "gretl.h"
 #include "libset.h"
+#include "gretl_func.h"
 
 #include "toolbar.h"
 #include "winstack.h"
 #include "dlgutils.h"
+#include "textbuf.h"
 #include "tabwin.h"
 
 #ifndef G_OS_WIN32
@@ -58,6 +60,16 @@ extern int update_query (void);
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list",  0, GRETL_FILENAME }
 };
+
+static void
+editor_handle_drag (GtkWidget          *widget,
+		    GdkDragContext     *dc,
+		    gint                x,
+		    gint                y,
+		    GtkSelectionData   *data,
+		    guint               info,
+		    guint               time,
+		    gpointer            p);
 
 static int optver;
 #ifdef G_OS_WIN32
@@ -128,7 +140,8 @@ int tryfile_is_set (void)
 
 static int script_type (const char *fname)
 {
-    if (has_suffix(fname, ".inp")) {
+    if (has_suffix(fname, ".inp") ||
+	has_suffix(fname, ".gfn")) {
 	return EDIT_HANSL;
     } else if (has_suffix(fname, ".R")) {
 	return EDIT_R;
@@ -176,61 +189,13 @@ static void real_nls_init (void)
 
 #elif defined(__APPLE__)
 
-#define LOCALE_CHECK 1
-
-#if LOCALE_CHECK
-
-#include <CoreFoundation/CoreFoundation.h>
-
-/* Use this to check what we get from setlocale() ? */
-
-static void macos_check_locale (void)
-{
-    CFLocaleRef cfloc = CFLocaleCopyCurrent();
-    CFStringRef cfprop;
-    const char *s;
-
-    cfprop = (CFStringRef) CFLocaleGetValue(cfloc, kCFLocaleIdentifier);
-    s = CFStringGetCStringPtr(cfprop, kCFStringEncodingASCII);
-    if (s != NULL) {
-	fprintf(stderr, "macos_check_locale: CF gave ID '%s'\n", s);
-    }
-
-    CFRelease(cfloc);
-}
-
-#endif /* LOCALE_CHECK */
-
-static void real_nls_init (void)
-{
-    char *gretlhome = getenv("GRETL_HOME");
-    char localedir[MAXSTR];
-    char *p;
-
-    if (gretlhome == NULL) {
-	return;
-    }
-
-    g_strlcpy(localedir, gretlhome, sizeof localedir);
-    p = strstr(localedir, "share/gretl");
-    if (p != NULL) {
-	g_strlcpy(p, "share/locale", sizeof localedir - (p - localedir));
-    }
-
-    p = setlocale(LC_ALL, "");
-    fprintf(stderr, "NLS init: setlocale() gave '%s'\n", p);
-#if LOCALE_CHECK
-    macos_check_locale();
-#endif
-    bindtextdomain(PACKAGE, localedir);
-    textdomain(PACKAGE);
-    bind_textdomain_codeset(PACKAGE, "UTF-8");
-}
+# include "macos_nls_init.c"
 
 #else /* end macOS-specific code */
 
-/* regular *nix treatment of NLS -- also applies
-   for non-package MSYS2 build on Windows */
+/* regular *nix treatment of NLS -- also applies for non-package MSYS2
+   build on Windows
+*/
 
 static void real_nls_init (void)
 {
@@ -425,10 +390,26 @@ static void alt_gtk_init (int *pargc,
 #endif /* G_OS_WIN32 */
 
 #ifdef ALT_MAC_STARTUP
-
-#include "macos_env.c"
-
+# include "macos_env.c"
 #endif /* specific to Mac package */
+
+#ifdef MAC_INTEGRATION
+
+static void finish_mac_ui (void)
+{
+    GtkWidget *mbar = gtk_menu_bar_new();
+    GtkWidget *vbox = gtk_bin_get_child(GTK_BIN(editor));
+
+    /* the menubar needs a toplevel, but should never be visible */
+    gtk_box_pack_end(GTK_BOX(vbox), mbar, FALSE, FALSE, 0);
+    gtk_widget_set_no_show_all(mbar, TRUE);
+    gtk_widget_hide(mbar);
+
+    gtkosx_application_set_menu_bar(MacApp, GTK_MENU_SHELL(mbar));
+    gtkosx_application_ready(MacApp);
+}
+
+#endif
 
 int main (int argc, char **argv)
 {
@@ -527,6 +508,17 @@ int main (int argc, char **argv)
 	do_new_script(EDIT_HANSL, NULL, NULL);
     }
 
+    gtk_drag_dest_set(editor, GTK_DEST_DEFAULT_ALL,
+		      gretl_drag_targets, 1,
+		      GDK_ACTION_COPY);
+    g_signal_connect(G_OBJECT(editor), "drag-data-received",
+		     G_CALLBACK(editor_handle_drag),
+		     NULL);
+
+#ifdef MAC_INTEGRATION
+    finish_mac_ui();
+#endif
+
     /* Enter the event loop */
     gtk_main();
 
@@ -557,6 +549,57 @@ void set_wm_icon (GtkWidget *w)
 
 #endif
 
+static char *grab_gfn_code (const char *fname)
+{
+    char *buf = NULL;
+    PRN *prn = NULL;
+    int err = 0;
+
+    if (bufopen(&prn)) {
+        return NULL;
+    }
+
+    err = print_function_package_code(fname, tabwidth, prn);
+    if (err) {
+        gui_errmsg(err);
+    } else {
+	buf = gretl_print_steal_buffer(prn);
+    }
+
+    gretl_print_destroy(prn);
+    return buf;
+}
+
+gboolean open_gfn_as_script (const char *fname)
+{
+    char *buf = NULL;
+    FILE *fp = NULL;
+    int vsize = 1.5 * SCRIPT_HEIGHT;
+    char tmpname[MAXLEN];
+    windata_t *vwin;
+
+    buf = grab_gfn_code(fname);
+    if (buf == NULL) {
+	return FALSE;
+    }
+
+    sprintf(tmpname, "%sscript_tmp.XXXXXX", gretl_dotdir());
+    fp = gretl_tempfile_open(tmpname);
+    if (fp == NULL) {
+	return FALSE;
+    }
+
+    fputs(buf, fp);
+    fclose(fp);
+    free(buf);
+
+    strcpy(scriptfile, tmpname);
+    vwin = view_file(tmpname, 1, TMP_FILE, SCRIPT_WIDTH, vsize, EDIT_HANSL);
+    mark_vwin_content_changed(vwin);
+
+    return TRUE;
+}
+
 /* At start-up only: if we can't open a script file specified on the
    command line, give the user a choice between creating a new file
    (of the given name, if writable) and quitting the program.
@@ -566,7 +609,11 @@ static gboolean maybe_open_script (int stype)
 {
     if (gretl_test_fopen(tryfile, "r") == 0) {
 	/* file can be opened OK */
-	return do_open_script(stype);
+	if (has_suffix(tryfile, ".gfn")) {
+	    return open_gfn_as_script(tryfile);
+	} else {
+	    return do_open_script(stype);
+	}
     } else {
 	int noname = 0;
 	gchar *msg;
@@ -614,6 +661,73 @@ gboolean open_tryfile (gboolean startup)
     }
 
     return ret;
+}
+
+/* Drag 'n' drop: respond to data dropped into the editor window */
+
+static void
+editor_handle_drag (GtkWidget *widget,
+		    GdkDragContext *context,
+		    gint x,
+		    gint y,
+		    GtkSelectionData *data,
+		    guint info,
+		    guint time,
+		    gpointer p)
+{
+    const guchar *seldata = NULL;
+    gchar *dfname;
+    char tmp[MAXSTR];
+    int pos, skip = 5;
+
+    if (data != NULL) {
+	seldata = gtk_selection_data_get_data(data);
+    }
+
+    if (info != GRETL_FILENAME) {
+	return;
+    }
+
+    /* ignore the wrong sort of data */
+    if (data == NULL || (dfname = (gchar *) seldata) == NULL ||
+	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5)) {
+	return;
+    }
+
+    if (strncmp(dfname, "file://", 7) == 0) skip = 7;
+#ifdef G_OS_WIN32
+    if (strncmp(dfname, "file:///", 8) == 0) skip = 8;
+#endif
+
+    /* there may be multiple files: we ignore all but the first */
+    *tmp = 0;
+    if ((pos = gretl_charpos('\r', dfname)) > 0 ||
+	(pos = gretl_charpos('\n', dfname) > 0)) {
+	int len = pos - skip;
+
+	if (len < 0 || len >= MAXSTR) {
+	    return; /* too long to be a sane path */
+	}
+	strncat(tmp, dfname + skip, len);
+    } else {
+	if (strlen(dfname + skip) >= MAXSTR) {
+	    return; /* too long to be a sane path */
+	}
+	strcat(tmp, dfname + skip);
+    }
+
+    /* handle spaces and such */
+    unescape_url(tmp);
+
+    /* check for valid file types */
+    if (!script_type(tmp)) {
+	gdk_drop_reply(context, FALSE, time);
+	return;
+    }
+
+    /* transcribe filename and try opening */
+    set_tryfile(tmp);
+    open_tryfile(FALSE);
 }
 
 /* @tmain here is the @main member of a tabwin struct, and @tabs is its

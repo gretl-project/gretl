@@ -2284,7 +2284,6 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
     }
 
     /* repack pointers if necessary */
-
     for (v=1; v<vmax; v++) {
 	if (dset->Z[v] == NULL) {
 	    int gap = 1;
@@ -2296,7 +2295,6 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 		    break;
 		}
 	    }
-
 	    if (i < vmax) {
 		vmax -= gap;
 		for (i=v; i<vmax; i++) {
@@ -2317,8 +2315,7 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 
  finish:
 
-    /* report results, if appropriate */
-
+    /* report results if appropriate */
     if (!err && prn != NULL) {
 	if (d0 == d1) {
             /* all the series selected for deletion were deleted */
@@ -2342,6 +2339,7 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 	}
     }
 
+    /* reset static recorder */
     real_d0 = 0;
 
     return err;

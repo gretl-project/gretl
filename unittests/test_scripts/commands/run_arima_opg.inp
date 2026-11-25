@@ -1,0 +1,203 @@
+set verbose off
+clear
+set assert stop
+
+# Reference values: standard errors from "mle" applied to the
+# equivalent state-space loglikelihood (llt from kfilter), which
+# gives the genuine OPG (the default for mle) and the QML sandwich
+# ("mle --robust"). See bug #342. For the airline model the OPG
+# values also agree with Stata and statsmodels.
+#
+# Backends: 0 = default (AS 197), 1 = AS 154, 2 = Kalman
+
+# ARMA(1,1), no constant: standard errors for (phi, theta)
+function matrix se_arma11 (const series x, int algo, int robust)
+    if algo == 0
+        if robust
+            arima 1 1 ; x --nc --robust --quiet
+        else
+            arima 1 1 ; x --nc --opg --quiet
+        endif
+    elif algo == 1
+        if robust
+            arima 1 1 ; x --nc --as154 --robust --quiet
+        else
+            arima 1 1 ; x --nc --as154 --opg --quiet
+        endif
+    else
+        if robust
+            arima 1 1 ; x --nc --kalman --robust --quiet
+        else
+            arima 1 1 ; x --nc --kalman --opg --quiet
+        endif
+    endif
+    return $stderr
+end function
+
+# airline model: standard errors for (theta, Theta)
+function matrix se_airline (const series x, int algo, int robust)
+    if algo == 0
+        if robust
+            arima 0 1 1 ; 0 1 1 ; x --nc --robust --quiet
+        else
+            arima 0 1 1 ; 0 1 1 ; x --nc --opg --quiet
+        endif
+    elif algo == 1
+        if robust
+            arima 0 1 1 ; 0 1 1 ; x --nc --as154 --robust --quiet
+        else
+            arima 0 1 1 ; 0 1 1 ; x --nc --as154 --opg --quiet
+        endif
+    else
+        if robust
+            arima 0 1 1 ; 0 1 1 ; x --nc --kalman --robust --quiet
+        else
+            arima 0 1 1 ; 0 1 1 ; x --nc --kalman --opg --quiet
+        endif
+    endif
+    return $stderr
+end function
+
+# ARIMA(1,1,1), no constant: with missing values this is estimated
+# using the Kalman filter and the "levels" formulation
+function matrix se_arima111 (const series x, int robust)
+    if robust
+        arima 1 1 1 ; x --nc --robust --quiet
+    else
+        arima 1 1 1 ; x --nc --opg --quiet
+    endif
+    return $stderr
+end function
+
+# tolerance: the Gauss-Newton results that --opg used to give
+# differ from the genuine OPG by 1e-4 or more
+function void assert_close (const matrix got, const matrix want)
+    scalar tol = 1.0e-5
+
+    assert(rows(got) == rows(want))
+    assert(maxr(abs(got - want)) < tol)
+end function
+
+function void test_arma11_opg (const series x)
+    print "Start testing arima --opg: ARMA(1,1), all backends."
+
+    # Given
+    matrix want = {0.0333317, 0.0404208}'
+
+    # When
+    matrix s0 = se_arma11(x, 0, 0)
+    matrix s1 = se_arma11(x, 1, 0)
+    matrix s2 = se_arma11(x, 2, 0)
+
+    # Then
+    assert_close(s0, want)
+    assert_close(s1, want)
+    assert_close(s2, want)
+end function
+
+function void test_arma11_robust (const series x)
+    print "Start testing arima --robust: ARMA(1,1), all backends."
+
+    # Given
+    matrix want = {0.0377920, 0.0455122}'
+
+    # When
+    matrix s0 = se_arma11(x, 0, 1)
+    matrix s1 = se_arma11(x, 1, 1)
+    matrix s2 = se_arma11(x, 2, 1)
+
+    # Then
+    assert_close(s0, want)
+    assert_close(s1, want)
+    assert_close(s2, want)
+end function
+
+function void test_airline_opg (const series x)
+    print "Start testing arima --opg: airline model, all backends."
+
+    # Given
+    matrix want = {0.0730299, 0.0963116}'
+
+    # When
+    matrix s0 = se_airline(x, 0, 0)
+    matrix s1 = se_airline(x, 1, 0)
+    matrix s2 = se_airline(x, 2, 0)
+
+    # Then
+    assert_close(s0, want)
+    assert_close(s1, want)
+    assert_close(s2, want)
+end function
+
+function void test_airline_robust (const series x)
+    print "Start testing arima --robust: airline model, all backends."
+
+    # Given
+    matrix want = {0.111982, 0.0556247}'
+
+    # When
+    matrix s0 = se_airline(x, 0, 1)
+    matrix s1 = se_airline(x, 1, 1)
+    matrix s2 = se_airline(x, 2, 1)
+
+    # Then
+    assert_close(s0, want)
+    assert_close(s1, want)
+    assert_close(s2, want)
+end function
+
+function void test_arma11_missing (const series x)
+    print "Start testing arima --opg and --robust: ARMA(1,1) with missing values."
+
+    # Given: x has 4 missing values, in the middle and near the end
+    matrix want_opg = {0.0329766, 0.0409077}'
+    matrix want_rob = {0.0383340, 0.0477976}'
+
+    # When
+    matrix o1 = se_arma11(x, 1, 0)
+    matrix o2 = se_arma11(x, 2, 0)
+    matrix r1 = se_arma11(x, 1, 1)
+    matrix r2 = se_arma11(x, 2, 1)
+
+    # Then
+    assert_close(o1, want_opg)
+    assert_close(o2, want_opg)
+    assert_close(r1, want_rob)
+    assert_close(r2, want_rob)
+end function
+
+function void test_arima111_levels (const series x)
+    print "Start testing arima --opg and --robust: ARIMA(1,1,1), levels form."
+
+    # Given: x has 4 missing values; the MA parameter enters
+    # both the Z and T matrices of the state-space form
+    matrix want_opg = {0.0933716, 0.0723088}'
+    matrix want_rob = {0.0753850, 0.0573669}'
+
+    # When
+    matrix o = se_arima111(x, 0)
+    matrix r = se_arima111(x, 1)
+
+    # Then
+    assert_close(o, want_opg)
+    assert_close(r, want_rob)
+end function
+
+open arma.gdt --quiet
+series y_na = y
+y_na[100] = NA
+y_na[300] = NA
+y_na[301] = NA
+y_na[500] = NA
+
+test_arma11_opg(y)
+test_arma11_robust(y)
+test_arma11_missing(y_na)
+test_arima111_levels(y_na)
+
+open bjg.gdt --quiet
+test_airline_opg(lg)
+test_airline_robust(lg)
+
+print "Successfully finished tests."
+quit

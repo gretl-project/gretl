@@ -339,6 +339,8 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_L, "ylogscale", 1 },
     { GNUPLOT,  OPT_D, "y2axis", 2 },
     { GNUPLOT,  OPT_E, "alpha", 2 }, /* experimental */
+    { GNUPLOT,  OPT_K, "width", 2 },
+    { GNUPLOT,  OPT_H, "height", 2 },
     { GRAPHPG,  OPT_M, "monochrome", 0 },
     { GRAPHPG,  OPT_O, "output", 2 },
     { GRIDPLOT, OPT_F, "fontsize", 2 },
@@ -427,7 +429,7 @@ struct gretl_option gretl_opts[] = {
     { MPI,      OPT_D, "send-data", 1 },
     { MPI,      OPT_M, "send-metadata", 0 },
     { MPI,      OPT_R, "full-range", 0 },
-    { MPI,      OPT_F, "send-functions", 0 },
+    { MPI,      OPT_F, "send-functions", 1 },
     { MPI,      OPT_L, "local", 0 },
     { MPI,      OPT_N, "np", 2 },
     { MPI,      OPT_T, "omp-threads", 2 },

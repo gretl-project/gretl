@@ -837,7 +837,8 @@
 	  <cmdref targ="freq"/>, <cmdref targ="hurst"/>, <cmdref targ="leverage"/>,
 	  <cmdref targ="summary"/>, <cmdref targ="vif"/> and <cmdref targ="xtab"/>
 	  (in which cases the result is a matrix), plus <cmdref targ="pkg"/>
-	  (which optionally stores a bundle result).
+	  (which optionally stores a bundle result) and
+	  <cmdref targ="fcast"/> (bundle result).
 	</para>
       </description>
     </function>
@@ -1399,8 +1400,9 @@
 	<para>
 	  Must follow the estimation of a VAR or a VECM; returns a
 	  matrix containing the VMA representation up to the order
-	  specified via the <lit>set horizon</lit> command. See
-	  <guideref targ="chap:var"/> for details.
+	  specified via the <lit>set horizon</lit> command. See also the
+	  <fncref targ="vma"/> function, and <guideref targ="chap:var"/>
+	  for details.
 	</para>
       </description>
     </function>
@@ -6526,18 +6528,22 @@
       <description>
 	<para>
 	  Returns the cycle component from application of the
-	  Hodrick&ndash;Prescott filter to series <argname>y</argname>. If the
-	  smoothing parameter, <argname>lambda</argname>, is not supplied then
-	  a data-based default is used, namely 100 times the square of the
-	  periodicity (100 for annual data, 1600 for quarterly data, and so
-	  on).
+	  Hodrick&ndash;Prescott filter to series
+	  <argname>y</argname>. If the smoothing parameter,
+	  <argname>lambda</argname>, is not supplied then a data-based
+	  default is used, namely that recommended by <cite
+	  key="ravn-uhlig02">Ravn and Uhlig (2002)</cite>: 6.25 times
+	  the periodicity of the data to the fourth power. (Up till
+	  gretl version 2026d the default was the 100 times the square
+	  of the periodicity; you can recreate that by passing
+	  <lit>100*$pd^2</lit> for the second argument.)
 	</para>
 	<para>
 	  By default the filter is the usual two-sided version, but if
-	  the optional third argument is given with a non-zero
-	  value a one-sided variant (with no look-ahead) is computed
-	  in the manner of <cite key="stock-watson1999">Stock and
-	  Watson (1999)</cite>.
+	  the optional third argument is given with a non-zero value a
+	  one-sided variant (with no look-ahead) is computed in the
+	  manner of <cite key="stock-watson1999">Stock and Watson
+	  (1999)</cite>.
 	</para>
 	<para>
 	  The most common use of the HP filter is detrending, but if
@@ -15301,34 +15307,44 @@ d =  8.0000000
       <description>
 	<para>
 	  This function yields the VMA representation for a VAR
-	  system. If <equation status="inline" ascii="y(t) = A1 y(t-1)
-	  + ... + Ap y(t-p) + u(t)" tex="$y_t = \sum_{i=1}^p A_i
-	  y_{t-i} + u_t$"/>, where <math>u</math><sub>t</sub> are the
+	  system. If <equation status="inline" ascii="y(t) = A1*y(t-1) +
+	  ... + Ap*y(t-p) + u(t)" tex="$y_t = \sum_{i=1}^p A_i y_{t-i} +
+	  u_t$"/>, where <math>u</math><sub>t</sub> are the
 	  one-step-ahead prediction errors, the corresponding VMA
-	  representation is <equation status="inline" ascii="y(t) = C0
-	  e(t) + C1 e(t-1) + ..."  tex="$y_t = C_0 e_t + C_1 e_{t-1} +
-	  \ldots$."/>. The relationship between the forecast errors
+	  representation is <equation status="inline" ascii="y(t) =
+	  C0*e(t) + C1*e(t-1) + ..."  tex="$y_t = C_0 e_t + C_1 e_{t-1}
+	  + \ldots$."/>. The relationship between the forecast errors
 	  <math>u</math><sub>t</sub> and the structural shocks
 	  <math>e</math><sub>t</sub> is given by <equation
-	  status="inline" ascii="u(t) = K e(t)" tex="$u_t = K
+	  status="inline" ascii="u(t) = K*e(t)" tex="$u_t = K
 	  e_t$"/>. (Note that <math>C</math><sub>0</sub> =
 	  <math>K</math>.)
         </para>
         <para>
           The coefficient matrix <argname>A</argname> is composed by
-	  stacking the <math>A</math><sub>i</sub> matrices horizontally;
-	  it is <by r="n" c="np"/>, with one row per equation. This
-	  corresponds to the first <math>n</math> rows of the matrix
-	  <lit>$compan</lit> provided by gretl's <lit>var</lit> and
-	  <lit>vecm</lit> commands. The <argname>K</argname> matrix is
-	  optional, and defaults to the identity matrix if omitted.
+          stacking the <math>A</math><sub>i</sub> matrices horizontally;
+          it is <by r="n" c="np"/>, where <math>n</math> is the number
+          of equations in the VAR and <math>p</math> is the lag order,
+          with one row per equation. This corresponds to the first
+          <math>n</math> rows of the matrix <lit>$compan</lit> provided
+          by gretl's <lit>var</lit> and <lit>vecm</lit> commands.
+	</para>
+	<para>
+	  If <argname>K</argname> is not given it defaults to the
+	  identity matrix, in which case the result is the plain MA
+	  representation, identical to <fncref targ="$vma"/> (apart from
+	  column ordering). For orthogonalized responses based on a
+	  recursive identification, pass the Cholesky factor of the
+	  error covariance matrix; following estimation of a VAR this
+	  can be obtained as <lit>cholesky($sigma)</lit> or
+	  <lit>$system.C</lit>.
 	</para>
         <para>
-          The returned matrix will have <argname>horizon</argname>
-	  rows and <math>n</math><sup>2</sup> columns: its
-	  <math>i</math>-th row contains <math>C</math><sub>i-1</sub>
-	  in vectorized form. The <argname>horizon</argname> value
-	  defaults to 24 if omitted.
+          The returned matrix will have <argname>horizon</argname> rows
+          and <math>n</math><sup>2</sup> columns: its <math>i</math>-th
+          row contains <math>C</math><sub>i-1</sub> in vectorized
+          form. The <argname>horizon</argname> value defaults to 24 if
+          the third argument is omitted.
 	</para>
 	<para>
 	  <seelist>

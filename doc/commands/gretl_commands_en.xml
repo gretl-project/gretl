@@ -1055,6 +1055,15 @@
 	misspecified model.
       </para>
       <para context="cli">
+	The OPG is computed from numerical derivatives of the
+	per-observation contributions to the full exact loglikelihood,
+	treating the innovation variance as an additional parameter
+	(only the block pertaining to the ARMA coefficients is
+	reported). With the <opt>robust</opt> option the covariance
+	matrix is a <quote>sandwich</quote> of the inverse of the
+	numerical Hessian of the same loglikelihood and this OPG.
+      </para>
+      <para context="cli">
 	The option <opt>lbfgs</opt> is specific to estimation using
 	native ARMA code and exact ML: it calls for use of the
 	<quote>limited memory</quote> L-BFGS-B algorithm in place
@@ -4192,11 +4201,16 @@
 	If the dependent variable is recognized as the log of a series
 	in the dataset, you get the choice of producing a forecast for
 	either the log or the level variable. In the latter case the log
-	forecast is exponentiated, with a bias correction that depends
-	on whether normality of the error term is or is not
-	rejected. Similarly, if the dependent variable is recognized as
-	a first difference you are given the choice of producing an
-	integrated (level) forecast.
+	forecast is exponentiated, by default with a bias correction
+	that depends on whether normality of the error term is or is not
+	rejected. To obtain a forecast that's simply exponentiated (not
+	recommended other than for pedagogical purposes), uncheck the
+	box labeled <quote>Apply bias correction</quote>.
+      </para>
+      <para>
+	Similarly, if the dependent variable is recognized as a first
+	difference you are given the choice of producing an integrated
+	(level) forecast.
       </para>
 
       <para context="cli">
@@ -4225,6 +4239,30 @@
 	<repl>vname</repl> is not given, the forecast values can be
 	retrieved using the accessor <fncref targ="$fcast"/>, and the
 	standard errors, if available, via <fncref targ="$fcse"/>.
+	In addition, a bundle is made available via
+	<fncref targ="$result"/>. This contains the members
+	<lit>fcast</lit> and <lit>fcse</lit> (as above) plus, when
+	standard errors are available, the confidence interval
+	bounds <lit>lower</lit> and <lit>upper</lit> along with
+	<lit>alpha</lit> and <lit>coverage</lit>; the first and last
+	forecast observations, <lit>t1</lit> and <lit>t2</lit>; and,
+	for forecasts based on a single-equation model,
+	<lit>depvar</lit>, <lit>method</lit> and, if actual values are
+	available over (part of) the forecast range, forecast
+	evaluation statistics in <lit>eval_stats</lit> (as produced by
+	<fncref targ="fcstats"/>) with the number of observations used,
+	<lit>eval_obs</lit>. Note that <lit>fcse</lit>, <lit>lower</lit>
+	and <lit>upper</lit> may cover fewer observations than
+	<lit>fcast</lit> (for example, in-sample static forecasts have no
+	standard errors). With the <lit>--exponentiate</lit> option,
+	<lit>fcast</lit>, <lit>lower</lit> and <lit>upper</lit> are in
+	levels, but <lit>fcse</lit> is the standard error on the log
+	scale, with the interval formed on that scale and then
+	exponentiated; the bundle also records the
+	<lit>correction</lit> applied ("normal", "smearing" or "none")
+	and the factor <lit>a0</lit>. With <lit>--integrate</lit> all
+	members are in levels. The member <lit>transform</lit> is one of
+	"none", "exponentiate" or "integrate".
       </para>
 
       <subhead>Static and dynamic forecasts</subhead>
@@ -5679,6 +5717,16 @@
 	  <effect>use log scale for vertical axis</effect>
         </option>
         <option>
+	  <flag>--width</flag>
+	  <optparm>pixels</optparm>
+	  <effect>set plot width</effect>
+        </option>
+        <option>
+	  <flag>--height</flag>
+	  <optparm>pixels</optparm>
+	  <effect>set plot height</effect>
+        </option>
+        <option>
 	  <flag>--control</flag>
 	  <effect>see below</effect>
         </option>
@@ -5765,6 +5813,16 @@
 	<lit>y2</lit> against <lit>x</lit>, such that <lit>y2</lit> is
 	represented by a line but <lit>y1</lit> by points.
       </para>
+      <para>
+	The <opt>width</opt> and <opt>height</opt> options, which must
+	be given together, set the size of the plot in pixels,
+	overriding the default sizing which depends on the type of the
+	plot. These options apply to plots shown on screen or saved in
+	PNG format.  For example:
+      </para>
+      <code>
+	gnuplot y x --width=800 --height=500 --output=display
+      </code>
       <subhead>Two y axes</subhead>
       <para>
 	When <repl>yvars</repl> contains more than one variable it may
@@ -5829,6 +5887,12 @@
       <para>
 	plots the data such that the vertical axis is expressed as
 	powers of 2. If the base is not specified it defaults to 10.
+      </para>
+      <para>
+	The <opt>width</opt> and <opt>height</opt> options, which must be
+	given together, set the size of the plot in pixels. For example,
+	<code>gnuplot y x --width=800 --height=500</code>. They apply
+	to plots shown on screen or saved in PNG format.
       </para>
       <subhead>Taking data from a matrix</subhead>
       <para>
@@ -10422,9 +10486,44 @@
 	   label="Message Passing Interface">
     <usage>
       <arguments>
-	<argument>see below</argument>
+	<argument>none as such</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--np</flag>
+	  <optparm>n</optparm>
+	  <effect>number of MPI processes</effect>
+        </option>
+        <option>
+	  <flag>--omp-threads</flag>
+	  <optparm>m</optparm>
+	  <effect>number of OpenMP threads per process</effect>
+        </option>
+        <option>
+	  <flag>--send-data</flag>
+	  <optparm optional="true">list</optparm>
+	  <effect>send series data to MPI</effect>
+        </option>
+        <option>
+	  <flag>--send-functions</flag>
+	  <optparm optional="true">names</optparm>
+	  <effect>send function definitions</effect>
+        </option>
+        <option>
+	  <flag>--local</flag>
+	  <effect>ignore MPI hosts file, if present</effect>
+        </option>
+        <option>
+	  <flag>--single-rng</flag>
+	  <effect>use a single random number generator</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>print extra information</effect>
+        </option>
+      </options>
     </usage>
+
     <description>
       <para>
 	The <lit>mpi</lit> command starts a block of statements (which

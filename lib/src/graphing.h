@@ -66,10 +66,10 @@ typedef struct GPT_SPEC_ GPT_SPEC;
 
 #define N_GP_LINETYPES 8
 
-#define GP_WIDTH      640
-#define GP_HEIGHT     480
-#define GP_LB_WIDTH   680
-#define GP_LB_HEIGHT  400
+#define GP_WIDTH      640 /* standard width for scatterplots */
+#define GP_HEIGHT     480 /* standard height, scatterplots */
+#define GP_LB_WIDTH   680 /* "letterbox" width for time series */
+#define GP_LB_HEIGHT  400 /* "letterbox" height, time series */
 #define GP_XL_WIDTH   680
 #define GP_XL_HEIGHT  510
 #define GP_XXL_WIDTH  680
@@ -150,6 +150,21 @@ typedef enum {
 #define maybe_big_multiplot(c) (c == PLOT_MULTI_IRF || \
 				c == PLOT_MULTI_BASIC || \
 				c == PLOT_PANEL)
+
+/* special graphs for which editing via GUI is not supported */
+
+#define cant_edit(p) (p == PLOT_CORRELOGRAM || \
+		      p == PLOT_LEVERAGE || \
+		      p == PLOT_MULTI_IRF || \
+		      p == PLOT_MULTI_BASIC || \
+		      p == PLOT_PANEL || \
+		      p == PLOT_TRI_GRAPH || \
+		      p == PLOT_BI_GRAPH || \
+		      p == PLOT_ELLIPSE || \
+		      p == PLOT_3D || \
+		      p == PLOT_HEATMAP || \
+		      p == PLOT_GEOMAP || \
+		      p == PLOT_GRIDPLOT)
 
 #define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
 				c == PLOT_FREQ_NORMAL || \

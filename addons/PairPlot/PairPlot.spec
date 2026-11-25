@@ -1,7 +1,7 @@
 author = Artur Tarassow and Allin Cottrell
 email = atecon@posteo.de
 version = @VERSION@
-date = 2026-06-11
+date = 2026-10-22
 description = Scatterplot matrix with factor separation
 tags = C88
 min-version = @VERSION@
@@ -11,5 +11,7 @@ label = Pair Plot
 menu-attachment = MAINWIN/View/GraphVars
 public = PairPlot GUI_PairPlot
 no-print = GUI_PairPlot
-help = PairPlot_help.md
+
+help = PairPlot.pdf
+
 sample-script = PairPlot_sample.inp

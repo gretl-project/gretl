@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "calculator.h"
+#include "nonparam.h"
 #include "dlgutils.h"
 #include "gpt_control.h"
 #include "lib_private.h"

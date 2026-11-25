@@ -1092,6 +1092,16 @@
         solito indice di un modello mal specificato.
       </para>
       <para context="cli">
+        L'OPG viene calcolata a partire dalle derivate numeriche dei
+        contributi di ciascuna osservazione alla log-verosimiglianza
+        esatta, trattando la varianza delle innovazioni come un
+        parametro aggiuntivo (viene riportato solo il blocco relativo
+        ai coefficienti ARMA). Con l'opzione <opt>robust</opt>, la
+        matrice di covarianza è costituita da una struttura a
+        <quote>sandwich</quote> che combina l'inversa dell'Hessiano
+        numerico con l'OPG.
+        </para>
+      <para context="cli">
 	L'opzione <opt>lbfgs</opt> è riservata alla stima basata su codice
 	ARMA nativo e MV esatta; quando viene indicata, la stima usa l'algoritmo
 	L-BFGS a <quote>memoria limitata</quote> anziché l'ottimizzatore BFGS
@@ -4333,10 +4343,16 @@
 	livelli. In quest'ultimo caso, la previsione in logaritmi
 	viene esponenziata, applicando una correzione della
 	distorsione. La natura di quest'ultima dipende dal rifiuto o
-	meno di un test di normalità del termine di
-	errore. Analogamente, se la variabile dipendente è
-	riconosciuta come una differenza prima, è possibile scegliere
-	di produrre una previsione integrata (in livelli).
+	meno di un test di normalità del termine di errore. Per
+	ottenere una previsione che sia semplicemente esponenziata (il
+	che è sconsigliabile, se non a fini didattici), bisogna
+	deselezionare la casella contrassegnata con <quote>Correzione
+	della distorsione</quote>.
+      </para>
+      <para>
+	Analogamente, se la variabile dipendente è riconosciuta come
+	una differenza prima, è possibile scegliere di produrre una
+	previsione integrata (in livelli).
       </para>
 
       <para context="cli">
@@ -4356,17 +4372,49 @@
 
       <para context="cli">
 	Se l'ultimo modello stimato consiste in un'equazione singola,
-	l'argomento opzionale <repl>nome-variabile</repl> ha l'effetto seguente:
-	i valori della previsione non sono mostrati, ma vengono salvati nel
-	dataset con il nome di variabile indicato. Se l'ultimo modello stimato è
-	un sistema di equazioni, <repl>nome-variabile</repl> ha un effetto
-	diverso, ossia seleziona una particolare variabile endogena per cui
-	effettuare la previsione (l'impostazione predefinita consiste nel
-	produrre previsioni per tutte le variabili endogene). Nel caso del
-	sistema, o se non viene specificata <repl>nome-variabile</repl>, i
-	valori della previsione possono essere recuperati usando la variabile
-	accessoria <fncref targ="$fcast"/>, mentre gli errori standard, se
-	disponibili, sono recuperabili con <fncref targ="$fcse"/>.
+	l'argomento opzionale <repl>nome-variabile</repl> ha l'effetto
+	seguente: i valori della previsione non sono mostrati, ma
+	vengono salvati nel dataset con il nome di variabile
+	indicato. Se l'ultimo modello stimato è un sistema di
+	equazioni, <repl>nome-variabile</repl> ha un effetto diverso,
+	ossia seleziona una particolare variabile endogena per cui
+	effettuare la previsione (l'impostazione predefinita consiste
+	nel produrre previsioni per tutte le variabili endogene). Nel
+	caso di un sistema, o se non viene specificata
+	<repl>nome-variabile</repl>, i valori della previsione possono
+	essere recuperati usando la variabile accessoria <fncref
+	targ="$fcast"/>, mentre gli errori standard, se disponibili,
+	sono recuperabili con <fncref targ="$fcse"/>.  Inoltre,
+	l'accessore <fncref targ="$result"/> ritorna un bundle. Esso
+	contiene gli elementi <lit>fcast</lit> e <lit>fcse</lit> (come
+	indicato sopra) e, qualora siano disponibili gli errori
+	standard, anche gli estremi dell'intervallo di confidenza
+	<lit>lower</lit> e <lit>upper</lit>, insieme a
+	<lit>alpha</lit> e <lit>coverage</lit>; include inoltre, sotto
+	i nomi <lit>t1</lit> e <lit>t2</lit>, la prima e l'ultima
+	osservazione della previsione; infine, per le previsioni
+	basate su un modello a equazione singola, comprende
+	<lit>depvar</lit>, <lit>method</lit> e le statistiche di
+	valutazione della previsione in <lit>eval_stats</lit>
+	(generate tramite <fncref targ="fcstats"/>), accompagnate dal
+	numero di osservazioni utilizzate, <lit>eval_obs</lit>
+	(ovviamente, queste statistiche vengono generate solo se sono
+	disponibili valori effettivi per periodo di previsione, almeno
+	in parte). Si noti che <lit>fcse</lit>, <lit>lower</lit> e
+	<lit>upper</lit> potrebbero riferirsi a un numero inferiore di
+	osservazioni rispetto a <lit>fcast</lit> (ad esempio, le
+	previsioni statiche <quote>in-sample </quote> non presentano
+	errori standard). Con l'opzione <lit>--exponentiate</lit>,
+	<lit>fcast</lit>, <lit>lower</lit> e <lit>upper</lit> sono
+	espressi in livelli, mentre <lit>fcse</lit> rappresenta
+	l'errore standard su scala logaritmica; in questo caso,
+	l'intervallo viene costruito su tale scala e successivamente
+	esponenziato. Il bundle registra inoltre la
+	<lit>correction</lit> applicata ("normal", "smearing" oppure
+	"none") e il fattore <lit>a0</lit>. Con l'opzione
+	<lit>--integrate</lit>, tutti gli elementi sono espressi in
+	livelli. L'elemento <lit>transform</lit> può assumere uno dei
+	seguenti valori: "none", "exponentiate" o "integrate".
       </para>
 
       <subhead>Previsioni statiche e dinamiche</subhead>
@@ -5127,8 +5175,8 @@
 
     <para>
       In contesti appropriati, <lit>series</lit>, <lit>scalar</lit>,
-      <lit>matrix</lit>, <lit>string</lit> e <lit>bundle</lit> sono
-      sinonimi per questo comando.
+      <lit>matrix</lit>, <lit>string</lit>, <lit>bundle</lit> e
+      <lit>array</lit> sono sinonimi per questo comando.
     </para>
     <para context="cli">
       Crea nuove variabili, di solito per mezzo di trasformazioni di
@@ -5198,10 +5246,10 @@
       Gli <emphasis>operatori Booleani</emphasis> disponibili sono
       (ancora in ordine di precedenza): <lit>!</lit> (negazione),
       <lit>&amp;&amp;</lit> (AND logico), <lit>||</lit> (OR logico),
-      <lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>,
+      <lit>&gt;</lit>, <lit>&lt;</lit>, <lit>==</lit>,
       <lit>&gt;=</lit> (maggiore o uguale), <lit>&lt;=</lit>
       (minore o uguale) e <lit>!=</lit> (disuguale).  Gli operatori
-      Booleani possono essere usati per costuire variabili dummy:
+      Booleani possono essere usati per costruire variabili dummy:
       ad esempio <lit>(x > 10)</lit> produce 1 se <lit>x</lit>
     &gt; 10, 0 altrimenti.</para>
 
@@ -5247,7 +5295,7 @@
 	  nel secondo trimestre e 0 altrove, e così via. Nel caso di dati
 	  mensili, le dummy si chiamano <lit>dm1</lit>, <lit>dm2</lit> e così
 	  via. Con altre frequenze dei dati, i nomi delle dummy sono <lit>dummy_1</lit>,
-	  <lit>dummy2</lit>, ecc.
+	  <lit>dummy_2</lit>, ecc.
 	</para>
       </li>
       <li><para><cmd>genr unitdum</cmd> e <cmd>genr timedum</cmd> creano insiemi di
@@ -5280,16 +5328,16 @@
       selezionare alcune osservazioni particolari secondo la data o
       il nome. Ad esempio
       <lit>genr d = (obs&gt;1986:4)</lit>,
-      <lit>genr d = (obs&gt;"2008/04/01")</lit>, oppure
+      <lit>genr d = (obs&gt;"2008-04-01")</lit>, oppure
       <lit>genr d = (obs=="CA")</lit>. Quando si usano in questo contesto date
       giornaliere o etichette per le osservazioni, bisogna
       racchiuderle fra virgolette.  Questo non è necessario per date
       trimestrali o annuali. Si noti che, per serie storiche
-      annuali, l'anno non è sintatticmante distiguibile da un
+      annuali, l'anno non è sintatticamente distinguibile da un
       semplice intero; per cui, per confrontare un'osservazione con
       <lit>obs</lit> per anno, bisogna usare la funzione
       <lit>obsnum</lit> per convertire l'anno in un numero
-      progressivo, come ad esempio in in <lit>genr d =
+      progressivo, come ad esempio in <lit>genr d =
       (obs&gt;obsnum(1986))</lit>.
       </para>
 
@@ -5300,8 +5348,8 @@
 	Il valore di <repl>osservazione</repl> può essere specificato con
 	un numero o una data.
 	Esempi: <lit>x[5]</lit>, <lit>CPI[1996:01]</lit>.  Per i dati
-	giornalieri occorre usare la forma <repl>AAAA/MM/GG</repl>, ad esempio
-	<lit>ibm[1970/01/23]</lit>.
+	giornalieri occorre usare la forma <repl>AAAA-MM-GG</repl>, ad esempio
+	<lit>ibm[1970-01-23]</lit>.
       </para>
 
       <para>
@@ -11756,7 +11804,7 @@ del comando <cmdref targ="set"/>.
     <options>
       <option>
 	<flag>--append</flag>
-	<effect>aggiunge al file</effect>
+	<effect>aggiunge al file (solo nella prima variante) </effect>
       </option>
       <option>
 	<flag>--quiet</flag>
@@ -11781,7 +11829,7 @@ del comando <cmdref targ="set"/>.
   <para>
     Il comando <lit>outfile</lit> inizia un blocco in cui tutto
     l'output stampato viene deviato a un file o a un buffer (o,
-    volendo, semplicemnte buttato via). Tale blocco è chiuso dal
+    volendo, semplicemente buttato via). Tale blocco è chiuso dal
     comando <quote><lit>end outfile</lit></quote>, dopodiché l'output
     viene mandato di nuovo allo stream predefinito.
   </para>
@@ -11791,10 +11839,10 @@ del comando <cmdref targ="set"/>.
     La prima variante manda l'output a un file il cui nome è dato come
     argomento <repl>nomefile</repl>. Di default, viene creato un file
     nuovo (sovrascrivendo il file dello stesso nome, se esiste).
-    L'output verrà scritto nella corrente <cmdref targ="workdir"/>, a
-    meno che il <repl>nomefile</repl> non contenga un percorso
-    completo.  Se invece di sovrascrivere si vuole aggiungere in coda,
-    va usata l'opzione <opt>append</opt>.
+    L'output verrà scritto nella directory corrente (<cmdref
+    targ="workdir"/>), a meno che il <repl>nomefile</repl> non
+    contenga un percorso completo.  Se invece di sovrascrivere si
+    vuole aggiungere in coda, va usata l'opzione <opt>append</opt>.
   </para>
   <para>
     Quello che segue è un semplice esempio, in cui l'output di una
@@ -11813,7 +11861,7 @@ del comando <cmdref targ="set"/>.
   <ilist>
     <li>
       <para>
-	<lit>null</lit>: l'output viene sopppresso fino alla fine
+	<lit>null</lit>: l'output viene soppresso fino alla fine
 	della ridirezione.
       </para>
     </li>
@@ -11835,7 +11883,7 @@ del comando <cmdref targ="set"/>.
   <para>
     L'opzione <opt>buffer</opt> serve a mandare l'ouput a una
     variabile stringa. Il parametro per questa opzione dev'essere il
-    nome di una variabile stringa preesistente, il cuni contenuto sarà
+    nome di una variabile stringa preesistente, il cui contenuto sarà
     sovrascritto.  Quello che segue è lo stesso esempio fatto appena
     sopra, a parte che l'output va ad una stringa. In questo caso
     stampando <lit>model_out</lit> si vedrà l'output reindirizzato.
@@ -11853,18 +11901,19 @@ del comando <cmdref targ="set"/>.
   <para>
     L'opzione <opt>tempfile</opt> serve a mandare l'output a un file
     temporaneo, con un nome costruito automaticamente per assicurarne
-    l'unicità, nella directory <quote>di servizio</quote>. Così come
-    nel caso del buffer, il parametro dell'opzione dev'essere il nome
-    di una variabile stringa, che viene riempita col nome del file
-    temporaneo. <i>Nota bene</i>: i file scritti sulla directory di
-    servizio vengono cancellati quando si esce dal programma: non
-    usate questa forma se volete che il file sia conservato.
+    l'unicità, nella directory <quote>di servizio</quote> in cui gretl
+    mette i file temporanei. Così come nel caso del buffer, il
+    parametro dell'opzione dev'essere il nome di una variabile
+    stringa, che viene riempita col nome del file temporaneo. <i>Nota
+    bene</i>: i file scritti sulla directory di servizio vengono
+    cancellati quando si esce dal programma: non usate questa forma se
+    volete che il file sia conservato.
   </para>
   <para>
     Ripetiamo l'esempio fatto sopra, con un paio di linee in più per
     illustrare il punto che <repl>varstr</repl> dice dove l'output è
-    andato, e volendo lo si può leggere usando la funzione <fncref
-    targ="readfile"/>.
+    andato a finire, e volendo lo si può leggere usando la funzione
+    <fncref targ="readfile"/>.
   </para>
   <code>
     open data4-10
