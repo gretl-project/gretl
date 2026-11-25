@@ -1,6 +1,7 @@
 # Example script for sign restrictions in gretl's SVAR addon
 
 set verbose off
+set seed 2511261113
 include SVAR.gfn
 
 ### supply & demand (artificial example)
