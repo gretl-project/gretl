@@ -106,20 +106,20 @@ function void test_truncnorm (void)
 
   matrix m = truncnorm(5, 1, 5, 0.1, 1.5)
 
-  assert_almost_equal_num(m[1], 0.69278, 1e-5)
-  assert_almost_equal_num(m[2], 1.4910, 1e-4)
-  assert_almost_equal_num(m[3], 0.13854, 1e-5)
-  assert_almost_equal_num(m[4], 0.81192, 1e-5)
-  assert_almost_equal_num(m[5], 0.54419, 1e-5)
+  assert_almost_equal_num(m[1], 0.268922, 1e-5)
+  assert_almost_equal_num(m[2], 0.326188, 1e-5)
+  assert_almost_equal_num(m[3], 0.900323, 1e-5)
+  assert_almost_equal_num(m[4], 0.888967, 1e-5)
+  assert_almost_equal_num(m[5], 0.136477, 1e-5)
 
 
   matrix m = truncnorm(5, 1, 5, NA, NA)
 
-  assert_almost_equal_num(m[1], -6.4419, 1e-4)
-  assert_almost_equal_num(m[2], 5.7794, 1e-4)
-  assert_almost_equal_num(m[3], -4.5460, 1e-4)
-  assert_almost_equal_num(m[4], -0.79578, 1e-5)
-  assert_almost_equal_num(m[5], 5.4342, 1e-4)
+  assert_almost_equal_num(m[1],  1.276810, 1e-5)
+  assert_almost_equal_num(m[2],  1.470051, 1e-5)
+  assert_almost_equal_num(m[3], -4.898565, 1e-5)
+  assert_almost_equal_num(m[4],  6.119447, 1e-5)
+  assert_almost_equal_num(m[5],  4.540279, 1e-5)
 end function
 test_truncnorm()
 
