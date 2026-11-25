@@ -1798,9 +1798,9 @@ static char *var_term_line (char *term_line, int ptype, GptFlags flags)
 
     if (pref != NULL) {
         for (i=0; i<3; i++) {
-            if (!strcmp(pref, strs[i]) && opts[i]) {
-                varterm = strs[i];
-            }
+	    if (opts[i] && !strcmp(pref, strs[i])) {
+		varterm = strs[i];
+	    }
         }
     } else {
         for (i=0; i<3; i++) {
@@ -1932,9 +1932,34 @@ const char *gretl_gnuplot_term_line (TermType ttype,
 const char *get_png_line_for_plotspec (const GPT_SPEC *spec)
 {
     static char term_line[TERMLEN];
+    char ad_hoc_fontspec[128];
+    char font_string[140];
+    char size_string[16];
+    int w = spec->xpix;
+    int h = spec->ypix;
 
-    real_png_term_line(term_line, spec->code, spec->flags,
-                       spec->fontstr, spec->scale);
+    *font_string = *size_string = *ad_hoc_fontspec = '\0';
+
+    if (spec->scale != 1.0 && spec->code != PLOT_GRIDPLOT) {
+        plot_get_scaled_dimensions(&w, &h, spec->scale);
+    }
+    sprintf(size_string, " size %d,%d", w, h);
+
+     write_png_font_string(font_string, ad_hoc_fontspec, spec->code,
+			  spec->fontstr, spec->scale);
+    sprintf(term_line, "set term pngcairo%s%s noenhanced",
+            font_string, size_string);
+    append_gp_encoding(term_line);
+
+    if (*ad_hoc_fontspec != '\0') {
+        strcat(term_line, "\n# fontspec: ");
+        strcat(term_line, ad_hoc_fontspec);
+    }
+
+#if GP_DEBUG
+    fprintf(stderr, "get_png_line_for_plotspec:\n'%s'\n", term_line);
+#endif
+
     return term_line;
 }
 
