@@ -7824,7 +7824,7 @@ int vars_test (const int *list, const DATASET *dset,
     if (usedum) {
         v2 = splitby_varnum(VARTEST, dset);
         if (v2 < 0) {
-            err = E_UNKVAR;
+            return E_UNKVAR;
         }
     } else {
         v2 = list[2];
