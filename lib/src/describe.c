@@ -7480,8 +7480,8 @@ int means_test (const int *list, const DATASET *dset,
     int n2 = 0;
     int df, err;
 
-    if (paired && usedum) {
-	/* --split-by and --paired are incompatible */
+    if (usedum && (paired || robust)) {
+	/* --split-by is incompatible with both --paired and --robust */
 	return E_BADOPT;
     } else if (!usedum && list[0] == 1) {
 	/* We need two series */
