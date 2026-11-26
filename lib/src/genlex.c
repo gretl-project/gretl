@@ -2148,6 +2148,7 @@ static int ok_hex_char (parser *p, char *s, int i)
 static void parse_number (parser *p)
 {
     char xstr[NUMLEN] = {0};
+    const char *colon_pt = NULL;
     int got_colon = 0;
     int got_hex = 0;
     int i = 0;
@@ -2165,6 +2166,7 @@ static void parse_number (parser *p)
             xstr[i++] = p->ch;
             if (p->ch == ':') {
                 got_colon = 1;
+		colon_pt = p->point; /* just past the colon */
             }
             parser_getc(p);
         }
@@ -2179,19 +2181,35 @@ static void parse_number (parser *p)
 #endif
 
     if (got_colon) {
+	int err = 0;
 #if LDEBUG
         fprintf(stderr, " got colon: obs identifier?\n");
 #endif
         if (p->dset == NULL || p->dset->n == 0) {
-            p->err = E_NODATA;
+            err = E_NODATA;
         } else if (p->dset->pd == 1) {
-            p->err = E_PDWRONG;
+            err = E_PDWRONG;
         } else if (dateton(xstr, p->dset) < 0) {
-            p->err = E_DATA;
-        } else {
-            p->idstr = gretl_strdup(xstr);
-            p->sym = CSTR;
+            err = E_DATA;
         }
+        if (err && parsing_query && colon_pt != NULL) {
+            /* Not an obs identifier after all: in a ternary the colon
+               is the branch separator. Keep the digits before it and
+               back up so that lex() next returns P_COL.
+            */
+            char *c = strchr(xstr, ':');
+
+            *c = '\0';
+            p->point = colon_pt;
+            p->ch = ':';
+            p->xval = dot_atof(xstr);
+            p->sym = CNUM;
+        } else if (err) {
+            p->err = err;
+	} else {
+	    p->idstr = gretl_strdup(xstr);
+	    p->sym = CSTR;
+	}
     } else if (got_hex) {
         guint32 u = strtoul(xstr, NULL, 16);
 
