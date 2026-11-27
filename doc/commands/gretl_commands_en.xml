@@ -4239,30 +4239,34 @@
 	<repl>vname</repl> is not given, the forecast values can be
 	retrieved using the accessor <fncref targ="$fcast"/>, and the
 	standard errors, if available, via <fncref targ="$fcse"/>.
-	In addition, a bundle is made available via
-	<fncref targ="$result"/>. This contains the members
-	<lit>fcast</lit> and <lit>fcse</lit> (as above) plus, when
-	standard errors are available, the confidence interval
-	bounds <lit>lower</lit> and <lit>upper</lit> along with
-	<lit>alpha</lit> and <lit>coverage</lit>; the first and last
-	forecast observations, <lit>t1</lit> and <lit>t2</lit>; and,
-	for forecasts based on a single-equation model,
-	<lit>depvar</lit>, <lit>method</lit> and, if actual values are
-	available over (part of) the forecast range, forecast
-	evaluation statistics in <lit>eval_stats</lit> (as produced by
-	<fncref targ="fcstats"/>) with the number of observations used,
-	<lit>eval_obs</lit>. Note that <lit>fcse</lit>, <lit>lower</lit>
-	and <lit>upper</lit> may cover fewer observations than
-	<lit>fcast</lit> (for example, in-sample static forecasts have no
-	standard errors). With the <lit>--exponentiate</lit> option,
-	<lit>fcast</lit>, <lit>lower</lit> and <lit>upper</lit> are in
-	levels, but <lit>fcse</lit> is the standard error on the log
-	scale, with the interval formed on that scale and then
-	exponentiated; the bundle also records the
-	<lit>correction</lit> applied ("normal", "smearing" or "none")
-	and the factor <lit>a0</lit>. With <lit>--integrate</lit> all
-	members are in levels. The member <lit>transform</lit> is one of
-	"none", "exponentiate" or "integrate".
+      </para>
+      <para>
+	In addition, a bundle is made available via <fncref
+	targ="$result"/>. This contains the members <lit>fcast</lit> and
+	<lit>fcse</lit> (as above) plus, when standard errors are
+	available, the confidence interval bounds <lit>lower</lit> and
+	<lit>upper</lit> along with <lit>alpha</lit> and
+	<lit>coverage</lit>; the first and last forecast observations,
+	<lit>t1</lit> and <lit>t2</lit>; and, for forecasts based on a
+	single-equation model, <lit>depvar</lit>, <lit>method</lit> and,
+	if actual values are available over (part of) the forecast
+	range, forecast evaluation statistics in <lit>eval_stats</lit>
+	(as produced by <fncref targ="fcstats"/>) with the number of
+	observations used, <lit>eval_obs</lit>.
+      </para>
+      <para>
+	Note that <lit>fcse</lit>, <lit>lower</lit> and <lit>upper</lit>
+	may cover fewer observations than <lit>fcast</lit> (for example,
+	in-sample static forecasts have no standard errors). With the
+	<lit>--exponentiate</lit> option, <lit>fcast</lit>,
+	<lit>lower</lit> and <lit>upper</lit> are in levels, but
+	<lit>fcse</lit> is the standard error on the log scale, with the
+	interval formed on that scale and then exponentiated; the bundle
+	also records the <lit>correction</lit> applied ("normal",
+	"smearing" or "none") and the factor <lit>a0</lit>. With
+	<lit>--integrate</lit> all members are in levels. The member
+	<lit>transform</lit> is one of "none", "exponentiate" or
+	"integrate".
       </para>
 
       <subhead>Static and dynamic forecasts</subhead>
@@ -4323,7 +4327,7 @@
 	    default point values (but not the limits of confidence
 	    intervals, if applicable) are multiplied by a
 	    bias-correction factor. This factor is
-	    exp(<math>s</math><sup>2</sup>), where <math>s</math> is the
+	    exp(<math>s</math><sup>2</sup>/2), where <math>s</math> is the
 	    standard error of the regression, if the
 	    Doornik&ndash;Hansen test fails to reject normality of the
 	    error term at the 10 percent level. Otherwise it is the
