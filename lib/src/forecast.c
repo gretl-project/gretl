@@ -3042,6 +3042,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	return err;
     }
 
+    fr->method = fc.method;
+
     if (pmod->ci == NLS && fc.method == FC_STATIC) {
 	asy_errs = 1;
     }
