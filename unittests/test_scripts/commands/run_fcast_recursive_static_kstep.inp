@@ -20,16 +20,19 @@ series fc
 fcast t1 t2 k fc --recursive
 
 # Then each forecast for period t equals the prediction from a
-# model estimated through t-k, using the regressors dated t
+# model estimated through t-k, using the regressors dated t.
+# (Errors inside a loop do not set gretlcli's exit status, so we
+# accumulate the worst discrepancy and assert after the loop.)
+scalar maxdiff = 0
 loop t=t1..t2 -q
     smpl 1 (t-k)
     ols y const x1 x2 --quiet
     matrix b = $coeff
     smpl full
     scalar manual = b[1] + b[2]*x1[t] + b[3]*x2[t]
-    assert(ok(fc[t]))
-    assert(abs(fc[t] - manual) < 1.0e-10)
+    maxdiff = max(maxdiff, abs(fc[t] - manual))
 endloop
+assert(maxdiff < 1.0e-10)
 
 # and nothing is stored outside the forecast range
 smpl full
