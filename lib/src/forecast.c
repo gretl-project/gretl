@@ -2838,12 +2838,20 @@ static int check_exponentiate_option (MODEL *pmod, const DATASET *dset,
     int err = 0;
 
     if (opt & OPT_I) {
+	/* can't be combined with --integrate (for now) */
 	err = E_BADOPT;
     } else if (is_standard_diff(gretl_model_get_depvar(pmod), dset, NULL)) {
 	gretl_errmsg_set(_("fcast: the dependent variable is a first "
 			   "difference, not a log: did you mean "
 			   "--integrate?"));
 	err = E_BADOPT;
+    } else {
+	/* if we get a non-zero option parameter it must be in [1,3] */
+	int i = get_optval_int(FCAST, OPT_X, &err);
+
+	if (!err && (i < 0 || i > 3)) {
+	    err = E_INVARG;
+	}
     }
 
     return err;
@@ -3656,9 +3664,10 @@ static void set_fcast_result_bundle (const gretl_matrix *f,
 	int et1 = gretl_matrix_get_t1(e);
 	double a2 = alpha / 2;
 	double cval, fx, ex;
-	/* for exponentiated forecasts the standard errors are on the
+	/* For exponentiated forecasts the standard errors are on the
 	   log scale, and the interval is formed on that scale and
-	   then exponentiated (as in text_print_forecast) */
+	   then exponentiated (as in text_print_forecast).
+	*/
 	int expon = (fr != NULL && (fr->opt & OPT_X));
 	gretl_matrix *lo, *hi;
 	int i, j, s;
@@ -3679,16 +3688,14 @@ static void set_fcast_result_bundle (const gretl_matrix *f,
 		    if (na(fx) || na(ex)) {
 			gretl_matrix_set(lo, i, j, NADBL);
 			gretl_matrix_set(hi, i, j, NADBL);
-		    } else {
-			if (expon) {
-			    double lfx = log(fx);
+		    } else if (expon) {
+			double lfx = log(fx);
 
-			    gretl_matrix_set(lo, i, j, exp(lfx - cval * ex));
-			    gretl_matrix_set(hi, i, j, exp(lfx + cval * ex));
-			} else {
-			    gretl_matrix_set(lo, i, j, fx - cval * ex);
-			    gretl_matrix_set(hi, i, j, fx + cval * ex);
-			}
+			gretl_matrix_set(lo, i, j, exp(lfx - cval * ex));
+			gretl_matrix_set(hi, i, j, exp(lfx + cval * ex));
+		    } else {
+			gretl_matrix_set(lo, i, j, fx - cval * ex);
+			gretl_matrix_set(hi, i, j, fx + cval * ex);
 		    }
 		}
 	    }
@@ -3705,9 +3712,10 @@ static void set_fcast_result_bundle (const gretl_matrix *f,
     }
 
     if (!err) {
-	/* the forecast range proper, which can be narrower than the
+	/* The forecast range proper, which can be narrower than the
 	   range of @f (pre-forecast observations, or in the integrated
-	   case the extra initial observation) */
+	   case the extra initial observation).
+	*/
 	int bt1 = gretl_matrix_get_t1(f);
 	int bt2 = gretl_matrix_get_t2(f);
 
