@@ -1767,6 +1767,11 @@ gretlopt valid_short_opt (int ci, char c)
     gretlopt opt = 0;
     int i, ok;
 
+    if (c == 'w' && (plot_output_opt_ok(ci) || cmd_plot_opt_ok(ci))) {
+	set_optval_string(ci, OPT_U, "display");
+	return OPT_U;
+    }
+
     for (i=0; flag_matches[i].c != '\0'; i++) {
         if (c == flag_matches[i].c) {
             opt = flag_matches[i].o;
