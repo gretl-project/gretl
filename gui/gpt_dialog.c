@@ -1746,6 +1746,12 @@ static int show_bars_check (GPT_SPEC *spec)
 
 #define bar_plot(c) (c == PLOT_BAR || c == PLOT_STACKED_BAR)
 
+// #define EXPERIMENTAL_PLOT_SIZER (not yet)
+
+#ifdef EXPERIMENTAL_PLOT_SIZER
+# include "plotsizer.c"
+#endif
+
 static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 {
     static const char *basic_key_strings[] = {
@@ -2008,6 +2014,10 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	gtk_widget_show(hsep);
 	add_boxcolor_selector(tbl, TAB_MAIN_COLS, &rows, ed->notebook);
     }
+
+#ifdef EXPERIMENTAL_PLOT_SIZER
+    add_plot_size_setter(vbox, spec);
+#endif
 }
 
 static void linetitle_callback (GtkWidget *w, plot_editor *ed)
