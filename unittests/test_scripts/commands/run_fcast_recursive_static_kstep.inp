@@ -1,0 +1,36 @@
+set verbose off
+clear
+set assert stop
+
+# Given a static OLS model (no lagged dependent variable) on a
+# time-series dataset
+nulldata 60
+set seed 20260101
+setobs 4 1990:1 --time-series
+series x1 = normal()
+series x2 = normal()
+series y = 1 + 0.5*x1 - 0.8*x2 + normal()
+ols y const x1 x2 --quiet
+
+# When we compute recursive k-step-ahead forecasts, k > 1
+scalar k = 3
+scalar t1 = 40
+scalar t2 = 50
+series fc
+fcast t1 t2 k fc --recursive
+
+# Then each forecast for period t equals the prediction from a
+# model estimated through t-k, using the regressors dated t
+loop t=t1..t2 -q
+    smpl 1 (t-k)
+    ols y const x1 x2 --quiet
+    matrix b = $coeff
+    smpl full
+    scalar manual = b[1] + b[2]*x1[t] + b[3]*x2[t]
+    assert(ok(fc[t]))
+    assert(abs(fc[t] - manual) < 1.0e-10)
+endloop
+
+# and nothing is stored outside the forecast range
+smpl full
+assert(sum(ok(fc)) == t2 - t1 + 1)
