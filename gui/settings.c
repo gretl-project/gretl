@@ -1696,6 +1696,19 @@ static GtkWidget *scroller_page (GtkWidget *vbox)
     return scroller;
 }
 
+static GtkWidget *settings_table (int len, int cols,
+				  int sp1,int sp2,
+				  GtkWidget *vbox)
+{
+    GtkWidget *tbl = gtk_table_new(len, cols, FALSE);
+
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), sp1);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), sp1);
+    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, sp2);
+
+    return tbl;
+}
+
 static void make_prefs_tab (GtkWidget *notebook, int tab,
 			    int console)
 {
@@ -1753,25 +1766,16 @@ static void make_prefs_tab (GtkWidget *notebook, int tab,
     if (tab == TAB_VCV && n_list > 0) {
 	/* VCV tab -- put the list entries first, right aligned */
 	l_cols = 2;
-	l_table = gtk_table_new(l_len, l_cols, FALSE);
-	gtk_table_set_row_spacings(GTK_TABLE(l_table), 5);
-	gtk_table_set_col_spacings(GTK_TABLE(l_table), 5);
-	gtk_box_pack_start(GTK_BOX(vbox), l_table, FALSE, FALSE, 0);
+	l_table = settings_table(l_len, l_cols, 5, 0, vbox);
     }
 
     if (n_str > 0) {
-	s_table = gtk_table_new(s_len, s_cols, FALSE);
-	gtk_table_set_row_spacings(GTK_TABLE(s_table), 5);
-	gtk_table_set_col_spacings(GTK_TABLE(s_table), 5);
-	gtk_box_pack_start(GTK_BOX(vbox), s_table, FALSE, FALSE, 0);
+	s_table = settings_table(s_len, s_cols, 5, 0, vbox);
     }
 
     if (n_bool > 0) {
 	b_cols = 2;
-	b_table = gtk_table_new(1, b_cols, FALSE);
-	gtk_table_set_row_spacings(GTK_TABLE(b_table), 5);
-	gtk_table_set_col_spacings(GTK_TABLE(b_table), 5);
-	gtk_box_pack_start(GTK_BOX(vbox), b_table, FALSE, FALSE, 10);
+	b_table = settings_table(1, b_cols, 5, 10, vbox);
     }
 
     if (tab != TAB_VCV && n_list > 0) {
