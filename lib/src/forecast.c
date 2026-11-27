@@ -4867,8 +4867,12 @@ recursive_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
 		    yf += mod.coeff[i] * xit;
 		}
 	    }
-	    if (y != NULL && j < k - 1) {
-		y[t++] = yf;
+	    if (j < k - 1) {
+		if (y != NULL) {
+		    y[t] = yf;
+		}
+		/* advance to the next forecast period */
+		t++;
 	    }
 	}
 	fr->fitted[t] = yf;
