@@ -885,6 +885,9 @@ int main (int argc, char *argv[])
             state.cmd->ci = RUNLOOP;
             err = cli_exec_line(&state, dset, cmdprn);
             state.cmd->ci = 0;
+            /* don't fall through to the code for a freshly read
+               line, which would overwrite any error from the loop */
+            continue;
         } else {
             err = cli_get_input_line(&state, runfile);
             if (err) {
