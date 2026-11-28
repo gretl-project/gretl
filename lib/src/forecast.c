@@ -3689,8 +3689,13 @@ static void set_fcast_result_bundle (const gretl_matrix *f,
 			gretl_matrix_set(lo, i, j, NADBL);
 			gretl_matrix_set(hi, i, j, NADBL);
 		    } else if (expon) {
-			double lfx = log(fx);
+			double lfx;
 
+			if (!na(fr->a0) && fr->a0 != 1) {
+			    lfx = log(fx / fr->a0);
+			} else {
+			    lfx = log(fx);
+			}
 			gretl_matrix_set(lo, i, j, exp(lfx - cval * ex));
 			gretl_matrix_set(hi, i, j, exp(lfx + cval * ex));
 		    } else {

@@ -3477,8 +3477,15 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 		}
 		maxerr[t] = tval * fr->sderr[t];
 		if (expon) {
-		    lo = exp(log(ft) - maxerr[t]);
-		    hi = exp(log(ft) + maxerr[t]);
+		    double lft;
+
+		    if (!na(fr->a0) && fr->a0 != 1) {
+			lft = log(ft / fr->a0);
+		    } else {
+			lft = log(ft);
+		    }
+		    lo = exp(lft - maxerr[t]);
+		    hi = exp(lft + maxerr[t]);
 		} else {
 		    lo = ft - maxerr[t];
 		    hi = ft + maxerr[t];
