@@ -5892,12 +5892,6 @@
 	plots the data such that the vertical axis is expressed as
 	powers of 2. If the base is not specified it defaults to 10.
       </para>
-      <para>
-	The <opt>width</opt> and <opt>height</opt> options, which must be
-	given together, set the size of the plot in pixels. For example,
-	<code>gnuplot y x --width=800 --height=500</code>. They apply
-	to plots shown on screen or saved in PNG format.
-      </para>
       <subhead>Taking data from a matrix</subhead>
       <para>
 	In the primary case the arguments <repl>yvars</repl> and
