@@ -1333,7 +1333,7 @@ VECM_add_forecast (GRETL_VAR *var, int t1, int t2,
                     }
                     bij = gretl_matrix_get(B, i, col++);
                     xtjd = NADBL;
-                    if (t < tdyn || s - k < 0) {
+                    if (t - k < tdyn || s - k < 0) {
                         /* pre-forecast value */
                         xtj = dset->Z[vj][t-k];
                     } else {
