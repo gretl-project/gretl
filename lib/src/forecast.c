@@ -173,6 +173,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
     }
 
     f->method = 0;
+    f->opt = OPT_NONE;
     f->model_ID = 0;
     f->asymp = 0;
     f->std = 0;
