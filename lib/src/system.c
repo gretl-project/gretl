@@ -3968,22 +3968,42 @@ static int sys_add_structural_form (equation_system *sys,
 }
 
 static gretl_matrix *sys_companion_matrix (equation_system *sys,
+                                           const gretl_matrix *G,
                                            int *err)
 {
     int m = sys->A->rows;
     int n = sys->A->cols;
+    gretl_matrix *R = sys->A;
     gretl_matrix *C;
 
+    /* Use reduced-form lag coefficients: G is Gamma^{-1},
+       or NULL if Gamma is the identity matrix. */
+    if (G != NULL) {
+        R = gretl_matrix_alloc(m, n);
+        if (R == NULL) {
+            *err = E_ALLOC;
+            return NULL;
+        }
+        *err = gretl_matrix_multiply(G, sys->A, R);
+        if (*err) {
+            gretl_matrix_free(R);
+            return NULL;
+        }
+    }
+
     if (m == n) {
-        C = sys->A;
+        C = R;
     } else {
         C = gretl_zero_matrix_new(n, n);
         if (C == NULL) {
             *err = E_ALLOC;
         } else {
-            gretl_matrix_inscribe_matrix(C, sys->A, 0, 0,
+            gretl_matrix_inscribe_matrix(C, R, 0, 0,
                                          GRETL_MOD_NONE);
             gretl_matrix_inscribe_I(C, m, 0, n - m);
+        }
+        if (R != sys->A) {
+            gretl_matrix_free(R);
         }
     }
 
@@ -3995,6 +4015,7 @@ static gretl_matrix *sys_companion_matrix (equation_system *sys,
 }
 
 static gretl_matrix *sys_get_fcast_se (equation_system *sys,
+                                       const gretl_matrix *G,
                                        int periods, int *err)
 {
     int n = sys->neqns + sys->nidents;
@@ -4016,7 +4037,7 @@ static gretl_matrix *sys_get_fcast_se (equation_system *sys,
         return NULL;
     }
 
-    C = sys_companion_matrix(sys, err);
+    C = sys_companion_matrix(sys, G, err);
     if (*err) {
         return NULL;
     }
@@ -4079,7 +4100,7 @@ static gretl_matrix *sys_get_fcast_se (equation_system *sys,
 }
 
 static int sys_add_fcast_variance (equation_system *sys, gretl_matrix *F,
-                                   int n_static)
+                                   const gretl_matrix *G, int n_static)
 {
     gretl_matrix *se = NULL;
     double ftj, vti;
@@ -4089,7 +4110,7 @@ static int sys_add_fcast_variance (equation_system *sys, gretl_matrix *F,
     int err = 0;
 
     if (k > 0) {
-        se = sys_get_fcast_se(sys, k, &err);
+        se = sys_get_fcast_se(sys, G, k, &err);
         if (err) {
             goto bailout;
         }
@@ -4103,12 +4124,9 @@ static int sys_add_fcast_variance (equation_system *sys, gretl_matrix *F,
             } else {
                 i = s - n_static;
                 if (i < 0) {
-                    if (j < sys->neqns) {
-                        vti = sqrt(gretl_matrix_get(sys->Sr, j, j));
-                    } else {
-                        /* LHS of identity */
-                        vti = 0.0;
-                    }
+                    /* Reduced-form variance also applies to
+                       variables defined by identities. */
+                    vti = sqrt(gretl_matrix_get(sys->Sr, j, j));
                 } else {
                     vti = gretl_matrix_get(se, i, j);
                 }
@@ -4501,7 +4519,6 @@ static int sys_add_forecast (equation_system *sys,
     gretl_matrix_free(yh);
     gretl_matrix_free(yl);
     gretl_matrix_free(x);
-    gretl_matrix_free(G);
 
     if (!err && s0 > 0) {
         err = sys_F_trim(sys);
@@ -4520,8 +4537,10 @@ static int sys_add_forecast (equation_system *sys,
 #endif
 
     if (!err) {
-        sys_add_fcast_variance(sys, sys->F, tdyn - t1);
+        sys_add_fcast_variance(sys, sys->F, G, tdyn - t1);
     }
+
+    gretl_matrix_free(G);
 
 #if SYSDEBUG
     gretl_matrix_print(sys->F, "sys->F, with variance");
