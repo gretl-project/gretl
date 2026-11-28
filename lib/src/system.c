@@ -4431,7 +4431,7 @@ static int sys_add_forecast (equation_system *sys,
                 vi = plist[i];
                 get_col_and_lag(vi, sys, &col, &lag);
                 xitd = NADBL;
-                if (t < tdyn || s - lag < 0) {
+                if (t - lag < tdyn || s - lag < 0) {
                     /* pre-forecast value */
                     xit = dset->Z[vi][t];
                 } else {
